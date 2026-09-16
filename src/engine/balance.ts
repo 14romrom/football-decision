@@ -3,12 +3,23 @@
 
 import type { Position, Tier } from './types';
 
-/** Верхние границы tier по итоговому score. clean — всё, что выше cost.
- *  Подобраны под 2d10 (колокол: P(≤6)=15%, P(≤11)=55%, P(≤15)=85%) и средний бонус атрибута +2. */
-export const THRESHOLDS: Record<Position, { badFail: number; fail: number; cost: number }> = {
-  controlled: { badFail: 5, fail: 9, cost: 12 },
-  risky: { badFail: 6, fail: 11, cost: 15 },
-  desperate: { badFail: 7, fail: 13, cost: 17 },
+/** Позиция — это цена ошибки, скилл — качество исхода (Blades in the Dark).
+ *  Катастрофа определяется сырыми кубиками до всех модификаторов: полоса зависит только
+ *  от формы риска, и никакой +4 её не выкупает. Плейтест: пока катастрофа считалась
+ *  по итоговому числу, рискованный вариант с сильным атрибутом доминировал надёжный
+ *  со слабым (45% чистого против 36% при 1% катастрофы) — смысла беречься не было. */
+export const CATASTROPHE_BAND: Record<Position, number> = { controlled: 2, risky: 5, desperate: 7 };
+
+/** 20 на кубиках — всегда чисто. */
+export const CRIT_SUCCESS = 20;
+
+/** Верхние границы fail и cost по итоговому score (кубики + атрибут + контекст).
+ *  clean — всё, что выше cost. Подобраны под 2d10 (P(≤9)=36%, P(≤11)=55%, P(≤15)=85%)
+ *  и средний бонус атрибута +2. */
+export const THRESHOLDS: Record<Position, { fail: number; cost: number }> = {
+  controlled: { fail: 9, cost: 12 },
+  risky: { fail: 11, cost: 15 },
+  desperate: { fail: 13, cost: 17 },
 };
 
 /** Модификатор атрибута: (attr − base) / step, всегда ≥ 0. После первого плейтеста —
@@ -16,10 +27,6 @@ export const THRESHOLDS: Record<Position, { badFail: number; fail: number; cost:
  *  Старт 45..65 даёт 0..+5; пороги выше сдвинуты на +1 под средний бонус. */
 export const ATTR_MOD = { base: 45, step: 4, max: 12 };
 
-/** Ниже этого кубик надёжного варианта не падает: смысл «упевнено» — что единица
- *  на нём не выпадает. Катастрофа остаётся возможной только через минусы контекста.
- *  Рискованные формы играют честные 2d10. */
-export const DIE_FLOOR: Record<Position, number> = { controlled: 6, risky: 2, desperate: 2 };
 
 /** Кураж симметричный: вниз и вверх одинаковой крутизны. «Вийшло, але…» при минусе
  *  возвращает +1 (см. applyChoice) — частичный успех останавливает серию. */

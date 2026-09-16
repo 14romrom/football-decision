@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { makeRng } from '../src/engine/rng';
 import { attrMod, computeContext } from '../src/engine/context';
-import { resolveOption, tierForScore } from '../src/engine/resolve';
-import { DIE_FLOOR, THRESHOLDS } from '../src/engine/balance';
+import { resolveOption, tierFor } from '../src/engine/resolve';
+import { CATASTROPHE_BAND, THRESHOLDS } from '../src/engine/balance';
 import type { Rng } from '../src/engine/rng';
 import type { EpisodeOption, MatchState, Player } from '../src/engine/types';
 
@@ -52,37 +52,40 @@ describe('attrMod', () => {
 });
 
 describe('пороги исходов', () => {
-  // Конкретные числа подобраны балансным прогоном (п. 11 ТЗ) и живут в balance.ts;
-  // тест сторожит не их значения, а то, что границы читаются ровно по таблице.
-  it('границы читаются по таблице balance.ts, без смещений на единицу', () => {
+  it('катастрофа — по сырым кубикам, полоса зависит только от формы риска', () => {
+    for (const pos of ['controlled', 'risky', 'desperate'] as const) {
+      const band = CATASTROPHE_BAND[pos];
+      expect(tierFor(pos, band, 99)).toBe('badFail');          // никакой score не спасает
+      expect(tierFor(pos, band + 1, -99)).not.toBe('badFail'); // а выше полосы катастрофы нет
+    }
+    expect(CATASTROPHE_BAND.controlled).toBeLessThan(CATASTROPHE_BAND.risky);
+    expect(CATASTROPHE_BAND.risky).toBeLessThan(CATASTROPHE_BAND.desperate);
+  });
+
+  it('границы fail и cost читаются по таблице, без смещений на единицу', () => {
     for (const pos of ['controlled', 'risky', 'desperate'] as const) {
       const t = THRESHOLDS[pos];
-      expect(tierForScore(pos, t.badFail)).toBe('badFail');
-      expect(tierForScore(pos, t.badFail + 1)).toBe('fail');
-      expect(tierForScore(pos, t.fail)).toBe('fail');
-      expect(tierForScore(pos, t.fail + 1)).toBe('cost');
-      expect(tierForScore(pos, t.cost)).toBe('cost');
-      expect(tierForScore(pos, t.cost + 1)).toBe('clean');
+      const safeRoll = CATASTROPHE_BAND[pos] + 1;
+      expect(tierFor(pos, safeRoll, t.fail)).toBe('fail');
+      expect(tierFor(pos, safeRoll, t.fail + 1)).toBe('cost');
+      expect(tierFor(pos, safeRoll, t.cost)).toBe('cost');
+      expect(tierFor(pos, safeRoll, t.cost + 1)).toBe('clean');
     }
   });
 
-  it('чем рискованнее форма, тем труднее чистый успех и шире полоса неудач', () => {
-    expect(THRESHOLDS.controlled.cost).toBeLessThan(THRESHOLDS.risky.cost);
-    expect(THRESHOLDS.risky.cost).toBeLessThan(THRESHOLDS.desperate.cost);
-    expect(THRESHOLDS.controlled.fail).toBeLessThan(THRESHOLDS.risky.fail);
-    expect(THRESHOLDS.risky.fail).toBeLessThan(THRESHOLDS.desperate.fail);
-    expect(THRESHOLDS.controlled.badFail).toBeLessThanOrEqual(THRESHOLDS.desperate.badFail);
+  it('двадцать на кубиках — чисто при любом score', () => {
+    expect(tierFor('desperate', 20, -5)).toBe('clean');
   });
 
-  it('каждая форма риска даёт все четыре уровня — бинарных исходов нет', () => {
-    for (const pos of ['controlled', 'risky', 'desperate'] as const) {
-      const tiers = new Set<string>();
-      for (let s = -10; s <= 35; s++) tiers.add(tierForScore(pos, s));
-      expect(tiers).toEqual(new Set(['badFail', 'fail', 'cost', 'clean']));
-      const t = THRESHOLDS[pos];
-      expect(t.badFail).toBeLessThan(t.fail);
-      expect(t.fail).toBeLessThan(t.cost);
-    }
+  it('скилл не выкупает риск: сильный атрибут на риске всё равно проигрывает надёжному по катастрофам', () => {
+    // Полный перебор 2d10: доля катастроф не зависит от модификатора.
+    const share = (pos: 'controlled' | 'risky' | 'desperate', mod: number) => {
+      let bad = 0;
+      for (let a = 1; a <= 10; a++) for (let b = 1; b <= 10; b++) if (tierFor(pos, a + b, a + b + mod) === 'badFail') bad++;
+      return bad / 100;
+    };
+    expect(share('risky', 4)).toBe(share('risky', 0));
+    expect(share('controlled', 0)).toBeLessThan(share('risky', 4));
   });
 });
 
@@ -182,31 +185,23 @@ describe('rng', () => {
   });
 });
 
-describe('планка кубика', () => {
-  const fixedDie = (n: number): Rng => ({
-    ...makeRng(1), roll: () => n,
+describe('кубики и модификаторы', () => {
+  const fixedDie = (n: number): Rng => ({ ...makeRng(1), roll: () => n });
+
+  it('score = кубики + модификаторы, кубики показываются как выпали', () => {
+    const res = resolveOption(state({ stamina: 80 }), player, option({ basePosition: 'controlled' }), 'attack', fixedDie(9));
+    expect(res.rawRoll).toBe(9);
+    expect(res.totalScore).toBe(9 + attrMod(player.attrs.passing) + 1);
+    expect(res.critical).toBeNull();
   });
 
-  it('на надёжном варианте единица не выпадает — кубик поднимается до планки и это видно строкой', () => {
-    const res = resolveOption(state(), player, option({ basePosition: 'controlled' }), 'attack', fixedDie(1));
-    expect(res.rawRoll).toBe(1);
-    expect(res.roll).toBe(DIE_FLOOR.controlled);
-    expect(res.mods[0]).toEqual({ label: 'надійний хід', value: DIE_FLOOR.controlled - 1 });
-    expect(res.totalScore).toBe(DIE_FLOOR.controlled + attrMod(player.attrs.passing));
-  });
-
-  it('рискованные формы играют честные 2d10', () => {
-    for (const basePosition of ['risky', 'desperate'] as const) {
-      const res = resolveOption(state(), player, option({ basePosition }), 'attack', fixedDie(2));
-      expect(res.roll).toBe(2);
-      expect(res.mods.some((m) => m.label === 'надійний хід')).toBe(false);
-    }
-  });
-
-  it('катастрофа на надёжном варианте возможна только через минусы контекста', () => {
-    const fresh = resolveOption(state({ stamina: 55 }), player, option({ basePosition: 'controlled' }), 'attack', fixedDie(1));
-    expect(fresh.tier).not.toBe('badFail');
-    const wrecked = resolveOption(state({ stamina: 10, momentum: -3 }), player, option({ basePosition: 'controlled' }), 'attack', fixedDie(1));
-    expect(wrecked.tier).toBe('badFail');
+  it('катастрофа на надёжном варианте — только двойка на кубиках, минусы контекста её не делают', () => {
+    // Минусы бьют по score, а не по полосе катастрофы. (Дорогой вариант при севших ногах
+    // сдвинулся бы в «ризиковано» — это отдельный, видимый игроку механизм, см. shift.)
+    const wrecked = state({ stamina: 5, momentum: -3 });
+    expect(resolveOption(wrecked, player, option({ basePosition: 'controlled', staminaCost: 2 }), 'attack', fixedDie(3)).tier).toBe('fail');
+    const res = resolveOption(state(), player, option({ basePosition: 'controlled' }), 'attack', fixedDie(2));
+    expect(res.tier).toBe('badFail');
+    expect(res.critical).toBe('fail');
   });
 });

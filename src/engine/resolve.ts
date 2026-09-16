@@ -1,15 +1,17 @@
 // Единственный бросок в игре: 2d10 + модификатор атрибута + контекст.
 // Функция чистая — rng приходит аргументом, поэтому её можно прогнать миллион раз.
 
-import { DIE_FLOOR, THRESHOLDS } from './balance';
+import { CATASTROPHE_BAND, CRIT_SUCCESS, THRESHOLDS } from './balance';
 import { computeContext } from './context';
 import type { Episode, EpisodeOption, MatchState, Player, Position, Resolution, Tier } from './types';
-import { neutralConditions, type MatchConditions } from './conditions';
 import type { Rng } from './rng';
+import { neutralConditions, type MatchConditions } from './conditions';
 
-export function tierForScore(position: Position, score: number): Tier {
+/** Ярус исхода. Катастрофа и критический успех — по сырым кубикам, остальное — по score. */
+export function tierFor(position: Position, rawRoll: number, score: number): Tier {
+  if (rawRoll <= CATASTROPHE_BAND[position]) return 'badFail';
+  if (rawRoll >= CRIT_SUCCESS) return 'clean';
   const t = THRESHOLDS[position];
-  if (score <= t.badFail) return 'badFail';
   if (score <= t.fail) return 'fail';
   if (score <= t.cost) return 'cost';
   return 'clean';
@@ -25,20 +27,19 @@ export function resolveOption(
 ): Resolution {
   const ctx = computeContext(state, player, option, phase, cond);
   const rawRoll = rng.roll();
-  const roll = Math.max(rawRoll, DIE_FLOOR[ctx.position]);
-  // Планка показывается как модификатор: игрок видит, что выпало, и за что добавили.
-  const mods = rawRoll < roll ? [{ label: 'надійний хід', value: roll - rawRoll }, ...ctx.mods] : ctx.mods;
-  const totalScore = roll + ctx.flat;
+  const totalScore = rawRoll + ctx.flat;
+  const tier = tierFor(ctx.position, rawRoll, totalScore);
   return {
     rawRoll,
-    roll,
+    roll: rawRoll,
     attrMod: ctx.attrMod,
-    mods,
+    mods: ctx.mods,
     totalScore,
     position: ctx.position,
     basePosition: option.basePosition,
     effect: ctx.effect,
-    tier: tierForScore(ctx.position, totalScore),
+    tier,
+    critical: rawRoll <= CATASTROPHE_BAND[ctx.position] ? 'fail' : rawRoll >= CRIT_SUCCESS ? 'success' : null,
   };
 }
 

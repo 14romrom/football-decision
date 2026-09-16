@@ -125,8 +125,8 @@ export type Episode = {
 export type ModLine = { label: string; value: number };
 
 export type Resolution = {
-  rawRoll: number;          // что выпало на кубике
-  roll: number;             // после планки формы риска (DIE_FLOOR); это и показываем
+  rawRoll: number;          // что выпало на кубиках
+  roll: number;             // то же; поле оставлено для телеметрии
   attrMod: number;
   mods: ModLine[];          // контекстные модификаторы, включая attrMod-строку
   totalScore: number;
@@ -134,4 +134,6 @@ export type Resolution = {
   basePosition: Position;
   effect: Effect;           // итоговый, после сдвигов
   tier: Tier;
+  /** Катастрофа или критический успех по сырым кубикам — независимо от модификаторов. */
+  critical: 'fail' | 'success' | null;
 };

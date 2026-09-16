@@ -48,6 +48,12 @@ export function RollView({ option, res, flavor, onNext }: Props) {
       {step >= 3 && (
         <>
           <div className={`tier tier-${res.tier}`}>{TIER_LABEL[res.tier]}</div>
+          {res.critical === 'fail' && (
+            <p className="crit-note">{res.rawRoll} на кубиках — на такому ризику це катастрофа, навичка тут не рятує.</p>
+          )}
+          {res.critical === 'success' && (
+            <p className="crit-note">Двадцять. Таке не пояснюють.</p>
+          )}
           <p className="outcome">{outcome.text}</p>
           {flavor && <p className="flavor">{flavor}</p>}
           <button className="primary" onClick={onNext}>Далі</button>

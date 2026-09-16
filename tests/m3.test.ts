@@ -1,15 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { makeRng, type Rng } from '../src/engine/rng';
-import { applyChoice, createMatch, nextEpisode } from '../src/engine/match';
+import { advanceTo, applyChoice, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
 import { computeContext } from '../src/engine/context';
-import { voiceAudible } from '../src/engine/voices';
+import { dominantVoice, initVoiceTrace, recordVoice, voiceAudible } from '../src/engine/voices';
 import { neutralConditions } from '../src/engine/conditions';
 import { BALANCE } from '../src/engine/balance';
 import { EPISODES, EPISODES_RAW, FLAG_RULES, PLAYER, ROSTER } from '../src/content';
 import type { MatchState } from '../src/engine/types';
 
 const fixed = (n: number): Rng => ({ ...makeRng(1), roll: () => n });
+
+const state = (over: Partial<MatchState> = {}): MatchState => ({
+  minute: 30, scoreUs: 0, scoreThem: 0, stamina: 55, composureNow: 60, coachTrust: 55, fanHype: 45, momentum: 0,
+  stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 }, flags: [], marks: {}, voices: initVoiceTrace(), log: [], ...over,
+});
 
 describe('M3: голоса', () => {
   it('у каждого варианта есть голос, и это один из шести', () => {
@@ -60,11 +65,6 @@ describe('M3: критический успех', () => {
 });
 
 describe('M3: последствия решений', () => {
-  const state = (over: Partial<MatchState> = {}): MatchState => ({
-    minute: 30, scoreUs: 0, scoreThem: 0, stamina: 55, composureNow: 60, coachTrust: 55, fanHype: 45, momentum: 0,
-    stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 }, flags: [], marks: {}, log: [], ...over,
-  });
-
   it('флаг даёт строку модификатора только на подходящих вариантах', () => {
     const opt = EPISODES[0].options.find((o) => o.attribute === 'passing')!;
     const dribble = EPISODES[0].options.find((o) => o.attribute === 'dribbling')!;
@@ -125,5 +125,104 @@ describe('M3: последствия решений', () => {
         applyChoice(s, next.episode, opt, resolveOption(s.state, s.player, opt, next.episode.phase, rng), rng);
       }
     }
+  });
+});
+
+describe('M3: голос имеет вес — слушают, и он становится громче', () => {
+  it('recordVoice копит счётчик и серию подряд', () => {
+    const t = initVoiceTrace();
+    recordVoice(t, 'ego');
+    recordVoice(t, 'ego');
+    recordVoice(t, 'team');
+    expect(t.counts.ego).toBe(2);
+    expect(t.counts.team).toBe(1);
+    expect(t.streak).toEqual({ who: 'team', count: 1 });
+    recordVoice(t, 'team');
+    expect(t.streak).toEqual({ who: 'team', count: 2 });
+  });
+
+  it('Его, услышанный дважды подряд, не затихает в серии провалов; Команда от этого молчит', () => {
+    const rng = makeRng(1);
+    const s = createMatch('w', 1, PLAYER, rng, EPISODES_RAW, ROSTER);
+    const egoOpt = { ...EPISODES[0].options[0], goals: { team: 1, personal: 3 } as const };
+    const teamOpt = { ...EPISODES[0].options[0], goals: { team: 3, personal: 0 } as const };
+    const losing = { ...s.state, momentum: -3, coachTrust: 60 };
+
+    // без серии: Его молчит в проигрышной инерции, Команда звучит
+    expect(voiceAudible('ego', egoOpt, losing, PLAYER)).toBe(false);
+    expect(voiceAudible('team', teamOpt, losing, PLAYER)).toBe(true);
+
+    // после двух подряд «Его»: Его перекрикивает провалы, Команда замолкает
+    const afterEgoStreak = { ...losing, voices: { counts: initVoiceTrace().counts, streak: { who: 'ego' as const, count: 2 } } };
+    expect(voiceAudible('ego', egoOpt, afterEgoStreak, PLAYER)).toBe(true);
+    expect(voiceAudible('team', teamOpt, afterEgoStreak, PLAYER)).toBe(false);
+  });
+
+  it('dominantVoice — null, пока ни один голос не набрал минимум; иначе самый частый', () => {
+    const t = initVoiceTrace();
+    recordVoice(t, 'ego'); recordVoice(t, 'ego');
+    expect(dominantVoice(t)).toBeNull();   // 2 < voiceDominantMin (3)
+    recordVoice(t, 'ego');
+    expect(dominantVoice(t)).toEqual({ who: 'ego', count: 3 });
+  });
+
+  it('applyChoice пишет голос выбранного варианта в state.voices', () => {
+    const rng = makeRng(2);
+    const s = createMatch('a', 2, PLAYER, rng, EPISODES_RAW, ROSTER);
+    const ep = s.episodes.find((e) => e.id === 'ep_edge_of_box')!;
+    const shoot = ep.options.find((o) => o.id === 'shoot')!;   // voice: ego
+    applyChoice(s, ep, shoot, resolveOption(s.state, s.player, shoot, ep.phase, rng), rng);
+    expect(s.state.voices.counts.ego).toBe(1);
+    expect(s.state.voices.streak).toEqual({ who: 'ego', count: 1 });
+  });
+
+  it('пересказ называет доминирующий голос, только если он звучал не меньше порога', () => {
+    const rng = makeRng(9);
+    const s = createMatch('rc', 9, PLAYER, rng, EPISODES_RAW, ROSTER);
+    for (;;) {
+      const next = nextEpisode(s, rng);
+      if (!next) break;
+      const egoOpt = next.episode.options.find((o) => o.voice?.who === 'ego');
+      const opt = egoOpt ?? next.episode.options[0];
+      applyChoice(s, next.episode, opt, resolveOption(s.state, s.player, opt, next.episode.phase, rng), rng);
+    }
+    const { summary } = finishMatch(s, rng);
+    const last = summary.recap.at(-1)!;
+    if (s.state.voices.counts.ego >= BALANCE.voiceDominantMin) {
+      expect(last).toContain('найгучніше звучав Его');
+    }
+    expect(summary.recap.length).toBeGreaterThanOrEqual(4);
+    expect(summary.recap.length).toBeLessThanOrEqual(6);
+  });
+});
+
+describe('M3: тренер і трибуни — не тільки декорація', () => {
+  it('високий coachTrust дає симетричний бонус ефекту (раніше довіра тільки карала)', () => {
+    // берём вариант, у которого эффект не на потолке 'great' — иначе бонусу некуда расти
+    const opt = EPISODES[0].options.find((o) => o.basePosition === 'risky' && o.effect !== 'great')!;
+    const trusted = state({ coachTrust: 85 });
+    const neutral = state({ coachTrust: 55 });
+    const distrusted = state({ coachTrust: 20 });
+    expect(computeContext(trusted, PLAYER, opt, 'attack').effect).not.toBe(
+      computeContext(neutral, PLAYER, opt, 'attack').effect,
+    );
+    // симметрия: низкое доверие штрафует позицию, высокое — не трогает её, а поднимает эффект
+    expect(computeContext(distrusted, PLAYER, opt, 'attack').position).not.toBe(opt.basePosition);
+    expect(computeContext(trusted, PLAYER, opt, 'attack').position).toBe(opt.basePosition);
+  });
+
+  it('заряджені трибуни піднімають холоднокровність з часом, ворожі — тиснуть', () => {
+    const run = (fanHype: number) => {
+      const rng = makeRng(4);
+      const s = createMatch('h', 4, PLAYER, rng, EPISODES_RAW, ROSTER);
+      s.state.fanHype = fanHype;
+      advanceTo(s, 40, rng);
+      return s.state.composureNow;
+    };
+    const withHighHype = run(90);
+    const withLowHype = run(5);
+    const neutralHype = run(45);
+    expect(withHighHype).toBeGreaterThan(neutralHype);
+    expect(withLowHype).toBeLessThan(neutralHype);
   });
 });

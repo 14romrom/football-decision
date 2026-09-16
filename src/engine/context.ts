@@ -131,6 +131,7 @@ export function computeContext(
   }
 
   if (state.coachTrust < s.lowTrustBelow && option.basePosition !== 'controlled') posShift += 1;
+  if (state.coachTrust >= s.highTrustAbove) effShift += 1;   // довіра дає масштаб
 
   posShift = Math.max(-1, Math.min(1, posShift));
   effShift = Math.max(-1, Math.min(1, effShift));

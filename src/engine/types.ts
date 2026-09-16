@@ -73,6 +73,14 @@ export type FlagRule = {
   phases?: Episode['phase'][];
 };
 
+/** Какие голоса слушали в этом матче: счётчик на recap и телеметрию,
+ *  и текущая серия — сколько раз подряд слушали один и тот же голос
+ *  (влияет на его громкость, см. voices.ts). */
+export type VoiceTrace = {
+  counts: Record<VoiceKey, number>;
+  streak: { who: VoiceKey | null; count: number };
+};
+
 export type MatchState = {
   minute: number;
   scoreUs: number;
@@ -85,6 +93,7 @@ export type MatchState = {
   stats: MatchStats;
   flags: string[];        // 'tired', 'booked', 'hero_moment' и т.п.
   marks: Record<string, Mark>;   // flag → решение, которое его поставило
+  voices: VoiceTrace;
   log: TimelineEvent[];
 };
 

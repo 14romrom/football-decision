@@ -9,6 +9,7 @@ import { createMatch, advanceTo, applyChoice, nextEpisode } from '../src/engine/
 import { resolveOption } from '../src/engine/resolve';
 import { EPISODES_RAW, OPPONENTS, PLAYER, rosterFor } from '../src/content';
 import type { EpisodeOption, MatchState, Player } from '../src/engine/types';
+import { initVoiceTrace } from '../src/engine/voices';
 
 const player: Player = {
   name: 'Тест', position: 'AM',
@@ -20,7 +21,7 @@ function state(over: Partial<MatchState> = {}): MatchState {
     minute: 20, scoreUs: 0, scoreThem: 0,
     stamina: 55, composureNow: 60, coachTrust: 55, fanHype: 45, momentum: 0,
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
-    flags: [], marks: {}, log: [], ...over,
+    flags: [], marks: {}, voices: initVoiceTrace(), log: [], ...over,
   };
 }
 

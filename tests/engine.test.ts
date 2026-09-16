@@ -5,6 +5,7 @@ import { resolveOption, tierFor } from '../src/engine/resolve';
 import { CATASTROPHE_BAND, THRESHOLDS } from '../src/engine/balance';
 import type { Rng } from '../src/engine/rng';
 import type { EpisodeOption, MatchState, Player } from '../src/engine/types';
+import { initVoiceTrace } from '../src/engine/voices';
 
 const player: Player = {
   name: 'Тест',
@@ -18,7 +19,7 @@ function state(over: Partial<MatchState> = {}): MatchState {
     minute: 20, scoreUs: 0, scoreThem: 0,
     stamina: 55, composureNow: 60, coachTrust: 55, fanHype: 45, momentum: 0,
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
-    flags: [], marks: {}, log: [],
+    flags: [], marks: {}, voices: initVoiceTrace(), log: [],
     ...over,
   };
 }

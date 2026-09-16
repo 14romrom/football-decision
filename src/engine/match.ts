@@ -5,6 +5,7 @@ import { BALANCE, MOMENTUM_BY_TIER, MOMENTUM_COST_RECOVERY } from './balance';
 import { attrMod } from './context';
 import { fillNames, fillNamesDeep, type Roster } from './names';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
+import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL } from './voices';
 import { pickFlavor, type FlavorRule } from './flavor';
 import type { Rng } from './rng';
 import type {
@@ -132,6 +133,7 @@ export function createMatch(
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
     flags: [],
     marks: {},
+    voices: initVoiceTrace(),
     log: [{
       minute: 0,
       kind: 'kickoff',
@@ -244,12 +246,19 @@ function syncTired(state: MatchState) {
   if (!tired) state.flags = state.flags.filter((f) => f !== 'tired');
 }
 
-function drainStamina(session: MatchSession, minutes: number) {
+/** Прогон времени: расход сил + дрейф холоднокровності от трибун. Трибуни не заводят
+ *  третий канал — они двигают composureNow, а он уже участвует и в пороговом моде
+ *  после 80-й, и в слышимости голоса «Холоднокровність» (voices.ts). */
+function tickTime(session: MatchSession, minutes: number) {
   const state = session.state;
   const heat = session.conditions.weather === 'heat' ? BALANCE.conditions.heatDrainScale : 1;
   const endurance = 1 - attrMod(session.player.attrs.stamina) * BALANCE.staminaAttrDrainStep;
   state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute * heat * endurance, 0, 100);
   syncTired(state);
+
+  const c = BALANCE.crowd;
+  const dir = state.fanHype >= c.hypeHighAbove ? 1 : state.fanHype < c.hypeLowBelow ? -1 : 0;
+  if (dir !== 0) state.composureNow = clamp(state.composureNow + dir * minutes * c.composureDriftPerMinute, 0, 100);
 }
 
 /** Прокручивает время до минуты `until`, наполняя ленту. Возвращает новые события. */
@@ -273,11 +282,11 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   const goalBeat = goal ? rng.int(1, beats) : -1;
   for (let i = 1; i <= beats; i++) {
     const minute = Math.round(from + (gap * i) / (beats + 1));
-    drainStamina(session, gap / (beats + 1));
+    tickTime(session, gap / (beats + 1));
     if (i === goalBeat) pushGoal(session, goal!, minute, rng);
     else state.log.push({ minute, kind: 'filler', text: fillerText(session, rng) });
   }
-  drainStamina(session, gap / (beats + 1));
+  tickTime(session, gap / (beats + 1));
   state.minute = until;
 
   return state.log.slice(before);
@@ -456,6 +465,7 @@ export function applyChoice(
     }
   }
 
+  if (option.voice) recordVoice(state.voices, option.voice.who);
   const conceded = applyEffects(session, outcome.apply, minute, rng, { episodeId: episode.id, optionId: option.id, past: option.past });
   if (crit) {
     state.momentum = clamp(state.momentum + BALANCE.crit.momentum, -3, 3);
@@ -549,6 +559,13 @@ export function finishMatch(session: MatchSession, rng: Rng): { events: Timeline
 // ——— пересказ ————————————————————————————————————————————————————
 // Главный проверяемый артефакт: если это читается как история, механика работает.
 
+function pluralSuffix(n: number): string {
+  // 1 раз, 2-4 рази, 5+ разів — украинская плюрализация для маленьких чисел (n <= ~9 за матч).
+  if (n % 10 === 1 && n % 100 !== 11) return '';
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'и';
+  return 'ів';
+}
+
 const TIER_WEIGHT: Record<Tier, number> = { clean: 3, badFail: 3, cost: 2, fail: 1 };
 
 function importance(e: TimelineEvent): number {
@@ -583,9 +600,11 @@ export function buildRecap(state: MatchState, coachRating: number, fanRating: nu
   });
 
   const verdict = state.scoreUs > state.scoreThem ? 'Перемога' : state.scoreUs === state.scoreThem ? 'Нічия' : 'Поразка';
+  const dominant = dominantVoice(state.voices);
+  const voiceNote = dominant ? ` Цього матчу найгучніше звучав ${VOICE_LABEL[dominant.who]} — ти слухав його ${dominant.count} раз${pluralSuffix(dominant.count)}.` : '';
   lines.push(
     verdict + ', ' + state.scoreUs + ':' + state.scoreThem
-    + '. Тренер поставив ' + coachRating.toFixed(1) + ', трибуни — ' + fanRating.toFixed(1) + '.',
+    + '. Тренер поставив ' + coachRating.toFixed(1) + ', трибуни — ' + fanRating.toFixed(1) + '.' + voiceNote,
   );
   return lines;
 }

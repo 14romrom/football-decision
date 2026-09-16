@@ -14,9 +14,11 @@ function hasGoalConflict(e: Episode): boolean {
 }
 
 describe('форма контента', () => {
-  it('в наборе ровно 10 эпизодов с уникальными id', () => {
-    expect(EPISODES.length).toBe(10);
-    expect(new Set(EPISODES.map((e) => e.id)).size).toBe(10);
+  it('в наборе не меньше 20 эпизодов с уникальными id', () => {
+    // Пул должен быть заметно больше десяти слотов: иначе второй матч —
+    // те же ситуации в другом порядке, и вопрос «хочется ли ещё» измеряет не то.
+    expect(EPISODES.length).toBeGreaterThanOrEqual(20);
+    expect(new Set(EPISODES.map((e) => e.id)).size).toBe(EPISODES.length);
   });
 
   it('у каждого эпизода 3–4 опции и все четыре исхода в каждой', () => {
@@ -58,9 +60,9 @@ describe('форма контента', () => {
 });
 
 describe('конфликт целей (п. 6 ТЗ)', () => {
-  it('минимум 4 эпизода из 10 содержат командный и карьерный варианты одновременно', () => {
+  it('минимум 40% эпизодов содержат командный и карьерный варианты одновременно', () => {
     const conflicted = EPISODES.filter(hasGoalConflict).map((e) => e.id);
-    expect(conflicted.length, `эпизоды с конфликтом: ${conflicted.join(', ')}`).toBeGreaterThanOrEqual(4);
+    expect(conflicted.length, `эпизоды с конфликтом: ${conflicted.join(', ')}`).toBeGreaterThanOrEqual(Math.ceil(EPISODES.length * 0.4));
   });
 
   it('есть эпизод, где командный вариант при этом надёжнее карьерного', () => {

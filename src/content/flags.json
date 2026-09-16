@@ -1,0 +1,64 @@
+[
+  {
+    "id": "humiliated_defender",
+    "label": "їхній захисник злий — іде в кожен стик",
+    "value": -1,
+    "attributes": [
+      "dribbling",
+      "first_touch"
+    ]
+  },
+  {
+    "id": "humiliated_defender",
+    "label": "їхній захисник кидається — зона за ним відкрита",
+    "value": 1,
+    "attributes": [
+      "finishing",
+      "passing",
+      "vision"
+    ],
+    "phases": [
+      "attack",
+      "transition"
+    ]
+  },
+  {
+    "id": "partner_trusts",
+    "label": "партнер шукає тебе",
+    "value": 1,
+    "attributes": [
+      "passing"
+    ]
+  },
+  {
+    "id": "partner_annoyed",
+    "label": "партнер ображений",
+    "value": -1,
+    "attributes": [
+      "passing",
+      "vision"
+    ]
+  },
+  {
+    "id": "coach_flank",
+    "label": "гра йде через твій фланг",
+    "value": 1,
+    "phases": [
+      "attack",
+      "transition"
+    ],
+    "attributes": [
+      "pace",
+      "dribbling",
+      "passing"
+    ]
+  },
+  {
+    "id": "keeper_owes",
+    "label": "{keeper} тобі винен",
+    "value": 1,
+    "phases": [
+      "defense"
+    ]
+  }
+]

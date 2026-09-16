@@ -20,7 +20,7 @@ function state(over: Partial<MatchState> = {}): MatchState {
     minute: 20, scoreUs: 0, scoreThem: 0,
     stamina: 55, composureNow: 60, coachTrust: 55, fanHype: 45, momentum: 0,
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
-    flags: [], log: [], ...over,
+    flags: [], marks: {}, log: [], ...over,
   };
 }
 
@@ -136,6 +136,6 @@ describe('условия матча: ресурсы и реакции', () => {
     const text = JSON.stringify(s.episodes);
     expect(text).toContain('Ольвар');
     expect(text).not.toContain('Сан-Дореа');
-    expect(text).not.toMatch(/\{[a-z.]+\}/);
+    expect(text).not.toMatch(/\{(?!trigger\.)[a-z.]+\}/);
   });
 });

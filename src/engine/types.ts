@@ -55,6 +55,24 @@ export type MatchStats = {
   losses: number; duelsWon: number; fouls: number;
 };
 
+/** След решения: какой поступок поставил флаг и когда. Реактивные эпизоды
+ *  подставляют это в текст: «На {trigger.minute}-й ти {trigger.past}…». */
+export type Mark = { minute: number; episodeId: string; optionId: string; past: string };
+
+/** Голос, который говорит с варианта. Его и Команда — из целей варианта,
+ *  остальные — от атрибутов; громче говорит тот, кто сильнее (см. voiceAudible). */
+export type VoiceKey = 'ego' | 'team' | 'composure' | 'vision' | 'instinct' | 'body';
+export type Voice = { who: VoiceKey; line: string };
+
+/** Флаг-последствие: строка модификатора, пока флаг стоит. Данные — content/flags.json. */
+export type FlagRule = {
+  id: string;
+  label: string;
+  value: number;
+  attributes?: Attribute[];
+  phases?: Episode['phase'][];
+};
+
 export type MatchState = {
   minute: number;
   scoreUs: number;
@@ -66,6 +84,7 @@ export type MatchState = {
   momentum: number;       // -3..+3, инерция последних эпизодов
   stats: MatchStats;
   flags: string[];        // 'tired', 'booked', 'hero_moment' и т.п.
+  marks: Record<string, Mark>;   // flag → решение, которое его поставило
   log: TimelineEvent[];
 };
 
@@ -109,13 +128,17 @@ export type EpisodeOption = {
   effect: Effect;
   staminaCost: number;               // 2..12
   goals: { team: 0 | 1 | 2 | 3; personal: 0 | 1 | 2 | 3 };
-  outcomes: Record<Tier, Outcome>;
+  /** Кто и что говорит с этого варианта. Слышно, только если голос сильный. */
+  voice?: Voice;
+  /** Пятый исход — критический успех (20 на кубиках). Без него берётся clean с системным бонусом. */
+  outcomes: Record<Tier, Outcome> & { crit?: Outcome };
 };
 
 export type Episode = {
   id: string;
   phase: 'attack' | 'defense' | 'transition' | 'setpiece';
   weight: number;
+  /** flags — реактивный эпизод: не планируется заранее, всплывает, когда флаги стоят. */
   requires?: { minMinute?: number; maxMinute?: number; notFlags?: string[]; flags?: string[] };
   setup: string;
   options: EpisodeOption[];

@@ -1,4 +1,5 @@
-import { ATTRIBUTE_LABEL, type Episode, type EpisodeOption, type MatchState, type Player } from '../engine/types';
+import { ATTRIBUTE_LABEL, type Episode, type EpisodeOption, type FlagRule, type MatchState, type Player } from '../engine/types';
+import { VOICE_LABEL, voiceAudible } from '../engine/voices';
 import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
 import { optionCost } from '../engine/match';
@@ -10,6 +11,7 @@ type Props = {
   state: MatchState;
   player: Player;
   conditions: MatchConditions;
+  flagRules: FlagRule[];
   onChoose: (option: EpisodeOption) => void;
 };
 
@@ -26,7 +28,7 @@ function CostBar({ cost }: { cost: number }) {
   );
 }
 
-export function EpisodeCard({ episode, minute, state, player, conditions, onChoose }: Props) {
+export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, onChoose }: Props) {
   return (
     <div className="card episode">
       <div className="card-minute">{minute}′</div>
@@ -35,11 +37,16 @@ export function EpisodeCard({ episode, minute, state, player, conditions, onChoo
         {episode.options.map((o) => {
           // Показываем ярлыки уже со сдвигами от контекста: если ноги встали,
           // игрок должен видеть, что надёжный вариант перестал быть надёжным.
-          const ctx = computeContext(state, player, o, episode.phase, conditions);
+          const ctx = computeContext(state, player, o, episode.phase, conditions, flagRules);
+          // Голос слышно, только когда он сильный: так объясняются сильные стороны и контекст.
+          const voice = o.voice && voiceAudible(o.voice.who, o, state, player) ? o.voice : null;
           const shifted = ctx.position !== o.basePosition;
           return (
             <button key={o.id} className="option" onClick={() => onChoose(o)}>
               <span className="option-label">{o.label}</span>
+              {voice && (
+                <span className={`voice voice-${voice.who}`}><b>{VOICE_LABEL[voice.who]}:</b> «{voice.line}»</span>
+              )}
               <span className="tags">
                 {/* Чем ты это делаешь и насколько хорошо: скилл виден до броска, как на листе персонажа. */}
                 <span className={`tag attr ${ctx.attrMod >= 3 ? 'strong' : ctx.attrMod === 0 ? 'weak' : ''}`}>

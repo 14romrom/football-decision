@@ -20,7 +20,9 @@ const PLACEHOLDER = /\{([a-z]+(?:\.[a-z]+){0,2})\}/g;
  *  `{them.striker.gen}` — игрок соперника; `{us}` / `{them.gen}` — названия команд.
  *  Неизвестный ключ — ошибка, а не пустая строка: опечатка в контенте должна валить тест. */
 export function fillNames(text: string, roster: Roster): string {
-  return text.replace(PLACEHOLDER, (_, path: string) => {
+  return text.replace(PLACEHOLDER, (whole: string, path: string) => {
+    // {trigger.*} — след решения, подставляется реактивным эпизодом в момент показа.
+    if (path.startsWith('trigger.')) return whole;
     const all = path.split('.');
     const side = all[0] === 'us' || all[0] === 'them' ? all[0] : null;
     const team = side ? roster[side] : roster.us;

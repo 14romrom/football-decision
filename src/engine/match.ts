@@ -8,7 +8,7 @@ import { hypeScale, neutralConditions, startResources, type MatchConditions } fr
 import { pickFlavor, type FlavorRule } from './flavor';
 import type { Rng } from './rng';
 import type {
-  ApplyEffect, Episode, EpisodeOption, MatchState, Player, Resolution, TimelineEvent, Tier,
+  ApplyEffect, Episode, EpisodeOption, FlagRule, MatchState, Player, Resolution, TimelineEvent, Tier,
 } from './types';
 
 export type MatchSession = {
@@ -19,6 +19,10 @@ export type MatchSession = {
   conditions: MatchConditions;
   /** Эпизоды с подставленными именами этого соперника. */
   episodes: Episode[];
+  /** Флаги-последствия: какие строки модификаторов дают. */
+  flagRules: FlagRule[];
+  /** Сколько реактивных эпизодов уже всплыло. */
+  reactiveUsed: number;
   state: MatchState;
   schedule: number[];
   /** Эпизод на каждый слот, подобранный заранее. См. planEpisodes. */
@@ -34,6 +38,8 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 function addTrust(state: MatchState, delta: number) {
   state.coachTrust = clamp(state.coachTrust + delta * BALANCE.systemic.trustDeltaScale, 0, 100);
 }
+
+const isReactive = (e: Episode) => (e.requires?.flags?.length ?? 0) > 0;
 
 /** Подходит ли эпизод по времени. Флаги динамические и здесь не учитываются. */
 function fitsMinute(e: Episode, minute: number): boolean {
@@ -61,10 +67,11 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recentI
     if (episodes.some((e) => e.phase === 'defense' && fitsMinute(e, schedule[i]))) defenseSlots.add(i);
   }
 
+  // Реактивные эпизоды заранее не планируются — они всплывают по флагам (см. pickEpisode).
   const slots = schedule
     .map((minute, index) => ({
       index,
-      candidates: episodes.filter((e) => fitsMinute(e, minute) && (!defenseSlots.has(index) || e.phase === 'defense')),
+      candidates: episodes.filter((e) => !isReactive(e) && fitsMinute(e, minute) && (!defenseSlots.has(index) || e.phase === 'defense')),
     }))
     .sort((a, b) => a.candidates.length - b.candidates.length);
 
@@ -100,8 +107,10 @@ export function createMatch(
   matchId: string, seed: number, player: Player, rng: Rng, rawEpisodes: Episode[], roster: Roster,
   conditions: MatchConditions = neutralConditions(),
   recentEpisodeIds: string[] = [],
+  flagRules: FlagRule[] = [],
 ): MatchSession {
   const episodes = fillNamesDeep(rawEpisodes, roster);
+  const rules = fillNamesDeep(flagRules, roster);
   const start = startResources(conditions);
   const last = BALANCE.match.episodeMinutes.length - 1;
   const schedule = BALANCE.match.episodeMinutes.map((m, i) => {
@@ -122,6 +131,7 @@ export function createMatch(
     momentum: clamp(start.momentum, -3, 3),
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
     flags: [],
+    marks: {},
     log: [{
       minute: 0,
       kind: 'kickoff',
@@ -131,7 +141,7 @@ export function createMatch(
   };
 
   return {
-    matchId, seed, player, roster, conditions, episodes, state, schedule,
+    matchId, seed, player, roster, conditions, episodes, flagRules: rules, reactiveUsed: 0, state, schedule,
     plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
     usedEpisodeIds: [], nextIndex: 0, finished: false,
   };
@@ -275,7 +285,46 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
 
 // ——— выбор эпизода ————————————————————————————————————————————————
 
-export function pickEpisode(session: MatchSession): Episode | null {
+/** Подстановка следа решения в реактивный эпизод: {trigger.past}, {trigger.minute}. */
+function fillTrigger<T>(value: T, mark: { minute: number; past: string }): T {
+  if (typeof value === 'string') {
+    return value.replace(/\{trigger\.past\}/g, mark.past).replace(/\{trigger\.minute\}/g, String(mark.minute)) as T;
+  }
+  if (Array.isArray(value)) return value.map((v) => fillTrigger(v, mark)) as T;
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) out[k] = fillTrigger(v, mark);
+    return out as T;
+  }
+  return value;
+}
+
+/** Реактивный эпизод для текущего слота, если флаги стоят. Всплывает вместо запланированного:
+ *  последствие решения важнее ровной раскладки. */
+function pickReactive(session: MatchSession, rng: Rng): Episode | null {
+  const m = BALANCE.match;
+  const i = session.nextIndex;
+  if (i < m.reactiveFromSlot || session.reactiveUsed >= m.maxReactive) return null;
+  const state = session.state;
+  const minute = session.schedule[i];
+  const pool = session.episodes.filter((e) =>
+    isReactive(e) && fitsMinute(e, minute) && !session.usedEpisodeIds.includes(e.id)
+    && e.requires!.flags!.every((f) => state.flags.includes(f))
+    && !(e.requires?.notFlags?.some((f) => state.flags.includes(f)) ?? false));
+  if (pool.length === 0) return null;
+  const chosen = rng.weighted(pool, (e) => e.weight);
+  // Слот квоты обороны реактивный эпизод занимает только оборонительным.
+  const planned = session.episodes.find((e) => e.id === session.plan[i]);
+  if (planned?.phase === 'defense' && chosen.phase !== 'defense') return null;
+  const mark = state.marks[chosen.requires!.flags![0]] ?? { minute: state.minute, past: 'зробив свій хід' };
+  session.reactiveUsed += 1;
+  return fillTrigger(chosen, mark);
+}
+
+export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
+  const reactive = pickReactive(session, rng);
+  if (reactive) return reactive;
+
   const episodes = session.episodes;
   const i = session.nextIndex;
   const byId = (id: string) => episodes.find((e) => e.id === id) ?? null;
@@ -305,7 +354,7 @@ export function nextEpisode(
   if (session.nextIndex >= session.schedule.length) return null;
   const minute = session.schedule[session.nextIndex];
   const events = advanceTo(session, minute, rng);
-  const episode = pickEpisode(session);
+  const episode = pickEpisode(session, rng);
   if (!episode) return null;
   return { episode, minute, events };
 }
@@ -314,7 +363,10 @@ export function nextEpisode(
 
 /** Возвращает true, только если гол соперника пришёл из контратаки после этого решения:
  *  прямой пропущенный уже описан текстом исхода, дублировать его в пересказе незачем. */
-function applyEffects(session: MatchSession, apply: ApplyEffect | undefined, minute: number, rng: Rng): boolean {
+function applyEffects(
+  session: MatchSession, apply: ApplyEffect | undefined, minute: number, rng: Rng,
+  mark?: { episodeId: string; optionId: string; past: string },
+): boolean {
   if (!apply) return false;
   const state = session.state;
   let fromCounter = false;
@@ -342,7 +394,12 @@ function applyEffects(session: MatchSession, apply: ApplyEffect | undefined, min
     fromCounter = true;
   }
 
-  if (apply.addFlags) for (const f of apply.addFlags) if (!state.flags.includes(f)) state.flags.push(f);
+  if (apply.addFlags) {
+    for (const f of apply.addFlags) {
+      if (!state.flags.includes(f)) state.flags.push(f);
+      if (mark) state.marks[f] = { minute, ...mark };   // след решения — для реактивных эпизодов
+    }
+  }
   if (apply.removeFlags) state.flags = state.flags.filter((f) => !apply.removeFlags!.includes(f));
 
   return fromCounter;
@@ -365,7 +422,9 @@ export function applyChoice(
   const state = session.state;
   const minute = session.schedule[session.nextIndex];
   const before = state.log.length;
-  const outcome = option.outcomes[res.tier];
+  // Критический успех: свой текст, если он написан, иначе clean с системным бонусом.
+  const crit = res.critical === 'success';
+  const outcome = crit && option.outcomes.crit ? option.outcomes.crit : option.outcomes[res.tier];
 
   state.minute = minute;
   state.stamina = clamp(state.stamina - optionCost(option), 0, 100);
@@ -397,7 +456,12 @@ export function applyChoice(
     }
   }
 
-  const conceded = applyEffects(session, outcome.apply, minute, rng);   // true только для контратаки
+  const conceded = applyEffects(session, outcome.apply, minute, rng, { episodeId: episode.id, optionId: option.id, past: option.past });
+  if (crit) {
+    state.momentum = clamp(state.momentum + BALANCE.crit.momentum, -3, 3);
+    addHype(session, BALANCE.crit.fanHype);
+    state.composureNow = clamp(state.composureNow + BALANCE.crit.composure, 0, 100);
+  }
   syncTired(state);
 
   state.log.push({

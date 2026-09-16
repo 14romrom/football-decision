@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EPISODES_RAW, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
+import { EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
 import { generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, recentEpisodes, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
@@ -78,7 +78,7 @@ function Game() {
     const conditions = generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)));
     const session = createMatch(
       `${Date.now().toString(36)}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
-      recentEpisodes(BALANCE.match.recentMatches),
+      recentEpisodes(BALANCE.match.recentMatches), FLAG_RULES,
     );
     rngRef.current = rng;
     sessionRef.current = session;
@@ -121,7 +121,7 @@ function Game() {
     if (stage.k !== 'episode') return;
     const session = sessionRef.current!;
     const rng = rngRef.current!;
-    const res = resolveOption(session.state, session.player, option, stage.episode.phase, rng, session.conditions);
+    const res = resolveOption(session.state, session.player, option, stage.episode.phase, rng, session.conditions, session.flagRules);
 
     logDecision({
       matchId: session.matchId,
@@ -213,6 +213,7 @@ function Game() {
             state={session.state}
             player={session.player}
             conditions={session.conditions}
+            flagRules={session.flagRules}
             onChoose={choose}
           />
         )}

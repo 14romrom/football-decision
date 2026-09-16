@@ -2,10 +2,11 @@ import episodesJson from './episodes.json';
 import playerJson from './player.json';
 import rosterJson from './roster.json';
 import flavorJson from './flavor.json';
+import flagsJson from './flags.json';
 import { fillNamesDeep, type Roster, type TeamRoster } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
-import type { Episode, Player } from '../engine/types';
+import type { Episode, FlagRule, Player } from '../engine/types';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
@@ -26,5 +27,7 @@ export const EPISODES_RAW = episodesJson as unknown as Episode[];
 export const EPISODES = fillNamesDeep(EPISODES_RAW, ROSTER);
 export const PLAYER = playerJson as unknown as Player;
 export const FLAVOR = flavorJson as FlavorRule[];
+/** Флаги-последствия; имена в подписях подставляет createMatch под ростер матча. */
+export const FLAG_RULES = flagsJson as FlagRule[];
 
 

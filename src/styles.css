@@ -217,3 +217,13 @@ button.primary { background: var(--accent); color: #10261a; border-color: var(--
 .card-summary { margin: 1.4rem 0; line-height: 1.5; }
 
 .crit-note { margin: -0.3rem 0 0.6rem; font-size: 0.85em; opacity: 0.6; }
+
+/* голос на варианте */
+.voice { display: block; font-size: 0.88em; font-style: italic; opacity: 0.75; margin: 0.15rem 0 0.35rem; line-height: 1.35; }
+.voice b { font-style: normal; font-weight: 600; opacity: 0.9; }
+.voice-ego b { color: #f0a35e; }
+.voice-team b { color: #6ee7a0; }
+.voice-composure b { color: #8fb8ff; }
+.voice-vision b { color: #c9a5ff; }
+.voice-instinct b { color: #ffd166; }
+.voice-body b { color: #ff8a8a; }

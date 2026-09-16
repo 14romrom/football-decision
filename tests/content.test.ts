@@ -124,6 +124,7 @@ describe('плейсхолдеры имён', () => {
   it('каждый плейсхолдер разрешается в имя', () => {
     // fillNamesDeep бросает на неизвестном ключе при импорте контента;
     // здесь проверяем, что после подстановки фигурных скобок не осталось.
-    for (const e of EPISODES) expect(JSON.stringify(e), e.id).not.toMatch(/\{[a-z.]+\}/);
+    // {trigger.*} — плейсхолдер решения, его заполняет реактивный эпизод в момент показа
+    for (const e of EPISODES) expect(JSON.stringify(e), e.id).not.toMatch(/\{(?!trigger\.)[a-z.]+\}/);
   });
 });

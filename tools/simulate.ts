@@ -5,7 +5,7 @@ import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
 import { applyChoice, createMatch, finishMatch, nextEpisode, optionCost } from '../src/engine/match';
 import type { MatchSummary } from '../src/engine/match';
-import { EPISODES_RAW, OPPONENTS, PLAYER, rosterFor } from '../src/content';
+import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, rosterFor } from '../src/content';
 import { generateConditions, neutralConditions, type MatchConditions } from '../src/engine/conditions';
 import { POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeOption, Tier } from '../src/engine/types';
@@ -41,7 +41,7 @@ export function runMatch(seed: number, policy: PolicyName, mode: ConditionsMode 
     ? generateConditions(rng, OPPONENTS, { confidence: rng.int(-2, 2), fatigue: rng.int(0, 3) })
     : neutralConditions();
   const session = createMatch(
-    `sim-${policy}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
+    `sim-${policy}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions, [], FLAG_RULES,
   );
   const tiers: Tier[] = [];
   let emptyAtMinute: number | null = null;
@@ -50,7 +50,7 @@ export function runMatch(seed: number, policy: PolicyName, mode: ConditionsMode 
     const next = nextEpisode(session, rng);
     if (!next) break;
     const option = POLICIES[policy](next.episode.options, (n) => rng.int(0, n - 1));
-    const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions);
+    const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
     applyChoice(session, next.episode, option, res, rng);
     tiers.push(res.tier);
     if (emptyAtMinute === null && session.state.stamina <= 0) emptyAtMinute = next.minute;

@@ -3,7 +3,7 @@
 
 import { CATASTROPHE_BAND, CRIT_SUCCESS, THRESHOLDS } from './balance';
 import { computeContext } from './context';
-import type { Episode, EpisodeOption, MatchState, Player, Position, Resolution, Tier } from './types';
+import type { Episode, EpisodeOption, FlagRule, MatchState, Player, Position, Resolution, Tier } from './types';
 import type { Rng } from './rng';
 import { neutralConditions, type MatchConditions } from './conditions';
 
@@ -24,8 +24,9 @@ export function resolveOption(
   phase: Episode['phase'],
   rng: Rng,
   cond: MatchConditions = neutralConditions(),
+  flagRules: FlagRule[] = [],
 ): Resolution {
-  const ctx = computeContext(state, player, option, phase, cond);
+  const ctx = computeContext(state, player, option, phase, cond, flagRules);
   const rawRoll = rng.roll();
   const totalScore = rawRoll + ctx.flat;
   const tier = tierFor(ctx.position, rawRoll, totalScore);

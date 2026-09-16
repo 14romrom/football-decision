@@ -4,7 +4,7 @@
 
 import { ATTR_MOD, BALANCE, POSITION_ORDER } from './balance';
 import { neutralConditions, signatureAttrs, type MatchConditions } from './conditions';
-import { ATTRIBUTE_LABEL, type Effect, type EpisodeOption, type Episode, type MatchState, type ModLine, type Player, type Position } from './types';
+import { ATTRIBUTE_LABEL, type Effect, type EpisodeOption, type Episode, type FlagRule, type MatchState, type ModLine, type Player, type Position } from './types';
 
 export function attrMod(attr: number): number {
   const { base, step, max } = ATTR_MOD;
@@ -54,6 +54,7 @@ export function computeContext(
   option: EpisodeOption,
   phase: Episode['phase'],
   cond: MatchConditions = neutralConditions(),
+  flagRules: FlagRule[] = [],
 ): ContextResult {
   const mods: ModLine[] = [];
   // Строка атрибута показывается всегда, со значением: игрок должен видеть, что его скилл
@@ -87,6 +88,15 @@ export function computeContext(
 
   if (state.flags.includes('injured')) {
     mods.push({ label: 'пошкодження', value: c.injured });
+  }
+
+  // Последствия прошлых решений: флаг стоит — строка есть. Это и есть
+  // «я сам підготував цей момент» в цифрах.
+  for (const rule of flagRules) {
+    if (!state.flags.includes(rule.id)) continue;
+    if (rule.attributes && !rule.attributes.includes(option.attribute)) continue;
+    if (rule.phases && !rule.phases.includes(phase)) continue;
+    mods.push({ label: rule.label, value: rule.value });
   }
 
   // Условия матча. Каждая строка — то, что игрок прочитал на брифинге.

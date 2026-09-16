@@ -62,7 +62,16 @@ export type MatchStats = {
 
 /** След решения: какой поступок поставил флаг и когда. Реактивные эпизоды
  *  подставляют это в текст: «На {trigger.minute}-й ти {trigger.past}…». */
-export type Mark = { minute: number; episodeId: string; optionId: string; past: string };
+export type Mark = {
+  minute: number; episodeId: string; optionId: string; past: string;
+  /** Флаг принесён из прошлого матча (см. career.ts:carriedFlags) — текст говорит
+   *  «ще минулого матчу», а не «на 34-й». */
+  previousMatch?: boolean;
+};
+
+/** Память эпизодов на дистанции сезона: id → сколько матчей назад его играли (1 — прошлый).
+ *  Вес в планировщике растёт с возрастом (см. balance.ts:memory), а не сбрасывается через два матча. */
+export type EpisodeMemory = Record<string, number>;
 
 /** Голос, который говорит с варианта. Его и Команда — из целей варианта,
  *  остальные — от атрибутов; громче говорит тот, кто сильнее (см. voiceAudible). */
@@ -153,13 +162,43 @@ export type EpisodeOption = {
   outcomes: Record<Tier, Outcome> & { crit?: Outcome };
 };
 
+/** Условие «по ситуации» — общее для реплик (flavor.json) и вариантов сетапа (Episode.setups).
+ *  Проверяется в момент показа, см. flavor.ts:matchesSituation. */
+export type SituationWhen = {
+  tier?: Tier;
+  score?: 'leading' | 'trailing' | 'level';
+  minMinute?: number;
+  maxMinute?: number;
+  tired?: boolean;
+  booked?: boolean;
+  lowTrust?: boolean;
+  momentumMin?: number;
+  momentumMax?: number;
+  venue?: 'home' | 'away' | 'neutral';
+  weather?: 'clear' | 'rain' | 'heat' | 'wind';
+  strength?: 'strong' | 'even' | 'weak';
+  flags?: string[];
+};
+
+/** Вариант вводного текста под ситуацию. Опции и исходы у эпизода одни, а читается
+ *  он по-разному: та же механика на 88-й при 0:1 и на 7-й при 0:0 — разные сцены. */
+export type SetupVariant = { when: SituationWhen; text: string };
+
 export type Episode = {
   id: string;
   phase: 'attack' | 'defense' | 'transition' | 'setpiece';
   weight: number;
-  /** flags — реактивный эпизод: не планируется заранее, всплывает, когда флаги стоят. */
-  requires?: { minMinute?: number; maxMinute?: number; notFlags?: string[]; flags?: string[] };
+  /** flags — реактивный эпизод: не планируется заранее, всплывает, когда флаги стоят.
+   *  score — эпизод имеет смысл только при таком счёте (затяжка времени — при преимуществе);
+   *  проверяется в момент показа, как notFlags, планировщик счёта не знает. */
+  requires?: {
+    minMinute?: number; maxMinute?: number; notFlags?: string[]; flags?: string[];
+    score?: 'leading' | 'trailing' | 'level';
+  };
   setup: string;
+  /** Вариации сетапа по ситуации; побеждает самое конкретное подходящее правило,
+   *  иначе — `setup`. Имена подставляются так же, как в setup. */
+  setups?: SetupVariant[];
   options: EpisodeOption[];
 };
 

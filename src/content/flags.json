@@ -60,5 +60,45 @@
     "phases": [
       "defense"
     ]
+  },
+  {
+    "id": "pattern_wide",
+    "label": "захисник читає твої проходи по бровці",
+    "value": -1,
+    "attributes": [
+      "pace",
+      "dribbling"
+    ],
+    "phases": [
+      "attack"
+    ]
+  },
+  {
+    "id": "pattern_wide",
+    "label": "він чекає на бровку — центр відкритий",
+    "value": 1,
+    "attributes": [
+      "vision",
+      "passing"
+    ],
+    "phases": [
+      "attack"
+    ]
+  },
+  {
+    "id": "ref_annoyed",
+    "label": "суддя тебе запам’ятав",
+    "value": -1,
+    "attributes": [
+      "composure"
+    ]
+  },
+  {
+    "id": "ref_sympathetic",
+    "label": "суддя на твоєму боці",
+    "value": 1,
+    "attributes": [
+      "composure"
+    ]
   }
 ]

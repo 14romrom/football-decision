@@ -4,7 +4,7 @@
 
 import { BALANCE } from './balance';
 import type { Rng } from './rng';
-import type { Attribute, MatchState, Player, VoiceKey } from './types';
+import type { Attribute, Mark, MatchState, Player, VoiceKey } from './types';
 import type { MatchSummary } from './match';
 
 export type Career = {
@@ -26,7 +26,15 @@ export type Career = {
   matchesPlayed: number;
   /** Один бросок тренировки на цикл «между матчами»; сбрасывается при старте нового матча. */
   trainedThisCycle: boolean;
+  /** Флаги-последствия, дожившие до конца матча и уходящие в следующий: партнёр помнит,
+   *  что ты ему отдал (или не отдал), тренер — что фланг твой. Реактивный эпизод
+   *  всплывёт «ще минулого матчу». Потребляются при старте (consumeStartPenalty). */
+  carriedFlags?: { flag: string; mark: Mark }[];
 };
+
+/** Что переживает финальный свисток. Обида/долг партнёра и доверенный фланг — про людей,
+ *  они помнят; злой защитник и жёлтая — про этот матч и этого соперника, их не несём. */
+export const CARRIED_FLAGS = ['partner_trusts', 'partner_annoyed', 'coach_flank'];
 
 export function defaultCareer(): Career {
   return {
@@ -92,7 +100,10 @@ export function nextMatchCoachTrust(endingTrust: number): number {
   return Math.round(endingTrust * (1 - reversion) + BALANCE.coachTrustStart * reversion);
 }
 
-export type StartPenalty = { staminaPenalty: number; coachTrustPenalty: number; note?: string };
+export type StartPenalty = {
+  staminaPenalty: number; coachTrustPenalty: number; note?: string;
+  flags: { flag: string; mark: Mark }[];
+};
 
 /** Штрафы старта следующего матча от травмы/картки прошлого — и одновременно их
  *  потребление (счётчики уменьшаются). Вызывается один раз при старте матча. */
@@ -118,7 +129,9 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
     next.injuredMatches = career.injuredMatches - 1;
   }
 
-  return { career: next, penalty: { staminaPenalty, coachTrustPenalty, note } };
+  const flags = career.carriedFlags ?? [];
+  next.carriedFlags = [];
+  return { career: next, penalty: { staminaPenalty, coachTrustPenalty, note, flags } };
 }
 
 /** Обновление карьеры по итогам матча: опыт, уровень (без авто-траты очка — это отдельный
@@ -145,6 +158,9 @@ export function applyMatchToCareer(
   if (state.flags.includes('sent_off')) next.pendingSentOff = true;
   else if (state.flags.includes('booked')) next.careerYellows = career.careerYellows + 1;
   if (state.flags.includes('injured')) next.injuredMatches = Math.max(career.injuredMatches, 1);
+  next.carriedFlags = CARRIED_FLAGS
+    .filter((f) => state.flags.includes(f) && state.marks[f])
+    .map((f) => ({ flag: f, mark: state.marks[f] }));
   return next;
 }
 

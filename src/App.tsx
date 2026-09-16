@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
 import { generateConditions, toneFromHistory } from './engine/conditions';
-import { readHistory, recentEpisodes, recordResult } from './telemetry/history';
+import { readHistory, episodeMemory, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
 import { BriefingScreen } from './ui/BriefingScreen';
 import { PlayerCard } from './ui/PlayerCard';
@@ -109,8 +109,11 @@ function Game() {
 
     const session = createMatch(
       `${Date.now().toString(36)}-${seed}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
-      recentEpisodes(BALANCE.match.recentMatches), FLAG_RULES,
-      { coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty },
+      episodeMemory(BALANCE.match.memory.horizon), FLAG_RULES,
+      {
+        coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,
+        coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
+      },
     );
     rngRef.current = rng;
     sessionRef.current = session;

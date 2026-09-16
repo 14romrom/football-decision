@@ -98,6 +98,77 @@ describe('связность и покрытие расписания', () => {
   });
 });
 
+describe('вариации сетапа и флаги (сезон)', () => {
+  const WHEN_KEYS = ['tier', 'score', 'minMinute', 'maxMinute', 'tired', 'booked', 'lowTrust', 'momentumMin', 'momentumMax', 'venue', 'weather', 'strength', 'flags'];
+
+  it('setups: непустое условие из известных ключей, текст отличается от базового и от соседей', () => {
+    for (const e of EPISODES) {
+      for (const v of e.setups ?? []) {
+        const keys = Object.keys(v.when);
+        expect(keys.length, `${e.id}: пустое when`).toBeGreaterThan(0);
+        for (const k of keys) expect(WHEN_KEYS, `${e.id}: when.${k}`).toContain(k);
+        expect(v.text.length, e.id).toBeGreaterThan(20);
+        expect(v.text, e.id).not.toBe(e.setup);
+        expect(v.text, e.id).not.toMatch(/%|шанс|вероятн|ймовірн|імовірн|відсот/i);
+      }
+      const texts = (e.setups ?? []).map((v) => v.text);
+      expect(new Set(texts).size, e.id).toBe(texts.length);
+    }
+  });
+
+  it('вариаций сетапа хватает, чтобы сезон читался по-разному: не меньше половины плановых эпизодов', () => {
+    const planned = EPISODES.filter((e) => !e.requires?.flags);
+    const varied = planned.filter((e) => (e.setups?.length ?? 0) > 0);
+    expect(varied.length).toBeGreaterThanOrEqual(Math.ceil(planned.length / 2));
+  });
+
+  it('requires.score — только leading/trailing/level, и такие эпизоды не занимают ранние слоты', () => {
+    for (const e of EPISODES) {
+      if (!e.requires?.score) continue;
+      expect(['leading', 'trailing', 'level'], e.id).toContain(e.requires.score);
+      // до второго тайма счёт почти всегда 0:0 — эпизод только по счёту зависал бы в плане
+      expect(e.requires.minMinute ?? 0, e.id).toBeGreaterThanOrEqual(45);
+    }
+  });
+
+  it('каждый флаг из контента известен: есть правило в flags.json или это системный флаг', async () => {
+    const { FLAG_RULES } = await import('../src/content');
+    const SYSTEM = ['booked', 'injured', 'sent_off', 'tired'];
+    const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
+    const used = new Set<string>();
+    for (const e of EPISODES) {
+      for (const f of e.requires?.flags ?? []) used.add(f);
+      for (const f of e.requires?.notFlags ?? []) used.add(f);
+      for (const v of e.setups ?? []) for (const f of v.when.flags ?? []) used.add(f);
+      for (const o of e.options) for (const out of Object.values(o.outcomes)) {
+        for (const f of out?.apply?.addFlags ?? []) used.add(f);
+        for (const f of out?.apply?.removeFlags ?? []) used.add(f);
+      }
+    }
+    for (const f of used) expect(known.has(f), `флаг ${f}`).toBe(true);
+    // и наоборот: правило без эпизода, который ставит флаг, — мёртвое
+    const set = new Set(EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))));
+    for (const r of FLAG_RULES) expect(set.has(r.id), `правило ${r.id} никто не ставит`).toBe(true);
+  });
+
+  it('у каждого реактивного эпизода есть флаг-триггер, который кто-то ставит, и каждый вариант умеет его снять', () => {
+    // Снимать на каждом исходе не обязательно: провал может оставить обиду партнёра
+    // висеть дальше — это продолжение цепочки, а не утечка. Но вариант без единого
+    // снимающего исхода означал бы, что цепочку закрыть нельзя. Жёлтая — системный флаг,
+    // её реактивный эпизод не снимает по определению.
+    const setters = new Set(EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))));
+    for (const e of EPISODES.filter((x) => x.requires?.flags?.length)) {
+      const flag = e.requires!.flags![0];
+      expect(setters.has(flag), `${e.id}: ${flag}`).toBe(true);
+      if (flag === 'booked') continue;
+      for (const o of e.options) {
+        const clears = TIERS.some((t) => (o.outcomes[t].apply?.removeFlags ?? []).includes(flag));
+        expect(clears, `${e.id}/${o.id}`).toBe(true);
+      }
+    }
+  });
+});
+
 describe('стартовый футболист', () => {
   it('каждый атрибут используется хотя бы одной опцией — иначе он мёртвый на карточке', () => {
     const used = new Set(EPISODES.flatMap((e) => e.options.map((o) => o.attribute)));

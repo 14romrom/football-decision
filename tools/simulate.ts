@@ -1,5 +1,6 @@
 // Балансный прогон: N матчей на фиксированных сидах четырьмя ботовыми политиками.
 // Гонять после каждого изменения balance.ts:  npm run sim -- 2000
+// Повторы на дистанции сезона:              npm run sim -- --season 12
 
 import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
@@ -7,8 +8,8 @@ import { applyChoice, createMatch, finishMatch, nextEpisode, optionCost } from '
 import type { MatchSummary } from '../src/engine/match';
 import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, rosterFor } from '../src/content';
 import { generateConditions, neutralConditions, type MatchConditions } from '../src/engine/conditions';
-import { POSITION_ORDER } from '../src/engine/balance';
-import type { EpisodeOption, Tier } from '../src/engine/types';
+import { BALANCE, POSITION_ORDER } from '../src/engine/balance';
+import type { EpisodeMemory, EpisodeOption, Tier } from '../src/engine/types';
 
 export type PolicyName = 'always_safe' | 'always_risky' | 'greedy_personal' | 'random' | 'max_cost';
 
@@ -114,6 +115,92 @@ export function runSuite(n: number, mode: ConditionsMode = 'neutral') {
   return SPEC_POLICIES.map((p) => report(p, seeds, mode));
 }
 
+// ——— повторы на дистанции сезона ————————————————————————————————————
+
+export type SeasonReport = {
+  matches: number;
+  /** Доля эпизодов k-го матча, уже виденных в матчах 1..k−1 (по индексу k−1). */
+  repeatShare: number[];
+  /** Доля эпизодов k-го матча, виденных в предыдущих двух (та цифра, что мерилась раньше). */
+  repeatShareLast2: number[];
+  /** Доля слотов k-го матча, где игрок прочитал уже виденный текст сетапа (варианты сетапа
+   *  по ситуации делают повтор id не всегда повтором сцены). */
+  repeatSetupShare: number[];
+  /** Сколько разных эпизодов увидел игрок за сезон, в среднем. */
+  uniqueSeen: number;
+  poolSize: number;
+};
+
+/** Сезон подряд одним игроком со случайной политикой: память — как в игре
+ *  (episodeMemory по горизонту), реактивные эпизоды всплывают по флагам. Считает,
+ *  сколько раз игрок читает уже знакомый сетап. */
+export function runSeason(seedBase: number, matches: number): { repeats: number[]; repeatsLast2: number[]; repeatsSetup: number[]; unique: number } {
+  const history: string[][] = [];
+  const setupsSeen = new Set<string>();
+  const repeats: number[] = [];
+  const repeatsLast2: number[] = [];
+  const repeatsSetup: number[] = [];
+  for (let k = 0; k < matches; k++) {
+    const memory: EpisodeMemory = {};
+    const window = history.slice(-BALANCE.match.memory.horizon);
+    window.forEach((ids, i) => {
+      const age = window.length - i;
+      for (const id of ids) memory[id] = Math.min(memory[id] ?? age, age);
+    });
+    const seed = seedBase + k;
+    const rng = makeRng(seed);
+    const conditions = generateConditions(rng, OPPONENTS, { confidence: rng.int(-2, 2), fatigue: k % 4 });
+    const session = createMatch(`season-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions, memory, FLAG_RULES);
+    let setupRepeats = 0;
+    let slots = 0;
+    for (;;) {
+      const next = nextEpisode(session, rng);
+      if (!next) break;
+      slots += 1;
+      // Текст сетапа без имён: смена соперника не должна считаться новой сценой.
+      const key = next.episode.id + '|' + next.episode.setup.replace(/\d+-й/g, 'N-й');
+      if (setupsSeen.has(key)) setupRepeats += 1;
+      setupsSeen.add(key);
+      const option = POLICIES.random(next.episode.options, (n) => rng.int(0, n - 1));
+      const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
+      applyChoice(session, next.episode, option, res, rng);
+    }
+    const ids = session.usedEpisodeIds;
+    const seenAll = new Set(history.flat());
+    const seenLast2 = new Set(history.slice(-2).flat());
+    repeats.push(ids.filter((id) => seenAll.has(id)).length / ids.length);
+    repeatsLast2.push(ids.filter((id) => seenLast2.has(id)).length / ids.length);
+    repeatsSetup.push(setupRepeats / slots);
+    history.push(ids);
+  }
+  return { repeats, repeatsLast2, repeatsSetup, unique: new Set(history.flat()).size };
+}
+
+export function seasonReport(matches: number, seasons = 200): SeasonReport {
+  const runs = Array.from({ length: seasons }, (_, i) => runSeason(50000 + i * 100, matches));
+  const avg = (pick: (r: ReturnType<typeof runSeason>) => number[]) =>
+    Array.from({ length: matches }, (_, k) => runs.reduce((s, r) => s + pick(r)[k], 0) / runs.length);
+  return {
+    matches,
+    repeatShare: avg((r) => r.repeats),
+    repeatShareLast2: avg((r) => r.repeatsLast2),
+    repeatSetupShare: avg((r) => r.repeatsSetup),
+    uniqueSeen: runs.reduce((s, r) => s + r.unique, 0) / runs.length,
+    poolSize: EPISODES_RAW.length,
+  };
+}
+
+function printSeason(matches: number) {
+  const r = seasonReport(matches);
+  console.log(`\nПовторы на дистанции сезона: ${matches} матчей подряд, 200 сезонов, случайная политика, пул ${r.poolSize}\n`);
+  console.log(pad('матч', 6) + pad('повторов id (все прошлые)', 26, true) + pad('повторов id (2 последних)', 26, true) + pad('повторов текста сетапа', 24, true));
+  for (let k = 0; k < matches; k++) {
+    console.log(pad(k + 1, 6) + pad((r.repeatShare[k] * 100).toFixed(0) + '%', 26, true)
+      + pad((r.repeatShareLast2[k] * 100).toFixed(0) + '%', 26, true) + pad((r.repeatSetupShare[k] * 100).toFixed(0) + '%', 24, true));
+  }
+  console.log(`\nРазных эпизодов за сезон: ${r.uniqueSeen.toFixed(1)} из ${r.poolSize} (сыграно ${matches * BALANCE.match.episodeMinutes.length} слотов)\n`);
+}
+
 // ——— вывод ————————————————————————————————————————————————————————
 
 function pad(v: string | number, w: number, right = false) {
@@ -122,6 +209,8 @@ function pad(v: string | number, w: number, right = false) {
 }
 
 function main() {
+  const seasonAt = process.argv.indexOf('--season');
+  if (seasonAt >= 0) { printSeason(Number(process.argv[seasonAt + 1] ?? 12)); return; }
   const n = Number(process.argv[2] ?? 1000);
   const mode: ConditionsMode = process.argv.includes('--random-conditions') ? 'random' : 'neutral';
   const reports = runSuite(n, mode);

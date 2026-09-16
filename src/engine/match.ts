@@ -6,11 +6,12 @@ import { attrMod } from './context';
 import { fillNames, fillNamesDeep, type Roster } from './names';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL } from './voices';
-import { pickFlavor, type FlavorRule } from './flavor';
+import { mostSpecific, pickFlavor, scoreState, type FlavorRule } from './flavor';
 import { pickOutcome, resultBadges } from './resolve';
 import type { Rng } from './rng';
 import type {
-  ApplyEffect, Episode, EpisodeOption, FlagRule, MatchState, Player, Resolution, TimelineEvent, Tier,
+  ApplyEffect, Episode, EpisodeMemory, EpisodeOption, FlagRule, Mark, MatchState, Player, Resolution,
+  TimelineEvent, Tier,
 } from './types';
 
 export type MatchSession = {
@@ -25,6 +26,9 @@ export type MatchSession = {
   flagRules: FlagRule[];
   /** Сколько реактивных эпизодов уже всплыло. */
   reactiveUsed: number;
+  /** Память сезона (id → возраст в матчах) — для реактивных эпизодов, которые всплывают
+   *  по флагу, а не из плана: без неё «долг партнёра» выпадал три матча подряд. */
+  memory: EpisodeMemory;
   state: MatchState;
   schedule: number[];
   /** Эпизод на каждый слот, подобранный заранее. См. planEpisodes. */
@@ -54,11 +58,29 @@ function fitsMinute(e: Episode, minute: number): boolean {
  *  Жадный выбор на десяти эпизодах и десяти слотах загоняет себя в тупик:
  *  «концовочный» эпизод не подходит никуда, кроме последнего слота, и матч
  *  теряет момент. Перебор по самым узким слотам такого не допускает. */
-function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recentIds: string[] = []): string[] {
+/** Множитель веса по возрасту в памяти: 1 матч назад — floor, дальше растёт по кривой
+ *  до 1 на горизонте. Возраст ≤ 0 или отсутствие в памяти — свежий эпизод. */
+export function memoryWeight(age: number | undefined): number {
+  const { recent, recentFloor, horizon, floor, curve } = BALANCE.match.memory;
+  if (age === undefined || age <= 0) return 1;
+  if (age <= recent) return recentFloor;
+  if (age > horizon) return 1;
+  return floor + (1 - floor) * Math.pow((age - recent - 1) / (horizon - recent - 1), curve);
+}
+
+/** Список id — старая форма памяти «всё это было в прошлом матче»; для тестов и прогона. */
+function toMemory(recent: string[] | EpisodeMemory): EpisodeMemory {
+  if (!Array.isArray(recent)) return recent;
+  const memory: EpisodeMemory = {};
+  for (const id of recent) memory[id] = 1;
+  return memory;
+}
+
+function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = []): string[] {
   const m = BALANCE.match;
-  const recent = new Set(recentIds);
-  // Память между матчами: сыгранное недавно почти не выпадает, пока есть свежее.
-  const weightOf = (e: Episode) => e.weight * (recent.has(e.id) ? m.recentWeight : 1);
+  const memory = toMemory(recent);
+  // Память на сезон: сыгранное недавно почти не выпадает, пока есть свежее, и медленно возвращается.
+  const weightOf = (e: Episode) => e.weight * memoryWeight(memory[e.id]);
 
   // Квота обороны: заранее выбираем слоты, в которых будет только защитный эпизод.
   // Плейтест показал, что без квоты матч — сплошные атаки и переходы.
@@ -108,12 +130,17 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recentI
 /** Перенос из карьеры (M2): доверие тренера продолжается, а не сбрасывается на старте
  *  каждого матча, и травма/карточка прошлого матча начинают следующий с недостачей.
  *  См. engine/career.ts:consumeStartPenalty — там же и обоснование чисел. */
-export type Carryover = { coachTrust?: number; staminaPenalty?: number; coachTrustPenalty?: number };
+export type Carryover = {
+  coachTrust?: number; staminaPenalty?: number; coachTrustPenalty?: number;
+  /** Флаги-последствия из прошлого матча (career.ts:carriedFlags) — партнёр помнит пас,
+   *  тренер — фланг. Реактивный эпизод скажет «ще минулого матчу», см. fillTrigger. */
+  flags?: { flag: string; mark: Mark }[];
+};
 
 export function createMatch(
   matchId: string, seed: number, player: Player, rng: Rng, rawEpisodes: Episode[], roster: Roster,
   conditions: MatchConditions = neutralConditions(),
-  recentEpisodeIds: string[] = [],
+  recentEpisodeIds: string[] | EpisodeMemory = [],
   flagRules: FlagRule[] = [],
   carryover: Carryover = {},
 ): MatchSession {
@@ -138,8 +165,8 @@ export function createMatch(
     fanHype: clamp(start.fanHype, 0, 100),
     momentum: clamp(start.momentum, -3, 3),
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
-    flags: [],
-    marks: {},
+    flags: (carryover.flags ?? []).map((f) => f.flag),
+    marks: Object.fromEntries((carryover.flags ?? []).map((f) => [f.flag, { ...f.mark, previousMatch: true }])),
     voices: initVoiceTrace(),
     log: [{
       minute: 0,
@@ -151,6 +178,7 @@ export function createMatch(
 
   return {
     matchId, seed, player, roster, conditions, episodes, flagRules: rules, reactiveUsed: 0, state, schedule,
+    memory: toMemory(recentEpisodeIds),
     plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
     usedEpisodeIds: [], nextIndex: 0, finished: false,
   };
@@ -315,10 +343,17 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
 
 // ——— выбор эпизода ————————————————————————————————————————————————
 
-/** Подстановка следа решения в реактивный эпизод: {trigger.past}, {trigger.minute}. */
-function fillTrigger<T>(value: T, mark: { minute: number; past: string }): T {
+/** Подстановка следа решения в реактивный эпизод: {trigger.past}, {trigger.minute},
+ *  {trigger.when} — «на 34-й» или «ще минулого матчу», если флаг принесён из прошлого
+ *  матча; {trigger.When} — то же с большой буквы для начала предложения. */
+function fillTrigger<T>(value: T, mark: { minute: number; past: string; previousMatch?: boolean }): T {
   if (typeof value === 'string') {
-    return value.replace(/\{trigger\.past\}/g, mark.past).replace(/\{trigger\.minute\}/g, String(mark.minute)) as T;
+    const when = mark.previousMatch ? 'ще минулого матчу' : 'на ' + mark.minute + '-й';
+    return value
+      .replace(/\{trigger\.past\}/g, mark.past)
+      .replace(/\{trigger\.minute\}/g, String(mark.minute))
+      .replace(/\{trigger\.when\}/g, when)
+      .replace(/\{trigger\.When\}/g, when.charAt(0).toUpperCase() + when.slice(1)) as T;
   }
   if (Array.isArray(value)) return value.map((v) => fillTrigger(v, mark)) as T;
   if (value && typeof value === 'object') {
@@ -343,12 +378,33 @@ function pickReactive(session: MatchSession, rng: Rng): Episode | null {
     && !(e.requires?.notFlags?.some((f) => state.flags.includes(f)) ?? false));
   if (pool.length === 0) return null;
   const chosen = rng.weighted(pool, (e) => e.weight);
+  // Память сезона для реактивных: шаблон, который всплывал в прошлом матче, почти не всплывает
+  // снова — флаг при этом остаётся и продолжает давать модификаторы. Вес по флагу тут не помогает
+  // (на один флаг обычно один шаблон), поэтому бросок «всплыть или нет».
+  const familiarity = memoryWeight(session.memory[chosen.id]);
+  if (familiarity < 1 && !rng.chance(familiarity)) return null;
   // Слот квоты обороны реактивный эпизод занимает только оборонительным.
   const planned = session.episodes.find((e) => e.id === session.plan[i]);
   if (planned?.phase === 'defense' && chosen.phase !== 'defense') return null;
   const mark = state.marks[chosen.requires!.flags![0]] ?? { minute: state.minute, past: 'зробив свій хід' };
   session.reactiveUsed += 1;
-  return fillTrigger(chosen, mark);
+  return withSetup(fillTrigger(chosen, mark), session, rng);
+}
+
+/** Вариант сетапа под ситуацию: самое конкретное подходящее правило из `setups`,
+ *  при равной конкретности — случайное; без подходящего остаётся базовый `setup`. */
+function withSetup(episode: Episode, session: MatchSession, rng: Rng): Episode {
+  if (!episode.setups?.length) return episode;
+  const top = mostSpecific(episode.setups, session.state, session.conditions);
+  if (top.length === 0) return episode;
+  return { ...episode, setup: rng.pick(top).text };
+}
+
+/** Закрыт ли эпизод динамическим условием — флагом или счётом. Планировщик их не знает. */
+function blockedNow(e: Episode, state: MatchState): boolean {
+  if (e.requires?.notFlags?.some((f) => state.flags.includes(f))) return true;
+  if (e.requires?.score && e.requires.score !== scoreState(state)) return true;
+  return false;
 }
 
 export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
@@ -358,23 +414,34 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
   const episodes = session.episodes;
   const i = session.nextIndex;
   const byId = (id: string) => episodes.find((e) => e.id === id) ?? null;
-  const blocked = (e: Episode) => e.requires?.notFlags?.some((f) => session.state.flags.includes(f)) ?? false;
+  const blocked = (e: Episode) => blockedNow(e, session.state);
 
   const planned = byId(session.plan[i]);
   if (!planned) return null;
-  if (!blocked(planned)) return planned;
+  if (!blocked(planned)) return withSetup(planned, session, rng);
 
-  // Эпизод закрыт флагом (например, угловой при повреждении) — меняем его
-  // местами с более поздним, который сейчас доступен и влезает по времени.
+  // Эпизод закрыт флагом или счётом (угловой при повреждении, затяжка времени при 0:1) —
+  // меняем его местами с более поздним, который сейчас доступен и влезает по времени.
   for (let j = i + 1; j < session.plan.length; j++) {
     const other = byId(session.plan[j]);
     if (!other || blocked(other)) continue;
     if (!fitsMinute(other, session.schedule[i]) || !fitsMinute(planned, session.schedule[j])) continue;
     session.plan[j] = planned.id;
     session.plan[i] = other.id;
-    return other;
+    return withSetup(other, session, rng);
   }
-  return planned;   // менять не с чем — играем как есть, матч важнее чистоты флага
+  // Менять не с чем — берём свежий эпизод вне плана. Играть «тягнути час» при 0:1
+  // хуже, чем нарушить раскладку; квоту обороны при этом сохраняем.
+  const fresh = episodes.filter((e) =>
+    !isReactive(e) && !blocked(e) && fitsMinute(e, session.schedule[i])
+    && !session.plan.includes(e.id) && !session.usedEpisodeIds.includes(e.id)
+    && (planned.phase !== 'defense' || e.phase === 'defense'));
+  if (fresh.length > 0) {
+    const pick = rng.weighted(fresh, (e) => e.weight);
+    session.plan[i] = pick.id;
+    return withSetup(pick, session, rng);
+  }
+  return withSetup(planned, session, rng);   // совсем нечем — играем как есть, матч важнее чистоты условия
 }
 
 /** Следующий эпизод: сначала лента до его минуты, потом сам эпизод. */

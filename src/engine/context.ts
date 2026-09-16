@@ -8,11 +8,11 @@ import type { Attribute, Effect, EpisodeOption, Episode, MatchState, ModLine, Pl
 const ATTR_LABEL: Record<Attribute, string> = {
   finishing: 'удар',
   passing: 'пас',
-  dribbling: 'дриблинг',
-  pace: 'скорость',
+  dribbling: 'дриблінг',
+  pace: 'швидкість',
   strength: 'корпус',
-  defending: 'отбор',
-  composure: 'хладнокровие',
+  defending: 'відбір',
+  composure: 'холоднокровність',
 };
 
 export function attrMod(attr: number): number {
@@ -56,26 +56,26 @@ export function computeContext(
 
   const c = BALANCE.contextMod;
 
-  if (state.stamina >= 70) mods.push({ label: 'свежесть', value: c.staminaHigh });
+  if (state.stamina >= 70) mods.push({ label: 'свіжість', value: c.staminaHigh });
   else if (state.stamina >= 40) { /* 40..69 — без модификатора */ }
-  else if (state.stamina >= 20) mods.push({ label: 'устал', value: c.staminaLow });
-  else mods.push({ label: 'ноги встали', value: c.staminaCritical });
+  else if (state.stamina >= 20) mods.push({ label: 'втомився', value: c.staminaLow });
+  else mods.push({ label: 'ноги стали', value: c.staminaCritical });
 
   if (state.momentum !== 0) {
-    mods.push({ label: state.momentum > 0 ? 'кураж' : 'провалы давят', value: state.momentum });
+    mods.push({ label: state.momentum > 0 ? 'кураж' : 'провали тиснуть', value: state.momentum });
   }
 
   if (state.minute > 80) {
-    if (state.composureNow >= 70) mods.push({ label: 'спокоен в концовке', value: c.composureLateGood });
-    else if (state.composureNow < 30) mods.push({ label: 'конец матча, нервы', value: c.composureLateBad });
+    if (state.composureNow >= 70) mods.push({ label: 'спокійний у кінцівці', value: c.composureLateGood });
+    else if (state.composureNow < 30) mods.push({ label: 'кінець матчу, нерви', value: c.composureLateBad });
   }
 
   if (state.flags.includes('booked') && isDefensiveAction(option, phase)) {
-    mods.push({ label: 'жёлтая, идёшь аккуратнее', value: c.bookedDefending });
+    mods.push({ label: 'жовта, йдеш обережніше', value: c.bookedDefending });
   }
 
   if (state.flags.includes('injured')) {
-    mods.push({ label: 'повреждение', value: c.injured });
+    mods.push({ label: 'пошкодження', value: c.injured });
   }
 
   // Сдвиги формы риска. Накапливаем и зажимаем в один шаг: контекст может

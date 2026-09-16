@@ -49,7 +49,7 @@ export function RollView({ option, res, onNext }: Props) {
         <>
           <div className={`tier tier-${res.tier}`}>{TIER_LABEL[res.tier]}</div>
           <p className="outcome">{outcome.text}</p>
-          <button className="primary" onClick={onNext}>Дальше</button>
+          <button className="primary" onClick={onNext}>Далі</button>
         </>
       )}
     </div>

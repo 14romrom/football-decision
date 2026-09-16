@@ -15,7 +15,7 @@ function CostBar({ cost }: { cost: number }) {
   const segments = 6;
   const filled = Math.max(1, Math.round((cost / 12) * segments));
   return (
-    <span className="cost" aria-label="цена по силам">
+    <span className="cost" aria-label="ціна по силах">
       {Array.from({ length: segments }, (_, i) => (
         <i key={i} className={i < filled ? 'seg on' : 'seg'} />
       ))}
@@ -41,7 +41,7 @@ export function EpisodeCard({ episode, minute, state, player, onChoose }: Props)
                 <span className={`tag risk risk-${ctx.position}`}>
                   {POSITION_LABEL[ctx.position]}
                   {shifted && (
-                    <i className="shift-mark" title="форма риска сместилась из-за твоего состояния">↯</i>
+                    <i className="shift-mark" title="форма ризику змістилася через твій стан">↯</i>
                   )}
                 </span>
                 <span className="tag scale">{EFFECT_LABEL[ctx.effect]}</span>

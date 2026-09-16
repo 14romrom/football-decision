@@ -38,20 +38,20 @@ export function resolveOption(
 
 /** Ярлыки, которые видит игрок. Ни одного числа — это условие эксперимента. */
 export const POSITION_LABEL: Record<Position, string> = {
-  controlled: 'уверенно',
-  risky: 'рискованно',
-  desperate: 'отчаянно',
+  controlled: 'упевнено',
+  risky: 'ризиковано',
+  desperate: 'відчайдушно',
 };
 
 export const EFFECT_LABEL = {
-  limited: 'удержать',
-  standard: 'создать',
-  great: 'решить',
+  limited: 'утримати',
+  standard: 'створити',
+  great: 'вирішити',
 } as const;
 
 export const TIER_LABEL: Record<Tier, string> = {
   clean: 'Чисто',
-  cost: 'Получилось, но…',
-  fail: 'Не вышло',
+  cost: 'Вийшло, але…',
+  fail: 'Не вийшло',
   badFail: 'Катастрофа',
 };

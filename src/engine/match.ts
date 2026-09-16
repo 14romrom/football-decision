@@ -2,18 +2,17 @@
 // исходов и сборка итога. React сюда не заглядывает — UI только вызывает функции.
 
 import { BALANCE, MOMENTUM_BY_TIER } from './balance';
+import { fillNames, type Roster } from './names';
 import type { Rng } from './rng';
 import type {
   ApplyEffect, Episode, EpisodeOption, MatchState, Player, Resolution, TimelineEvent, Tier,
 } from './types';
 
-export const TEAM_US = 'Вальмара';
-export const TEAM_THEM = 'Сан-Дореа';
-
 export type MatchSession = {
   matchId: string;
   seed: number;
   player: Player;
+  roster: Roster;
   state: MatchState;
   schedule: number[];
   /** Эпизод на каждый слот, подобранный заранее. См. planEpisodes. */
@@ -75,7 +74,7 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng): string
 }
 
 export function createMatch(
-  matchId: string, seed: number, player: Player, rng: Rng, episodes: Episode[],
+  matchId: string, seed: number, player: Player, rng: Rng, episodes: Episode[], roster: Roster,
 ): MatchSession {
   const last = BALANCE.match.episodeMinutes.length - 1;
   const schedule = BALANCE.match.episodeMinutes.map((m, i) => {
@@ -99,12 +98,12 @@ export function createMatch(
     log: [{
       minute: 0,
       kind: 'kickoff',
-      text: '«' + TEAM_US + '» — «' + TEAM_THEM + '». Свисток. Трибуны встали.',
+      text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». Свисток. Трибуни встали.',
     }],
   };
 
   return {
-    matchId, seed, player, state, schedule,
+    matchId, seed, player, roster, state, schedule,
     plan: planEpisodes(schedule, episodes, rng),
     usedEpisodeIds: [], nextIndex: 0, finished: false,
   };
@@ -112,41 +111,45 @@ export function createMatch(
 
 // ——— лента между эпизодами ———————————————————————————————————————————
 
+// Тексты ленты с плейсхолдерами имён — подставляются в момент показа по ростеру сессии.
 const FILLER_NEUTRAL = [
-  'Мяч гуляет между защитниками, никто не хочет рисковать первым.',
-  'Тибо накрывает разыгрывающего, соперник откатывает назад.',
-  'Длинная передача на ход — Феррейра выходит и забирает.',
-  'Пара фолов в центре, игра рвётся.',
-  'Мораес пробует по флангу, но его встречают вдвоём.',
-  'Соперник перекатывает мяч поперёк поля, время идёт.',
-  'Кнапп борется за верховой мяч и не достаёт полкорпуса.',
-  'Вбрасывание у нашей штрафной, скамейка кричит про линию.',
+  'М’яч гуляє між захисниками, ніхто не хоче ризикувати першим.',
+  '{dm} накриває розігруючого, суперник відкочує назад.',
+  'Довга передача на хід — {keeper} виходить і забирає.',
+  'Пара фолів у центрі, гра рветься.',
+  '{partner} пробує флангом, але його зустрічають удвох.',
+  'Суперник перекочує м’яч упоперек поля, час іде.',
+  '{striker} бореться за верховий м’яч і не дістає півкорпусу.',
+  'Вкидання біля нашого штрафного, лава кричить про лінію.',
 ];
 const FILLER_LEADING = [
-  'Скамейка требует держать мяч, счёт нас устраивает.',
-  'Ордас выносит без затей — сейчас не до красоты.',
-  'Соперник пошёл вперёд всей линией, сзади пусто у обоих.',
+  'Лава вимагає тримати м’яч, рахунок нас влаштовує.',
+  '{cb} виносить без затій — зараз не до краси.',
+  'Суперник пішов уперед усією лінією, ззаду порожньо в обох.',
 ];
 const FILLER_TRAILING = [
-  'Трибуны свистят: пора что-то делать.',
-  'Тренер машет рукой вперёд — выше, выше.',
-  'Кнапп бьёт из-под защитника, мимо.',
+  'Трибуни свистять: час щось робити.',
+  'Тренер махає рукою вперед — вище, вище.',
+  '{striker} б’є з-під захисника, повз.',
 ];
 const FILLER_TIRED = [
-  'Ты упираешься руками в колени, пока мяч на той половине.',
-  'Ноги тяжёлые, до ближнего соперника два шага, которых нет.',
+  'Ти впираєшся руками в коліна, поки м’яч на тій половині.',
+  'Ноги важкі, до найближчого суперника два кроки, яких немає.',
 ];
 
-function fillerText(state: MatchState, rng: Rng): string {
+function fillerText(session: MatchSession, rng: Rng): string {
+  const state = session.state;
   const pool = [...FILLER_NEUTRAL];
   if (state.scoreUs > state.scoreThem) pool.push(...FILLER_LEADING);
   if (state.scoreUs < state.scoreThem) pool.push(...FILLER_TRAILING);
   if (state.stamina < BALANCE.tiredBelow) pool.push(...FILLER_TIRED);
-  return rng.pick(pool);
+  return fillNames(rng.pick(pool), session.roster);
 }
 
-const SCORERS_US = ['Кнапп', 'Мораес', 'Ордас'];
-const SCORERS_THEM = ['Валье', 'Понс', 'Ибарра'];
+function scorer(roster: Roster, side: 'us' | 'them', rng: Rng): string {
+  const team = roster[side];
+  return team.players[rng.pick(team.scorers)].nom;
+}
 
 /** Счёт между эпизодами меняется по простой таблице, а не по симуляции поля. */
 function rollFillerGoal(state: MatchState, rng: Rng): 'us' | 'them' | null {
@@ -159,7 +162,8 @@ function rollFillerGoal(state: MatchState, rng: Rng): 'us' | 'them' | null {
   return null;
 }
 
-function pushGoal(state: MatchState, side: 'us' | 'them', minute: number, rng: Rng, text?: string) {
+function pushGoal(session: MatchSession, side: 'us' | 'them', minute: number, rng: Rng, text?: string) {
+  const state = session.state;
   if (side === 'us') {
     state.scoreUs += 1;
     state.momentum = clamp(state.momentum + 1, -3, 3);
@@ -167,7 +171,7 @@ function pushGoal(state: MatchState, side: 'us' | 'them', minute: number, rng: R
     state.log.push({
       minute,
       kind: 'goalUs',
-      text: text ?? (rng.pick(SCORERS_US) + ' протыкает мяч в сетку — гол! ' + state.scoreUs + ':' + state.scoreThem + '.'),
+      text: text ?? (scorer(session.roster, 'us', rng) + ' проштовхує м’яч у сітку — гол! ' + state.scoreUs + ':' + state.scoreThem + '.'),
     });
   } else {
     state.scoreThem += 1;
@@ -176,7 +180,7 @@ function pushGoal(state: MatchState, side: 'us' | 'them', minute: number, rng: R
     state.log.push({
       minute,
       kind: 'goalThem',
-      text: text ?? (rng.pick(SCORERS_THEM) + ' убегает и бьёт в дальний. ' + state.scoreUs + ':' + state.scoreThem + '.'),
+      text: text ?? (scorer(session.roster, 'them', rng) + ' тікає і б’є в дальній. ' + state.scoreUs + ':' + state.scoreThem + '.'),
     });
   }
 }
@@ -200,7 +204,7 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   if (until <= from) return [];
 
   if (from < 45 && until >= 45) {
-    state.log.push({ minute: 45, kind: 'halftime', text: 'Перерыв. ' + state.scoreUs + ':' + state.scoreThem + '.' });
+    state.log.push({ minute: 45, kind: 'halftime', text: 'Перерва. ' + state.scoreUs + ':' + state.scoreThem + '.' });
   }
 
   const gap = until - from;
@@ -212,8 +216,8 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   for (let i = 1; i <= beats; i++) {
     const minute = Math.round(from + (gap * i) / (beats + 1));
     drainStamina(state, gap / (beats + 1));
-    if (i === goalBeat) pushGoal(state, goal!, minute, rng);
-    else state.log.push({ minute, kind: 'filler', text: fillerText(state, rng) });
+    if (i === goalBeat) pushGoal(session, goal!, minute, rng);
+    else state.log.push({ minute, kind: 'filler', text: fillerText(session, rng) });
   }
   drainStamina(state, gap / (beats + 1));
   state.minute = until;
@@ -261,8 +265,9 @@ export function nextEpisode(
 
 /** Возвращает true, только если гол соперника пришёл из контратаки после этого решения:
  *  прямой пропущенный уже описан текстом исхода, дублировать его в пересказе незачем. */
-function applyEffects(state: MatchState, apply: ApplyEffect | undefined, minute: number, rng: Rng): boolean {
+function applyEffects(session: MatchSession, apply: ApplyEffect | undefined, minute: number, rng: Rng): boolean {
   if (!apply) return false;
+  const state = session.state;
   let fromCounter = false;
 
   if (apply.stamina) state.stamina = clamp(state.stamina + apply.stamina, 0, 100);
@@ -276,14 +281,14 @@ function applyEffects(state: MatchState, apply: ApplyEffect | undefined, minute:
   if (apply.duelWon) state.stats.duelsWon += 1;
   if (apply.foul) state.stats.fouls += 1;
 
-  if (apply.goal) { state.stats.goals += 1; pushGoal(state, 'us', minute, rng, 'Гол! ' + (state.scoreUs + 1) + ':' + state.scoreThem + '.'); }
-  if (apply.assist) { state.stats.assists += 1; pushGoal(state, 'us', minute, rng); }
-  if (apply.teamGoal) pushGoal(state, 'us', minute, rng);
+  if (apply.goal) { state.stats.goals += 1; pushGoal(session, 'us', minute, rng, 'Гол! ' + (state.scoreUs + 1) + ':' + state.scoreThem + '.'); }
+  if (apply.assist) { state.stats.assists += 1; pushGoal(session, 'us', minute, rng); }
+  if (apply.teamGoal) pushGoal(session, 'us', minute, rng);
 
-  if (apply.concede) pushGoal(state, 'them', minute, rng);
+  if (apply.concede) pushGoal(session, 'them', minute, rng);
   if (apply.counterAttack && !apply.concede && rng.chance(BALANCE.counterAttackConcede)) {
-    pushGoal(state, 'them', minute + 1, rng,
-      'Контратаку доводят до удара — ' + rng.pick(SCORERS_THEM) + ' не промахивается. '
+    pushGoal(session, 'them', minute + 1, rng,
+      'Контратаку доводять до удару — ' + scorer(session.roster, 'them', rng) + ' не промахується. '
       + state.scoreUs + ':' + (state.scoreThem + 1) + '.');
     fromCounter = true;
   }
@@ -321,7 +326,7 @@ export function applyChoice(
     }
   }
 
-  const conceded = applyEffects(state, outcome.apply, minute, rng);   // true только для контратаки
+  const conceded = applyEffects(session, outcome.apply, minute, rng);   // true только для контратаки
   syncTired(state);
 
   state.log.push({
@@ -378,7 +383,8 @@ export function finishMatch(session: MatchSession, rng: Rng): { events: Timeline
   state.log.push({
     minute: 90,
     kind: 'fulltime',
-    text: 'Финальный свисток. «' + TEAM_US + '» — «' + TEAM_THEM + '» ' + state.scoreUs + ':' + state.scoreThem + '.',
+    text: 'Фінальний свисток. «' + session.roster.us.name.nom + '» — «' + session.roster.them.name.nom + '» '
+      + state.scoreUs + ':' + state.scoreThem + '.',
   });
   session.finished = true;
 
@@ -414,10 +420,10 @@ function importance(e: TimelineEvent): number {
 
 function connective(index: number, minute: number, prevMinute: number): string {
   if (index === 0) return 'На ' + minute + '-й';
-  if (minute >= 85) return 'На ' + minute + '-й, уже в концовке,';
-  if (minute - prevMinute <= 8) return 'Почти сразу, на ' + minute + '-й,';
-  if (index % 2 === 0) return 'К ' + minute + '-й';
-  return 'Потом, на ' + minute + '-й,';
+  if (minute >= 85) return 'На ' + minute + '-й, уже в кінцівці,';
+  if (minute - prevMinute <= 8) return 'Майже одразу, на ' + minute + '-й,';
+  if (index % 2 === 0) return 'Ближче до ' + minute + '-ї';
+  return 'Потім, на ' + minute + '-й,';
 }
 
 export function buildRecap(state: MatchState, coachRating: number, fanRating: number): string[] {
@@ -429,15 +435,15 @@ export function buildRecap(state: MatchState, coachRating: number, fanRating: nu
   let prev = 0;
   chosen.forEach((e, i) => {
     let line = connective(i, e.minute, prev) + ' ' + e.past + ' — ' + e.recap;
-    if (e.causedConcede) line += ' Через минуту гости этим воспользовались.';
+    if (e.causedConcede) line += ' За хвилину гості цим скористалися.';
     lines.push(line);
     prev = e.minute;
   });
 
-  const verdict = state.scoreUs > state.scoreThem ? 'Победа' : state.scoreUs === state.scoreThem ? 'Ничья' : 'Поражение';
+  const verdict = state.scoreUs > state.scoreThem ? 'Перемога' : state.scoreUs === state.scoreThem ? 'Нічия' : 'Поразка';
   lines.push(
     verdict + ', ' + state.scoreUs + ':' + state.scoreThem
-    + '. Тренер поставил ' + coachRating.toFixed(1) + ', трибуны — ' + fanRating.toFixed(1) + '.',
+    + '. Тренер поставив ' + coachRating.toFixed(1) + ', трибуни — ' + fanRating.toFixed(1) + '.',
   );
   return lines;
 }

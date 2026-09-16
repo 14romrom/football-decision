@@ -111,7 +111,7 @@ describe('контекстные модификаторы', () => {
 
   it('модификаторы показываются строками — игроку есть что прочитать после броска', () => {
     const ctx = computeContext(state({ stamina: 85, momentum: 2 }), player, option(), 'attack');
-    expect(ctx.mods.map((m) => m.label)).toEqual(['свежесть', 'кураж']);
+    expect(ctx.mods.map((m) => m.label)).toEqual(['свіжість', 'кураж']);
   });
 });
 

@@ -104,3 +104,19 @@ describe('стартовый футболист', () => {
     }
   });
 });
+
+describe('плейсхолдеры имён', () => {
+  it('в сыром контенте нет фамилий из ростера — только плейсхолдеры', async () => {
+    const { EPISODES_RAW, ROSTER } = await import('../src/content');
+    const surnames = [...Object.values(ROSTER.us.players), ...Object.values(ROSTER.them.players)]
+      .flatMap((p) => Object.values(p));
+    const raw = JSON.stringify(EPISODES_RAW);
+    for (const s of surnames) expect(raw, s).not.toContain(s);
+  });
+
+  it('каждый плейсхолдер разрешается в имя', () => {
+    // fillNamesDeep бросает на неизвестном ключе при импорте контента;
+    // здесь проверяем, что после подстановки фигурных скобок не осталось.
+    for (const e of EPISODES) expect(JSON.stringify(e), e.id).not.toMatch(/\{[a-z.]+\}/);
+  });
+});

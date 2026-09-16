@@ -5,7 +5,7 @@ import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
 import { applyChoice, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
 import type { MatchSummary } from '../src/engine/match';
-import { EPISODES, PLAYER } from '../src/content';
+import { EPISODES, PLAYER, ROSTER } from '../src/content';
 import { POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeOption, Tier } from '../src/engine/types';
 
@@ -32,7 +32,7 @@ export type MatchRun = {
 
 export function runMatch(seed: number, policy: PolicyName): MatchRun {
   const rng = makeRng(seed);
-  const session = createMatch(`sim-${policy}-${seed}`, seed, PLAYER, rng, EPISODES);
+  const session = createMatch(`sim-${policy}-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
   const tiers: Tier[] = [];
   let emptyAtMinute: number | null = null;
 

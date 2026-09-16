@@ -3,7 +3,7 @@ import { runMatch, runSuite } from '../tools/simulate';
 import { makeRng } from '../src/engine/rng';
 import { applyChoice, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
-import { EPISODES, PLAYER } from '../src/content';
+import { EPISODES, PLAYER, ROSTER } from '../src/content';
 import { BALANCE } from '../src/engine/balance';
 
 const seeds = (n: number, from = 5000) => Array.from({ length: n }, (_, i) => from + i);
@@ -49,7 +49,7 @@ describe('матч целиком', () => {
   it('каждый матч — ровно 10 эпизодов без повторов, последний после 85-й минуты', () => {
     for (const seed of seeds(600, 9000)) {
       const rng = makeRng(seed);
-      const session = createMatch(`t-${seed}`, seed, PLAYER, rng, EPISODES);
+      const session = createMatch(`t-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
       const minutes: number[] = [];
       for (;;) {
         const next = nextEpisode(session, EPISODES, rng);
@@ -69,7 +69,7 @@ describe('матч целиком', () => {
   it('пересказ — 4–6 строк, каждая привязана к минуте', () => {
     for (const seed of seeds(60, 11000)) {
       const rng = makeRng(seed);
-      const session = createMatch(`r-${seed}`, seed, PLAYER, rng, EPISODES);
+      const session = createMatch(`r-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
       for (;;) {
         const next = nextEpisode(session, EPISODES, rng);
         if (!next) break;
@@ -82,10 +82,10 @@ describe('матч целиком', () => {
       expect(summary.recap.length).toBeLessThanOrEqual(6);
       // последняя строка — счёт и две расходящиеся оценки, остальные — моменты с минутами
       for (const line of summary.recap.slice(0, -1)) {
-        expect(line, `seed ${seed}`).toMatch(/\d+-й/);
+        expect(line, `seed ${seed}`).toMatch(/\d+-[йї]/);
         expect(line.length).toBeGreaterThan(25);
       }
-      expect(summary.recap.at(-1)).toMatch(/Тренер поставил/);
+      expect(summary.recap.at(-1)).toMatch(/Тренер поставив/);
     }
   });
 
@@ -110,17 +110,17 @@ describe('правило «никаких процентов» (п. 1 и п. 13 
         .replace(/^\s*\/\/.*$/gm, '')             // строчные комментарии — тоже
         .replace(/style=\{\{[\s\S]*?\}\}/g, ''); // ширина полосок в CSS — оформление
       expect(src, name).not.toMatch(/%/);
-      expect(src, name).not.toMatch(/шанс|вероятн|ожидаем/i);
+      expect(src, name).not.toMatch(/шанс|вероятн|ожидаем|ймовірн|імовірн|очікуван|відсот/i);
     }
   });
 
   it('тексты эпизодов не подсказывают вероятность исхода', () => {
     for (const e of EPISODES) {
-      expect(e.setup, e.id).not.toMatch(/%|шанс|вероятн/i);
+      expect(e.setup, e.id).not.toMatch(/%|шанс|вероятн|ймовірн|імовірн|відсот/i);
       for (const o of e.options) {
-        expect(o.label, o.id).not.toMatch(/%|шанс|вероятн/i);
+        expect(o.label, o.id).not.toMatch(/%|шанс|вероятн|ймовірн|імовірн|відсот/i);
         for (const t of ['clean', 'cost', 'fail', 'badFail'] as const) {
-          expect(o.outcomes[t].text, `${e.id}/${o.id}/${t}`).not.toMatch(/%|шанс|вероятн/i);
+          expect(o.outcomes[t].text, `${e.id}/${o.id}/${t}`).not.toMatch(/%|шанс|вероятн|ймовірн|імовірн|відсот/i);
         }
       }
     }

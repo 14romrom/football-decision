@@ -12,19 +12,19 @@ export function StatsScreen() {
 
   return (
     <div className="stats-screen" key={version}>
-      <h1>Распределение выборов</h1>
+      <h1>Розподіл виборів</h1>
       <p className="muted">
-        Решений записано: {logs.length}. Эпизод считается сломанным, если одна опция забирает
-        больше {Math.round(BROKEN_SHARE * 100)}% выборов: значит, решение мнимое и эпизод надо переписать.
+        Рішень записано: {logs.length}. Епізод вважається зламаним, якщо одна опція забирає
+        більше {Math.round(BROKEN_SHARE * 100)}% виборів: отже, рішення уявне і епізод треба переписати.
       </p>
 
-      {dist.length === 0 && <p className="muted">Пока пусто — сыграйте матч.</p>}
+      {dist.length === 0 && <p className="muted">Поки порожньо — зіграйте матч.</p>}
 
       {dist.map((e) => (
         <section key={e.episodeId} className={`ep-stats${e.broken ? ' broken' : ''}`}>
           <h2>
-            {e.episodeId} <span className="muted">· {e.total} решений</span>
-            {e.broken && <span className="badge">решение мнимое</span>}
+            {e.episodeId} <span className="muted">· {e.total} рішень</span>
+            {e.broken && <span className="badge">рішення уявне</span>}
           </h2>
           <p className="muted setup-quote">{setups.get(e.episodeId)}</p>
           {e.options.map((o) => (
@@ -42,16 +42,16 @@ export function StatsScreen() {
           ))}
           {e.fastShare > 0.3 && (
             <p className="warn-line">
-              {Math.round(e.fastShare * 100)}% решений быстрее {FAST_DECISION_MS / 1000} с — жмут по привычке, а не думают.
+              {Math.round(e.fastShare * 100)}% рішень швидше за {FAST_DECISION_MS / 1000} с — тиснуть за звичкою, а не думають.
             </p>
           )}
         </section>
       ))}
 
       <div className="actions">
-        <a className="link" href="#/">⟵ к матчу</a>
-        <button onClick={exportLogs}>Выгрузить логи</button>
-        <button onClick={() => { clearLogs(); setVersion((v) => v + 1); }}>Очистить</button>
+        <a className="link" href="#/">⟵ до матчу</a>
+        <button onClick={exportLogs}>Вивантажити логи</button>
+        <button onClick={() => { clearLogs(); setVersion((v) => v + 1); }}>Очистити</button>
       </div>
     </div>
   );

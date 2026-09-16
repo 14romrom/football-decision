@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EPISODES, PLAYER } from './content';
+import { EPISODES, PLAYER, ROSTER } from './content';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
 import {
@@ -63,7 +63,7 @@ function Game() {
     const fromUrl = Number(new URLSearchParams(location.search).get('seed'));
     const seed = Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : Math.floor(Math.random() * 1e9);
     const rng = makeRng(seed);
-    const session = createMatch(`${Date.now().toString(36)}-${seed}`, seed, PLAYER, rng, EPISODES);
+    const session = createMatch(`${Date.now().toString(36)}-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
     rngRef.current = rng;
     sessionRef.current = session;
     setShown([]);
@@ -136,14 +136,14 @@ function Game() {
       <div className="menu">
         <h1>Один матч</h1>
         <p>
-          Ты — {PLAYER.name}, {PLAYER.position} в «Вальмаре». Девяносто минут, десять моментов,
-          и в каждом надо выбрать. Переиграть нельзя.
+          Ти — {PLAYER.name}, {PLAYER.position} «{ROSTER.us.name.gen}». Дев’яносто хвилин, десять моментів,
+          і в кожному треба обирати. Переграти не можна.
         </p>
         <p className="muted">
-          Тренер и трибуны хотят от тебя разного. Силы не восстанавливаются.
+          Тренер і трибуни хочуть від тебе різного. Сили не відновлюються.
         </p>
-        <button className="primary" onClick={start}>Выйти на поле</button>
-        <a className="link" href="#/stats">Распределение выборов</a>
+        <button className="primary" onClick={start}>Вийти на поле</button>
+        <a className="link" href="#/stats">Розподіл виборів</a>
       </div>
     );
   }
@@ -151,7 +151,7 @@ function Game() {
   if (stage.k === 'result') {
     return (
       <>
-        <ResultScreen summary={stage.summary} onRestart={start} />
+        <ResultScreen summary={stage.summary} roster={sessionRef.current!.roster} onRestart={start} />
         <DebugPanel session={sessionRef.current} />
       </>
     );
@@ -162,6 +162,7 @@ function Game() {
     <>
       <MatchScreen
         state={session.state}
+        roster={session.roster}
         shown={shown}
         waiting={stage.k === 'feed' && queue.length > 0}
         onSkip={skip}

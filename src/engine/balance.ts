@@ -5,10 +5,15 @@ import type { Position, Tier } from './types';
 
 /** Верхние границы tier по итоговому score. clean — всё, что выше cost. */
 export const THRESHOLDS: Record<Position, { badFail: number; fail: number; cost: number }> = {
-  controlled: { badFail: 2, fail: 7, cost: 12 },
-  risky: { badFail: 2, fail: 10, cost: 16 },
-  desperate: { badFail: 3, fail: 12, cost: 18 },
+  controlled: { badFail: 2, fail: 7, cost: 11 },
+  risky: { badFail: 2, fail: 10, cost: 14 },
+  desperate: { badFail: 3, fail: 12, cost: 17 },
 };
+
+/** Ниже этого кубик надёжного варианта не падает: смысл «упевнено» — что единица
+ *  на нём не выпадает. Катастрофа остаётся возможной только через минусы контекста.
+ *  Рискованные формы играют честный d20. */
+export const DIE_FLOOR: Record<Position, number> = { controlled: 4, risky: 1, desperate: 1 };
 
 export const MOMENTUM_BY_TIER: Record<Tier, number> = {
   clean: 1, cost: 0, fail: -1, badFail: -2,
@@ -27,6 +32,11 @@ export const BALANCE = {
 
   /** Флаг 'tired' вешается автоматически ниже этого порога. */
   tiredBelow: 30,
+
+  /** Сколько сил возвращает перерыв. Физические варианты при этом дороже (см. physicalExtraCost). */
+  halftimeRecovery: 8,
+  /** Надбавка к стоимости вариантов на швидкість/корпус — беготня и борьба выжигают сильнее техники. */
+  physicalExtraCost: 4,
 
   contextMod: {
     staminaHigh: 1,        // stamina >= 70

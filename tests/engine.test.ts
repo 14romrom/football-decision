@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { makeRng } from '../src/engine/rng';
 import { attrMod, computeContext } from '../src/engine/context';
-import { tierForScore } from '../src/engine/resolve';
-import { THRESHOLDS } from '../src/engine/balance';
+import { resolveOption, tierForScore } from '../src/engine/resolve';
+import { DIE_FLOOR, THRESHOLDS } from '../src/engine/balance';
+import type { Rng } from '../src/engine/rng';
 import type { EpisodeOption, MatchState, Player } from '../src/engine/types';
 
 const player: Player = {
@@ -162,5 +163,34 @@ describe('rng', () => {
       seen.add(v);
     }
     expect(seen.size).toBe(20);
+  });
+});
+
+describe('планка кубика', () => {
+  const fixedDie = (n: number): Rng => ({
+    ...makeRng(1), d20: () => n,
+  });
+
+  it('на надёжном варианте единица не выпадает — кубик поднимается до планки и это видно строкой', () => {
+    const res = resolveOption(state(), player, option({ basePosition: 'controlled' }), 'attack', fixedDie(1));
+    expect(res.rawRoll).toBe(1);
+    expect(res.roll).toBe(DIE_FLOOR.controlled);
+    expect(res.mods[0]).toEqual({ label: 'надійний хід', value: DIE_FLOOR.controlled - 1 });
+    expect(res.totalScore).toBe(DIE_FLOOR.controlled);
+  });
+
+  it('рискованные формы играют честный d20', () => {
+    for (const basePosition of ['risky', 'desperate'] as const) {
+      const res = resolveOption(state(), player, option({ basePosition }), 'attack', fixedDie(1));
+      expect(res.roll).toBe(1);
+      expect(res.mods.some((m) => m.label === 'надійний хід')).toBe(false);
+    }
+  });
+
+  it('катастрофа на надёжном варианте возможна только через минусы контекста', () => {
+    const fresh = resolveOption(state({ stamina: 55 }), player, option({ basePosition: 'controlled' }), 'attack', fixedDie(1));
+    expect(fresh.tier).not.toBe('badFail');
+    const wrecked = resolveOption(state({ stamina: 10, momentum: -3 }), player, option({ basePosition: 'controlled' }), 'attack', fixedDie(1));
+    expect(wrecked.tier).toBe('badFail');
   });
 });

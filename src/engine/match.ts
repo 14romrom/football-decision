@@ -3,6 +3,7 @@
 
 import { BALANCE, MOMENTUM_BY_TIER } from './balance';
 import { fillNames, type Roster } from './names';
+import { pickFlavor, type FlavorRule } from './flavor';
 import type { Rng } from './rng';
 import type {
   ApplyEffect, Episode, EpisodeOption, MatchState, Player, Resolution, TimelineEvent, Tier,
@@ -204,7 +205,9 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   if (until <= from) return [];
 
   if (from < 45 && until >= 45) {
-    state.log.push({ minute: 45, kind: 'halftime', text: 'Перерва. ' + state.scoreUs + ':' + state.scoreThem + '.' });
+    state.stamina = clamp(state.stamina + BALANCE.halftimeRecovery, 0, 100);
+    syncTired(state);
+    state.log.push({ minute: 45, kind: 'halftime', text: 'Перерва. ' + state.scoreUs + ':' + state.scoreThem + '. П’ятнадцять хвилин на лавці — ноги трохи відпустило.' });
   }
 
   const gap = until - from;
@@ -299,12 +302,19 @@ function applyEffects(session: MatchSession, apply: ApplyEffect | undefined, min
   return fromCounter;
 }
 
+/** Полная цена варианта по силам: базовая плюс надбавка за физику. */
+export function optionCost(option: EpisodeOption): number {
+  const physical = option.attribute === 'pace' || option.attribute === 'strength';
+  return option.staminaCost + (physical ? BALANCE.physicalExtraCost : 0);
+}
+
 export function applyChoice(
   session: MatchSession,
   episode: Episode,
   option: EpisodeOption,
   res: Resolution,
   rng: Rng,
+  flavorRules: FlavorRule[] = [],
 ): { events: TimelineEvent[]; conceded: boolean } {
   const state = session.state;
   const minute = session.schedule[session.nextIndex];
@@ -312,7 +322,7 @@ export function applyChoice(
   const outcome = option.outcomes[res.tier];
 
   state.minute = minute;
-  state.stamina = clamp(state.stamina - option.staminaCost, 0, 100);
+  state.stamina = clamp(state.stamina - optionCost(option), 0, 100);
   state.momentum = clamp(state.momentum + MOMENTUM_BY_TIER[res.tier], -3, 3);
 
   // Трибуны реагируют на смелость сами по себе, до того как ясен результат.
@@ -341,6 +351,7 @@ export function applyChoice(
     tier: res.tier,
     effect: res.effect,
     causedConcede: conceded,
+    flavor: pickFlavor(flavorRules, state, res.tier, rng),
   });
 
   session.usedEpisodeIds.push(episode.id);

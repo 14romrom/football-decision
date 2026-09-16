@@ -1,5 +1,6 @@
 import type { Episode, EpisodeOption, MatchState, Player } from '../engine/types';
 import { computeContext } from '../engine/context';
+import { optionCost } from '../engine/match';
 import { EFFECT_LABEL, POSITION_LABEL } from '../engine/resolve';
 
 type Props = {
@@ -13,7 +14,7 @@ type Props = {
 /** Полоска стоимости: цена действия показывается объёмом, а не числом (п. 4.4 ТЗ). */
 function CostBar({ cost }: { cost: number }) {
   const segments = 6;
-  const filled = Math.max(1, Math.round((cost / 12) * segments));
+  const filled = Math.max(1, Math.round((cost / 14) * segments));
   return (
     <span className="cost" aria-label="ціна по силах">
       {Array.from({ length: segments }, (_, i) => (
@@ -45,7 +46,7 @@ export function EpisodeCard({ episode, minute, state, player, onChoose }: Props)
                   )}
                 </span>
                 <span className="tag scale">{EFFECT_LABEL[ctx.effect]}</span>
-                <CostBar cost={o.staminaCost} />
+                <CostBar cost={optionCost(o)} />
               </span>
             </button>
           );

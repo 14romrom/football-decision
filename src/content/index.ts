@@ -1,7 +1,9 @@
 import episodesJson from './episodes.json';
 import playerJson from './player.json';
 import rosterJson from './roster.json';
+import flavorJson from './flavor.json';
 import { fillNamesDeep, type Roster } from '../engine/names';
+import type { FlavorRule } from '../engine/flavor';
 import type { Episode, Player } from '../engine/types';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
@@ -12,3 +14,4 @@ export const EPISODES = fillNamesDeep(episodesJson as unknown as Episode[], ROST
 /** Сырой контент — для проверок, что плейсхолдеры разрешаются и имена не зашиты. */
 export const EPISODES_RAW = episodesJson as unknown as Episode[];
 export const PLAYER = playerJson as unknown as Player;
+export const FLAVOR = flavorJson as FlavorRule[];

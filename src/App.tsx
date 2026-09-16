@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EPISODES, PLAYER, ROSTER } from './content';
+import { EPISODES, FLAVOR, PLAYER, ROSTER } from './content';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
 import {
@@ -19,7 +19,7 @@ type Stage =
   | { k: 'menu' }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number }
-  | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution }
+  | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[] }
   | { k: 'result'; summary: MatchSummary };
 
 type Pending =
@@ -60,8 +60,12 @@ function Game() {
   }, []);
 
   const start = useCallback(() => {
-    const fromUrl = Number(new URLSearchParams(location.search).get('seed'));
+    // ?seed= воспроизводит конкретный матч, но только первый: иначе «Ще матч»
+    // раз за разом даёт ту же игру, и кажется, что эпизодов всего десять.
+    const params = new URLSearchParams(location.search);
+    const fromUrl = Number(params.get('seed'));
     const seed = Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : Math.floor(Math.random() * 1e9);
+    if (params.has('seed')) history.replaceState(null, '', location.pathname + location.hash);
     const rng = makeRng(seed);
     const session = createMatch(`${Date.now().toString(36)}-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
     rngRef.current = rng;
@@ -121,13 +125,15 @@ function Game() {
       at: Date.now(),
     });
 
-    setStage({ k: 'roll', episode: stage.episode, option, res });
+    // Исход применяется сразу: реплика после броска должна знать счёт и минуту
+    // уже с учётом этого исхода. В ленту события попадают по кнопке «Далі».
+    const { events } = applyChoice(session, stage.episode, option, res, rng, FLAVOR);
+    setStage({ k: 'roll', episode: stage.episode, option, res, events });
   }, [stage]);
 
   const afterRoll = useCallback(() => {
     if (stage.k !== 'roll') return;
-    const { events } = applyChoice(sessionRef.current!, stage.episode, stage.option, stage.res, rngRef.current!);
-    setShown((s) => [...s, ...events]);
+    setShown((s) => [...s, ...stage.events]);
     proceed();
   }, [stage, proceed]);
 
@@ -177,7 +183,7 @@ function Game() {
           />
         )}
         {stage.k === 'roll' && (
-          <RollView option={stage.option} res={stage.res} onNext={afterRoll} />
+          <RollView option={stage.option} res={stage.res} flavor={stage.events.find((e) => e.kind === 'episode')?.flavor} onNext={afterRoll} />
         )}
       </MatchScreen>
       <DebugPanel session={session} />

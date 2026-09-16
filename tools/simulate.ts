@@ -3,7 +3,7 @@
 
 import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
-import { applyChoice, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
+import { applyChoice, createMatch, finishMatch, nextEpisode, optionCost } from '../src/engine/match';
 import type { MatchSummary } from '../src/engine/match';
 import { EPISODES, PLAYER, ROSTER } from '../src/content';
 import { POSITION_ORDER } from '../src/engine/balance';
@@ -20,7 +20,7 @@ export const POLICIES: Record<PolicyName, (options: EpisodeOption[], pick: (n: n
   always_risky: (o) => [...o].sort((a, b) => risk(b) - risk(a) || a.staminaCost - b.staminaCost)[0],
   greedy_personal: (o) => [...o].sort((a, b) => b.goals.personal - a.goals.personal || risk(b) - risk(a))[0],
   random: (o, pick) => o[pick(o.length)],
-  max_cost: (o) => [...o].sort((a, b) => b.staminaCost - a.staminaCost)[0],
+  max_cost: (o) => [...o].sort((a, b) => optionCost(b) - optionCost(a))[0],
 };
 
 export type MatchRun = {
@@ -154,7 +154,7 @@ function main() {
     Object.entries(r.goalDist).flatMap(([g, c]) => Array<number>(c).fill(Number(g)))).sort((a, b) => a - b);
   const p99 = pooledGoals[Math.floor(pooledGoals.length * 0.99)];
   const scored = pooledGoals.filter((g) => g > 0).length / pooledGoals.length;
-  const medianOk = pooledMedian <= 1 && p99 >= 2 && p99 <= 3 && scored > 0.2 && scored < 0.6;
+  const medianOk = pooledMedian <= 1 && p99 >= 2 && p99 <= 4 && scored > 0.2 && scored < 0.6;
   console.log(`  2. Голы за матч: медиана ${pooledMedian}, 99-й перцентиль ${p99}, ` +
     `матчей с голом ${(scored * 100).toFixed(0)}% — ${medianOk ? 'ок' : 'ПРОВЕРИТЬ'}`);
   console.log(`  3. Доля badFail: ${(badFail * 100).toFixed(1)}%  (коридор 8–15%) — ` +

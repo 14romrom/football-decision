@@ -31,6 +31,8 @@ export type TimelineEvent = {
   past?: string;
   /** Этот эпизод напрямую привёл к голу соперника. */
   causedConcede?: boolean;
+  /** Ироничная реплика по ситуации после исхода (см. engine/flavor.ts). */
+  flavor?: string;
 };
 
 export type MatchStats = {
@@ -108,7 +110,8 @@ export type Episode = {
 export type ModLine = { label: string; value: number };
 
 export type Resolution = {
-  roll: number;             // сырой d20
+  rawRoll: number;          // что выпало на кубике
+  roll: number;             // после планки формы риска (DIE_FLOOR); это и показываем
   attrMod: number;
   mods: ModLine[];          // контекстные модификаторы, включая attrMod-строку
   totalScore: number;

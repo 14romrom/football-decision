@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import type { EpisodeOption, Resolution } from '../engine/types';
 import { EFFECT_LABEL, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 
-type Props = { option: EpisodeOption; res: Resolution; onNext: () => void };
+type Props = { option: EpisodeOption; res: Resolution; flavor?: string; onNext: () => void };
 
 // Бросок должен быть событием, а не обновлением страницы: сначала пауза,
 // потом кубик, потом объяснение модификаторов, и только затем — исход.
 const STEP_DELAYS = [900, 700, 600];
 
-export function RollView({ option, res, onNext }: Props) {
+export function RollView({ option, res, flavor, onNext }: Props) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function RollView({ option, res, onNext }: Props) {
       </div>
 
       <div className={`die ${step >= 1 ? 'shown' : 'rolling'}`}>
-        {step >= 1 ? res.roll : '…'}
+        {step >= 1 ? res.rawRoll : '…'}
       </div>
 
       {step >= 2 && (
@@ -49,6 +49,7 @@ export function RollView({ option, res, onNext }: Props) {
         <>
           <div className={`tier tier-${res.tier}`}>{TIER_LABEL[res.tier]}</div>
           <p className="outcome">{outcome.text}</p>
+          {flavor && <p className="flavor">{flavor}</p>}
           <button className="primary" onClick={onNext}>Далі</button>
         </>
       )}

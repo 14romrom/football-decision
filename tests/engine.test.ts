@@ -1,0 +1,166 @@
+import { describe, it, expect } from 'vitest';
+import { makeRng } from '../src/engine/rng';
+import { attrMod, computeContext } from '../src/engine/context';
+import { tierForScore } from '../src/engine/resolve';
+import { THRESHOLDS } from '../src/engine/balance';
+import type { EpisodeOption, MatchState, Player } from '../src/engine/types';
+
+const player: Player = {
+  name: 'Тест',
+  position: 'AM',
+  attrs: { finishing: 50, passing: 50, dribbling: 50, pace: 50, strength: 50, defending: 50, composure: 50 },
+};
+
+function state(over: Partial<MatchState> = {}): MatchState {
+  return {
+    minute: 20, scoreUs: 0, scoreThem: 0,
+    stamina: 55, composureNow: 60, coachTrust: 55, fanHype: 45, momentum: 0,
+    stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
+    flags: [], log: [],
+    ...over,
+  };
+}
+
+function option(over: Partial<EpisodeOption> = {}): EpisodeOption {
+  return {
+    id: 'o', label: 'o', past: 'o',
+    attribute: 'passing', basePosition: 'risky', effect: 'standard',
+    staminaCost: 5, goals: { team: 1, personal: 1 },
+    outcomes: {
+      clean: { text: '', recap: '' }, cost: { text: '', recap: '' },
+      fail: { text: '', recap: '' }, badFail: { text: '', recap: '' },
+    },
+    ...over,
+  };
+}
+
+describe('attrMod', () => {
+  it('даёт 0 на середине шкалы и шаг на каждые 5 пунктов', () => {
+    expect(attrMod(50)).toBe(0);
+    expect(attrMod(54)).toBe(0);
+    expect(attrMod(55)).toBe(1);
+    expect(attrMod(45)).toBe(-1);
+    expect(attrMod(65)).toBe(3);
+  });
+  it('зажат в -9..+9', () => {
+    expect(attrMod(1)).toBe(-9);
+    expect(attrMod(99)).toBe(9);
+  });
+});
+
+describe('пороги исходов', () => {
+  // Конкретные числа подобраны балансным прогоном (п. 11 ТЗ) и живут в balance.ts;
+  // тест сторожит не их значения, а то, что границы читаются ровно по таблице.
+  it('границы читаются по таблице balance.ts, без смещений на единицу', () => {
+    for (const pos of ['controlled', 'risky', 'desperate'] as const) {
+      const t = THRESHOLDS[pos];
+      expect(tierForScore(pos, t.badFail)).toBe('badFail');
+      expect(tierForScore(pos, t.badFail + 1)).toBe('fail');
+      expect(tierForScore(pos, t.fail)).toBe('fail');
+      expect(tierForScore(pos, t.fail + 1)).toBe('cost');
+      expect(tierForScore(pos, t.cost)).toBe('cost');
+      expect(tierForScore(pos, t.cost + 1)).toBe('clean');
+    }
+  });
+
+  it('чем рискованнее форма, тем труднее чистый успех и шире полоса неудач', () => {
+    expect(THRESHOLDS.controlled.cost).toBeLessThan(THRESHOLDS.risky.cost);
+    expect(THRESHOLDS.risky.cost).toBeLessThan(THRESHOLDS.desperate.cost);
+    expect(THRESHOLDS.controlled.fail).toBeLessThan(THRESHOLDS.risky.fail);
+    expect(THRESHOLDS.risky.fail).toBeLessThan(THRESHOLDS.desperate.fail);
+    expect(THRESHOLDS.controlled.badFail).toBeLessThanOrEqual(THRESHOLDS.desperate.badFail);
+  });
+
+  it('каждая форма риска даёт все четыре уровня — бинарных исходов нет', () => {
+    for (const pos of ['controlled', 'risky', 'desperate'] as const) {
+      const tiers = new Set<string>();
+      for (let s = -10; s <= 35; s++) tiers.add(tierForScore(pos, s));
+      expect(tiers).toEqual(new Set(['badFail', 'fail', 'cost', 'clean']));
+      const t = THRESHOLDS[pos];
+      expect(t.badFail).toBeLessThan(t.fail);
+      expect(t.fail).toBeLessThan(t.cost);
+    }
+  });
+});
+
+describe('контекстные модификаторы', () => {
+  it('свежесть даёт +1, усталость −2, севшие ноги −4', () => {
+    expect(computeContext(state({ stamina: 80 }), player, option(), 'attack').flat).toBe(1);
+    expect(computeContext(state({ stamina: 55 }), player, option(), 'attack').flat).toBe(0);
+    expect(computeContext(state({ stamina: 30 }), player, option(), 'attack').flat).toBe(-2);
+    expect(computeContext(state({ stamina: 10 }), player, option(), 'attack').flat).toBe(-4);
+  });
+
+  it('momentum входит в score как есть', () => {
+    expect(computeContext(state({ momentum: 3 }), player, option(), 'attack').flat).toBe(3);
+    expect(computeContext(state({ momentum: -2 }), player, option(), 'attack').flat).toBe(-2);
+  });
+
+  it('хладнокровие работает только после 80-й минуты', () => {
+    expect(computeContext(state({ minute: 70, composureNow: 90 }), player, option(), 'attack').flat).toBe(0);
+    expect(computeContext(state({ minute: 85, composureNow: 90 }), player, option(), 'attack').flat).toBe(2);
+    expect(computeContext(state({ minute: 85, composureNow: 10 }), player, option(), 'attack').flat).toBe(-2);
+  });
+
+  it('жёлтая мешает только в защитных действиях', () => {
+    const booked = state({ flags: ['booked'] });
+    expect(computeContext(booked, player, option({ attribute: 'defending' }), 'attack').flat).toBe(-2);
+    expect(computeContext(booked, player, option({ attribute: 'passing' }), 'defense').flat).toBe(-2);
+    expect(computeContext(booked, player, option({ attribute: 'passing' }), 'attack').flat).toBe(0);
+  });
+
+  it('модификаторы показываются строками — игроку есть что прочитать после броска', () => {
+    const ctx = computeContext(state({ stamina: 85, momentum: 2 }), player, option(), 'attack');
+    expect(ctx.mods.map((m) => m.label)).toEqual(['свежесть', 'кураж']);
+  });
+});
+
+describe('сдвиги формы риска', () => {
+  it('севшие ноги делают дорогую опцию отчаянной', () => {
+    const ctx = computeContext(state({ stamina: 20 }), player, option({ staminaCost: 10 }), 'attack');
+    expect(ctx.position).toBe('desperate');
+  });
+
+  it('дешёвая опция при севших ногах форму не меняет', () => {
+    const ctx = computeContext(state({ stamina: 20 }), player, option({ staminaCost: 4 }), 'attack');
+    expect(ctx.position).toBe('risky');
+  });
+
+  it('нервы в концовке при отставании: риск выше, но и масштаб выше', () => {
+    const s = state({ minute: 86, scoreUs: 0, scoreThem: 1 });
+    const ctx = computeContext(s, player, option({ goals: { team: 1, personal: 3 }, effect: 'standard' }), 'attack');
+    expect(ctx.position).toBe('desperate');
+    expect(ctx.effect).toBe('great');
+  });
+
+  it('низкое доверие тренера не трогает надёжные опции', () => {
+    const s = state({ coachTrust: 20 });
+    expect(computeContext(s, player, option({ basePosition: 'controlled' }), 'attack').position).toBe('controlled');
+    expect(computeContext(s, player, option({ basePosition: 'risky' }), 'attack').position).toBe('desperate');
+  });
+
+  it('несколько условий сразу сдвигают позицию не больше чем на шаг', () => {
+    const s = state({ stamina: 10, coachTrust: 10, minute: 86, scoreUs: 0, scoreThem: 2 });
+    const ctx = computeContext(s, player, option({ basePosition: 'controlled', staminaCost: 12, goals: { team: 1, personal: 3 } }), 'attack');
+    expect(ctx.position).toBe('risky');
+  });
+});
+
+describe('rng', () => {
+  it('воспроизводится по сиду', () => {
+    const a = makeRng(42); const b = makeRng(42);
+    expect([a.d20(), a.d20(), a.d20()]).toEqual([b.d20(), b.d20(), b.d20()]);
+  });
+
+  it('d20 не выходит за 1..20 и покрывает края', () => {
+    const rng = makeRng(7);
+    const seen = new Set<number>();
+    for (let i = 0; i < 20000; i++) {
+      const v = rng.d20();
+      expect(v).toBeGreaterThanOrEqual(1);
+      expect(v).toBeLessThanOrEqual(20);
+      seen.add(v);
+    }
+    expect(seen.size).toBe(20);
+  });
+});

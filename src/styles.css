@@ -1,0 +1,183 @@
+/* Вид намеренно черновой: текст, кнопки, полоски. Никакого поля и спрайтов —
+   если прототип держится только на оформлении, значит гипотеза не подтвердилась. */
+
+:root {
+  --bg: #12141a;
+  --panel: #1b1e26;
+  --line: #2b303c;
+  --ink: #e8e9ee;
+  --muted: #8d93a3;
+  --accent: #6fd08c;
+  --warn: #e0a34a;
+  --bad: #d9534f;
+  --hype: #7aa7ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#root {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 16px 16px 80px;
+}
+
+h1 { font-size: 22px; margin: 0 0 12px; }
+h2 { font-size: 15px; margin: 20px 0 8px; font-weight: 600; }
+p { margin: 0 0 12px; }
+.muted { color: var(--muted); font-size: 14px; }
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+button:hover { border-color: #444b5c; }
+button.primary { background: var(--accent); color: #10261a; border-color: var(--accent); font-weight: 600; }
+.link { color: var(--hype); font-size: 14px; text-decoration: none; }
+
+/* ——— меню ——— */
+.menu { padding-top: 60px; }
+.menu button { margin: 12px 12px 12px 0; }
+
+/* ——— шапка матча ——— */
+.scoreboard {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 10px;
+}
+.teams { font-size: 15px; }
+.teams b { font-size: 19px; margin: 0 6px; }
+.minute { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ——— ресурсы: объём вместо чисел ——— */
+.resources { display: grid; gap: 5px; margin-bottom: 10px; }
+.bar { display: grid; grid-template-columns: 62px 1fr; align-items: center; gap: 8px; }
+.bar-label { font-size: 12px; color: var(--muted); }
+.bar-track { height: 6px; background: #22262f; border-radius: 3px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; background: var(--accent); transition: width .4s ease; }
+.bar-fill.low { background: var(--bad); }
+.bar-fill.hype { background: var(--hype); }
+
+.momentum-dots { display: flex; gap: 4px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #22262f; }
+.dot.zero { background: #333a48; }
+.dot.on.plus { background: var(--accent); }
+.dot.on.minus { background: var(--bad); }
+
+.flags { display: flex; gap: 6px; margin-bottom: 8px; }
+.flag { font-size: 12px; padding: 2px 7px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); }
+.flag.warn { color: var(--warn); border-color: #4a3c22; }
+.coach-warning { font-size: 13px; color: var(--warn); margin-bottom: 10px; }
+
+/* ——— лента ——— */
+.feed { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.event { display: grid; grid-template-columns: 38px 1fr; gap: 8px; font-size: 14px; color: var(--muted); }
+.ev-minute { color: #5c6373; font-variant-numeric: tabular-nums; }
+.event.goalUs .ev-text { color: var(--accent); font-weight: 600; }
+.event.goalThem .ev-text { color: var(--bad); font-weight: 600; }
+.event.episode .ev-text { color: var(--ink); }
+.event.halftime .ev-text, .event.fulltime .ev-text { color: var(--ink); font-weight: 600; }
+.skip { display: block; width: 100%; color: var(--muted); font-size: 13px; }
+
+/* ——— карточка эпизода ——— */
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  padding: 14px; margin-top: 14px;
+}
+.card-minute { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+.setup { font-size: 16px; }
+.options { display: grid; gap: 8px; }
+.option { display: grid; gap: 6px; text-align: left; padding: 11px 12px; }
+.option-label { font-weight: 600; }
+.tags { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tag { font-size: 12px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); }
+.risk-controlled { color: var(--accent); border-color: #2c4636; }
+.risk-risky { color: var(--warn); border-color: #4a3c22; }
+.risk-desperate { color: var(--bad); border-color: #4d2a29; }
+.tag.scale { color: var(--muted); }
+.shift-mark { font-style: normal; margin-left: 4px; opacity: .8; cursor: help; }
+.cost { display: inline-flex; gap: 2px; margin-left: auto; }
+.cost .seg { width: 7px; height: 7px; border-radius: 1px; background: #262b35; }
+.cost .seg.on { background: #6c7488; }
+
+/* ——— экран броска ——— */
+.roll { text-align: center; }
+.roll-head { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.die {
+  font-size: 54px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums;
+  margin: 6px 0 12px;
+}
+.die.rolling { color: var(--muted); animation: pulse .5s ease-in-out infinite alternate; }
+@keyframes pulse { from { opacity: .35; } to { opacity: 1; } }
+
+.mods { list-style: none; padding: 0; margin: 0 auto 14px; max-width: 280px; }
+.mod { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; color: var(--muted); }
+.mod.plus b { color: var(--accent); }
+.mod.minus b { color: var(--bad); }
+
+.tier { font-size: 26px; font-weight: 700; margin: 6px 0 10px; }
+.tier-clean { color: var(--accent); }
+.tier-cost { color: var(--warn); }
+.tier-fail { color: var(--muted); }
+.tier-badFail { color: var(--bad); }
+.outcome { font-size: 16px; text-align: left; }
+
+/* ——— итог ——— */
+.result { padding-top: 20px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px; text-align: center; }
+.stat-value { display: block; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat-label { display: block; font-size: 11px; color: var(--muted); }
+
+.recap p { font-size: 16px; }
+.recap .recap-last { color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+
+.ratings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 6px; }
+.rating { text-align: center; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.rating-value { display: block; font-size: 30px; font-weight: 700; }
+.rating-label { font-size: 12px; color: var(--muted); }
+.rating.coach .rating-value { color: var(--accent); }
+.rating.fan .rating-value { color: var(--hype); }
+.gap-note { text-align: center; color: var(--muted); font-size: 14px; }
+.actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+
+/* ——— /stats ——— */
+.stats-screen { padding-top: 20px; }
+.ep-stats { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.ep-stats.broken { border-color: #4d2a29; }
+.ep-stats h2 { margin-top: 0; }
+.badge { margin-left: 8px; font-size: 11px; color: var(--bad); border: 1px solid #4d2a29; border-radius: 10px; padding: 1px 7px; }
+.setup-quote { font-style: italic; }
+.share-row { display: grid; grid-template-columns: 150px 1fr 44px 48px; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; }
+.share-track { height: 8px; background: #22262f; border-radius: 4px; overflow: hidden; }
+.share-fill { display: block; height: 100%; background: var(--hype); }
+.share-fill.over { background: var(--bad); }
+.share-num, .share-time { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.warn-line { color: var(--warn); font-size: 12px; margin: 6px 0 0; }
+
+/* ——— debug ——— */
+.debug { position: fixed; right: 10px; bottom: 10px; z-index: 10; }
+.debug-toggle { font-size: 11px; padding: 4px 8px; opacity: .5; }
+.debug.open .debug-toggle { opacity: 1; }
+.debug dl {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 10px; margin: 6px 0 0; font-size: 12px; max-width: 260px;
+}
+.debug dl div { display: flex; justify-content: space-between; gap: 10px; }
+.debug dt { color: var(--muted); }
+.debug dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 480px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .share-row { grid-template-columns: 110px 1fr 40px 44px; }
+}

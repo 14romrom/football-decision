@@ -1,0 +1,56 @@
+import type { Episode, EpisodeOption, MatchState, Player } from '../engine/types';
+import { computeContext } from '../engine/context';
+import { EFFECT_LABEL, POSITION_LABEL } from '../engine/resolve';
+
+type Props = {
+  episode: Episode;
+  minute: number;
+  state: MatchState;
+  player: Player;
+  onChoose: (option: EpisodeOption) => void;
+};
+
+/** Полоска стоимости: цена действия показывается объёмом, а не числом (п. 4.4 ТЗ). */
+function CostBar({ cost }: { cost: number }) {
+  const segments = 6;
+  const filled = Math.max(1, Math.round((cost / 12) * segments));
+  return (
+    <span className="cost" aria-label="цена по силам">
+      {Array.from({ length: segments }, (_, i) => (
+        <i key={i} className={i < filled ? 'seg on' : 'seg'} />
+      ))}
+    </span>
+  );
+}
+
+export function EpisodeCard({ episode, minute, state, player, onChoose }: Props) {
+  return (
+    <div className="card episode">
+      <div className="card-minute">{minute}′</div>
+      <p className="setup">{episode.setup}</p>
+      <div className="options">
+        {episode.options.map((o) => {
+          // Показываем ярлыки уже со сдвигами от контекста: если ноги встали,
+          // игрок должен видеть, что надёжный вариант перестал быть надёжным.
+          const ctx = computeContext(state, player, o, episode.phase);
+          const shifted = ctx.position !== o.basePosition;
+          return (
+            <button key={o.id} className="option" onClick={() => onChoose(o)}>
+              <span className="option-label">{o.label}</span>
+              <span className="tags">
+                <span className={`tag risk risk-${ctx.position}`}>
+                  {POSITION_LABEL[ctx.position]}
+                  {shifted && (
+                    <i className="shift-mark" title="форма риска сместилась из-за твоего состояния">↯</i>
+                  )}
+                </span>
+                <span className="tag scale">{EFFECT_LABEL[ctx.effect]}</span>
+                <CostBar cost={o.staminaCost} />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

@@ -1,4 +1,4 @@
-// Единственный бросок в игре: d20 + модификатор атрибута + контекст.
+// Единственный бросок в игре: 2d10 + модификатор атрибута + контекст.
 // Функция чистая — rng приходит аргументом, поэтому её можно прогнать миллион раз.
 
 import { DIE_FLOOR, THRESHOLDS } from './balance';
@@ -24,7 +24,7 @@ export function resolveOption(
   cond: MatchConditions = neutralConditions(),
 ): Resolution {
   const ctx = computeContext(state, player, option, phase, cond);
-  const rawRoll = rng.d20();
+  const rawRoll = rng.roll();
   const roll = Math.max(rawRoll, DIE_FLOOR[ctx.position]);
   // Планка показывается как модификатор: игрок видит, что выпало, и за что добавили.
   const mods = rawRoll < roll ? [{ label: 'надійний хід', value: roll - rawRoll }, ...ctx.mods] : ctx.mods;

@@ -1,14 +1,29 @@
 // Модель данных прототипа. Здесь нет React и нет случайности —
 // всё, что ниже, должно одинаково работать в браузере и в балансном прогоне.
 
+/** Десять атрибутов в трёх группах — техника, физика, голова (схема Football Manager,
+ *  игроки её узнают). Модификатор к броску считается из значения, см. ATTR_MOD. */
 export type Attribute =
-  | 'finishing' | 'passing' | 'dribbling' | 'pace'
-  | 'strength' | 'defending' | 'composure';
+  | 'finishing' | 'passing' | 'dribbling' | 'first_touch'
+  | 'pace' | 'strength' | 'stamina'
+  | 'composure' | 'vision' | 'positioning';
+
+export const ATTRIBUTE_GROUPS: { title: string; attrs: Attribute[] }[] = [
+  { title: 'Техніка', attrs: ['finishing', 'passing', 'dribbling', 'first_touch'] },
+  { title: 'Фізика', attrs: ['pace', 'strength', 'stamina'] },
+  { title: 'Голова', attrs: ['composure', 'vision', 'positioning'] },
+];
+
+export const ATTRIBUTE_LABEL: Record<Attribute, string> = {
+  finishing: 'удар', passing: 'пас', dribbling: 'дриблінг', first_touch: 'перший дотик',
+  pace: 'швидкість', strength: 'корпус', stamina: 'витривалість',
+  composure: 'холоднокровність', vision: 'бачення поля', positioning: 'позиція',
+};
 
 export type Player = {
   name: string;
   position: 'CM' | 'AM' | 'ST' | 'LW';
-  attrs: Record<Attribute, number>;   // 1..99, старт 45..65
+  attrs: Record<Attribute, number>;   // 1..99, старт 45..65; модификатор — attrMod()
 };
 
 /** Форма риска: то, что игрок видит как ярлык, а движок — как таблицу порогов. */

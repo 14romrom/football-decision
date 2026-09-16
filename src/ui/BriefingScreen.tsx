@@ -1,5 +1,7 @@
 import type { MatchConditions } from '../engine/conditions';
 import { signatureAttrs } from '../engine/conditions';
+import { attrMod } from '../engine/context';
+import { ATTRIBUTE_LABEL } from '../engine/types';
 import type { Attribute, Player } from '../engine/types';
 import type { Opponent } from '../content';
 
@@ -8,8 +10,9 @@ import type { Opponent } from '../content';
 // и есть способ проверить, что условия ощущаются, а не просто показываются.
 
 const ATTR_GEN: Record<Attribute, string> = {
-  finishing: 'удар', passing: 'пас', dribbling: 'дриблінг', pace: 'швидкість',
-  strength: 'боротьбу', defending: 'відбір', composure: 'холоднокровність',
+  finishing: 'удар', passing: 'пас', dribbling: 'дриблінг', first_touch: 'перший дотик',
+  pace: 'швидкість', strength: 'боротьбу', stamina: 'витривалість',
+  composure: 'холоднокровність', vision: 'бачення поля', positioning: 'позиційну гру',
 };
 
 const WEATHER: Record<MatchConditions['weather'], { title: string; note: string }> = {
@@ -45,6 +48,12 @@ function toneLines(c: MatchConditions): { title: string; note: string } {
   return { title, note: form + ' ' + legs };
 }
 
+function weakestLine(player: Player): string {
+  const keys = Object.keys(player.attrs) as Attribute[];
+  return keys.sort((a, b) => player.attrs[a] - player.attrs[b]).slice(0, 2)
+    .map((a) => `${ATTRIBUTE_LABEL[a]} +${attrMod(player.attrs[a])}`).join(', ');
+}
+
 type Props = { conditions: MatchConditions; opponent: Opponent; player: Player; onStart: () => void };
 
 export function BriefingScreen({ conditions, opponent, player, onStart }: Props) {
@@ -63,6 +72,10 @@ export function BriefingScreen({ conditions, opponent, player, onStart }: Props)
     <div className="briefing">
       <h1>Перед матчем</h1>
       <dl className="conditions">
+        <div><dt>Ти</dt><dd>
+          <b>{player.name}.</b> {signatureAttrs(player).map((a) => `${ATTRIBUTE_LABEL[a]} +${attrMod(player.attrs[a])}`).join(', ')} —
+          твоє; {weakestLine(player)} — ні. <a className="link" href="#/player">Картка</a>
+        </dd></div>
         <div><dt>Суперник</dt><dd><b>«{opponent.name.nom}»</b> — {opponent.blurb}. {strength}</dd></div>
         <div><dt>Стадіон</dt><dd><b>{venue.title}.</b> {venue.note}</dd></div>
         <div><dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd></div>

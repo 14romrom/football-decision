@@ -5,9 +5,12 @@
     "finishing": 58,
     "passing": 62,
     "dribbling": 60,
+    "first_touch": 59,
     "pace": 55,
     "strength": 48,
-    "defending": 46,
-    "composure": 52
+    "stamina": 54,
+    "composure": 52,
+    "vision": 61,
+    "positioning": 47
   }
 }

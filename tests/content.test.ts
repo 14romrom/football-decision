@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { EPISODES, PLAYER } from '../src/content';
 import { BALANCE } from '../src/engine/balance';
-import type { Episode, Tier } from '../src/engine/types';
+import type { Attribute, Episode, Tier } from '../src/engine/types';
 
 const TIERS: Tier[] = ['badFail', 'fail', 'cost', 'clean'];
-const ATTRS = ['finishing', 'passing', 'dribbling', 'pace', 'strength', 'defending', 'composure'];
+const ATTRS: Attribute[] = ['finishing', 'passing', 'dribbling', 'first_touch', 'pace', 'strength', 'stamina', 'composure', 'vision', 'positioning'];
 
 /** Эпизод с конфликтом целей: есть явно командный вариант и явно карьерный. */
 function hasGoalConflict(e: Episode): boolean {
@@ -99,6 +99,11 @@ describe('связность и покрытие расписания', () => {
 });
 
 describe('стартовый футболист', () => {
+  it('каждый атрибут используется хотя бы одной опцией — иначе он мёртвый на карточке', () => {
+    const used = new Set(EPISODES.flatMap((e) => e.options.map((o) => o.attribute)));
+    for (const a of ATTRS) if (a !== 'stamina') expect(used.has(a), a).toBe(true);   // витривалість работает через расход сил
+  });
+
   it('атрибуты в стартовом коридоре 45..65', () => {
     for (const [k, v] of Object.entries(PLAYER.attrs)) {
       expect(v, k).toBeGreaterThanOrEqual(45);

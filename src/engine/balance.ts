@@ -3,11 +3,12 @@
 
 import type { Position, Tier } from './types';
 
-/** Верхние границы tier по итоговому score. clean — всё, что выше cost. */
+/** Верхние границы tier по итоговому score. clean — всё, что выше cost.
+ *  Подобраны под 2d10 (колокол: P(≤6)=15%, P(≤11)=55%, P(≤15)=85%) и средний бонус атрибута +2. */
 export const THRESHOLDS: Record<Position, { badFail: number; fail: number; cost: number }> = {
-  controlled: { badFail: 3, fail: 8, cost: 12 },
-  risky: { badFail: 3, fail: 11, cost: 15 },
-  desperate: { badFail: 4, fail: 13, cost: 18 },
+  controlled: { badFail: 5, fail: 9, cost: 12 },
+  risky: { badFail: 6, fail: 11, cost: 15 },
+  desperate: { badFail: 7, fail: 13, cost: 17 },
 };
 
 /** Модификатор атрибута: (attr − base) / step, всегда ≥ 0. После первого плейтеста —
@@ -17,18 +18,24 @@ export const ATTR_MOD = { base: 45, step: 4, max: 12 };
 
 /** Ниже этого кубик надёжного варианта не падает: смысл «упевнено» — что единица
  *  на нём не выпадает. Катастрофа остаётся возможной только через минусы контекста.
- *  Рискованные формы играют честный d20. */
-export const DIE_FLOOR: Record<Position, number> = { controlled: 4, risky: 1, desperate: 1 };
+ *  Рискованные формы играют честные 2d10. */
+export const DIE_FLOOR: Record<Position, number> = { controlled: 6, risky: 2, desperate: 2 };
 
+/** Кураж симметричный: вниз и вверх одинаковой крутизны. «Вийшло, але…» при минусе
+ *  возвращает +1 (см. applyChoice) — частичный успех останавливает серию. */
 export const MOMENTUM_BY_TIER: Record<Tier, number> = {
-  clean: 1, cost: 0, fail: -1, badFail: -2,
+  clean: 1, cost: 0, fail: -1, badFail: -1,
 };
+export const MOMENTUM_COST_RECOVERY = 1;
 
 export const BALANCE = {
   staminaStart: 100,
   composureStart: 60,
   coachTrustStart: 55,
   fanHypeStart: 45,
+
+  /** Витривалість: каждый пункт модификатора снижает расход сил на эту долю. */
+  staminaAttrDrainStep: 0.05,
 
   /** Пассивный расход стамины за игровую минуту.
    *  Без него критерий приёмки «на самых дорогих опциях стамина кончается
@@ -45,8 +52,10 @@ export const BALANCE = {
 
   contextMod: {
     staminaHigh: 1,        // stamina >= 70
-    staminaLow: -2,        // stamina 20..39
-    staminaCritical: -4,   // stamina < 20
+    staminaLow: -2,        // stamina 20..39, для варианта полной цены
+    staminaCritical: -4,   // stamina < 20, для варианта полной цены
+    fatigueFullCost: 8,    // от этой цены штраф усталости полный, 5..7 — половина, дешевле — четверть
+    fatigueHalfCost: 5,
     composureLateGood: 2,  // composureNow >= 70 и минута > 80
     composureLateBad: -2,  // composureNow < 30 и минута > 80
     bookedDefending: -2,   // флаг 'booked' на защитном действии

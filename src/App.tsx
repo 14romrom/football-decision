@@ -4,6 +4,7 @@ import { generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, recentEpisodes, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
 import { BriefingScreen } from './ui/BriefingScreen';
+import { PlayerCard } from './ui/PlayerCard';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
 import {
@@ -165,6 +166,7 @@ function Game() {
           Тренер і трибуни хочуть від тебе різного. Сили майже не відновлюються — хіба що в перерві.
         </p>
         <button className="primary" onClick={start}>До матчу</button>
+        <a className="link" href="#/player">Картка гравця</a>
         <a className="link" href="#/stats">Розподіл виборів</a>
       </div>
     );
@@ -230,5 +232,7 @@ export function App() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
-  return route.startsWith('#/stats') ? <StatsScreen /> : <Game />;
+  if (route.startsWith('#/stats')) return <StatsScreen />;
+  if (route.startsWith('#/player')) return <PlayerCard player={PLAYER} onBack={() => { location.hash = '#/'; }} />;
+  return <Game />;
 }

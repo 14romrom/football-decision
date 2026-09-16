@@ -1,4 +1,4 @@
-import type { Episode, EpisodeOption, MatchState, Player } from '../engine/types';
+import { ATTRIBUTE_LABEL, type Episode, type EpisodeOption, type MatchState, type Player } from '../engine/types';
 import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
 import { optionCost } from '../engine/match';
@@ -41,6 +41,10 @@ export function EpisodeCard({ episode, minute, state, player, conditions, onChoo
             <button key={o.id} className="option" onClick={() => onChoose(o)}>
               <span className="option-label">{o.label}</span>
               <span className="tags">
+                {/* Чем ты это делаешь и насколько хорошо: скилл виден до броска, как на листе персонажа. */}
+                <span className={`tag attr ${ctx.attrMod >= 3 ? 'strong' : ctx.attrMod === 0 ? 'weak' : ''}`}>
+                  {ATTRIBUTE_LABEL[o.attribute]} +{ctx.attrMod}
+                </span>
                 <span className={`tag risk risk-${ctx.position}`}>
                   {POSITION_LABEL[ctx.position]}
                   {shifted && (

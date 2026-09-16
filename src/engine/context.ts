@@ -4,17 +4,7 @@
 
 import { ATTR_MOD, BALANCE, POSITION_ORDER } from './balance';
 import { neutralConditions, signatureAttrs, type MatchConditions } from './conditions';
-import type { Attribute, Effect, EpisodeOption, Episode, MatchState, ModLine, Player, Position } from './types';
-
-const ATTR_LABEL: Record<Attribute, string> = {
-  finishing: 'удар',
-  passing: 'пас',
-  dribbling: 'дриблінг',
-  pace: 'швидкість',
-  strength: 'корпус',
-  defending: 'відбір',
-  composure: 'холоднокровність',
-};
+import { ATTRIBUTE_LABEL, type Effect, type EpisodeOption, type Episode, type MatchState, type ModLine, type Player, type Position } from './types';
 
 export function attrMod(attr: number): number {
   const { base, step, max } = ATTR_MOD;
@@ -34,7 +24,20 @@ function shiftEffect(e: Effect, steps: number): Effect {
 }
 
 function isDefensiveAction(option: EpisodeOption, phase: Episode['phase']): boolean {
-  return phase === 'defense' || option.attribute === 'defending' || option.attribute === 'strength';
+  return phase === 'defense' || option.attribute === 'positioning' || option.attribute === 'strength';
+}
+
+/** Штраф усталости: уровень по силам × доля по цене варианта. */
+export function fatiguePenalty(stamina: number, cost: number): ModLine {
+  const c = BALANCE.contextMod;
+  const base = stamina < 20 ? c.staminaCritical : stamina < 40 ? c.staminaLow : 0;
+  if (base === 0) return { label: '', value: 0 };
+  const share = cost >= c.fatigueFullCost ? 1 : cost >= c.fatigueHalfCost ? 0.5 : 0.25;
+  const value = -Math.max(1, Math.round(-base * share));
+  const label = stamina < 20
+    ? (share === 1 ? 'ноги стали' : 'ноги стали, але це дешево')
+    : (share === 1 ? 'втомився' : 'втомився, але це дешево');
+  return { label, value };
 }
 
 export type ContextResult = {
@@ -56,14 +59,17 @@ export function computeContext(
   // Строка атрибута показывается всегда, со значением: игрок должен видеть, что его скилл
   // участвует в броске, даже когда бонус нулевой.
   const am = attrMod(player.attrs[option.attribute]);
-  mods.push({ label: ATTR_LABEL[option.attribute] + ' (' + player.attrs[option.attribute] + ')', value: am });
+  mods.push({ label: ATTRIBUTE_LABEL[option.attribute] + ' (' + player.attrs[option.attribute] + ')', value: am });
 
   const c = BALANCE.contextMod;
 
+  // Истощение — уровнями, и штраф зависит от цены варианта: уставшие ноги мешают
+  // спринту, а не простому пасу. На нулевых силах дешёвое решение остаётся рабочим —
+  // это и делает «берегти сили» тактикой, а не приговором (плейтест: 8 из 9 решений
+  // при силах ≤10 проваливались, потому что штраф был одинаковым для всего).
+  const tired = fatiguePenalty(state.stamina, option.staminaCost);
   if (state.stamina >= 70) mods.push({ label: 'свіжість', value: c.staminaHigh });
-  else if (state.stamina >= 40) { /* 40..69 — без модификатора */ }
-  else if (state.stamina >= 20) mods.push({ label: 'втомився', value: c.staminaLow });
-  else mods.push({ label: 'ноги стали', value: c.staminaCritical });
+  else if (tired.value !== 0) mods.push(tired);
 
   if (state.momentum !== 0) {
     const m = Math.max(c.momentumMin, Math.min(c.momentumMax, state.momentum));

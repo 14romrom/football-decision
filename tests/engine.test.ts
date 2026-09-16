@@ -10,7 +10,7 @@ const player: Player = {
   name: 'Тест',
   position: 'AM',
   // 45 — нулевой модификатор атрибута: контекстные тесты смотрят только на контекст
-  attrs: { finishing: 45, passing: 45, dribbling: 45, pace: 45, strength: 45, defending: 45, composure: 45 },
+  attrs: { finishing: 45, passing: 45, dribbling: 45, first_touch: 45, pace: 45, strength: 45, stamina: 45, composure: 45, vision: 45, positioning: 45 },
 };
 
 function state(over: Partial<MatchState> = {}): MatchState {
@@ -87,11 +87,19 @@ describe('пороги исходов', () => {
 });
 
 describe('контекстные модификаторы', () => {
-  it('свежесть даёт +1, усталость −2, севшие ноги −4', () => {
-    expect(computeContext(state({ stamina: 80 }), player, option(), 'attack').flat).toBe(1);
-    expect(computeContext(state({ stamina: 55 }), player, option(), 'attack').flat).toBe(0);
-    expect(computeContext(state({ stamina: 30 }), player, option(), 'attack').flat).toBe(-2);
-    expect(computeContext(state({ stamina: 10 }), player, option(), 'attack').flat).toBe(-4);
+  it('свежесть даёт +1; усталость −2 и севшие ноги −4 — для дорогого варианта', () => {
+    const expensive = option({ staminaCost: 12 });
+    expect(computeContext(state({ stamina: 80 }), player, expensive, 'attack').flat).toBe(1);
+    expect(computeContext(state({ stamina: 55 }), player, expensive, 'attack').flat).toBe(0);
+    expect(computeContext(state({ stamina: 30 }), player, expensive, 'attack').flat).toBe(-2);
+    expect(computeContext(state({ stamina: 10 }), player, expensive, 'attack').flat).toBe(-4);
+  });
+
+  it('истощение бьёт по цене варианта: дешёвое решение на нулевых силах почти не страдает', () => {
+    expect(computeContext(state({ stamina: 5 }), player, option({ staminaCost: 12 }), 'attack').flat).toBe(-4);
+    expect(computeContext(state({ stamina: 5 }), player, option({ staminaCost: 6 }), 'attack').flat).toBe(-2);
+    expect(computeContext(state({ stamina: 5 }), player, option({ staminaCost: 2 }), 'attack').flat).toBe(-1);
+    expect(computeContext(state({ stamina: 30 }), player, option({ staminaCost: 3 }), 'attack').flat).toBe(-1);
   });
 
   it('кураж входит в score до +3, провалы давят не ниже −2', () => {
@@ -108,7 +116,7 @@ describe('контекстные модификаторы', () => {
 
   it('жёлтая мешает только в защитных действиях', () => {
     const booked = state({ flags: ['booked'] });
-    expect(computeContext(booked, player, option({ attribute: 'defending' }), 'attack').flat).toBe(-2);
+    expect(computeContext(booked, player, option({ attribute: 'positioning' }), 'attack').flat).toBe(-2);
     expect(computeContext(booked, player, option({ attribute: 'passing' }), 'defense').flat).toBe(-2);
     expect(computeContext(booked, player, option({ attribute: 'passing' }), 'attack').flat).toBe(0);
   });
@@ -153,25 +161,30 @@ describe('сдвиги формы риска', () => {
 describe('rng', () => {
   it('воспроизводится по сиду', () => {
     const a = makeRng(42); const b = makeRng(42);
-    expect([a.d20(), a.d20(), a.d20()]).toEqual([b.d20(), b.d20(), b.d20()]);
+    expect([a.roll(), a.roll(), a.roll()]).toEqual([b.roll(), b.roll(), b.roll()]);
   });
 
-  it('d20 не выходит за 1..20 и покрывает края', () => {
-    const rng = makeRng(7);
+  it('2d10 не выходит за 2..20, покрывает края и держит колокол', () => {
+    const rng = makeRng(42);
     const seen = new Set<number>();
-    for (let i = 0; i < 20000; i++) {
-      const v = rng.d20();
-      expect(v).toBeGreaterThanOrEqual(1);
+    let mid = 0;
+    const n = 20000;
+    for (let i = 0; i < n; i++) {
+      const v = rng.roll();
+      expect(v).toBeGreaterThanOrEqual(2);
       expect(v).toBeLessThanOrEqual(20);
       seen.add(v);
+      if (v >= 8 && v <= 14) mid++;
     }
-    expect(seen.size).toBe(20);
+    expect(seen.has(2)).toBe(true);
+    expect(seen.has(20)).toBe(true);
+    expect(mid / n).toBeGreaterThan(0.55);   // у d20 было бы 0.35
   });
 });
 
 describe('планка кубика', () => {
   const fixedDie = (n: number): Rng => ({
-    ...makeRng(1), d20: () => n,
+    ...makeRng(1), roll: () => n,
   });
 
   it('на надёжном варианте единица не выпадает — кубик поднимается до планки и это видно строкой', () => {
@@ -182,10 +195,10 @@ describe('планка кубика', () => {
     expect(res.totalScore).toBe(DIE_FLOOR.controlled + attrMod(player.attrs.passing));
   });
 
-  it('рискованные формы играют честный d20', () => {
+  it('рискованные формы играют честные 2d10', () => {
     for (const basePosition of ['risky', 'desperate'] as const) {
-      const res = resolveOption(state(), player, option({ basePosition }), 'attack', fixedDie(1));
-      expect(res.roll).toBe(1);
+      const res = resolveOption(state(), player, option({ basePosition }), 'attack', fixedDie(2));
+      expect(res.roll).toBe(2);
       expect(res.mods.some((m) => m.label === 'надійний хід')).toBe(false);
     }
   });

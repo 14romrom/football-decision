@@ -1,7 +1,8 @@
 // Машина состояний матча: расписание эпизодов, лента между ними, применение
 // исходов и сборка итога. React сюда не заглядывает — UI только вызывает функции.
 
-import { BALANCE, MOMENTUM_BY_TIER } from './balance';
+import { BALANCE, MOMENTUM_BY_TIER, MOMENTUM_COST_RECOVERY } from './balance';
+import { attrMod } from './context';
 import { fillNames, fillNamesDeep, type Roster } from './names';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { pickFlavor, type FlavorRule } from './flavor';
@@ -236,7 +237,8 @@ function syncTired(state: MatchState) {
 function drainStamina(session: MatchSession, minutes: number) {
   const state = session.state;
   const heat = session.conditions.weather === 'heat' ? BALANCE.conditions.heatDrainScale : 1;
-  state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute * heat, 0, 100);
+  const endurance = 1 - attrMod(session.player.attrs.stamina) * BALANCE.staminaAttrDrainStep;
+  state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute * heat * endurance, 0, 100);
   syncTired(state);
 }
 
@@ -367,7 +369,8 @@ export function applyChoice(
 
   state.minute = minute;
   state.stamina = clamp(state.stamina - optionCost(option), 0, 100);
-  state.momentum = clamp(state.momentum + MOMENTUM_BY_TIER[res.tier], -3, 3);
+  const recovery = res.tier === 'cost' && state.momentum < 0 ? MOMENTUM_COST_RECOVERY : 0;
+  state.momentum = clamp(state.momentum + MOMENTUM_BY_TIER[res.tier] + recovery, -3, 3);
 
   // Трибуны реагируют на смелость сами по себе, до того как ясен результат.
   addHype(session, BALANCE.systemic.boldnessHype[res.position]);

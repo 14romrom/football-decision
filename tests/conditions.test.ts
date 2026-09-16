@@ -12,7 +12,7 @@ import type { EpisodeOption, MatchState, Player } from '../src/engine/types';
 
 const player: Player = {
   name: 'Тест', position: 'AM',
-  attrs: { finishing: 50, passing: 64, dribbling: 61, pace: 50, strength: 50, defending: 50, composure: 50 },
+  attrs: { finishing: 50, passing: 64, dribbling: 61, first_touch: 50, pace: 50, strength: 50, stamina: 50, composure: 50, vision: 50, positioning: 50 },
 };
 
 function state(over: Partial<MatchState> = {}): MatchState {
@@ -113,7 +113,7 @@ describe('условия матча: ресурсы и реакции', () => {
       const s = createMatch('i', 11, PLAYER, rng, EPISODES_RAW, rosterFor('sandorea'), { ...neutralConditions(), instruction });
       const next = nextEpisode(s, rng)!;
       const opt = next.episode.options.find((o) => o.basePosition === 'controlled') ?? next.episode.options[0];
-      const res = resolveOption(s.state, s.player, opt, next.episode.phase, { ...rng, d20: () => 20 }, s.conditions);
+      const res = resolveOption(s.state, s.player, opt, next.episode.phase, { ...rng, roll: () => 20 }, s.conditions);
       applyChoice(s, next.episode, opt, res, rng);
       return s.state.coachTrust;
     };

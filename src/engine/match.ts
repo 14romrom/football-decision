@@ -7,6 +7,7 @@ import { fillNames, fillNamesDeep, type Roster } from './names';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL } from './voices';
 import { pickFlavor, type FlavorRule } from './flavor';
+import { pickOutcome, resultBadges } from './resolve';
 import type { Rng } from './rng';
 import type {
   ApplyEffect, Episode, EpisodeOption, FlagRule, MatchState, Player, Resolution, TimelineEvent, Tier,
@@ -197,6 +198,15 @@ function scorer(roster: Roster, side: 'us' | 'them', rng: Rng): string {
   return team.players[rng.pick(team.scorers)].nom;
 }
 
+/** Конкретный игрок по ключу ростера (apply.scorer) — когда текст исхода уже назвал
+ *  автора гола, лента должна называть того же, а не случайное имя из scorers.
+ *  Неизвестный ключ — содержательная ошибка контента, а не тихий откат на случайное имя. */
+function namedScorer(roster: Roster, side: 'us' | 'them', key: string): string {
+  const player = roster[side].players[key];
+  if (!player) throw new Error(`apply.scorer «${key}» не найден в ростере ${side}`);
+  return player.nom;
+}
+
 /** Счёт между эпизодами меняется по простой таблице, а не по симуляции поля. */
 function rollFillerGoal(session: MatchSession, rng: Rng): 'us' | 'them' | null {
   const m = BALANCE.match;
@@ -217,8 +227,13 @@ function addHype(session: MatchSession, delta: number) {
   session.state.fanHype = clamp(session.state.fanHype + delta * hypeScale(session.conditions), 0, 100);
 }
 
-function pushGoal(session: MatchSession, side: 'us' | 'them', minute: number, rng: Rng, text?: string) {
+function pushGoal(
+  session: MatchSession, side: 'us' | 'them', minute: number, rng: Rng, text?: string, scorerKey?: string,
+) {
   const state = session.state;
+  // Если текст исхода уже назвал автора (apply.scorer) — лента называет того же игрока,
+  // не случайное имя из scorers. Без ключа поведение прежнее: случайный игрок команды.
+  const name = () => (scorerKey ? namedScorer(session.roster, side, scorerKey) : scorer(session.roster, side, rng));
   if (side === 'us') {
     state.scoreUs += 1;
     state.momentum = clamp(state.momentum + 1, -3, 3);
@@ -226,7 +241,7 @@ function pushGoal(session: MatchSession, side: 'us' | 'them', minute: number, rn
     state.log.push({
       minute,
       kind: 'goalUs',
-      text: text ?? (scorer(session.roster, 'us', rng) + ' проштовхує м’яч у сітку — гол! ' + state.scoreUs + ':' + state.scoreThem + '.'),
+      text: text ?? (name() + ' проштовхує м’яч у сітку — гол! ' + state.scoreUs + ':' + state.scoreThem + '.'),
     });
   } else {
     state.scoreThem += 1;
@@ -235,7 +250,7 @@ function pushGoal(session: MatchSession, side: 'us' | 'them', minute: number, rn
     state.log.push({
       minute,
       kind: 'goalThem',
-      text: text ?? (scorer(session.roster, 'them', rng) + ' тікає і б’є в дальній. ' + state.scoreUs + ':' + state.scoreThem + '.'),
+      text: text ?? (name() + ' тікає і б’є в дальній. ' + state.scoreUs + ':' + state.scoreThem + '.'),
     });
   }
 }
@@ -392,10 +407,10 @@ function applyEffects(
   if (apply.foul) state.stats.fouls += 1;
 
   if (apply.goal) { state.stats.goals += 1; pushGoal(session, 'us', minute, rng, 'Гол! ' + (state.scoreUs + 1) + ':' + state.scoreThem + '.'); }
-  if (apply.assist) { state.stats.assists += 1; pushGoal(session, 'us', minute, rng); }
-  if (apply.teamGoal) pushGoal(session, 'us', minute, rng);
+  if (apply.assist) { state.stats.assists += 1; pushGoal(session, 'us', minute, rng, undefined, apply.scorer); }
+  if (apply.teamGoal) pushGoal(session, 'us', minute, rng, undefined, apply.scorer);
 
-  if (apply.concede) pushGoal(session, 'them', minute, rng);
+  if (apply.concede) pushGoal(session, 'them', minute, rng, undefined, apply.scorer);
   if (apply.counterAttack && !apply.concede && rng.chance(BALANCE.counterAttackConcede)) {
     pushGoal(session, 'them', minute + 1, rng,
       'Контратаку доводять до удару — ' + scorer(session.roster, 'them', rng) + ' не промахується. '
@@ -433,7 +448,7 @@ export function applyChoice(
   const before = state.log.length;
   // Критический успех: свой текст, если он написан, иначе clean с системным бонусом.
   const crit = res.critical === 'success';
-  const outcome = crit && option.outcomes.crit ? option.outcomes.crit : option.outcomes[res.tier];
+  const outcome = pickOutcome(option, res);
 
   state.minute = minute;
   state.stamina = clamp(state.stamina - optionCost(option), 0, 100);
@@ -487,6 +502,7 @@ export function applyChoice(
     effect: res.effect,
     causedConcede: conceded,
     flavor: pickFlavor(flavorRules, state, res.tier, rng),
+    badges: resultBadges(outcome.apply),
   });
 
   session.usedEpisodeIds.push(episode.id);

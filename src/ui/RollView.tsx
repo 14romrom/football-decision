@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import type { EpisodeOption, Resolution } from '../engine/types';
-import { EFFECT_LABEL, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
+import type { EpisodeOption, Resolution, ResultBadge } from '../engine/types';
+import { EFFECT_LABEL, pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 
-type Props = { option: EpisodeOption; res: Resolution; flavor?: string; onNext: () => void };
+type Props = { option: EpisodeOption; res: Resolution; flavor?: string; badges?: ResultBadge[]; onNext: () => void };
 
 // Бросок должен быть событием, а не обновлением страницы: сначала пауза,
 // потом кубик, потом объяснение модификаторов, и только затем — исход.
 const STEP_DELAYS = [900, 700, 600];
 
-export function RollView({ option, res, flavor, onNext }: Props) {
+export function RollView({ option, res, flavor, badges, onNext }: Props) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
@@ -21,7 +21,9 @@ export function RollView({ option, res, flavor, onNext }: Props) {
     return () => clearTimeout(t);
   }, [step]);
 
-  const outcome = option.outcomes[res.tier];
+  // Один источник истины с applyChoice (resolve.ts:pickOutcome) — иначе на критическом
+  // успехе тут показывался бы обычный «чисто», а в ленту уходил бы другой, крит-текст.
+  const outcome = pickOutcome(option, res);
 
   return (
     <div className="card roll" onClick={() => setStep(STEP_DELAYS.length)}>
@@ -53,6 +55,15 @@ export function RollView({ option, res, flavor, onNext }: Props) {
           )}
           {res.critical === 'success' && (
             <p className="crit-note">Двадцять. Таке не пояснюють.</p>
+          )}
+          {badges && badges.length > 0 && (
+            <ul className="badges">
+              {badges.map((b) => (
+                <li key={b.label} className={`badge badge-${b.tone}`}>
+                  <span className="badge-icon">{b.icon}</span>{b.label}
+                </li>
+              ))}
+            </ul>
           )}
           <p className="outcome">{outcome.text}</p>
           {flavor && <p className="flavor">{flavor}</p>}

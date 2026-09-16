@@ -71,7 +71,16 @@ export function MatchScreen({
         {shown.map((e, i) => (
           <div key={i} className={`event ${e.kind}`}>
             <span className="ev-minute">{e.minute}′</span>
-            <span className="ev-text">{e.text}</span>
+            <span className="ev-text">
+              {e.badges && e.badges.length > 0 && (
+                <span className="ev-badges">
+                  {e.badges.map((b) => (
+                    <span key={b.label} className={`badge badge-${b.tone} badge-sm`} title={b.label}>{b.icon}</span>
+                  ))}
+                </span>
+              )}
+              {e.text}
+            </span>
           </div>
         ))}
       </div>

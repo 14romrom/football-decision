@@ -3,7 +3,7 @@
 
 import { CATASTROPHE_BAND, CRIT_SUCCESS, THRESHOLDS } from './balance';
 import { computeContext } from './context';
-import type { Episode, EpisodeOption, FlagRule, MatchState, Player, Position, Resolution, Tier } from './types';
+import type { ApplyEffect, Episode, EpisodeOption, FlagRule, MatchState, Outcome, Player, Position, Resolution, ResultBadge, Tier } from './types';
 import type { Rng } from './rng';
 import { neutralConditions, type MatchConditions } from './conditions';
 
@@ -44,6 +44,14 @@ export function resolveOption(
   };
 }
 
+/** Единственное место, где решается, какой Outcome показывать и логировать.
+ *  Раньше RollView и applyChoice считали это отдельно и расходились: на критическом
+ *  успехе экран броска показывал обычный «чисто», а в ленту уходил другой, крит-текст —
+ *  игрок читал не то, что потом видел в хронологии матча. */
+export function pickOutcome(option: EpisodeOption, res: Resolution): Outcome {
+  return res.critical === 'success' && option.outcomes.crit ? option.outcomes.crit : option.outcomes[res.tier];
+}
+
 /** Ярлыки, которые видит игрок. Ни одного числа — это условие эксперимента. */
 export const POSITION_LABEL: Record<Position, string> = {
   controlled: 'упевнено',
@@ -63,3 +71,26 @@ export const TIER_LABEL: Record<Tier, string> = {
   fail: 'Не вийшло',
   badFail: 'Катастрофа',
 };
+
+/** Ярус («Чисто»/«Вийшло, але…») — про якість спроби. Ці теги — про сам факт: що
+ *  саме сталося в грі. Порядок задає пріоритет; показуємо всі, що спрацювали
+ *  (зазвичай 1, зрідка 2), а не тільки перший. */
+const BADGE_RULES: { test: (a: ApplyEffect) => boolean; badge: ResultBadge }[] = [
+  { test: (a) => !!a.goal, badge: { icon: '⚽', label: 'Гол!', tone: 'good' } },
+  { test: (a) => !!a.assist, badge: { icon: '🅰️', label: 'Гольова передача', tone: 'good' } },
+  { test: (a) => !!a.teamGoal, badge: { icon: '⚽', label: 'Гол команди', tone: 'good' } },
+  { test: (a) => !!a.concede, badge: { icon: '🥅', label: 'Пропущений гол', tone: 'bad' } },
+  { test: (a) => !!a.keyPass, badge: { icon: '🎯', label: 'Точний пас', tone: 'good' } },
+  { test: (a) => !!a.duelWon, badge: { icon: '💪', label: 'Виграна дуель', tone: 'good' } },
+  { test: (a) => (a.losses ?? 0) > 0, badge: { icon: '❌', label: 'Втрата м’яча', tone: 'bad' } },
+  { test: (a) => !!a.corner, badge: { icon: '🚩', label: 'Кутовий', tone: 'neutral' } },
+  { test: (a) => !!a.counterAttack, badge: { icon: '⚠️', label: 'Ризик контратаки', tone: 'bad' } },
+  { test: (a) => !!a.foul, badge: { icon: '🟨', label: 'Фол', tone: 'bad' } },
+  { test: (a) => !!a.addFlags?.includes('booked'), badge: { icon: '🟨', label: 'Жовта картка', tone: 'bad' } },
+  { test: (a) => !!a.addFlags?.includes('injured'), badge: { icon: '🤕', label: 'Пошкодження', tone: 'bad' } },
+];
+
+export function resultBadges(apply: ApplyEffect | undefined): ResultBadge[] {
+  if (!apply) return [];
+  return BADGE_RULES.filter((r) => r.test(apply)).map((r) => r.badge);
+}

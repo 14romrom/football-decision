@@ -102,7 +102,8 @@
               "fanHype": 5,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "partner"
             }
           },
           "cost": {
@@ -449,7 +450,8 @@
               "fanHype": 6,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -487,7 +489,8 @@
               "fanHype": 14,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "striker"
             }
           }
         },
@@ -528,7 +531,8 @@
               "teamGoal": true,
               "stamina": -5,
               "fanHype": 8,
-              "coachTrust": 2
+              "coachTrust": 2,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -666,7 +670,8 @@
             "apply": {
               "teamGoal": true,
               "fanHype": 8,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "scorer": "cb"
             }
           },
           "fail": {
@@ -723,7 +728,8 @@
               "fanHype": 6,
               "addFlags": [
                 "coach_flank"
-              ]
+              ],
+              "scorer": "cb"
             }
           },
           "cost": {
@@ -922,7 +928,8 @@
             "recap": "і лишився на чужій половині, поки нам забивали.",
             "apply": {
               "concede": true,
-              "coachTrust": -12
+              "coachTrust": -12,
+              "scorer": "striker"
             }
           }
         },
@@ -1120,7 +1127,8 @@
               "coachTrust": 3,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "partner"
             }
           },
           "cost": {
@@ -1158,7 +1166,8 @@
               "coachTrust": 3,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "partner"
             }
           }
         },
@@ -1207,7 +1216,8 @@
             "apply": {
               "teamGoal": true,
               "fanHype": 8,
-              "coachTrust": 4
+              "coachTrust": 4,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -1261,7 +1271,8 @@
             "apply": {
               "teamGoal": true,
               "fanHype": 10,
-              "coachTrust": 2
+              "coachTrust": 2,
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -1322,7 +1333,8 @@
               "fanHype": 5,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -1451,7 +1463,8 @@
             "recap": "і довів момент до гола {partner.gen}.",
             "apply": {
               "teamGoal": true,
-              "fanHype": 12
+              "fanHype": 12,
+              "scorer": "partner"
             }
           },
           "fail": {
@@ -1584,7 +1597,8 @@
               "fanHype": 8,
               "addFlags": [
                 "coach_flank"
-              ]
+              ],
+              "scorer": "cb"
             }
           },
           "cost": {
@@ -1770,7 +1784,8 @@
             "apply": {
               "teamGoal": true,
               "fanHype": 12,
-              "stamina": -6
+              "stamina": -6,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -1877,7 +1892,8 @@
             "apply": {
               "assist": true,
               "coachTrust": 12,
-              "fanHype": 10
+              "fanHype": 10,
+              "scorer": "partner"
             }
           },
           "cost": {
@@ -1912,7 +1928,8 @@
             "apply": {
               "assist": true,
               "coachTrust": 12,
-              "fanHype": 16
+              "fanHype": 16,
+              "scorer": "partner"
             }
           }
         },
@@ -2068,7 +2085,8 @@
               "composure": 8,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -2222,7 +2240,8 @@
               "concede": true,
               "coachTrust": -12,
               "fanHype": -6,
-              "composure": -10
+              "composure": -10,
+              "scorer": "striker"
             }
           }
         },
@@ -2275,7 +2294,8 @@
             "apply": {
               "concede": true,
               "coachTrust": -15,
-              "fanHype": -4
+              "fanHype": -4,
+              "scorer": "striker"
             }
           }
         },
@@ -2325,7 +2345,8 @@
               "teamGoal": true,
               "keyPass": true,
               "fanHype": 8,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -2395,7 +2416,8 @@
             "apply": {
               "teamGoal": true,
               "keyPass": true,
-              "fanHype": 14
+              "fanHype": 14,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -2459,7 +2481,8 @@
               "fanHype": 6,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -2525,7 +2548,8 @@
             "apply": {
               "teamGoal": true,
               "keyPass": true,
-              "fanHype": 16
+              "fanHype": 16,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -2668,7 +2692,8 @@
               "concede": true,
               "coachTrust": -12,
               "fanHype": -6,
-              "composure": -10
+              "composure": -10,
+              "scorer": "mid"
             }
           }
         },
@@ -2729,7 +2754,8 @@
               "concede": true,
               "coachTrust": -14,
               "fanHype": -6,
-              "composure": -10
+              "composure": -10,
+              "scorer": "mid"
             }
           }
         },
@@ -3149,7 +3175,8 @@
               "composure": 6,
               "addFlags": [
                 "humiliated_defender"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -3513,7 +3540,8 @@
               "teamGoal": true,
               "fanHype": 4,
               "coachTrust": -1,
-              "composure": -4
+              "composure": -4,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -3580,7 +3608,8 @@
             "apply": {
               "teamGoal": true,
               "coachTrust": 8,
-              "composure": 4
+              "composure": 4,
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -3588,7 +3617,8 @@
             "recap": "і дивився, як {striker} забиває з добивання.",
             "apply": {
               "teamGoal": true,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -3734,7 +3764,8 @@
               "concede": true,
               "coachTrust": -8,
               "fanHype": 3,
-              "composure": -6
+              "composure": -6,
+              "scorer": "striker"
             }
           }
         },
@@ -3977,7 +4008,8 @@
               "concede": true,
               "coachTrust": -15,
               "fanHype": -8,
-              "composure": -10
+              "composure": -10,
+              "scorer": "striker"
             }
           }
         },
@@ -4032,7 +4064,8 @@
               "concede": true,
               "coachTrust": -14,
               "fanHype": -8,
-              "composure": -10
+              "composure": -10,
+              "scorer": "striker"
             }
           }
         },
@@ -4082,7 +4115,8 @@
               "teamGoal": true,
               "keyPass": true,
               "fanHype": 8,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -4197,7 +4231,8 @@
               "fanHype": 6,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -4476,7 +4511,8 @@
             "apply": {
               "concede": true,
               "coachTrust": -9,
-              "composure": -8
+              "composure": -8,
+              "scorer": "striker"
             }
           }
         },
@@ -4592,7 +4628,8 @@
               ],
               "concede": true,
               "coachTrust": -12,
-              "composure": -8
+              "composure": -8,
+              "scorer": "mid"
             }
           }
         },
@@ -4660,7 +4697,8 @@
               "foul": true,
               "concede": true,
               "coachTrust": -10,
-              "composure": -8
+              "composure": -8,
+              "scorer": "striker"
             }
           }
         },
@@ -4941,7 +4979,8 @@
               "concede": true,
               "coachTrust": -14,
               "fanHype": -4,
-              "composure": -8
+              "composure": -8,
+              "scorer": "mid"
             }
           }
         },
@@ -5006,7 +5045,8 @@
             "apply": {
               "concede": true,
               "coachTrust": -9,
-              "composure": -6
+              "composure": -6,
+              "scorer": "striker"
             }
           }
         },
@@ -5056,7 +5096,8 @@
               "concede": true,
               "coachTrust": -8,
               "fanHype": -3,
-              "composure": -6
+              "composure": -6,
+              "scorer": "mid"
             }
           }
         },
@@ -5111,7 +5152,8 @@
               "foul": true,
               "concede": true,
               "coachTrust": -10,
-              "composure": -8
+              "composure": -8,
+              "scorer": "striker"
             }
           }
         },
@@ -5381,7 +5423,8 @@
               "fanHype": 8,
               "removeFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -5513,7 +5556,8 @@
               "fanHype": 6,
               "removeFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "partner"
             }
           },
           "cost": {
@@ -5671,7 +5715,8 @@
               "fanHype": 8,
               "removeFlags": [
                 "partner_annoyed"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "fail": {
@@ -5800,7 +5845,8 @@
               "coachTrust": 10,
               "removeFlags": [
                 "coach_flank"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -5862,7 +5908,8 @@
               "fanHype": 8,
               "removeFlags": [
                 "coach_flank"
-              ]
+              ],
+              "scorer": "partner"
             }
           },
           "cost": {
@@ -6855,7 +6902,8 @@
               "coachTrust": 8,
               "addFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -7581,7 +7629,8 @@
             "apply": {
               "assist": true,
               "coachTrust": 8,
-              "fanHype": 6
+              "fanHype": 6,
+              "scorer": "striker"
             }
           },
           "cost": {
@@ -7635,7 +7684,8 @@
             "apply": {
               "assist": true,
               "coachTrust": 7,
-              "fanHype": 5
+              "fanHype": 5,
+              "scorer": "dm"
             }
           },
           "cost": {
@@ -7807,7 +7857,8 @@
             "apply": {
               "assist": true,
               "coachTrust": 7,
-              "fanHype": 4
+              "fanHype": 4,
+              "scorer": "partner"
             }
           },
           "cost": {
@@ -8092,7 +8143,8 @@
             "apply": {
               "assist": true,
               "coachTrust": 7,
-              "fanHype": 6
+              "fanHype": 6,
+              "scorer": "partner"
             }
           },
           "cost": {
@@ -8144,7 +8196,8 @@
             "apply": {
               "assist": true,
               "coachTrust": 6,
-              "fanHype": 5
+              "fanHype": 5,
+              "scorer": "partner"
             }
           },
           "cost": {
@@ -9540,7 +9593,8 @@
             "apply": {
               "assist": true,
               "fanHype": 16,
-              "coachTrust": 6
+              "coachTrust": 6,
+              "scorer": "striker"
             }
           },
           "cost": {

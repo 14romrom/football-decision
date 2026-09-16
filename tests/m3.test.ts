@@ -226,3 +226,43 @@ describe('M3: тренер і трибуни — не тільки декора�
     expect(withLowHype).toBeLessThan(neutralHype);
   });
 });
+
+describe('автор гола в хронологии', () => {
+  it('assist/teamGoal/concede объявляют в ленте того же игрока, кого назвал текст исхода', () => {
+    const rng = makeRng(1);
+    const s = createMatch('goal', 1, PLAYER, rng, EPISODES_RAW, ROSTER);
+    let checked = 0;
+    for (;;) {
+      const next = nextEpisode(s, rng);
+      if (!next) break;
+      for (const opt of next.episode.options) {
+        for (const [, out] of Object.entries(opt.outcomes)) {
+          if (!out.apply?.scorer) continue;
+          const side = out.apply.concede ? 'them' : 'us';
+          const namedPlayer = s.roster[side].players[out.apply.scorer].nom;
+          expect(out.text, `${opt.id}: текст исхода должен называть ${out.apply.scorer}`).toContain(namedPlayer);
+        }
+      }
+      const opt = next.episode.options[0];
+      applyChoice(s, next.episode, opt, resolveOption(s.state, s.player, opt, next.episode.phase, rng), rng);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it('pushGoal через applyChoice называет именно того, кто указан в apply.scorer — не случайного', () => {
+    // Берём конкретный известный кейс: ep_edge_of_box/pass_moraes/clean — assist, scorer='partner'.
+    for (let seed = 1; seed < 30; seed++) {
+      const rng = makeRng(seed);
+      const s = createMatch('a', seed, PLAYER, rng, EPISODES_RAW, ROSTER);
+      const ep = s.episodes.find((e) => e.id === 'ep_edge_of_box')!;
+      const opt = ep.options.find((o) => o.id === 'pass_moraes')!;
+      const res = resolveOption(s.state, s.player, opt, ep.phase, { ...rng, roll: () => 19 });
+      expect(res.tier).toBe('clean');
+      const { events } = applyChoice(s, ep, opt, res, rng);
+      const goalLine = events.find((e) => e.kind === 'goalUs')!;
+      expect(goalLine, `seed ${seed}`).toBeTruthy();
+      expect(goalLine.text, `seed ${seed}`).toContain(s.roster.us.players.partner.nom);
+    }
+  });
+});

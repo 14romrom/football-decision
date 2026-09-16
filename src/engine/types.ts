@@ -48,7 +48,12 @@ export type TimelineEvent = {
   causedConcede?: boolean;
   /** Ироничная реплика по ситуации после исхода (см. engine/flavor.ts). */
   flavor?: string;
+  /** Чёткие теги результата («⚽ Гол!», «Втрата м'яча») — что конкретно произошло,
+   *  отдельно от яруса броска (тот про качество попытки, не про итог). См. resolve.ts. */
+  badges?: ResultBadge[];
 };
+
+export type ResultBadge = { icon: string; label: string; tone: 'good' | 'bad' | 'neutral' };
 
 export type MatchStats = {
   goals: number; assists: number; keyPasses: number;
@@ -109,6 +114,11 @@ export type ApplyEffect = {
   corner?: boolean;          // заработан стандарт, счёт не меняется
   counterAttack?: boolean;   // контратака соперника: шанс пропустить
   concede?: boolean;         // гол в ответ гарантированно
+  /** Ключ игрока ростера (partner/striker/cb/dm/keeper — для assist/teamGoal;
+   *  striker/winger/mid — для concede), который назван в тексте исхода. Без этого
+   *  лента объявляет гол случайным именем из scorers — оно может не совпасть
+   *  с тем, кого текст уже назвал. См. resolve.ts:resultBadges и match.ts:pushGoal. */
+  scorer?: string;
   stamina?: number;          // дополнительный расход/экономия сверх staminaCost
   coachTrust?: number;
   fanHype?: number;

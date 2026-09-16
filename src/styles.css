@@ -227,3 +227,13 @@ button.primary { background: var(--accent); color: #10261a; border-color: var(--
 .voice-vision b { color: #c9a5ff; }
 .voice-instinct b { color: #ffd166; }
 .voice-body b { color: #ff8a8a; }
+
+/* теги результата: что конкретно произошло, отдельно от яруса броска */
+.badges { list-style: none; display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.6rem; padding: 0; }
+.badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.85em; font-weight: 600; }
+.badge-good { background: rgba(110, 231, 160, 0.15); color: #6ee7a0; }
+.badge-bad { background: rgba(255, 120, 120, 0.15); color: #ff7878; }
+.badge-neutral { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.75); }
+.badge-icon { font-size: 1.05em; line-height: 1; }
+.ev-badges { display: inline-flex; gap: 0.2rem; margin-right: 0.35rem; }
+.badge-sm { padding: 0; background: none; border-radius: 0; font-size: 1em; }

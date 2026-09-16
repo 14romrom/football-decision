@@ -128,3 +128,45 @@ describe('плейсхолдеры имён', () => {
     for (const e of EPISODES) expect(JSON.stringify(e), e.id).not.toMatch(/\{(?!trigger\.)[a-z.]+\}/);
   });
 });
+
+describe('автор гола в хронологии совпадает со сценарием', () => {
+  // Баг из плейтеста: текст исхода называл конкретного партнёра, а лента матча
+  // объявляла гол случайным именем из roster.scorers — разные «авторы» одного гола.
+  // apply.scorer фиксирует, кого назвал текст; pushGoal (match.ts) обязан использовать
+  // именно его. Здесь проверяем контент: ключ проставлен и совпадает с текстом.
+  const US_KEYS = ['partner', 'striker', 'cb', 'dm', 'keeper'];
+  const THEM_KEYS = ['striker', 'winger', 'mid'];
+
+  it('assist и teamGoal — apply.scorer обязателен и назван в тексте', async () => {
+    const { EPISODES_RAW } = await import('../src/content');
+    for (const e of EPISODES_RAW) {
+      for (const o of e.options) {
+        for (const [tier, out] of Object.entries(o.outcomes)) {
+          if (!out?.apply || (!out.apply.assist && !out.apply.teamGoal)) continue;
+          const label = `${e.id}/${o.id}/${tier}`;
+          const key = out.apply.scorer;
+          expect(key, label).toBeTruthy();
+          expect(US_KEYS, label).toContain(key);
+          const text = out.text + ' ' + out.recap;
+          expect(text, label).toMatch(new RegExp(`\\{${key}(\\.\\w+)?\\}`));
+        }
+      }
+    }
+  });
+
+  it('concede с apply.scorer — ключ из ростера соперника и назван в тексте', async () => {
+    const { EPISODES_RAW } = await import('../src/content');
+    for (const e of EPISODES_RAW) {
+      for (const o of e.options) {
+        for (const [tier, out] of Object.entries(o.outcomes)) {
+          if (!out?.apply?.concede || !out.apply.scorer) continue;
+          const label = `${e.id}/${o.id}/${tier}`;
+          const key = out.apply.scorer;
+          expect(THEM_KEYS, label).toContain(key);
+          const text = out.text + ' ' + out.recap;
+          expect(text, label).toMatch(new RegExp(`\\{them\\.${key}(\\.\\w+)?\\}`));
+        }
+      }
+    }
+  });
+});

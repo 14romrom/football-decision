@@ -218,7 +218,13 @@ function Game() {
           />
         )}
         {stage.k === 'roll' && (
-          <RollView option={stage.option} res={stage.res} flavor={stage.events.find((e) => e.kind === 'episode')?.flavor} onNext={afterRoll} />
+          <RollView
+            option={stage.option}
+            res={stage.res}
+            flavor={stage.events.find((e) => e.kind === 'episode')?.flavor}
+            badges={stage.events.find((e) => e.kind === 'episode')?.badges}
+            onNext={afterRoll}
+          />
         )}
       </MatchScreen>
       <DebugPanel session={session} />

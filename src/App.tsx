@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { EPISODES_RAW, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
 import { generateConditions, toneFromHistory } from './engine/conditions';
-import { readHistory, recordResult } from './telemetry/history';
+import { readHistory, recentEpisodes, recordResult } from './telemetry/history';
+import { BALANCE } from './engine/balance';
 import { BriefingScreen } from './ui/BriefingScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
@@ -57,7 +58,7 @@ function Game() {
       setQueue([...lead, ...next.events]);
     } else {
       const { events, summary } = finishMatch(session, rng);
-      recordResult(summary.scoreUs, summary.scoreThem);   // тонус следующего матча
+      recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds);   // тонус и память следующего матча
       pendingRef.current = { kind: 'result', summary };
       setQueue([...lead, ...events]);
     }
@@ -76,6 +77,7 @@ function Game() {
     const conditions = generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)));
     const session = createMatch(
       `${Date.now().toString(36)}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
+      recentEpisodes(BALANCE.match.recentMatches),
     );
     rngRef.current = rng;
     sessionRef.current = session;

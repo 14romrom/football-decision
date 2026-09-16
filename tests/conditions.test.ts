@@ -38,7 +38,7 @@ const labels = (mods: { label: string }[]) => mods.map((m) => m.label);
 describe('условия матча: модификаторы', () => {
   it('нейтральные условия не добавляют ни одной строки', () => {
     const ctx = computeContext(state(), player, option(), 'attack', neutralConditions());
-    expect(labels(ctx.mods)).toEqual([]);
+    expect(labels(ctx.mods)).toEqual(['удар (50)']);
   });
 
   it('дома трибуны дают +1 только на коронных атрибутах', () => {
@@ -52,25 +52,26 @@ describe('условия матча: модификаторы', () => {
 
   it('на выезде минус приходит только в концовке', () => {
     const away = { ...neutralConditions(), venue: 'away' as const };
-    expect(labels(computeContext(state({ minute: 60 }), player, option(), 'attack', away).mods)).toEqual([]);
-    expect(computeContext(state({ minute: 80 }), player, option(), 'attack', away).flat).toBe(BALANCE.conditions.awayLateNerves);
+    expect(labels(computeContext(state({ minute: 60 }), player, option(), 'attack', away).mods)).toEqual(['удар (50)']);
+    expect(computeContext(state({ minute: 80 }), player, option(), 'attack', away).flat).toBe(1 + BALANCE.conditions.awayLateNerves);
   });
 
   it('сильный соперник −1, слабый +1, ко всему', () => {
     const strong = { ...neutralConditions(), strength: 'strong' as const };
     const weak = { ...neutralConditions(), strength: 'weak' as const };
-    expect(computeContext(state(), player, option(), 'attack', strong).flat).toBe(-1);
-    expect(computeContext(state(), player, option(), 'attack', weak).flat).toBe(1);
+    expect(computeContext(state(), player, option(), 'attack', strong).flat).toBe(1 - 1);
+    expect(computeContext(state(), player, option(), 'attack', weak).flat).toBe(1 + 1);
   });
 
   it('дождь бьёт по дриблингу и пасу, ветер — по удару и подачам со стандартов', () => {
     const rain = { ...neutralConditions(), weather: 'rain' as const };
     const wind = { ...neutralConditions(), weather: 'wind' as const };
-    expect(computeContext(state(), player, option({ attribute: 'dribbling' }), 'attack', rain).flat).toBe(-1 + 2);
-    expect(computeContext(state(), player, option({ attribute: 'finishing' }), 'attack', rain).flat).toBe(0);
-    expect(computeContext(state(), player, option({ attribute: 'finishing' }), 'attack', wind).flat).toBe(-1);
-    expect(computeContext(state(), player, option({ attribute: 'passing' }), 'setpiece', wind).flat).toBe(-1 + 2);
-    expect(computeContext(state(), player, option({ attribute: 'passing' }), 'attack', wind).flat).toBe(2);
+    // attrMod: finishing 50 → +1, dribbling 61 → +4, passing 64 → +4
+    expect(computeContext(state(), player, option({ attribute: 'dribbling' }), 'attack', rain).flat).toBe(4 - 2);
+    expect(computeContext(state(), player, option({ attribute: 'finishing' }), 'attack', rain).flat).toBe(1);
+    expect(computeContext(state(), player, option({ attribute: 'finishing' }), 'attack', wind).flat).toBe(1 - 2);
+    expect(computeContext(state(), player, option({ attribute: 'passing' }), 'setpiece', wind).flat).toBe(4 - 2);
+    expect(computeContext(state(), player, option({ attribute: 'passing' }), 'attack', wind).flat).toBe(4);
   });
 });
 
@@ -87,6 +88,7 @@ describe('условия матча: ресурсы и реакции', () => {
     const r = startResources(c);
     expect(r.stamina).toBe(BALANCE.staminaStart - 3 * BALANCE.conditions.fatigueStamina);
     expect(r.composure).toBe(BALANCE.composureStart - 2 * BALANCE.conditions.confidenceComposure);
+    expect(r.momentum).toBe(-BALANCE.conditions.confidenceMomentumCap);
   });
 
   it('дома трибуны громче, на выезде глуше', () => {

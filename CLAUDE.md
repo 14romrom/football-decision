@@ -29,7 +29,7 @@
 
 ```
 npm run dev      # localhost:5179 (см. .claude/launch.json)
-npm test         # 54 теста: движок, контент, условия, критерии приёмки
+npm test         # 56 тестов: движок, контент, условия, критерии приёмки
 npm run sim      # балансный прогон ботами; --random-conditions — со случайными условиями матча
 npm run build    # dist/ — деплоится на GitHub Pages workflow'ом
 ```

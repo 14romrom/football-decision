@@ -68,11 +68,12 @@ export function signatureAttrs(player: Player): Attribute[] {
 }
 
 /** Стартовые ресурсы с поправкой на тонус. */
-export function startResources(c: MatchConditions): { stamina: number; composure: number; fanHype: number } {
+export function startResources(c: MatchConditions): { stamina: number; composure: number; fanHype: number; momentum: number } {
   const k = BALANCE.conditions;
   return {
     stamina: BALANCE.staminaStart - c.tone.fatigue * k.fatigueStamina,
     composure: BALANCE.composureStart + c.tone.confidence * k.confidenceComposure,
+    momentum: Math.max(-k.confidenceMomentumCap, Math.min(k.confidenceMomentumCap, c.tone.confidence)),
     fanHype: BALANCE.fanHypeStart + (c.venue === 'home' ? k.homeHypeStart : c.venue === 'away' ? k.awayHypeStart : 0),
   };
 }

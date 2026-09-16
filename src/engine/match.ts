@@ -45,9 +45,26 @@ function fitsMinute(e: Episode, minute: number): boolean {
  *  Жадный выбор на десяти эпизодах и десяти слотах загоняет себя в тупик:
  *  «концовочный» эпизод не подходит никуда, кроме последнего слота, и матч
  *  теряет момент. Перебор по самым узким слотам такого не допускает. */
-function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng): string[] {
+function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recentIds: string[] = []): string[] {
+  const m = BALANCE.match;
+  const recent = new Set(recentIds);
+  // Память между матчами: сыгранное недавно почти не выпадает, пока есть свежее.
+  const weightOf = (e: Episode) => e.weight * (recent.has(e.id) ? m.recentWeight : 1);
+
+  // Квота обороны: заранее выбираем слоты, в которых будет только защитный эпизод.
+  // Плейтест показал, что без квоты матч — сплошные атаки и переходы.
+  const defenseSlots = new Set<number>();
+  const order = schedule.map((_, i) => i).sort(() => rng.next() - 0.5);
+  for (const i of order) {
+    if (defenseSlots.size >= m.minDefense) break;
+    if (episodes.some((e) => e.phase === 'defense' && fitsMinute(e, schedule[i]))) defenseSlots.add(i);
+  }
+
   const slots = schedule
-    .map((minute, index) => ({ index, candidates: episodes.filter((e) => fitsMinute(e, minute)) }))
+    .map((minute, index) => ({
+      index,
+      candidates: episodes.filter((e) => fitsMinute(e, minute) && (!defenseSlots.has(index) || e.phase === 'defense')),
+    }))
     .sort((a, b) => a.candidates.length - b.candidates.length);
 
   const plan: (string | null)[] = schedule.map(() => null);
@@ -59,7 +76,7 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng): string
     const rest = [...pool];
     const order: Episode[] = [];
     while (rest.length) {
-      const picked = rng.weighted(rest, (e) => e.weight);
+      const picked = rng.weighted(rest, weightOf);
       order.push(picked);
       rest.splice(rest.indexOf(picked), 1);
     }
@@ -81,6 +98,7 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng): string
 export function createMatch(
   matchId: string, seed: number, player: Player, rng: Rng, rawEpisodes: Episode[], roster: Roster,
   conditions: MatchConditions = neutralConditions(),
+  recentEpisodeIds: string[] = [],
 ): MatchSession {
   const episodes = fillNamesDeep(rawEpisodes, roster);
   const start = startResources(conditions);
@@ -100,7 +118,7 @@ export function createMatch(
     composureNow: clamp(start.composure, 0, 100),
     coachTrust: BALANCE.coachTrustStart,
     fanHype: clamp(start.fanHype, 0, 100),
-    momentum: 0,
+    momentum: clamp(start.momentum, -3, 3),
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
     flags: [],
     log: [{
@@ -113,7 +131,7 @@ export function createMatch(
 
   return {
     matchId, seed, player, roster, conditions, episodes, state, schedule,
-    plan: planEpisodes(schedule, episodes, rng),
+    plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
     usedEpisodeIds: [], nextIndex: 0, finished: false,
   };
 }

@@ -9,7 +9,8 @@ import type { EpisodeOption, MatchState, Player } from '../src/engine/types';
 const player: Player = {
   name: 'Тест',
   position: 'AM',
-  attrs: { finishing: 50, passing: 50, dribbling: 50, pace: 50, strength: 50, defending: 50, composure: 50 },
+  // 45 — нулевой модификатор атрибута: контекстные тесты смотрят только на контекст
+  attrs: { finishing: 45, passing: 45, dribbling: 45, pace: 45, strength: 45, defending: 45, composure: 45 },
 };
 
 function state(over: Partial<MatchState> = {}): MatchState {
@@ -36,16 +37,17 @@ function option(over: Partial<EpisodeOption> = {}): EpisodeOption {
 }
 
 describe('attrMod', () => {
-  it('даёт 0 на середине шкалы и шаг на каждые 5 пунктов', () => {
-    expect(attrMod(50)).toBe(0);
-    expect(attrMod(54)).toBe(0);
-    expect(attrMod(55)).toBe(1);
-    expect(attrMod(45)).toBe(-1);
-    expect(attrMod(65)).toBe(3);
+  it('стартовый коридор 45..65 даёт 0..+5, шаг на каждые 4 пункта, минуса нет', () => {
+    expect(attrMod(45)).toBe(0);
+    expect(attrMod(48)).toBe(0);
+    expect(attrMod(49)).toBe(1);
+    expect(attrMod(53)).toBe(2);
+    expect(attrMod(62)).toBe(4);
+    expect(attrMod(65)).toBe(5);
+    expect(attrMod(30)).toBe(0);
   });
-  it('зажат в -9..+9', () => {
-    expect(attrMod(1)).toBe(-9);
-    expect(attrMod(99)).toBe(9);
+  it('сверху зажат ATTR_MOD.max', () => {
+    expect(attrMod(99)).toBe(12);
   });
 });
 
@@ -92,9 +94,10 @@ describe('контекстные модификаторы', () => {
     expect(computeContext(state({ stamina: 10 }), player, option(), 'attack').flat).toBe(-4);
   });
 
-  it('momentum входит в score как есть', () => {
+  it('кураж входит в score до +3, провалы давят не ниже −2', () => {
     expect(computeContext(state({ momentum: 3 }), player, option(), 'attack').flat).toBe(3);
     expect(computeContext(state({ momentum: -2 }), player, option(), 'attack').flat).toBe(-2);
+    expect(computeContext(state({ momentum: -3 }), player, option(), 'attack').flat).toBe(-2);
   });
 
   it('хладнокровие работает только после 80-й минуты', () => {
@@ -112,7 +115,7 @@ describe('контекстные модификаторы', () => {
 
   it('модификаторы показываются строками — игроку есть что прочитать после броска', () => {
     const ctx = computeContext(state({ stamina: 85, momentum: 2 }), player, option(), 'attack');
-    expect(ctx.mods.map((m) => m.label)).toEqual(['свіжість', 'кураж']);
+    expect(ctx.mods.map((m) => m.label)).toEqual(['пас (45)', 'свіжість', 'кураж']);
   });
 });
 
@@ -176,7 +179,7 @@ describe('планка кубика', () => {
     expect(res.rawRoll).toBe(1);
     expect(res.roll).toBe(DIE_FLOOR.controlled);
     expect(res.mods[0]).toEqual({ label: 'надійний хід', value: DIE_FLOOR.controlled - 1 });
-    expect(res.totalScore).toBe(DIE_FLOOR.controlled);
+    expect(res.totalScore).toBe(DIE_FLOOR.controlled + attrMod(player.attrs.passing));
   });
 
   it('рискованные формы играют честный d20', () => {

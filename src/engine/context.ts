@@ -2,7 +2,7 @@
 // Всё, что здесь считается, потом показывается игроку списком после броска —
 // это единственный способ увидеть, что прошлые решения на что-то повлияли.
 
-import { BALANCE, POSITION_ORDER } from './balance';
+import { ATTR_MOD, BALANCE, POSITION_ORDER } from './balance';
 import { neutralConditions, signatureAttrs, type MatchConditions } from './conditions';
 import type { Attribute, Effect, EpisodeOption, Episode, MatchState, ModLine, Player, Position } from './types';
 
@@ -17,8 +17,8 @@ const ATTR_LABEL: Record<Attribute, string> = {
 };
 
 export function attrMod(attr: number): number {
-  // floor((attr - 50) / 5), зажато в -9..+9
-  return Math.max(-9, Math.min(9, Math.floor((attr - 50) / 5)));
+  const { base, step, max } = ATTR_MOD;
+  return Math.max(0, Math.min(max, Math.floor((attr - base) / step)));
 }
 
 const EFFECT_ORDER: Effect[] = ['limited', 'standard', 'great'];
@@ -53,8 +53,10 @@ export function computeContext(
   cond: MatchConditions = neutralConditions(),
 ): ContextResult {
   const mods: ModLine[] = [];
+  // Строка атрибута показывается всегда, со значением: игрок должен видеть, что его скилл
+  // участвует в броске, даже когда бонус нулевой.
   const am = attrMod(player.attrs[option.attribute]);
-  if (am !== 0) mods.push({ label: ATTR_LABEL[option.attribute], value: am });
+  mods.push({ label: ATTR_LABEL[option.attribute] + ' (' + player.attrs[option.attribute] + ')', value: am });
 
   const c = BALANCE.contextMod;
 
@@ -64,7 +66,8 @@ export function computeContext(
   else mods.push({ label: 'ноги стали', value: c.staminaCritical });
 
   if (state.momentum !== 0) {
-    mods.push({ label: state.momentum > 0 ? 'кураж' : 'провали тиснуть', value: state.momentum });
+    const m = Math.max(c.momentumMin, Math.min(c.momentumMax, state.momentum));
+    mods.push({ label: m > 0 ? 'кураж' : 'провали тиснуть', value: m });
   }
 
   if (state.minute > 80) {

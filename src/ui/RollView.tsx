@@ -37,9 +37,9 @@ export function RollView({ option, res, flavor, onNext }: Props) {
         <ul className="mods">
           {res.mods.length === 0 && <li className="mod"><span>без поправок</span><b /></li>}
           {res.mods.map((m) => (
-            <li key={m.label} className={`mod ${m.value > 0 ? 'plus' : 'minus'}`}>
+            <li key={m.label} className={`mod ${m.value > 0 ? 'plus' : m.value < 0 ? 'minus' : 'zero'}`}>
               <span>{m.label}</span>
-              <b>{m.value > 0 ? `+${m.value}` : `−${Math.abs(m.value)}`}</b>
+              <b>{m.value > 0 ? `+${m.value}` : m.value < 0 ? `−${Math.abs(m.value)}` : '+0'}</b>
             </li>
           ))}
         </ul>

@@ -7,6 +7,7 @@ export type DecisionLog = {
   matchId: string; seed: number; episodeId: string; optionId: string;
   optionLabel: string;
   minute: number; stamina: number; scoreDiff: number; momentum: number;
+  conditions?: string;   // venue/strength/instruction/weather — чтобы читать логи в разрезе условий
   roll: number; totalScore: number; position: Position; tier: Tier;
   msToDecide: number;
   at: number;   // время решения, чтобы различать сессии тестеров

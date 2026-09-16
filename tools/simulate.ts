@@ -5,7 +5,8 @@ import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
 import { applyChoice, createMatch, finishMatch, nextEpisode, optionCost } from '../src/engine/match';
 import type { MatchSummary } from '../src/engine/match';
-import { EPISODES, PLAYER, ROSTER } from '../src/content';
+import { EPISODES_RAW, OPPONENTS, PLAYER, rosterFor } from '../src/content';
+import { generateConditions, neutralConditions, type MatchConditions } from '../src/engine/conditions';
 import { POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeOption, Tier } from '../src/engine/types';
 
@@ -30,17 +31,26 @@ export type MatchRun = {
   emptyAtMinute: number | null;
 };
 
-export function runMatch(seed: number, policy: PolicyName): MatchRun {
+export type ConditionsMode = 'neutral' | 'random';
+
+/** Прогон по умолчанию — на нейтральных условиях, чтобы цифры баланса были сравнимы
+ *  между версиями. Режим random проверяет, что условия матча не ломают разрыв политик. */
+export function runMatch(seed: number, policy: PolicyName, mode: ConditionsMode = 'neutral'): MatchRun {
   const rng = makeRng(seed);
-  const session = createMatch(`sim-${policy}-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
+  const conditions: MatchConditions = mode === 'random'
+    ? generateConditions(rng, OPPONENTS, { confidence: rng.int(-2, 2), fatigue: rng.int(0, 3) })
+    : neutralConditions();
+  const session = createMatch(
+    `sim-${policy}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
+  );
   const tiers: Tier[] = [];
   let emptyAtMinute: number | null = null;
 
   for (;;) {
-    const next = nextEpisode(session, EPISODES, rng);
+    const next = nextEpisode(session, rng);
     if (!next) break;
     const option = POLICIES[policy](next.episode.options, (n) => rng.int(0, n - 1));
-    const res = resolveOption(session.state, session.player, option, next.episode.phase, rng);
+    const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions);
     applyChoice(session, next.episode, option, res, rng);
     tiers.push(res.tier);
     if (emptyAtMinute === null && session.state.stamina <= 0) emptyAtMinute = next.minute;
@@ -73,8 +83,8 @@ export type PolicyReport = {
   avgStaminaLeft: number;
 };
 
-export function report(policy: PolicyName, seeds: number[]): PolicyReport {
-  const runs = seeds.map((s) => runMatch(s, policy));
+export function report(policy: PolicyName, seeds: number[], mode: ConditionsMode = 'neutral'): PolicyReport {
+  const runs = seeds.map((s) => runMatch(s, policy, mode));
   const goals = runs.map((r) => r.summary.stats.goals);
   const allTiers = runs.flatMap((r) => r.tiers);
   const dist: Record<number, number> = {};
@@ -99,9 +109,9 @@ export function report(policy: PolicyName, seeds: number[]): PolicyReport {
 
 const SPEC_POLICIES: PolicyName[] = ['always_safe', 'always_risky', 'greedy_personal', 'random'];
 
-export function runSuite(n: number) {
+export function runSuite(n: number, mode: ConditionsMode = 'neutral') {
   const seeds = Array.from({ length: n }, (_, i) => 1000 + i);
-  return SPEC_POLICIES.map((p) => report(p, seeds));
+  return SPEC_POLICIES.map((p) => report(p, seeds, mode));
 }
 
 // ——— вывод ————————————————————————————————————————————————————————
@@ -113,9 +123,10 @@ function pad(v: string | number, w: number, right = false) {
 
 function main() {
   const n = Number(process.argv[2] ?? 1000);
-  const reports = runSuite(n);
+  const mode: ConditionsMode = process.argv.includes('--random-conditions') ? 'random' : 'neutral';
+  const reports = runSuite(n, mode);
 
-  console.log(`\nБалансный прогон: ${n} матчей на политику, сиды 1000..${1000 + n - 1}\n`);
+  console.log(`\nБалансный прогон: ${n} матчей на политику, сиды 1000..${1000 + n - 1}, условия: ${mode === 'random' ? 'случайные' : 'нейтральные'}\n`);
   const head = [
     pad('политика', 16), pad('результат', 10, true), pad('тренер', 8, true), pad('трибуны', 9, true),
     pad('очки', 6, true), pad('голы ср.', 9, true), pad('мед.', 5, true), pad('макс', 5, true),

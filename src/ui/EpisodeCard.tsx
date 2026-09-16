@@ -1,4 +1,5 @@
 import type { Episode, EpisodeOption, MatchState, Player } from '../engine/types';
+import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
 import { optionCost } from '../engine/match';
 import { EFFECT_LABEL, POSITION_LABEL } from '../engine/resolve';
@@ -8,6 +9,7 @@ type Props = {
   minute: number;
   state: MatchState;
   player: Player;
+  conditions: MatchConditions;
   onChoose: (option: EpisodeOption) => void;
 };
 
@@ -24,7 +26,7 @@ function CostBar({ cost }: { cost: number }) {
   );
 }
 
-export function EpisodeCard({ episode, minute, state, player, onChoose }: Props) {
+export function EpisodeCard({ episode, minute, state, player, conditions, onChoose }: Props) {
   return (
     <div className="card episode">
       <div className="card-minute">{minute}′</div>
@@ -33,7 +35,7 @@ export function EpisodeCard({ episode, minute, state, player, onChoose }: Props)
         {episode.options.map((o) => {
           // Показываем ярлыки уже со сдвигами от контекста: если ноги встали,
           // игрок должен видеть, что надёжный вариант перестал быть надёжным.
-          const ctx = computeContext(state, player, o, episode.phase);
+          const ctx = computeContext(state, player, o, episode.phase, conditions);
           const shifted = ctx.position !== o.basePosition;
           return (
             <button key={o.id} className="option" onClick={() => onChoose(o)}>

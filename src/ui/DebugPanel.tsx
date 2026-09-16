@@ -21,6 +21,7 @@ export function DebugPanel({ session }: { session: MatchSession | null }) {
           <div><dt>fanHype</dt><dd>{Math.round(s.fanHype)}</dd></div>
           <div><dt>momentum</dt><dd>{s.momentum}</dd></div>
           <div><dt>flags</dt><dd>{s.flags.join(', ') || '—'}</dd></div>
+          <div><dt>умови</dt><dd>{[session.conditions.venue, session.conditions.strength, session.conditions.instruction, session.conditions.weather].join(' ')} t{session.conditions.tone.confidence}/{session.conditions.tone.fatigue}</dd></div>
           <div><dt>епізоди</dt><dd>{session.nextIndex}/{session.schedule.length}</dd></div>
           <div><dt>розклад</dt><dd>{session.schedule.join(' ')}</dd></div>
         </dl>

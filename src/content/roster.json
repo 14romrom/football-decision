@@ -10,13 +10,39 @@
     },
     "scorers": ["striker", "partner", "cb"]
   },
-  "them": {
-    "name": { "nom": "Сан-Дореа", "gen": "Сан-Дореа" },
-    "players": {
-      "striker": { "nom": "Вальє", "gen": "Вальє", "dat": "Вальє", "ins": "Вальє" },
-      "winger": { "nom": "Понс", "gen": "Понса", "dat": "Понсу", "ins": "Понсом" },
-      "mid": { "nom": "Ібарра", "gen": "Ібарри", "dat": "Ібаррі", "ins": "Ібаррою" }
+  "opponents": {
+    "sandorea": {
+      "strength": "strong",
+      "blurb": "лідер таблиці, не програють уже дев’ять матчів",
+      "name": { "nom": "Сан-Дореа", "gen": "Сан-Дореа" },
+      "players": {
+        "striker": { "nom": "Вальє", "gen": "Вальє", "dat": "Вальє", "ins": "Вальє" },
+        "winger": { "nom": "Понс", "gen": "Понса", "dat": "Понсу", "ins": "Понсом" },
+        "mid": { "nom": "Ібарра", "gen": "Ібарри", "dat": "Ібаррі", "ins": "Ібаррою" }
+      },
+      "scorers": ["striker", "winger", "mid"]
     },
-    "scorers": ["striker", "winger", "mid"]
+    "castelrio": {
+      "strength": "even",
+      "blurb": "середина таблиці, б’ються за кожен м’яч",
+      "name": { "nom": "Кастель-Ріо", "gen": "Кастель-Ріо" },
+      "players": {
+        "striker": { "nom": "Дуарте", "gen": "Дуарте", "dat": "Дуарте", "ins": "Дуарте" },
+        "winger": { "nom": "Сальгадо", "gen": "Сальгадо", "dat": "Сальгадо", "ins": "Сальгадо" },
+        "mid": { "nom": "Ромеро", "gen": "Ромеро", "dat": "Ромеро", "ins": "Ромеро" }
+      },
+      "scorers": ["striker", "winger", "mid"]
+    },
+    "olvar": {
+      "strength": "weak",
+      "blurb": "аутсайдер, тренера змінили місяць тому",
+      "name": { "nom": "Ольвар", "gen": "Ольвара" },
+      "players": {
+        "striker": { "nom": "Бенітес", "gen": "Бенітеса", "dat": "Бенітесу", "ins": "Бенітесом" },
+        "winger": { "nom": "Кордеро", "gen": "Кордеро", "dat": "Кордеро", "ins": "Кордеро" },
+        "mid": { "nom": "Маркес", "gen": "Маркеса", "dat": "Маркесу", "ins": "Маркесом" }
+      },
+      "scorers": ["striker", "winger", "mid"]
+    }
   }
 }

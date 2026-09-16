@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EPISODES, FLAVOR, PLAYER, ROSTER } from './content';
+import { EPISODES_RAW, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
+import { generateConditions, toneFromHistory } from './engine/conditions';
+import { readHistory, recordResult } from './telemetry/history';
+import { BriefingScreen } from './ui/BriefingScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
 import {
@@ -17,6 +20,7 @@ import { DebugPanel } from './ui/DebugPanel';
 
 type Stage =
   | { k: 'menu' }
+  | { k: 'briefing' }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number }
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[] }
@@ -47,12 +51,13 @@ function Game() {
   const proceed = useCallback((lead: TimelineEvent[] = []) => {
     const session = sessionRef.current!;
     const rng = rngRef.current!;
-    const next = nextEpisode(session, EPISODES, rng);
+    const next = nextEpisode(session, rng);
     if (next) {
       pendingRef.current = { kind: 'episode', episode: next.episode, minute: next.minute };
       setQueue([...lead, ...next.events]);
     } else {
       const { events, summary } = finishMatch(session, rng);
+      recordResult(summary.scoreUs, summary.scoreThem);   // тонус следующего матча
       pendingRef.current = { kind: 'result', summary };
       setQueue([...lead, ...events]);
     }
@@ -67,11 +72,19 @@ function Game() {
     const seed = Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : Math.floor(Math.random() * 1e9);
     if (params.has('seed')) history.replaceState(null, '', location.pathname + location.hash);
     const rng = makeRng(seed);
-    const session = createMatch(`${Date.now().toString(36)}-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
+    // Условия матча — по сиду, тонус — из истории этого устройства.
+    const conditions = generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)));
+    const session = createMatch(
+      `${Date.now().toString(36)}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
+    );
     rngRef.current = rng;
     sessionRef.current = session;
     setShown([]);
-    proceed(session.state.log.slice());   // стартовый свисток уже лежит в логе
+    setStage({ k: 'briefing' });
+  }, []);
+
+  const kickoff = useCallback(() => {
+    proceed(sessionRef.current!.state.log.slice());   // стартовый свисток уже лежит в логе
   }, [proceed]);
 
   // Проигрывание ленты: по одному событию, пока очередь не опустеет.
@@ -105,7 +118,7 @@ function Game() {
     if (stage.k !== 'episode') return;
     const session = sessionRef.current!;
     const rng = rngRef.current!;
-    const res = resolveOption(session.state, session.player, option, stage.episode.phase, rng);
+    const res = resolveOption(session.state, session.player, option, stage.episode.phase, rng, session.conditions);
 
     logDecision({
       matchId: session.matchId,
@@ -114,6 +127,7 @@ function Game() {
       optionId: option.id,
       optionLabel: option.label,
       minute: stage.minute,
+      conditions: `${session.conditions.venue}/${session.conditions.strength}/${session.conditions.instruction}/${session.conditions.weather}`,
       stamina: Math.round(session.state.stamina),
       scoreDiff: session.state.scoreUs - session.state.scoreThem,
       momentum: session.state.momentum,
@@ -148,9 +162,24 @@ function Game() {
         <p className="muted">
           Тренер і трибуни хочуть від тебе різного. Сили майже не відновлюються — хіба що в перерві.
         </p>
-        <button className="primary" onClick={start}>Вийти на поле</button>
+        <button className="primary" onClick={start}>До матчу</button>
         <a className="link" href="#/stats">Розподіл виборів</a>
       </div>
+    );
+  }
+
+  if (stage.k === 'briefing') {
+    const session = sessionRef.current!;
+    return (
+      <>
+        <BriefingScreen
+          conditions={session.conditions}
+          opponent={OPPONENTS[session.conditions.opponentKey]}
+          player={session.player}
+          onStart={kickoff}
+        />
+        <DebugPanel session={session} />
+      </>
     );
   }
 
@@ -179,6 +208,7 @@ function Game() {
             minute={stage.minute}
             state={session.state}
             player={session.player}
+            conditions={session.conditions}
             onChoose={choose}
           />
         )}

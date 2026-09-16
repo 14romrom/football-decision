@@ -4,6 +4,7 @@
 import { DIE_FLOOR, THRESHOLDS } from './balance';
 import { computeContext } from './context';
 import type { Episode, EpisodeOption, MatchState, Player, Position, Resolution, Tier } from './types';
+import { neutralConditions, type MatchConditions } from './conditions';
 import type { Rng } from './rng';
 
 export function tierForScore(position: Position, score: number): Tier {
@@ -20,8 +21,9 @@ export function resolveOption(
   option: EpisodeOption,
   phase: Episode['phase'],
   rng: Rng,
+  cond: MatchConditions = neutralConditions(),
 ): Resolution {
-  const ctx = computeContext(state, player, option, phase);
+  const ctx = computeContext(state, player, option, phase, cond);
   const rawRoll = rng.d20();
   const roll = Math.max(rawRoll, DIE_FLOOR[ctx.position]);
   // Планка показывается как модификатор: игрок видит, что выпало, и за что добавили.

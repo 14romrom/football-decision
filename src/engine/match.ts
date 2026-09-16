@@ -2,7 +2,8 @@
 // исходов и сборка итога. React сюда не заглядывает — UI только вызывает функции.
 
 import { BALANCE, MOMENTUM_BY_TIER } from './balance';
-import { fillNames, type Roster } from './names';
+import { fillNames, fillNamesDeep, type Roster } from './names';
+import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { pickFlavor, type FlavorRule } from './flavor';
 import type { Rng } from './rng';
 import type {
@@ -14,6 +15,9 @@ export type MatchSession = {
   seed: number;
   player: Player;
   roster: Roster;
+  conditions: MatchConditions;
+  /** Эпизоды с подставленными именами этого соперника. */
+  episodes: Episode[];
   state: MatchState;
   schedule: number[];
   /** Эпизод на каждый слот, подобранный заранее. См. planEpisodes. */
@@ -75,8 +79,11 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng): string
 }
 
 export function createMatch(
-  matchId: string, seed: number, player: Player, rng: Rng, episodes: Episode[], roster: Roster,
+  matchId: string, seed: number, player: Player, rng: Rng, rawEpisodes: Episode[], roster: Roster,
+  conditions: MatchConditions = neutralConditions(),
 ): MatchSession {
+  const episodes = fillNamesDeep(rawEpisodes, roster);
+  const start = startResources(conditions);
   const last = BALANCE.match.episodeMinutes.length - 1;
   const schedule = BALANCE.match.episodeMinutes.map((m, i) => {
     const j = BALANCE.match.minuteJitter;
@@ -89,22 +96,23 @@ export function createMatch(
     minute: 0,
     scoreUs: 0,
     scoreThem: 0,
-    stamina: BALANCE.staminaStart,
-    composureNow: BALANCE.composureStart,
+    stamina: clamp(start.stamina, 0, 100),
+    composureNow: clamp(start.composure, 0, 100),
     coachTrust: BALANCE.coachTrustStart,
-    fanHype: BALANCE.fanHypeStart,
+    fanHype: clamp(start.fanHype, 0, 100),
     momentum: 0,
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
     flags: [],
     log: [{
       minute: 0,
       kind: 'kickoff',
-      text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». Свисток. Трибуни встали.',
+      text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». Свисток. '
+        + (conditions.venue === 'home' ? 'Трибуни встали.' : 'Свистять ще до першого дотику.'),
     }],
   };
 
   return {
-    matchId, seed, player, roster, state, schedule,
+    matchId, seed, player, roster, conditions, episodes, state, schedule,
     plan: planEpisodes(schedule, episodes, rng),
     usedEpisodeIds: [], nextIndex: 0, finished: false,
   };
@@ -137,6 +145,11 @@ const FILLER_TIRED = [
   'Ти впираєшся руками в коліна, поки м’яч на тій половині.',
   'Ноги важкі, до найближчого суперника два кроки, яких немає.',
 ];
+const FILLER_WEATHER: Record<string, string[]> = {
+  rain: ['Дощ сильнішає, м’яч ковзає по газону швидше за гравців.', 'Захисник послизнувся на рівному місці. Поки що не наш.'],
+  heat: ['Спека. Пауза на воду, і ніхто не сперечається.', 'Гра стає повільнішою: усі бережуть сили.'],
+  wind: ['Вітер зносить подачу за лицьову — воротар навіть не рухається.', 'Дальній удар суперника вітер відводить від стійки.'],
+};
 
 function fillerText(session: MatchSession, rng: Rng): string {
   const state = session.state;
@@ -144,6 +157,7 @@ function fillerText(session: MatchSession, rng: Rng): string {
   if (state.scoreUs > state.scoreThem) pool.push(...FILLER_LEADING);
   if (state.scoreUs < state.scoreThem) pool.push(...FILLER_TRAILING);
   if (state.stamina < BALANCE.tiredBelow) pool.push(...FILLER_TIRED);
+  pool.push(...(FILLER_WEATHER[session.conditions.weather] ?? []));
   return fillNames(rng.pick(pool), session.roster);
 }
 
@@ -153,14 +167,23 @@ function scorer(roster: Roster, side: 'us' | 'them', rng: Rng): string {
 }
 
 /** Счёт между эпизодами меняется по простой таблице, а не по симуляции поля. */
-function rollFillerGoal(state: MatchState, rng: Rng): 'us' | 'them' | null {
+function rollFillerGoal(session: MatchSession, rng: Rng): 'us' | 'them' | null {
   const m = BALANCE.match;
-  const pUs = clamp(m.fillerGoalBase + state.momentum * m.fillerGoalMomentum, 0.01, 0.16);
-  const pThem = clamp(m.fillerGoalBase - state.momentum * m.fillerGoalMomentum, 0.01, 0.16);
+  const state = session.state;
+  // Сильный соперник чаще забивает сам, слабый — чаще пропускает от партнёров.
+  const edge = BALANCE.conditions.strongFillerGoal;
+  const s = session.conditions.strength;
+  const pUs = clamp(m.fillerGoalBase + state.momentum * m.fillerGoalMomentum + (s === 'weak' ? edge : 0), 0.01, 0.2);
+  const pThem = clamp(m.fillerGoalBase - state.momentum * m.fillerGoalMomentum + (s === 'strong' ? edge : 0), 0.01, 0.2);
   const r = rng.next();
   if (r < pUs) return 'us';
   if (r < pUs + pThem) return 'them';
   return null;
+}
+
+/** Трибуны: дома громче, на выезде глуше. Все изменения fanHype идут через это. */
+function addHype(session: MatchSession, delta: number) {
+  session.state.fanHype = clamp(session.state.fanHype + delta * hypeScale(session.conditions), 0, 100);
 }
 
 function pushGoal(session: MatchSession, side: 'us' | 'them', minute: number, rng: Rng, text?: string) {
@@ -168,7 +191,7 @@ function pushGoal(session: MatchSession, side: 'us' | 'them', minute: number, rn
   if (side === 'us') {
     state.scoreUs += 1;
     state.momentum = clamp(state.momentum + 1, -3, 3);
-    state.fanHype = clamp(state.fanHype + 6, 0, 100);
+    addHype(session, 6);
     state.log.push({
       minute,
       kind: 'goalUs',
@@ -192,8 +215,10 @@ function syncTired(state: MatchState) {
   if (!tired) state.flags = state.flags.filter((f) => f !== 'tired');
 }
 
-function drainStamina(state: MatchState, minutes: number) {
-  state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute, 0, 100);
+function drainStamina(session: MatchSession, minutes: number) {
+  const state = session.state;
+  const heat = session.conditions.weather === 'heat' ? BALANCE.conditions.heatDrainScale : 1;
+  state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute * heat, 0, 100);
   syncTired(state);
 }
 
@@ -214,15 +239,15 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   const beats = gap >= 16 ? 3 : gap >= 8 ? 2 : 1;
   // Гол разыгрывается один раз на промежуток, а не на каждую строку ленты:
   // иначе темп подачи текста начал бы менять счёт матча.
-  const goal = rollFillerGoal(state, rng);
+  const goal = rollFillerGoal(session, rng);
   const goalBeat = goal ? rng.int(1, beats) : -1;
   for (let i = 1; i <= beats; i++) {
     const minute = Math.round(from + (gap * i) / (beats + 1));
-    drainStamina(state, gap / (beats + 1));
+    drainStamina(session, gap / (beats + 1));
     if (i === goalBeat) pushGoal(session, goal!, minute, rng);
     else state.log.push({ minute, kind: 'filler', text: fillerText(session, rng) });
   }
-  drainStamina(state, gap / (beats + 1));
+  drainStamina(session, gap / (beats + 1));
   state.minute = until;
 
   return state.log.slice(before);
@@ -230,7 +255,8 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
 
 // ——— выбор эпизода ————————————————————————————————————————————————
 
-export function pickEpisode(session: MatchSession, episodes: Episode[], _rng: Rng): Episode | null {
+export function pickEpisode(session: MatchSession): Episode | null {
+  const episodes = session.episodes;
   const i = session.nextIndex;
   const byId = (id: string) => episodes.find((e) => e.id === id) ?? null;
   const blocked = (e: Episode) => e.requires?.notFlags?.some((f) => session.state.flags.includes(f)) ?? false;
@@ -254,12 +280,12 @@ export function pickEpisode(session: MatchSession, episodes: Episode[], _rng: Rn
 
 /** Следующий эпизод: сначала лента до его минуты, потом сам эпизод. */
 export function nextEpisode(
-  session: MatchSession, episodes: Episode[], rng: Rng,
+  session: MatchSession, rng: Rng,
 ): { episode: Episode; minute: number; events: TimelineEvent[] } | null {
   if (session.nextIndex >= session.schedule.length) return null;
   const minute = session.schedule[session.nextIndex];
   const events = advanceTo(session, minute, rng);
-  const episode = pickEpisode(session, episodes, rng);
+  const episode = pickEpisode(session);
   if (!episode) return null;
   return { episode, minute, events };
 }
@@ -275,7 +301,7 @@ function applyEffects(session: MatchSession, apply: ApplyEffect | undefined, min
 
   if (apply.stamina) state.stamina = clamp(state.stamina + apply.stamina, 0, 100);
   if (apply.coachTrust) addTrust(state, apply.coachTrust);
-  if (apply.fanHype) state.fanHype = clamp(state.fanHype + apply.fanHype, 0, 100);
+  if (apply.fanHype) addHype(session, apply.fanHype);
   if (apply.composure) state.composureNow = clamp(state.composureNow + apply.composure, 0, 100);
   if (apply.momentum) state.momentum = clamp(state.momentum + apply.momentum, -3, 3);
 
@@ -326,7 +352,21 @@ export function applyChoice(
   state.momentum = clamp(state.momentum + MOMENTUM_BY_TIER[res.tier], -3, 3);
 
   // Трибуны реагируют на смелость сами по себе, до того как ясен результат.
-  state.fanHype = clamp(state.fanHype + BALANCE.systemic.boldnessHype[res.position], 0, 100);
+  addHype(session, BALANCE.systemic.boldnessHype[res.position]);
+
+  // Установка тренера: он оценивает не бросок, а послушание.
+  const k = BALANCE.conditions;
+  const bold = res.position !== 'controlled';
+  const good = res.tier === 'clean';
+  const bad = res.tier === 'fail' || res.tier === 'badFail';
+  if (session.conditions.instruction === 'hold') {
+    if (!bold && good) addTrust(state, k.holdObeyTrust);
+    if (bold && bad) addTrust(state, k.holdDisobeyTrust);
+  }
+  if (session.conditions.instruction === 'press') {
+    if (bold && good) addTrust(state, k.pressBoldTrust);
+    if (!bold) addTrust(state, k.pressTimidTrust);
+  }
 
   // Провалившееся эгоистичное решение стоит доверия сверх того, что записано в контенте.
   if (res.tier === 'fail' || res.tier === 'badFail') {
@@ -375,11 +415,17 @@ export type MatchSummary = {
 
 const rate = (value: number) => Math.round(clamp(value, 1, 10) * 10) / 10;
 
-export function computeRatings(state: MatchState): { coachRating: number; fanRating: number } {
+export function computeRatings(
+  state: MatchState, conditions: MatchConditions = neutralConditions(),
+): { coachRating: number; fanRating: number } {
   const r = BALANCE.rating;
   const st = state.stats;
+  // «Вільна роль»: тренер отпустил — значит, ждёт голов и передач.
+  const free = conditions.instruction === 'free';
+  const goalW = r.coach.goal + (free ? BALANCE.conditions.freeGoalWeight : 0);
+  const assistW = r.coach.assist + (free ? BALANCE.conditions.freeAssistWeight : 0);
   const coach = r.coach.base + (state.coachTrust / 100) * r.coach.trustWeight
-    + st.goals * r.coach.goal + st.assists * r.coach.assist + st.keyPasses * r.coach.keyPass
+    + st.goals * goalW + st.assists * assistW + st.keyPasses * r.coach.keyPass
     + st.duelsWon * r.coach.duel + st.losses * r.coach.loss + st.fouls * r.coach.foul;
   const fan = r.fan.base + (state.fanHype / 100) * r.fan.hypeWeight
     + st.goals * r.fan.goal + st.assists * r.fan.assist + st.duelsWon * r.fan.duel
@@ -399,7 +445,7 @@ export function finishMatch(session: MatchSession, rng: Rng): { events: Timeline
   });
   session.finished = true;
 
-  const { coachRating, fanRating } = computeRatings(state);
+  const { coachRating, fanRating } = computeRatings(state, session.conditions);
   const points = state.scoreUs > state.scoreThem ? 3 : state.scoreUs === state.scoreThem ? 1 : 0;
 
   const summary: MatchSummary = {

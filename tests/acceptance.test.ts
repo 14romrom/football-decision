@@ -53,6 +53,17 @@ describe('критерии приёмки, п. 13', () => {
   });
 });
 
+describe('условия матча', () => {
+  it('со случайными условиями разрыв политик остаётся в разумных пределах', () => {
+    // Условия сдвигают всех сразу (сильный соперник — всем −1), поэтому порог мягче
+    // спецификационного: важно, чтобы ни одна политика не стала выигрышной именно из-за условий.
+    const reports = runSuite(400, 'random');
+    const results = reports.map((r) => r.avgResult);
+    const spread = (Math.max(...results) - Math.min(...results)) / Math.min(...results);
+    expect(spread, reports.map((r) => `${r.policy}=${r.avgResult.toFixed(2)}`).join(' ')).toBeLessThanOrEqual(0.2);
+  });
+});
+
 describe('матч целиком', () => {
   it('каждый матч — ровно 10 эпизодов без повторов, последний после 85-й минуты', () => {
     for (const seed of seeds(600, 9000)) {
@@ -60,7 +71,7 @@ describe('матч целиком', () => {
       const session = createMatch(`t-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
       const minutes: number[] = [];
       for (;;) {
-        const next = nextEpisode(session, EPISODES, rng);
+        const next = nextEpisode(session, rng);
         if (!next) break;
         const option = next.episode.options[rng.int(0, next.episode.options.length - 1)];
         const res = resolveOption(session.state, session.player, option, next.episode.phase, rng);
@@ -79,7 +90,7 @@ describe('матч целиком', () => {
       const rng = makeRng(seed);
       const session = createMatch(`r-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
       for (;;) {
-        const next = nextEpisode(session, EPISODES, rng);
+        const next = nextEpisode(session, rng);
         if (!next) break;
         const option = next.episode.options[rng.int(0, next.episode.options.length - 1)];
         const res = resolveOption(session.state, session.player, option, next.episode.phase, rng);
@@ -108,7 +119,7 @@ describe('матч целиком', () => {
 describe('правило «никаких процентов» (п. 1 и п. 13 ТЗ)', () => {
   // Экран /stats — единственное исключение: там процент долей выборов живых
   // тестеров и есть предмет измерения, а не подсказка игроку.
-  const GAMEPLAY_UI = ['MatchScreen', 'EpisodeCard', 'RollView', 'ResultScreen', 'DebugPanel'];
+  const GAMEPLAY_UI = ['MatchScreen', 'EpisodeCard', 'RollView', 'ResultScreen', 'DebugPanel', 'BriefingScreen'];
 
   it('в игровых экранах нет процентов, шансов и ожидаемых значений', async () => {
     const { readFileSync } = await import('node:fs');

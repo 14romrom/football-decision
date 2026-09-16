@@ -3,6 +3,7 @@
 // это единственный способ увидеть, что прошлые решения на что-то повлияли.
 
 import { BALANCE, POSITION_ORDER } from './balance';
+import { neutralConditions, signatureAttrs, type MatchConditions } from './conditions';
 import type { Attribute, Effect, EpisodeOption, Episode, MatchState, ModLine, Player, Position } from './types';
 
 const ATTR_LABEL: Record<Attribute, string> = {
@@ -49,6 +50,7 @@ export function computeContext(
   player: Player,
   option: EpisodeOption,
   phase: Episode['phase'],
+  cond: MatchConditions = neutralConditions(),
 ): ContextResult {
   const mods: ModLine[] = [];
   const am = attrMod(player.attrs[option.attribute]);
@@ -76,6 +78,23 @@ export function computeContext(
 
   if (state.flags.includes('injured')) {
     mods.push({ label: 'пошкодження', value: c.injured });
+  }
+
+  // Условия матча. Каждая строка — то, что игрок прочитал на брифинге.
+  const k = BALANCE.conditions;
+  if (cond.venue === 'home' && signatureAttrs(player).includes(option.attribute)) {
+    mods.push({ label: 'рідні трибуни чекають саме цього', value: k.homeSignatureBonus });
+  }
+  if (cond.venue === 'away' && state.minute >= k.awayLateMinute) {
+    mods.push({ label: 'чужий стадіон, кінцівка', value: k.awayLateNerves });
+  }
+  if (cond.strength === 'strong') mods.push({ label: 'сильний суперник', value: k.strongOpponent });
+  if (cond.strength === 'weak') mods.push({ label: 'слабкий суперник', value: k.weakOpponent });
+  if (cond.weather === 'rain' && (option.attribute === 'dribbling' || option.attribute === 'passing')) {
+    mods.push({ label: 'мокрий газон', value: k.rainPenalty });
+  }
+  if (cond.weather === 'wind' && (option.attribute === 'finishing' || (phase === 'setpiece' && option.attribute === 'passing'))) {
+    mods.push({ label: 'вітер', value: k.windPenalty });
   }
 
   // Сдвиги формы риска. Накапливаем и зажимаем в один шаг: контекст может

@@ -54,9 +54,9 @@ function weakestLine(player: Player): string {
     .map((a) => `${ATTRIBUTE_LABEL[a]} +${attrMod(player.attrs[a])}`).join(', ');
 }
 
-type Props = { conditions: MatchConditions; opponent: Opponent; player: Player; onStart: () => void };
+type Props = { conditions: MatchConditions; opponent: Opponent; player: Player; carryoverNote?: string; onStart: () => void };
 
-export function BriefingScreen({ conditions, opponent, player, onStart }: Props) {
+export function BriefingScreen({ conditions, opponent, player, carryoverNote, onStart }: Props) {
   const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
   const venue = conditions.venue === 'home'
     ? { title: 'Вдома', note: `Трибуни знають тебе і чекають ${sig[0]} та ${sig[1]} — саме за це тут люблять.` }
@@ -81,6 +81,7 @@ export function BriefingScreen({ conditions, opponent, player, onStart }: Props)
         <div><dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd></div>
         <div><dt>Тренер</dt><dd><b>{instr.title}.</b> {instr.quote} {instr.note}</dd></div>
         <div><dt>Тонус</dt><dd><b>{tone.title}.</b> {tone.note}</dd></div>
+        {carryoverNote && <div><dt>Наслідки</dt><dd>{carryoverNote}</dd></div>}
       </dl>
       <button className="primary" onClick={onStart}>Вийти на поле</button>
     </div>

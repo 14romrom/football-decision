@@ -11,7 +11,9 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-export function ResultScreen({ summary, roster, onRestart }: { summary: MatchSummary; roster: Roster; onRestart: () => void }) {
+type Props = { summary: MatchSummary; roster: Roster; xpEarned?: number; onRestart: () => void };
+
+export function ResultScreen({ summary, roster, xpEarned, onRestart }: Props) {
   const gap = Math.abs(summary.coachRating - summary.fanRating);
   const low = Math.min(summary.coachRating, summary.fanRating);
 
@@ -57,8 +59,10 @@ export function ResultScreen({ summary, roster, onRestart }: { summary: MatchSum
         <p className="gap-note">Догодити обом одразу вдається рідко. Сьогодні вдалося.</p>
       )}
 
+      {xpEarned !== undefined && <p className="xp-earned">+{xpEarned} досвіду за матч</p>}
+
       <div className="actions">
-        <button className="primary" onClick={onRestart}>Ще матч</button>
+        <button className="primary" onClick={onRestart}>Далі</button>
         <button onClick={exportLogs}>Вивантажити логи</button>
         <a className="link" href="#/stats">Розподіл виборів</a>
       </div>

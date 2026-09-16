@@ -5,13 +5,21 @@ import { readHistory, recentEpisodes, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
 import { BriefingScreen } from './ui/BriefingScreen';
 import { PlayerCard } from './ui/PlayerCard';
+import { TrainingScreen } from './ui/TrainingScreen';
+import { LevelUpScreen } from './ui/LevelUpScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
 import {
   applyChoice, createMatch, finishMatch, nextEpisode,
   type MatchSession, type MatchSummary,
 } from './engine/match';
-import type { Episode, EpisodeOption, Resolution, TimelineEvent } from './engine/types';
+import {
+  applyMatchToCareer, consumeStartPenalty, effectivePlayer, trainAttribute, xpForMatch,
+  type Career,
+} from './engine/career';
+import { readCareer, writeCareer } from './telemetry/career-storage';
+import { dominantVoice } from './engine/voices';
+import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent } from './engine/types';
 import { logDecision } from './telemetry/log';
 import { MatchScreen } from './ui/MatchScreen';
 import { EpisodeCard } from './ui/EpisodeCard';
@@ -22,15 +30,17 @@ import { DebugPanel } from './ui/DebugPanel';
 
 type Stage =
   | { k: 'menu' }
-  | { k: 'briefing' }
+  | { k: 'briefing'; carryoverNote?: string }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number }
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[] }
-  | { k: 'result'; summary: MatchSummary };
+  | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
+  | { k: 'levelup'; fromLevel: number; toLevel: number }
+  | { k: 'train' };
 
 type Pending =
   | { kind: 'episode'; episode: Episode; minute: number }
-  | { kind: 'result'; summary: MatchSummary };
+  | { kind: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number };
 
 /** Пауза на событие ленты: гол должен успеть прозвучать, проходной момент — нет. */
 function delayFor(e: TimelineEvent): number {
@@ -45,6 +55,11 @@ function Game() {
   const rngRef = useRef<Rng | null>(null);
   const pendingRef = useRef<Pending | null>(null);
   const shownAtRef = useRef(0);
+  // career — состояние для UI (уровень/опыт на экранах) и ref для чтения из колбэков
+  // без устаревших замыканий, тот же приём, что и sessionRef/rngRef.
+  const careerRef = useRef<Career>(readCareer());
+  const [career, setCareer] = useState<Career>(careerRef.current);
+  const setCareerBoth = useCallback((c: Career) => { careerRef.current = c; writeCareer(c); setCareer(c); }, []);
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   const [shown, setShown] = useState<TimelineEvent[]>([]);
@@ -60,11 +75,20 @@ function Game() {
     } else {
       const { events, summary } = finishMatch(session, rng);
       recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds);   // тонус и память следующего матча
-      pendingRef.current = { kind: 'result', summary };
+
+      const before = careerRef.current;
+      const hadDominantVoice = dominantVoice(session.state.voices) !== null;
+      const xpEarned = xpForMatch(summary, hadDominantVoice);
+      const after = applyMatchToCareer(before, session.state, summary, hadDominantVoice);
+      setCareerBoth(after);
+
+      pendingRef.current = {
+        kind: 'result', summary, xpEarned, leveledFrom: before.level, leveledTo: after.level,
+      };
       setQueue([...lead, ...events]);
     }
     setStage({ k: 'feed' });
-  }, []);
+  }, [setCareerBoth]);
 
   const start = useCallback(() => {
     // ?seed= воспроизводит конкретный матч, но только первый: иначе «Ще матч»
@@ -76,15 +100,36 @@ function Game() {
     const rng = makeRng(seed);
     // Условия матча — по сиду, тонус — из истории этого устройства.
     const conditions = generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)));
+
+    // Перенос из карьеры: травма/карточка прошлого матча бьют по старту этого,
+    // доверие тренера продолжается (с регрессией), а не сбрасывается на 55.
+    const { career: consumedCareer, penalty } = consumeStartPenalty(careerRef.current);
+    setCareerBoth(consumedCareer);
+    const player = effectivePlayer(PLAYER, consumedCareer);
+
     const session = createMatch(
-      `${Date.now().toString(36)}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
+      `${Date.now().toString(36)}-${seed}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
       recentEpisodes(BALANCE.match.recentMatches), FLAG_RULES,
+      { coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty },
     );
     rngRef.current = rng;
     sessionRef.current = session;
     setShown([]);
-    setStage({ k: 'briefing' });
-  }, []);
+    setStage({ k: 'briefing', carryoverNote: penalty.note });
+  }, [setCareerBoth]);
+
+  const train = useCallback((attr: Attribute) => {
+    const rng = makeRng(Date.now() ^ Math.floor(Math.random() * 1e9));
+    const { career: after, success, roll } = trainAttribute(careerRef.current, attr, rng);
+    setCareerBoth(after);
+    return { attr, success, roll };
+  }, [setCareerBoth]);
+
+  const confirmLevelUp = useCallback((attr: Attribute) => {
+    const c = careerRef.current;
+    setCareerBoth({ ...c, attrPoints: { ...c.attrPoints, [attr]: (c.attrPoints[attr] ?? 0) + 1 } });
+    setStage({ k: 'menu' });
+  }, [setCareerBoth]);
 
   const kickoff = useCallback(() => {
     proceed(sessionRef.current!.state.log.slice());   // стартовый свисток уже лежит в логе
@@ -101,7 +146,7 @@ function Game() {
         shownAtRef.current = performance.now();
         setStage({ k: 'episode', episode: p.episode, minute: p.minute });
       } else {
-        setStage({ k: 'result', summary: p.summary });
+        setStage({ k: 'result', summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo });
       }
       return;
     }
@@ -159,13 +204,18 @@ function Game() {
       <div className="menu">
         <h1>Один матч</h1>
         <p>
-          Ти — {PLAYER.name}, {PLAYER.position} «{ROSTER.us.name.gen}». Дев’яносто хвилин, десять моментів,
-          і в кожному треба обирати. Переграти не можна.
+          Ти — {PLAYER.name}, {PLAYER.position} «{ROSTER.us.name.gen}». {career.level} рівень.
+          Дев’яносто хвилин, десять моментів, і в кожному треба обирати. Переграти не можна.
         </p>
         <p className="muted">
           Тренер і трибуни хочуть від тебе різного. Сили майже не відновлюються — хіба що в перерві.
         </p>
         <button className="primary" onClick={start}>До матчу</button>
+        {career.trainedThisCycle ? (
+          <p className="muted small">Тренування вже проведено — наступне після матчу.</p>
+        ) : (
+          <button className="link" onClick={() => setStage({ k: 'train' })}>Тренування</button>
+        )}
         <a className="link" href="#/player">Картка гравця</a>
         <a className="link" href="#/stats">Розподіл виборів</a>
       </div>
@@ -180,6 +230,7 @@ function Game() {
           conditions={session.conditions}
           opponent={OPPONENTS[session.conditions.opponentKey]}
           player={session.player}
+          carryoverNote={stage.carryoverNote}
           onStart={kickoff}
         />
         <DebugPanel session={session} />
@@ -188,12 +239,26 @@ function Game() {
   }
 
   if (stage.k === 'result') {
+    const leveled = stage.leveledTo > stage.leveledFrom;
     return (
       <>
-        <ResultScreen summary={stage.summary} roster={sessionRef.current!.roster} onRestart={start} />
+        <ResultScreen
+          summary={stage.summary}
+          roster={sessionRef.current!.roster}
+          xpEarned={stage.xpEarned}
+          onRestart={() => (leveled ? setStage({ k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo }) : setStage({ k: 'menu' }))}
+        />
         <DebugPanel session={sessionRef.current} />
       </>
     );
+  }
+
+  if (stage.k === 'levelup') {
+    return <LevelUpScreen player={PLAYER} career={career} fromLevel={stage.fromLevel} toLevel={stage.toLevel} onConfirm={confirmLevelUp} />;
+  }
+
+  if (stage.k === 'train') {
+    return <TrainingScreen player={PLAYER} career={career} onTrain={train} onBack={() => setStage({ k: 'menu' })} />;
   }
 
   const session = sessionRef.current!;
@@ -240,6 +305,9 @@ export function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
   if (route.startsWith('#/stats')) return <StatsScreen />;
-  if (route.startsWith('#/player')) return <PlayerCard player={PLAYER} onBack={() => { location.hash = '#/'; }} />;
+  // Карточка вне активного матча читает карьеру напрямую из хранилища — она не
+  // синхронизирована «вживую» с сессией Game (там своя копия в рефе), но для
+  // самостоятельного экрана свежего чтения при заходе достаточно.
+  if (route.startsWith('#/player')) return <PlayerCard player={PLAYER} career={readCareer()} onBack={() => { location.hash = '#/'; }} />;
   return <Game />;
 }

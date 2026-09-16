@@ -105,11 +105,17 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recentI
   return plan.map((id, i) => id ?? episodes.filter((e) => !plan.includes(e.id))[0]?.id ?? episodes[i % episodes.length].id);
 }
 
+/** Перенос из карьеры (M2): доверие тренера продолжается, а не сбрасывается на старте
+ *  каждого матча, и травма/карточка прошлого матча начинают следующий с недостачей.
+ *  См. engine/career.ts:consumeStartPenalty — там же и обоснование чисел. */
+export type Carryover = { coachTrust?: number; staminaPenalty?: number; coachTrustPenalty?: number };
+
 export function createMatch(
   matchId: string, seed: number, player: Player, rng: Rng, rawEpisodes: Episode[], roster: Roster,
   conditions: MatchConditions = neutralConditions(),
   recentEpisodeIds: string[] = [],
   flagRules: FlagRule[] = [],
+  carryover: Carryover = {},
 ): MatchSession {
   const episodes = fillNamesDeep(rawEpisodes, roster);
   const rules = fillNamesDeep(flagRules, roster);
@@ -126,9 +132,9 @@ export function createMatch(
     minute: 0,
     scoreUs: 0,
     scoreThem: 0,
-    stamina: clamp(start.stamina, 0, 100),
+    stamina: clamp(start.stamina - (carryover.staminaPenalty ?? 0), 0, 100),
     composureNow: clamp(start.composure, 0, 100),
-    coachTrust: BALANCE.coachTrustStart,
+    coachTrust: clamp((carryover.coachTrust ?? BALANCE.coachTrustStart) - (carryover.coachTrustPenalty ?? 0), 0, 100),
     fanHype: clamp(start.fanHype, 0, 100),
     momentum: clamp(start.momentum, -3, 3),
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },

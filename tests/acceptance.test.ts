@@ -128,7 +128,10 @@ describe('матч целиком', () => {
 describe('правило «никаких процентов» (п. 1 и п. 13 ТЗ)', () => {
   // Экран /stats — единственное исключение: там процент долей выборов живых
   // тестеров и есть предмет измерения, а не подсказка игроку.
-  const GAMEPLAY_UI = ['MatchScreen', 'EpisodeCard', 'RollView', 'ResultScreen', 'DebugPanel', 'BriefingScreen', 'PlayerCard'];
+  const GAMEPLAY_UI = [
+    'MatchScreen', 'EpisodeCard', 'RollView', 'ResultScreen', 'DebugPanel', 'BriefingScreen', 'PlayerCard',
+    'TrainingScreen', 'LevelUpScreen',
+  ];
 
   it('в игровых экранах нет процентов, шансов и ожидаемых значений', async () => {
     const { readFileSync } = await import('node:fs');

@@ -24,7 +24,7 @@ export function StatsScreen() {
         <section key={e.episodeId} className={`ep-stats${e.broken ? ' broken' : ''}`}>
           <h2>
             {e.episodeId} <span className="muted">· {e.total} рішень</span>
-            {e.broken && <span className="badge">рішення уявне</span>}
+            {e.broken && <span className="broken-badge">рішення уявне</span>}
           </h2>
           <p className="muted setup-quote">{setups.get(e.episodeId)}</p>
           {e.options.map((o) => (

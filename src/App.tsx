@@ -372,6 +372,13 @@ export function App() {
   // Карточка вне активного матча читает карьеру напрямую из хранилища — она не
   // синхронизирована «вживую» с сессией Game (там своя копия в рефе), но для
   // самостоятельного экрана свежего чтения при заходе достаточно.
-  if (route.startsWith('#/player')) return <PlayerCard player={PLAYER} career={readCareer()} onBack={() => { location.hash = '#/'; }} />;
+  if (route.startsWith('#/player')) {
+    return (
+      <PlayerCard
+        player={PLAYER} career={readCareer()} season={readSeason()} history={readHistory()} club={ROSTER.us.name.nom}
+        onBack={() => { location.hash = '#/'; }}
+      />
+    );
+  }
   return <Game />;
 }

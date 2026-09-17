@@ -2,9 +2,11 @@
 // тренера и последствий карточек/травм. Чистая логика без React и без localStorage —
 // хранилище отдельно (telemetry/career-storage.ts), здесь только правила.
 
-import { BALANCE } from './balance';
+import { ATTR_MOD, BALANCE } from './balance';
+import { attrMod } from './attr';
 import type { Attribute, Mark, MatchState, Player, VoiceKey } from './types';
 import type { MatchSummary } from './match';
+import { voiceSees, VOICE_LABEL } from './voices';
 
 export type Career = {
   xp: number;
@@ -84,15 +86,51 @@ export function xpToNextLevel(xp: number): { xpIntoLevel: number; xpForLevel: nu
   return { xpIntoLevel: xp - prevThreshold, xpForLevel: nextThreshold - prevThreshold };
 }
 
-/** Игрок для этого матча: базовые атрибуты + накопленные очки прокачки, зажато в 1..99.
+/** Одно очко уровня = +1 к модификатору броска, то есть +ATTR_MOD.step к значению (решение
+ *  17.09: очко «+1 к значению» три раза из четырёх ничего не меняло в матче — модификатор
+ *  растёт ступенями по 4, и уровень ощущался пустым). Старые сохранения с attrPoints в
+ *  «единицах значения» становятся щедрее задним числом — для прототипа допустимо. */
+export const POINT_VALUE = ATTR_MOD.step;
+
+/** Игрок для этого матча: базовые атрибуты + очки прокачки × POINT_VALUE, зажато в 1..99.
  *  attrMod() сам ограничивает модификатор потолком +12 — раскачать бросок до абсурда
  *  прокачкой нельзя, даже если атрибут дойдёт до 99. */
 export function effectivePlayer(base: Player, career: Career): Player {
   const attrs = { ...base.attrs };
   for (const [attr, bonus] of Object.entries(career.attrPoints) as [Attribute, number][]) {
-    attrs[attr] = Math.max(1, Math.min(99, attrs[attr] + bonus));
+    attrs[attr] = Math.max(1, Math.min(99, attrs[attr] + bonus * POINT_VALUE));
   }
   return { ...base, attrs };
+}
+
+/** Голоса, которые питает атрибут (зеркало voices.ts:voiceSees / voiceAudible). */
+const VOICE_OF: Partial<Record<Attribute, VoiceKey>> = {
+  vision: 'vision', positioning: 'vision', dribbling: 'instinct', first_touch: 'instinct',
+  pace: 'body', strength: 'body', composure: 'composure',
+};
+
+export type PointEffect = {
+  from: number; to: number; modFrom: number; modTo: number;
+  /** Что очко сделает с голосом этого атрибута: разбудит, даст зрение — или ничего. */
+  voice?: { who: VoiceKey; label: string; change: 'hears' | 'sees' | null };
+};
+
+/** Что даст очко в этот атрибут — для экрана уровня и карточки: не «+1», а «Тіло почне бачити».
+ *  Голос слышно с BALANCE.voiceMinMod, видит — с insightMinMod; считаем по атрибуту, который
+ *  прокачивается, поэтому «уже бачить через другой атрибут» здесь не change, а null. */
+export function pointEffect(base: Player, career: Career, attr: Attribute): PointEffect {
+  const now = effectivePlayer(base, career);
+  const next = effectivePlayer(base, spendPoint({ ...career, unspentPoints: 1 }, attr));
+  const from = now.attrs[attr];
+  const to = next.attrs[attr];
+  const modFrom = attrMod(from);
+  const modTo = attrMod(to);
+  const who = VOICE_OF[attr];
+  if (!who) return { from, to, modFrom, modTo };
+  let change: 'hears' | 'sees' | null = null;
+  if (!voiceSees(who, now) && voiceSees(who, next)) change = 'sees';
+  else if (modFrom < BALANCE.voiceMinMod && modTo >= BALANCE.voiceMinMod) change = 'hears';
+  return { from, to, modFrom, modTo, voice: { who, label: VOICE_LABEL[who], change } };
 }
 
 /** Доверие тренера между матчами: тянется к базовому значению, а не сохраняется дословно —

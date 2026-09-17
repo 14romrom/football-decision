@@ -206,7 +206,7 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .player-card header { margin-bottom: 1rem; }
 .player-card h1 { margin: 0.2rem 0 0.2rem; }
 .attr-group h2 { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55; margin: 1.1rem 0 0.4rem; }
-.attr-row { display: grid; grid-template-columns: 9rem 1fr 2.2rem 2.4rem; gap: 0.6rem; align-items: center; padding: 0.3rem 0; }
+.attr-row { display: grid; grid-template-columns: 9rem 1fr 3.6rem 2.4rem; gap: 0.6rem; align-items: center; padding: 0.3rem 0; }
 .attr-row.signature .attr-name, .attr-row.signature .attr-mod { color: #6ee7a0; }
 .attr-row.weak .attr-name, .attr-row.weak .attr-mod { opacity: 0.55; }
 .attr-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
@@ -344,3 +344,33 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 /* Голос бачить — строка над вариантами: то, что заметил сильный атрибут (EpisodeOption.insight). */
 .insight { font-size: 15px; font-style: italic; margin: -4px 0 10px; padding-left: 10px; border-left: 2px solid #444b5c; line-height: 1.4; }
 .insight b { font-style: normal; letter-spacing: .04em; text-transform: uppercase; font-size: 0.85em; }
+
+/* Экран уровня: очко будит голос — подпись на кнопке цветом голоса. */
+.train-attr em { display: block; font-style: normal; font-size: 0.78em; font-weight: 600; margin-top: 2px; }
+.train-attr.wakes { border-color: #444b5c; }
+.train-attr em.voice-vision { color: #c9a5ff; } .train-attr em.voice-instinct { color: #ffd166; }
+.train-attr em.voice-body { color: #ff8a8a; } .train-attr em.voice-composure { color: #8fb8ff; }
+
+/* Карточка игрока — удостоверение (Disco Elysium): шапка с полями, девиз голоса, голоси, метрики. */
+.id-card { display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: start; padding: 14px 16px; border: 1px solid #2a2f3a; border-radius: 12px; background: #161a22; margin-bottom: 1rem; }
+.id-card h1 { margin: 0; font-size: 24px; }
+.id-fields { margin: 0; display: grid; grid-template-columns: auto auto; gap: 2px 12px; font-size: 13px; align-self: center; }
+.id-fields dt { color: var(--muted); }
+.id-fields dd { margin: 0; font-variant-numeric: tabular-nums; }
+.id-motto { grid-column: 1 / -1; margin: 6px 0 0; padding-top: 8px; border-top: 1px solid #2a2f3a; font-style: italic; color: var(--muted); }
+.voices-block h2, .stats-block h2 { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55; margin: 1.1rem 0 0.5rem; }
+.voice-row { padding: 6px 0 6px 12px; border-left: 2px solid #444b5c; margin-bottom: 8px; }
+.voice-row.voice-ego { border-color: #f0a35e; } .voice-row.voice-team { border-color: #6ee7a0; }
+.voice-row.voice-composure { border-color: #8fb8ff; } .voice-row.voice-vision { border-color: #c9a5ff; }
+.voice-row.voice-instinct { border-color: #ffd166; } .voice-row.voice-body { border-color: #ff8a8a; }
+.voice-row.state-silent { opacity: 0.6; }
+.voice-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.voice-state { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--muted); }
+.voice-state.state-sees { background: rgba(110, 231, 160, 0.15); color: #6ee7a0; }
+.voice-state.state-heard { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
+.voice-about { margin: 2px 0 0; font-size: 14px; }
+.voice-meta { margin: 2px 0 0; font-size: 12px; }
+.stats-grid { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; font-size: 14px; }
+.stats-grid dt { color: var(--muted); }
+.stats-grid dd { margin: 0; font-variant-numeric: tabular-nums; }
+.stats-block .xp-track { display: block; margin-top: 8px; }

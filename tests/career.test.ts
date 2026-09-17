@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { BALANCE } from '../src/engine/balance';
 import {
   applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, levelForXp,
-  LEVEL_THRESHOLDS, nextMatchCoachTrust, spendPoint, xpForMatch, xpToNextLevel,
+  LEVEL_THRESHOLDS, nextMatchCoachTrust, pointEffect, POINT_VALUE, spendPoint, xpForMatch, xpToNextLevel,
 } from '../src/engine/career';
+import { attrMod } from '../src/engine/attr';
 import { PLAYER } from '../src/content';
 import type { MatchState } from '../src/engine/types';
 import type { MatchSummary } from '../src/engine/match';
@@ -52,12 +53,27 @@ describe('career: эффективный игрок', () => {
     expect(eff.attrs).toEqual(PLAYER.attrs);
   });
 
-  it('очки прокачки прибавляются и зажаты в 1..99', () => {
+  it('очко прокачки = +1 к модификатору (POINT_VALUE к значению), зажато в 1..99', () => {
     const career = { ...defaultCareer(), attrPoints: { passing: 3, finishing: -1000, dribbling: 1000 } };
     const eff = effectivePlayer(PLAYER, career);
-    expect(eff.attrs.passing).toBe(PLAYER.attrs.passing + 3);
+    expect(eff.attrs.passing).toBe(PLAYER.attrs.passing + 3 * POINT_VALUE);
+    expect(attrMod(eff.attrs.passing)).toBe(attrMod(PLAYER.attrs.passing) + 3);
     expect(eff.attrs.finishing).toBe(1);
     expect(eff.attrs.dribbling).toBe(99);
+  });
+
+  it('pointEffect говорит, что очко сделает с голосом: розбудить, дасть зір — або нічого', () => {
+    // Стартовый Реєс: холоднокровність 52 (+1) → 56 (+2): Холоднокровність стане чутно.
+    expect(pointEffect(PLAYER, defaultCareer(), 'composure')).toMatchObject({ from: 52, to: 56, modFrom: 1, modTo: 2, voice: { who: 'composure', change: 'hears' } });
+    // швидкість 55 (+2) → 59 (+3): Тіло почне бачити.
+    expect(pointEffect(PLAYER, defaultCareer(), 'pace')).toMatchObject({ modFrom: 2, modTo: 3, voice: { who: 'body', change: 'sees' } });
+    // бачення поля 61 (+4) → 65 (+5): Бачення и так бачить — голос есть, change нет.
+    expect(pointEffect(PLAYER, defaultCareer(), 'vision')).toMatchObject({ modFrom: 4, modTo: 5, voice: { who: 'vision', change: null } });
+    // удар не питает голос.
+    expect(pointEffect(PLAYER, defaultCareer(), 'finishing').voice).toBeUndefined();
+    // Второе очко в уже потраченный атрибут считает от текущего, не от базы.
+    const spent = { ...defaultCareer(), attrPoints: { composure: 1 } };
+    expect(pointEffect(PLAYER, spent, 'composure')).toMatchObject({ from: 56, to: 60, modFrom: 2, modTo: 3, voice: { change: 'sees' } });
   });
 });
 

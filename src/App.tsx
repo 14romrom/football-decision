@@ -9,7 +9,7 @@ import { LevelUpScreen } from './ui/LevelUpScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
 import {
-  applyChoice, createMatch, finishMatch, nextEpisode,
+  applyChoice, createMatch, finishMatch, nextEpisode, sceneInsights,
   type MatchSession, type MatchSummary,
 } from './engine/match';
 import {
@@ -219,6 +219,8 @@ function Game() {
       tier: res.tier,
       msToDecide: Math.round(performance.now() - shownAtRef.current),
       at: Date.now(),
+      version: __APP_VERSION__,
+      insights: sceneInsights(stage.episode, session.state, session.player).map((v) => v.who),
     });
 
     // Исход применяется сразу: реплика после броска должна знать счёт и минуту

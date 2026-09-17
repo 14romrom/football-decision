@@ -11,6 +11,11 @@ export type DecisionLog = {
   roll: number; totalScore: number; position: Position; tier: Tier;
   msToDecide: number;
   at: number;   // время решения, чтобы различать сессии тестеров
+  /** Хеш коммита сборки (vite.config.ts) — какая версия игры сыграла этот матч. */
+  version?: string;
+  /** Голоса, которые «бачили» в этой сцене (EpisodeOption.insight) — показанные, не выбранные:
+   *  выбор и так виден по optionId, а вот сколько раз игрок видел подсказку — только отсюда. */
+  insights?: string[];
 };
 
 const KEY = 'fdp.decisions.v1';

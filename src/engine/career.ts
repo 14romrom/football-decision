@@ -53,6 +53,9 @@ export type WeekLogEntry = { season: number; round: number; chosen: string[]; of
 export type NextMatchPrep = {
   attrBonus?: Partial<Record<Attribute, number>>;
   start?: { stamina?: number; composure?: number; fanHype?: number; momentum?: number };
+  /** Его/Команда гучніші — стартовая серия; тихіші — замовкли на N эпизодов (voices.ts). */
+  voiceStreak?: { who: VoiceKey; count: number };
+  voiceMute?: Partial<Record<VoiceKey, number>>;
   notes?: string[];
   /** Травма/мікротравма вылечены неделей: injuredMatches обнуляется, knock не переносится. */
   healed?: boolean;
@@ -181,6 +184,8 @@ export type StartPenalty = {
   /** От недели: временные модификаторы и сдвиг старта (career.nextMatch), уже потреблённые. */
   attrBonus?: Partial<Record<Attribute, number>>;
   startDelta?: NextMatchPrep['start'];
+  voiceStreak?: NextMatchPrep['voiceStreak'];
+  voiceMute?: NextMatchPrep['voiceMute'];
 };
 
 /** Штрафы старта следующего матча от травмы/картки прошлого — и одновременно их
@@ -219,7 +224,10 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   next.nextMatch = undefined;
   return {
     career: next,
-    penalty: { staminaPenalty, coachTrustPenalty, note, flags, attrBonus: prep?.attrBonus, startDelta: prep?.start },
+    penalty: {
+      staminaPenalty, coachTrustPenalty, note, flags,
+      attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,
+    },
   };
 }
 
@@ -249,11 +257,13 @@ export function applyMatchToCareer(
   if (state.flags.includes('injured')) next.injuredMatches = Math.max(career.injuredMatches, 1);
   // К началу матча consumeStartPenalty оставляет в carriedFlags только отложенные флаги недели;
   // к ним добавляются флаги, дожившие до свистка этого матча.
+  const fromMatch = CARRIED_FLAGS
+    .filter((f) => state.flags.includes(f) && state.marks[f])
+    .map((f) => ({ flag: f, mark: state.marks[f], ...(OPPONENT_BOUND_FLAGS.includes(f) ? { opponentKey } : {}) }));
+  // Флаг из матча свежее отложенного с тем же id — отложенный выбрасываем, дублей не бывает.
   next.carriedFlags = [
-    ...(career.carriedFlags ?? []),
-    ...CARRIED_FLAGS
-      .filter((f) => state.flags.includes(f) && state.marks[f])
-      .map((f) => ({ flag: f, mark: state.marks[f], ...(OPPONENT_BOUND_FLAGS.includes(f) ? { opponentKey } : {}) })),
+    ...(career.carriedFlags ?? []).filter((f) => !fromMatch.some((m) => m.flag === f.flag)),
+    ...fromMatch,
   ];
   return next;
 }

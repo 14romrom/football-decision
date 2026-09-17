@@ -58,6 +58,8 @@ const listenedTwice = (state: MatchState, who: VoiceKey) => state.voices.streak.
 export function voiceAudible(who: VoiceKey, option: EpisodeOption, state: MatchState, player: Player): boolean {
   const m = (a: keyof Player['attrs']) => attrMod(player.attrs[a]);
   const loud = BALANCE.voiceMinMod;
+  // Замовклий голос (тиждень: «Команда тихіше») не чутно, поки не мине його термін.
+  if ((state.voices.muted?.[who] ?? 0) > 0) return false;
   switch (who) {
     case 'ego':
       // Разогнався: слушал Его дважды подряд — он не затихает даже в серии провалов.
@@ -67,7 +69,8 @@ export function voiceAudible(who: VoiceKey, option: EpisodeOption, state: MatchS
       if (option.goals.team < 2) return false;
       // Команда замовкає, если только что слушали Его: партнёры перестали звать.
       if (listenedTwice(state, 'ego')) return false;
-      return state.coachTrust >= 40;
+      // Розігналась (или неделя «Команда гучніша» — стартовая серия): зовёт даже при низком доверии.
+      return state.coachTrust >= 40 || listenedTwice(state, 'team');
     case 'composure': return m('composure') >= loud || state.composureNow >= 70;
     case 'vision': return m('vision') >= loud || m('positioning') >= loud;
     case 'instinct': return m('dribbling') >= loud || m('first_touch') >= loud;

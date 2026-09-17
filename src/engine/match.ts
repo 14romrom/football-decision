@@ -11,7 +11,7 @@ import { pickOutcome, resultBadges } from './resolve';
 import type { Rng } from './rng';
 import type {
   ApplyEffect, Episode, EpisodeMemory, EpisodeOption, FlagRule, Mark, MatchState, Player, Resolution,
-  TimelineEvent, Tier, Voice,
+  TimelineEvent, Tier, Voice, VoiceKey,
 } from './types';
 
 export type MatchSession = {
@@ -162,6 +162,10 @@ export type Carryover = {
   flavorSeen?: string[];
   /** Сдвиг стартовых ресурсов от недели між матчами (career.ts:NextMatchPrep.start). */
   startDelta?: { stamina?: number; composure?: number; fanHype?: number; momentum?: number };
+  /** Неделя сделала Его/Команду гучнішими: матч начинается с их серии (voices.ts:listenedTwice). */
+  voiceStreak?: { who: VoiceKey; count: number };
+  /** …или тихішими: голос замовк на N эпизодов. */
+  voiceMute?: Partial<Record<VoiceKey, number>>;
 };
 
 export function createMatch(
@@ -201,17 +205,22 @@ export function createMatch(
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
     // Характеристики соперника — флаги на матч: правила в flags.json (them_dribbler и т.п.),
     // варианты сетапа через when.flags. Механизм тот же, что у последствий решений.
-    flags: [
+    // Без дублей: флаг недели и флаг матча с одним id (partner_annoyed) — один флаг, одна поправка.
+    flags: [...new Set([
       ...carried.map((f) => f.flag),
       ...opponentTraits(roster.them).map((t) => 'them_' + t),
       ...(roster.them.keeper ? ['keeper_' + roster.them.keeper.trait] : []),
       ...(readsKeeper ? ['keeper_read'] : []),
-    ],
+    ])],
     marks: {
       ...Object.fromEntries(carried.map((f) => [f.flag, { ...f.mark, previousMatch: true }])),
       ...(readsKeeper ? { keeper_read: { minute: 0, episodeId: 'briefing', optionId: 'read', past: keeperReadPast } } : {}),
     },
-    voices: initVoiceTrace(),
+    voices: {
+      ...initVoiceTrace(),
+      ...(carryover.voiceStreak ? { streak: { ...carryover.voiceStreak } } : {}),
+      ...(carryover.voiceMute ? { muted: { ...carryover.voiceMute } } : {}),
+    },
     log: [{
       minute: 0,
       kind: 'kickoff',
@@ -677,6 +686,12 @@ export function applyChoice(
   }
 
   if (option.voice) recordVoice(state.voices, option.voice.who);
+  // Замовклі голоси возвращаются по эпизодам, не по минутам.
+  if (state.voices.muted) {
+    for (const k of Object.keys(state.voices.muted) as VoiceKey[]) {
+      state.voices.muted[k] = Math.max(0, (state.voices.muted[k] ?? 0) - 1);
+    }
+  }
   const link = chainTarget(session, outcome.apply);
   const conceded = applyEffects(session, outcome.apply, minute, rng, { episodeId: episode.id, optionId: option.id, past: option.past });
   // Цепочка не сработала — исход достраивается запасным apply (пенальті б’є {striker}).

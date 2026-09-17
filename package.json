@@ -8,7 +8,8 @@
     "build": "tsc -b --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "sim": "tsx tools/simulate.ts"
+    "sim": "tsx tools/simulate.ts",
+    "qa": "tsx tools/qa-career.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

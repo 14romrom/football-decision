@@ -164,7 +164,15 @@ export function PlayerCard({ player, career, season, history, club, onBack }: Pr
               <div key={a} className={`attr-row ${tone}`}>
                 <span className="attr-name">{ATTRIBUTE_LABEL[a]}</span>
                 <span className="attr-track"><span className="attr-fill" style={{ width: `${v}%` }} /></span>
-                <span className="attr-value">{v}{bonus > 0 && <b className="attr-bonus"> +{bonus * POINT_VALUE}</b>}</span>
+                <span className="attr-value">
+                  {v}{bonus > 0 && <b className="attr-bonus"> +{bonus * POINT_VALUE}</b>}
+                  {/* Тренировки недели копятся к очку: точки — сколько из BALANCE.week.trainToPoint уже есть. */}
+                  {(career?.training?.[a] ?? 0) > 0 && (
+                    <i className="attr-train" title="тренувань до +1">
+                      {Array.from({ length: BALANCE.week.trainToPoint }, (_, k) => <b key={k} className={k < (career!.training![a] ?? 0) ? 'on' : ''} />)}
+                    </i>
+                  )}
+                </span>
                 <span className={`attr-mod ${m === 0 ? 'zero' : ''}`}>+{m}</span>
               </div>
             );

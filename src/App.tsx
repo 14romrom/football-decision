@@ -149,6 +149,7 @@ function Game() {
         coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,
         coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), startDelta: penalty.startDelta,
+        voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute,
       },
     );
     rngRef.current = rng;

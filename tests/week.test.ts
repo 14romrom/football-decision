@@ -223,3 +223,53 @@ describe('старые сохранения', () => {
     expect(offerWeek(ACTIVITIES, c, legacy, makeRng(1)).length).toBe(6);
   });
 });
+
+describe('QA 17.09: пробелы, найденные прогоном', () => {
+  it('Его/Команда гучніші — матч начинается с их серии; тихіші — голос замовк на muteEpisodes', () => {
+    const { career } = applyWeek(defaultCareer(), [{ activity: byId('team_dinner') }, { activity: byId('autographs') }]);
+    // Вечеря: Команда гучніша → серия team; Автографи: Команда тихіша → замовкла. Оба сразу: серия есть, но замовкла.
+    const { penalty } = consumeStartPenalty(career);
+    expect(penalty.voiceStreak).toEqual({ who: 'team', count: 2 });
+    expect(penalty.voiceMute).toEqual({ team: BALANCE.week.muteEpisodes });
+    const s = createMatch('w', 1, PLAYER, makeRng(1), EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES,
+      { voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute });
+    expect(s.state.voices.streak).toEqual({ who: 'team', count: 2 });
+    expect(s.state.voices.muted).toEqual({ team: BALANCE.week.muteEpisodes });
+  });
+
+  it('серия Команди с недели делает её слышной даже при низком доверии; замовклий голос не слышно', async () => {
+    const { voiceAudible } = await import('../src/engine/voices');
+    const teamOpt = EPISODES_RAW.flatMap((e) => e.options).find((o) => o.voice?.who === 'team' && o.goals.team >= 2)!;
+    const low = { ...emptyState(), coachTrust: 20 };
+    expect(voiceAudible('team', teamOpt, low, PLAYER)).toBe(false);
+    expect(voiceAudible('team', teamOpt, { ...low, voices: { ...low.voices, streak: { who: 'team', count: 2 } } }, PLAYER)).toBe(true);
+    expect(voiceAudible('team', teamOpt, { ...low, coachTrust: 80, voices: { ...low.voices, muted: { team: 2 } } }, PLAYER)).toBe(false);
+  });
+
+  it('закрытый город оставляет ситуационные дела по флагу: поговорити з партнером после разгрома', () => {
+    const career: Career = { ...defaultCareer(), carriedFlags: [{ flag: 'partner_annoyed', mark: { minute: 1, episodeId: 'e', optionId: 'o', past: 'x' } }] };
+    const c = ctxFor(seasonWith([[0, 4]]), career);
+    expect(coachLocksCity(c)).toBe(true);
+    const offers = offerWeek(ACTIVITIES, c, career, makeRng(1));
+    expect(offers.map((a) => a.id)).toContain('apologize_partner');
+    expect(offers.some((a) => a.voice === 'ego')).toBe(false);
+  });
+
+  it('отложенный флаг недели и тот же флаг из матча не дублируются', () => {
+    const { career } = applyWeek(defaultCareer(), [{ activity: byId('lend_money') }]);   // partner_annoyed через 3 тура
+    let c = career;
+    for (let i = 0; i < 3; i++) {
+      const { career: consumed } = consumeStartPenalty(c);
+      const st = { ...emptyState(), flags: ['partner_annoyed'], marks: { partner_annoyed: { minute: 5, episodeId: 'e', optionId: 'o', past: 'пробив сам' } } };
+      c = applyMatchToCareer(consumed, st, {} as MatchSummary, false);
+    }
+    const ids = (c.carriedFlags ?? []).map((f) => f.flag);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain('partner_annoyed');
+  });
+
+  it('«здоровий» — только когда было что лечить', () => {
+    expect(applyWeek(defaultCareer(), [{ activity: byId('ice_bath') }]).tags).not.toContain('здоровий');
+    expect(applyWeek({ ...defaultCareer(), injuredMatches: 1 }, [{ activity: byId('ice_bath') }]).tags).toContain('здоровий');
+  });
+});

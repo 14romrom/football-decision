@@ -105,6 +105,8 @@ export type FlagRule = {
 export type VoiceTrace = {
   counts: Record<VoiceKey, number>;
   streak: { who: VoiceKey | null; count: number };
+  /** Голос замовк на N эпизодов (тиждень: «Его тихіше») — voiceAudible его не показывает. */
+  muted?: Partial<Record<VoiceKey, number>>;
 };
 
 export type MatchState = {

@@ -142,9 +142,11 @@ export function offerWeek(pool: Activity[], c: WeekContext, career: Career, rng:
   const locked = coachLocksCity(c);
   const offers: Activity[] = [];
   for (const voice of VOICE_ORDER) {
-    if (locked && !BASE_VOICES.includes(voice)) continue;
+    const voiceLocked = locked && !BASE_VOICES.includes(voice);
     const fitting = pool.filter((a) => {
       if (a.voice !== voice || !matchesActivity(a.when, c)) return false;
+      // Закрытый город не отменяет разговор с ображеним партнёром: ситуационные дела по флагу остаются.
+      if (voiceLocked && !a.when?.flags?.length) return false;
       if (a.once && thisSeason.some((e) => (e.chosen ?? []).includes(a.id))) return false;
       if (a.cooldown && c.round - lastChosen(a.id) < a.cooldown) return false;
       return true;
@@ -182,14 +184,29 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
 
   for (const { activity, trainAttr } of choices) {
     const e = activity.effect;
-    for (const v of e.louder ?? []) { for (const a of VOICE_ATTRS[v]) bump(a, 1); tags.push(`${VOICE_LABEL[v]} гучніше`); }
-    for (const v of e.quieter ?? []) { for (const a of VOICE_ATTRS[v]) bump(a, -1); tags.push(`${VOICE_LABEL[v]} тихіше`); }
+    // Атрибутные голоса — ±1 к модификатору; Его и Команда атрибутов не имеют: гучніший —
+    // матч начинается с их серии (Его не затихает при провалах, Команда зовёт при низком
+    // доверии), тихіший — голос замовк на первые эпизоды.
+    for (const v of e.louder ?? []) {
+      if (v === 'ego' || v === 'team') prep.voiceStreak = { who: v, count: 2 };
+      for (const a of VOICE_ATTRS[v]) bump(a, 1);
+      tags.push(`${VOICE_LABEL[v]} гучніше`);
+    }
+    for (const v of e.quieter ?? []) {
+      if (v === 'ego' || v === 'team') prep.voiceMute = { ...(prep.voiceMute ?? {}), [v]: BALANCE.week.muteEpisodes };
+      for (const a of VOICE_ATTRS[v]) bump(a, -1);
+      tags.push(`${VOICE_LABEL[v]} тихіше`);
+    }
     if (e.stamina) { prep.start!.stamina = (prep.start!.stamina ?? 0) + e.stamina; tags.push(e.stamina > 0 ? 'сили ↑' : 'сили ↓'); }
     if (e.composure) { prep.start!.composure = (prep.start!.composure ?? 0) + e.composure; tags.push(e.composure > 0 ? 'спокій ↑' : 'спокій ↓'); }
     if (e.fanHype) { prep.start!.fanHype = (prep.start!.fanHype ?? 0) + e.fanHype; tags.push(e.fanHype > 0 ? 'трибуни ↑' : 'трибуни ↓'); }
     if (e.momentum) { prep.start!.momentum = (prep.start!.momentum ?? 0) + e.momentum; tags.push(e.momentum > 0 ? 'кураж ↑' : 'кураж ↓'); }
     if (e.coachTrust) { next.coachTrust = clampTrust(next.coachTrust + e.coachTrust); tags.push(e.coachTrust > 0 ? 'тренер ↑' : 'тренер ↓'); }
-    if (e.heal) { prep.healed = true; flags = flags.filter((f) => f.flag !== 'knock'); tags.push('здоровий'); }
+    if (e.heal) {
+      prep.healed = true;
+      flags = flags.filter((f) => f.flag !== 'knock');
+      if (career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock')) tags.push('здоровий');
+    }
     const attr = e.train === 'choice' ? trainAttr : e.train;
     if (attr) {
       const n = (next.training![attr] ?? 0) + 1;

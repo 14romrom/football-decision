@@ -178,7 +178,7 @@ export const BALANCE = {
   voiceMinMod: 2,
   /** Тиждень між матчами (week.ts): сколько дел можно взять, сколько тренировок одного атрибута
    *  дают +1 очко навсегда, сколько недель одно дело не предлагается снова без своего cooldown. */
-  week: { picks: 2, trainToPoint: 4, recentPenalty: 3 },
+  week: { picks: 2, trainToPoint: 4, recentPenalty: 3, muteEpisodes: 3 },
   /** Голос бачить: с какой силы атрибута голос замечает деталь сцены и открывает свой вариант
    *  (EpisodeOption.insight). Выше порога слышимости: слышно многих, видят — сильные. */
   insightMinMod: 3,

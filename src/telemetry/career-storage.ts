@@ -16,6 +16,9 @@ export function readCareer(): Career {
     // перезагрузке. Каждый уровень выше первого даёт одно очко — недостающие возвращаем.
     const spent = Object.values(career.attrPoints).reduce((s, v) => s + (v ?? 0), 0);
     career.unspentPoints = Math.max(career.unspentPoints ?? 0, career.level - 1 - spent);
+    // Миграция 17.09: записи недели первой (откаченной) версии — {sceneId, optionId} без chosen/offered —
+    // валили offerWeek (пустой экран на сайте). Такие записи выбрасываем: неделя того тура покажется снова.
+    career.weekLog = (career.weekLog ?? []).filter((e) => Array.isArray(e.chosen) && Array.isArray(e.offered));
     return career;
   } catch {
     return defaultCareer();

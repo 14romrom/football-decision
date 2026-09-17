@@ -137,15 +137,15 @@ export const VOICE_ORDER: VoiceKey[] = ['body', 'vision', 'instinct', 'composure
 export function offerWeek(pool: Activity[], c: WeekContext, career: Career, rng: Rng): Activity[] {
   const log = career.weekLog ?? [];
   const thisSeason = log.filter((e) => e.season === c.season);
-  const lastChosen = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => e.chosen.includes(id)).map((e) => e.round));
-  const lastOffered = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => e.offered.includes(id)).map((e) => e.round));
+  const lastChosen = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.chosen ?? []).includes(id)).map((e) => e.round));
+  const lastOffered = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.offered ?? []).includes(id)).map((e) => e.round));
   const locked = coachLocksCity(c);
   const offers: Activity[] = [];
   for (const voice of VOICE_ORDER) {
     if (locked && !BASE_VOICES.includes(voice)) continue;
     const fitting = pool.filter((a) => {
       if (a.voice !== voice || !matchesActivity(a.when, c)) return false;
-      if (a.once && thisSeason.some((e) => e.chosen.includes(a.id))) return false;
+      if (a.once && thisSeason.some((e) => (e.chosen ?? []).includes(a.id))) return false;
       if (a.cooldown && c.round - lastChosen(a.id) < a.cooldown) return false;
       return true;
     });
@@ -234,5 +234,5 @@ export function weekPending(career: Career, c: WeekContext): boolean {
 
 /** Сколько раз игрок читал уже виденную реплику — не сюда; здесь: сколько разных дел видел за сезон. */
 export function distinctOffered(career: Career, season: number): number {
-  return new Set((career.weekLog ?? []).filter((e) => e.season === season).flatMap((e) => e.offered)).size;
+  return new Set((career.weekLog ?? []).filter((e) => e.season === season).flatMap((e) => e.offered ?? [])).size;
 }

@@ -214,3 +214,12 @@ describe('контент недели', () => {
     expect(seen.size).toBeGreaterThanOrEqual(30);
   });
 });
+
+describe('старые сохранения', () => {
+  it('записи недели первой версии (sceneId без chosen/offered) не валят offerWeek', () => {
+    const legacy = { ...defaultCareer(), weekLog: [{ season: 1, round: 1, sceneId: 'wk_press_loss', optionId: 'own_it' } as unknown as NonNullable<Career['weekLog']>[number]] };
+    const c = ctxFor(seasonWith([[0, 1]]), legacy);
+    expect(() => offerWeek(ACTIVITIES, c, legacy, makeRng(1))).not.toThrow();
+    expect(offerWeek(ACTIVITIES, c, legacy, makeRng(1)).length).toBe(6);
+  });
+});

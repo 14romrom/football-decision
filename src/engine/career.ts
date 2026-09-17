@@ -38,6 +38,8 @@ export type Career = {
   nextMatch?: NextMatchPrep;
   /** Прогресс тренировок по атрибутам: BALANCE.week.trainToPoint тренировок = +1 очко навсегда. */
   training?: Partial<Record<Attribute, number>>;
+  /** Травм за текущий сезон — не больше BALANCE.injury.maxPerSeason (match.ts понижает до knock). */
+  injuriesSeason?: number;
 };
 
 export type CarriedFlag = {
@@ -174,7 +176,7 @@ export function pointEffect(base: Player, career: Career, attr: Attribute): Poin
 /** Доверие тренера между матчами: тянется к базовому значению, а не сохраняется дословно —
  *  иначе один провальный матч навсегда портит карьеру, а один удачный — навсегда её решает. */
 export function nextMatchCoachTrust(endingTrust: number): number {
-  const reversion = 0.4;
+  const reversion = BALANCE.coachTrustReversion;
   return Math.round(endingTrust * (1 - reversion) + BALANCE.coachTrustStart * reversion);
 }
 
@@ -244,7 +246,9 @@ export function applyMatchToCareer(
     ...career,
     xp,
     level,
-    unspentPoints: (career.unspentPoints ?? 0) + (level - career.level),
+    // Уровни выключены (BALANCE.growth.levels): опыт и уровень считаются, очков не дают.
+    unspentPoints: (career.unspentPoints ?? 0) + (BALANCE.growth.levels ? level - career.level : 0),
+    injuriesSeason: (career.injuriesSeason ?? 0) + (state.flags.includes('injured') ? 1 : 0),
     coachTrust: nextMatchCoachTrust(state.coachTrust),
     matchesPlayed: career.matchesPlayed + 1,
     voiceCounts: { ...career.voiceCounts },

@@ -36,13 +36,17 @@ describe('голос бачить', () => {
 
   it('вариант со вставкой скрыт от слабого игрока и без игрока, виден сильному', () => {
     expect(insightEpisodes.length).toBeGreaterThanOrEqual(20);
+    // Его бачить на кураже (или на своей серии), Команда — при высоком доверии: их вставки — по состоянию матча.
+    const hot = () => state({ momentum: 3, coachTrust: 90 });
     for (const e of insightEpisodes) {
       const o = e.options.find((x) => x.insight)!;
+      const stateful = o.insight!.who === 'ego' || o.insight!.who === 'team';
       expect(availableOptions(e, state()).map((x) => x.id), e.id).not.toContain(o.id);
       expect(availableOptions(e, state(), flat(45)).map((x) => x.id), e.id).not.toContain(o.id);
-      expect(availableOptions(e, state(), flat(90)).map((x) => x.id), e.id).toContain(o.id);
-      expect(sceneInsights(e, state(), flat(90)), e.id).toEqual([o.insight]);
+      expect(availableOptions(e, stateful ? hot() : state(), flat(90)).map((x) => x.id), e.id).toContain(o.id);
+      expect(sceneInsights(e, stateful ? hot() : state(), flat(90)), e.id).toEqual([o.insight]);
       expect(sceneInsights(e, state(), flat(45)), e.id).toEqual([]);
+      if (stateful) expect(availableOptions(e, state(), flat(90)).map((x) => x.id), e.id).not.toContain(o.id);
     }
   });
 
@@ -52,7 +56,7 @@ describe('голос бачить', () => {
     expect(voiceSees('body', PLAYER)).toBe(false);
     expect(voiceSees('composure', PLAYER)).toBe(false);
     const seen = insightEpisodes.filter((e) => availableOptions(e, state(), PLAYER).some((o) => o.insight)).length;
-    expect(seen).toBeGreaterThanOrEqual(8);
+    expect(seen).toBeGreaterThanOrEqual(8);   // Бачення + Інстинкт; Его/Команда — по состоянию, здесь спокойный матч
     expect(seen).toBeLessThan(insightEpisodes.length);
   });
 
@@ -60,6 +64,7 @@ describe('голос бачить', () => {
     const SENSE: Record<string, string[]> = {
       vision: ['vision', 'positioning', 'passing', 'finishing'], instinct: ['dribbling', 'first_touch', 'finishing'],
       body: ['pace', 'strength'], composure: ['composure', 'positioning'],
+      ego: ['dribbling', 'composure', 'first_touch', 'finishing'], team: ['passing', 'vision'],
     };
     for (const e of EPISODES_RAW) for (const o of e.options) {
       if (!o.insight) continue;

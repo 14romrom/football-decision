@@ -311,5 +311,42 @@
       "dribbling"
     ],
     "source": "player"
+  },
+  {
+    "id": "week_set_pieces",
+    "label": "стандарти розбирали на тижні",
+    "value": 1,
+    "phases": [
+      "setpiece"
+    ],
+    "attributes": [
+      "passing",
+      "positioning",
+      "finishing"
+    ],
+    "source": "player"
+  },
+  {
+    "id": "week_tactics",
+    "label": "розбір із тренером на тижні",
+    "value": 1,
+    "phases": [
+      "defense",
+      "transition"
+    ],
+    "attributes": [
+      "positioning",
+      "vision"
+    ],
+    "source": "player"
+  },
+  {
+    "id": "week_promise",
+    "label": "обіцяв гол хлопчику в палаті",
+    "value": 1,
+    "attributes": [
+      "finishing"
+    ],
+    "source": "player"
   }
 ]

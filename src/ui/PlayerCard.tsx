@@ -69,7 +69,11 @@ type Props = {
 };
 
 export function PlayerCard({ player, career, season, history, club, onBack }: Props) {
-  const effective = career ? effectivePlayer(player, career) : player;
+  // Голоси на карточке — с учётом того, что неделя приготовила к следующему матчу (тимчасово).
+  const weekBonus = career?.nextMatch?.attrBonus;
+  const effective = career ? effectivePlayer(player, career, weekBonus) : player;
+  const permanent = career ? effectivePlayer(player, career) : player;
+  const levels = BALANCE.growth.levels;
   const signature = signatureAttrs(effective);
   const weakest = [...(Object.keys(effective.attrs) as Attribute[])]
     .sort((a, b) => effective.attrs[a] - effective.attrs[b]).slice(0, 2);
@@ -89,7 +93,7 @@ export function PlayerCard({ player, career, season, history, club, onBack }: Pr
           <p className="muted">{POSITION_LABEL[player.position]}{club ? ` · «${club}»` : ''}</p>
         </div>
         <dl className="id-fields">
-          <dt>Рівень</dt><dd>{career?.level ?? 1}</dd>
+          {levels && <><dt>Рівень</dt><dd>{career?.level ?? 1}</dd></>}
           <dt>Матчів</dt><dd>{career?.matchesPlayed ?? 0}</dd>
           <dt>Сезон</dt><dd>{season ? `${season.number}, тур ${season.round} з ${SEASON_ROUNDS}` : '—'}</dd>
           <dt>Місце</dt><dd>{row ? `${row.position}-е, ${row.points} ${plural(row.points, 'очко', 'очки', 'очок')}` : '—'}</dd>
@@ -113,7 +117,11 @@ export function PlayerCard({ player, career, season, history, club, onBack }: Pr
               <p className="voice-about">{v.about}</p>
               <p className="voice-meta muted">
                 {v.attrs.length > 0
-                  ? v.attrs.map((a) => `${ATTRIBUTE_LABEL[a]} +${attrMod(effective.attrs[a])}`).join(' · ')
+                  ? v.attrs.map((a) => {
+                    const m = attrMod(effective.attrs[a]);
+                    const base = attrMod(permanent.attrs[a]);
+                    return `${ATTRIBUTE_LABEL[a]} +${m}${m !== base ? (m > base ? ' (цього тижня ↑)' : ' (цього тижня ↓)') : ''}`;
+                  }).join(' · ')
                   : 'не атрибут — те, чого ти хочеш'}
                 {listened > 0 && ` · слухав ${listened} ${plural(listened, 'раз', 'рази', 'разів')}`}
               </p>
@@ -141,10 +149,13 @@ export function PlayerCard({ player, career, season, history, club, onBack }: Pr
           <dl className="stats-grid">
             <dt>Матчі</dt><dd>{career?.matchesPlayed ?? 0}</dd>
             <dt>В — Н — П</dt><dd>{wdl.W} — {wdl.D} — {wdl.L}</dd>
-            <dt>Рівень</dt><dd>{career?.level ?? 1}{progress ? ` · до наступного ${progress.xpForLevel - progress.xpIntoLevel} досв.` : ' · стеля'}</dd>
+            {levels
+              ? <><dt>Рівень</dt><dd>{career?.level ?? 1}{progress ? ` · до наступного ${progress.xpForLevel - progress.xpIntoLevel} досв.` : ' · стеля'}</dd></>
+              : <><dt>Тренування</dt><dd>{Object.entries(career?.training ?? {}).filter(([, n]) => (n ?? 0) > 0).map(([a, n]) => `${ATTRIBUTE_LABEL[a as Attribute]} ${n} з ${BALANCE.week.trainToPoint}`).join(' · ') || 'ще не починав'}</dd></>}
+            <dt>Травм цього сезону</dt><dd>{career?.injuriesSeason ?? 0} з {BALANCE.injury.maxPerSeason}</dd>
             <dt>Жовті без згоряння</dt><dd>{career?.careerYellows ?? 0}</dd>
           </dl>
-          {progress && (
+          {levels && progress && (
             <span className="bar-track xp-track">
               <span className="bar-fill xp-fill" style={{ width: `${Math.round((progress.xpIntoLevel / progress.xpForLevel) * 100)}%` }} />
             </span>
@@ -184,6 +195,7 @@ export function PlayerCard({ player, career, season, history, club, onBack }: Pr
         <b>Коронне:</b> {signature.map((a) => ATTRIBUTE_LABEL[a]).join(', ')} — за це тебе знають трибуни.
         {' '}<b>Слабке:</b> {weakest.map((a) => ATTRIBUTE_LABEL[a]).join(', ')} — тут кубик грає сам.
         {career && ` ${career.matchesPlayed} ${matchWord(career.matchesPlayed)} за плечима.`}
+        {!levels && ' Ріст — тільки через тиждень: три тренування одного атрибута дають +1 назавжди.'}
       </p>
 
       {onBack && <button className="primary" onClick={onBack}>Назад</button>}

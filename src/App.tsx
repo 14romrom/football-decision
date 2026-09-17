@@ -149,7 +149,7 @@ function Game() {
         coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,
         coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), startDelta: penalty.startDelta,
-        voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute,
+        voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: consumedCareer.injuriesSeason,
       },
     );
     rngRef.current = rng;
@@ -161,6 +161,7 @@ function Game() {
   const newSeason = useCallback(() => {
     const prev = seasonRef.current;
     setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS), prev.number + 1));
+    setCareerBoth({ ...careerRef.current, injuriesSeason: 0 });   // лимит травм — на сезон
   }, [setSeasonBoth]);
 
   /** Ещё не закрытая неделя после последнего тура: шесть предложений детерминированно по сиду. */
@@ -279,7 +280,7 @@ function Game() {
       <div className="menu">
         <h1>Сезон {season.number}</h1>
         <p>
-          Ти — {PLAYER.name}, {PLAYER.position} «{ROSTER.us.name.gen}». {career.level} рівень.
+          Ти — {PLAYER.name}, {PLAYER.position} «{ROSTER.us.name.gen}».
           Дев’ять моментів за матч, і в кожному треба обирати. Переграти не можна.
         </p>
         {fixture ? (

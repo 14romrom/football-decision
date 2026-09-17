@@ -226,8 +226,8 @@ describe('старые сохранения', () => {
 
 describe('QA 17.09: пробелы, найденные прогоном', () => {
   it('Его/Команда гучніші — матч начинается с их серии; тихіші — голос замовк на muteEpisodes', () => {
-    const { career } = applyWeek(defaultCareer(), [{ activity: byId('team_dinner') }, { activity: byId('autographs') }]);
-    // Вечеря: Команда гучніша → серия team; Автографи: Команда тихіша → замовкла. Оба сразу: серия есть, но замовкла.
+    const { career } = applyWeek(defaultCareer(), [{ activity: byId('team_dinner') }, { activity: byId('freestyle_stories') }]);
+    // Вечеря: Команда гучніша → серия team; Фрістайл: Команда тихіша → замовкла. Оба сразу: серия есть, но замовкла.
     const { penalty } = consumeStartPenalty(career);
     expect(penalty.voiceStreak).toEqual({ who: 'team', count: 2 });
     expect(penalty.voiceMute).toEqual({ team: BALANCE.week.muteEpisodes });
@@ -271,5 +271,63 @@ describe('QA 17.09: пробелы, найденные прогоном', () => 
   it('«здоровий» — только когда было что лечить', () => {
     expect(applyWeek(defaultCareer(), [{ activity: byId('ice_bath') }]).tags).not.toContain('здоровий');
     expect(applyWeek({ ...defaultCareer(), injuredMatches: 1 }, [{ activity: byId('ice_bath') }]).tags).toContain('здоровий');
+  });
+});
+
+describe('QA 17.09, вторая волна', () => {
+  it('«Его гучніше» с недели открывает вставку Его в первом же эпизоде — неделя видна на поле', async () => {
+    const { availableOptions, sceneInsights } = await import('../src/engine/match');
+    const { career } = applyWeek({ ...defaultCareer(), coachTrust: 55 }, [{ activity: byId('autographs') }]);   // Его гучніше → серия Его
+    const { penalty } = consumeStartPenalty(career);
+    const s = createMatch('w', 2, PLAYER, makeRng(2), EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES,
+      { voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute });
+    const ep = s.episodes.find((e) => e.id === 'ep_sub_warming')!;
+    expect(availableOptions(ep, s.state, s.player).map((o) => o.id)).toContain('show_the_sub');
+    expect(sceneInsights(ep, s.state, s.player)[0]?.who).toBe('ego');
+    // Без недели, на ровном кураже — Его не бачить.
+    const plain = createMatch('w', 2, PLAYER, makeRng(2), EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES);
+    expect(availableOptions(ep, plain.state, plain.player).map((o) => o.id)).not.toContain('show_the_sub');
+  });
+
+  it('флаг недели открывает вариант «з тижня» и свой сетап; вариант снимает флаг', async () => {
+    const { availableOptions } = await import('../src/engine/match');
+    const { career } = applyWeek(defaultCareer(), [{ activity: byId('set_pieces') }]);
+    const { penalty } = consumeStartPenalty(career);
+    expect(penalty.flags.map((f) => f.flag)).toContain('week_set_pieces');
+    const s = createMatch('w', 3, PLAYER, makeRng(3), EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES, { flags: penalty.flags });
+    const ep = s.episodes.find((e) => e.id === 'ep_corner_runner')!;
+    const opt = availableOptions(ep, s.state, s.player).find((o) => o.id === 'tuesday_routine')!;
+    expect(opt).toBeTruthy();
+    for (const t of ['clean', 'cost', 'fail', 'badFail'] as const) expect(opt.outcomes[t].apply?.removeFlags).toContain('week_set_pieces');
+    expect(ep.setups?.some((v) => v.when.flags?.includes('week_set_pieces'))).toBe(true);
+  });
+
+  it('не больше maxPerSeason травм за сезон: дальше «пошкодження» становится мікротравмою', async () => {
+    const { applyChoice } = await import('../src/engine/match');
+    const { resolveOption } = await import('../src/engine/resolve');
+    const capped = createMatch('w', 4, PLAYER, makeRng(4), EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES, { injuriesSeason: BALANCE.injury.maxPerSeason });
+    const ep = capped.episodes.find((e) => e.id === 'ep_goal_line')!;
+    const opt = ep.options.find((o) => o.id === 'let_it_in')!;
+    // Прямое применение исхода с пошкодженням через applyChoice: подменяем бросок на катастрофу.
+    const rng = makeRng(4);
+    const res = { ...resolveOption(capped.state, capped.player, opt, ep.phase, rng, capped.conditions, capped.flagRules), tier: 'badFail' as const, critical: null };
+    applyChoice(capped, ep, opt, res, rng);
+    expect(capped.state.flags).not.toContain('injured');
+    expect(capped.state.flags).toContain('knock');
+  });
+
+  it('вердикт сезона: лава — низ таблицы или тренер не вірить; середина с доверием — продовження', async () => {
+    const { seasonVerdict } = await import('../src/engine/season');
+    const sn = seasonWith(Array.from({ length: 10 }, (_, i) => [i % 2 ? 1 : 0, 2] as [number, number]));   // много поражений — низ
+    expect(seasonVerdict(sn, 60).kind).toBe('bench');
+    const ok = seasonWith(Array.from({ length: 10 }, () => [1, 1] as [number, number]), 6);
+    expect(['extend', 'transfer']).toContain(seasonVerdict(ok, 60).kind);
+    expect(seasonVerdict(ok, 30).kind).toBe('bench');
+  });
+
+  it('уровни выключены: опыт копится, очков нет, миграция не возвращает фантомные очки', async () => {
+    expect(BALANCE.growth.levels).toBe(false);
+    const c = applyMatchToCareer({ ...defaultCareer(), xp: 200, level: 4 }, emptyState(), { coachRating: 8, fanRating: 8, stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 } } as unknown as MatchSummary, false);
+    expect(c.unspentPoints).toBe(0);
   });
 });

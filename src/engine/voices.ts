@@ -53,6 +53,17 @@ export function voiceSees(who: VoiceKey, player: Player): boolean {
   }
 }
 
+/** Бачить с учётом матча: атрибутные голоса — по силе атрибута (стабильно), Его и Команда —
+ *  по тому, что происходит: Его бачить на серии Его или на кураже, Команда — на серии Команди
+ *  или при высоком доверии тренера. Так дело недели «Его гучніше» (стартовая серия) открывает
+ *  вставки Его в первом же эпизоде — игрок видит, что неделя дала. */
+export function voiceSeesNow(who: VoiceKey, state: MatchState, player: Player): boolean {
+  if ((state.voices.muted?.[who] ?? 0) > 0) return false;
+  if (who === 'ego') return listenedTwice(state, 'ego') || state.momentum >= BALANCE.egoSeesMomentum;
+  if (who === 'team') return listenedTwice(state, 'team') || state.coachTrust >= BALANCE.teamSeesTrust;
+  return voiceSees(who, player);
+}
+
 const listenedTwice = (state: MatchState, who: VoiceKey) => state.voices.streak.who === who && state.voices.streak.count >= 2;
 
 export function voiceAudible(who: VoiceKey, option: EpisodeOption, state: MatchState, player: Player): boolean {

@@ -186,7 +186,10 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
       text: `${row.position}-е місце, ${p.goals} голів і ${p.assists} передач за сезон. Клуб із сильнішої ліги хоче тебе вже цієї зими. Тренер не радий — але це найкраща з його проблем.`,
     };
   }
-  if (row.position <= 4 || coachTrust >= 50 || avgCoach >= 6.5) {
+  // Лава: низ таблицы, или тренер не верит, или сезон без оценок — одного достаточно.
+  // Было «extend, если хоть что-то одно хорошо» — лава выпадала в 6% сезонов, угроза не читалась.
+  const clubs = season.clubs.length;
+  if (row.position <= clubs - 2 && coachTrust >= 45 && avgCoach >= 5.2) {
     return {
       kind: 'extend',
       title: 'Продовження контракту',

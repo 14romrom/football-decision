@@ -2,6 +2,7 @@
 // Правила роста — в engine/career.ts, здесь только чтение/запись и приватный режим.
 
 import { defaultCareer, type Career } from '../engine/career';
+import { BALANCE } from '../engine/balance';
 
 const KEY = 'football-decision.career.v1';
 
@@ -15,7 +16,9 @@ export function readCareer(): Career {
     // Миграция 17.09: до unspentPoints очко уровня жило только в состоянии экрана и терялось при
     // перезагрузке. Каждый уровень выше первого даёт одно очко — недостающие возвращаем.
     const spent = Object.values(career.attrPoints).reduce((s, v) => s + (v ?? 0), 0);
-    career.unspentPoints = Math.max(career.unspentPoints ?? 0, career.level - 1 - spent);
+    // При выключенных уровнях (BALANCE.growth.levels) очков не возвращаем — иначе старые сохранения
+    // получили бы фантомные очки за уровни, которых больше нет.
+    career.unspentPoints = BALANCE.growth.levels ? Math.max(career.unspentPoints ?? 0, career.level - 1 - spent) : (career.unspentPoints ?? 0);
     // Миграция 17.09: записи недели первой (откаченной) версии — {sceneId, optionId} без chosen/offered —
     // валили offerWeek (пустой экран на сайте). Такие записи выбрасываем: неделя того тура покажется снова.
     career.weekLog = (career.weekLog ?? []).filter((e) => Array.isArray(e.chosen) && Array.isArray(e.offered));

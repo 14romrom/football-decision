@@ -145,7 +145,9 @@ describe('career: очко уровня живёт в карьере, пока �
     expect(career.level).toBe(1);
     career = applyMatchToCareer(career, state(), big, true);              // 62 xp → уровень 2 (порог 40)
     expect(career.level).toBe(2);
-    expect(career.unspentPoints).toBe(1);
+    // Уровни выключены (BALANCE.growth.levels): уровень считается, очко не выдаётся; включены — выдаётся.
+    expect(career.unspentPoints).toBe(BALANCE.growth.levels ? 1 : 0);
+    career = { ...career, unspentPoints: 1 };
     career = spendPoint(career, 'passing');
     expect(career.unspentPoints).toBe(0);
     expect(career.attrPoints.passing).toBe(1);

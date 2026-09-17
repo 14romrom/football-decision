@@ -240,7 +240,7 @@ export function runCareer(seed: number, policy: WeekPolicy): CareerRun {
     career = consumed;
     const player = effectivePlayer(PLAYER, career, penalty.attrBonus);
     const session = createMatch(`career-${seed}-${season.round}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, [], FLAG_RULES,
-      { coachTrust: career.coachTrust, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags, startDelta: penalty.startDelta, voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute });
+      { coachTrust: career.coachTrust, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags, startDelta: penalty.startDelta, voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: career.injuriesSeason });
     for (;;) {
       const next = nextEpisode(session, rng);
       if (!next) break;

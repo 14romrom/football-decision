@@ -5,7 +5,7 @@ import { BALANCE, MOMENTUM_BY_TIER, MOMENTUM_COST_RECOVERY } from './balance';
 import { attrMod } from './context';
 import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
-import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL, voiceSees } from './voices';
+import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL, voiceSeesNow } from './voices';
 import { mostSpecific, pickFlavorLine, scoreState, type FlavorRule } from './flavor';
 import { pickOutcome, resultBadges } from './resolve';
 import type { Rng } from './rng';
@@ -44,6 +44,7 @@ export type MatchSession = {
   finished: boolean;
   /** Реплики второго голоса, уже прочитанные в этом матче — flavor.ts не повторяет их, пока есть свежие. */
   flavorSeen: Set<string>;
+  injuriesSeason?: number;
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -166,6 +167,8 @@ export type Carryover = {
   voiceStreak?: { who: VoiceKey; count: number };
   /** …или тихішими: голос замовк на N эпизодов. */
   voiceMute?: Partial<Record<VoiceKey, number>>;
+  /** Травм уже было в этом сезоне: при лимите «пошкодження» в исходе становится мікротравмою. */
+  injuriesSeason?: number;
 };
 
 export function createMatch(
@@ -235,6 +238,7 @@ export function createMatch(
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
+    injuriesSeason: carryover.injuriesSeason,
   };
 }
 
@@ -561,7 +565,7 @@ export function nextEpisode(
  *  Без player варианты с insight скрыты: кто не передал игрока, тот не видит и подсказок. */
 export function availableOptions(episode: Episode, state: MatchState, player?: Player): EpisodeOption[] {
   return episode.options.filter((o) => {
-    if (o.insight && !(player && voiceSees(o.insight.who, player))) return false;
+    if (o.insight && !(player && voiceSeesNow(o.insight.who, state, player))) return false;
     const r = o.requires;
     if (!r) return true;
     if (r.flags && !r.flags.every((f) => state.flags.includes(f))) return false;
@@ -624,7 +628,9 @@ function applyEffects(
   }
 
   if (apply.addFlags) {
-    for (const f of apply.addFlags) {
+    for (let f of apply.addFlags) {
+      // Не больше maxPerSeason травм за сезон: дальше исход даёт мікротравму, а не пошкодження.
+      if (f === 'injured' && (session.injuriesSeason ?? 0) >= BALANCE.injury.maxPerSeason) f = 'knock';
       if (!state.flags.includes(f)) state.flags.push(f);
       if (mark) state.marks[f] = { minute, ...mark };   // след решения — для реактивных эпизодов
     }

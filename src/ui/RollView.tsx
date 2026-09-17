@@ -1,3 +1,4 @@
+import { VOICE_LABEL } from '../engine/voices';
 import { useEffect, useState } from 'react';
 import type { EpisodeOption, Resolution, ResultBadge } from '../engine/types';
 import { ATTRIBUTE_LABEL } from '../engine/types';
@@ -86,6 +87,13 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
           {flavor && (
             <p className="line line-second">
               <span className="voice-name src-field">{flavorVoice ?? 'ТРИБУНИ'}</span> — {flavor}
+            </p>
+          )}
+          {(option.insight || option.requires?.flags?.some((f) => f.startsWith('week_'))) && (
+            <p className="origin-note">
+              {option.insight
+                ? <>{VOICE_LABEL[option.insight.who]} побачив цей варіант — без нього кнопки не було б.</>
+                : <>Цей варіант з’явився завдяки тижню між матчами.</>}
             </p>
           )}
           {badges && badges.length > 0 && (

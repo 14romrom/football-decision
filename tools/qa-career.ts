@@ -37,7 +37,7 @@ function runCareer(seed: number) {
     const flags = penalty.flags.map((f) => f.flag);
     if (new Set(flags).size !== flags.length) note('дубли флагов на старте');
     const session = createMatch(`qa-${seed}-${season.round}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, [], FLAG_RULES,
-      { coachTrust: career.coachTrust, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags, startDelta: penalty.startDelta, voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute });
+      { coachTrust: career.coachTrust, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags, startDelta: penalty.startDelta, voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: career.injuriesSeason });
     if (new Set(session.state.flags).size !== session.state.flags.length) note('дубли флагов в матче');
     for (;;) {
       const next = nextEpisode(session, rng);

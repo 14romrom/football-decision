@@ -60,8 +60,14 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
           const voice = o.voice && voiceAudible(o.voice.who, o, state, player) ? o.voice : null;
           const shifted = ctx.position !== o.basePosition;
           return (
-            <button key={o.id} className="option" onClick={() => onChoose(o)}>
-              <span className="option-label">{o.label}</span>
+            <button key={o.id} className={`option ${o.insight ? 'option-insight' : ''}`} onClick={() => onChoose(o)}>
+              <span className="option-label">
+                {o.label}
+                {/* Откуда взялся вариант — чтобы игрок связал кнопку с голосом или с тижнем, а не с удачей. */}
+                {o.insight && <i className={`origin voice-${o.insight.who}`}>відкрив {VOICE_LABEL[o.insight.who]}</i>}
+                {!o.insight && o.requires?.flags?.some((f) => f.startsWith('week_')) && <i className="origin origin-week">з тижня</i>}
+                {!o.insight && o.requires?.flags?.includes('keeper_read') && <i className="origin origin-week">по підказці</i>}
+              </span>
               {voice && (
                 <span className={`voice voice-${voice.who}`}><b>{VOICE_LABEL[voice.who]}:</b> «{voice.line}»</span>
               )}

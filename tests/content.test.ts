@@ -152,8 +152,12 @@ describe('вариации сетапа и флаги (сезон)', () => {
       }
     }
     for (const f of used) expect(known.has(f), `флаг ${f}`).toBe(true);
-    // и наоборот: правило без эпизода, который ставит флаг, — мёртвое
-    const set = new Set(EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))));
+    // и наоборот: правило без эпизода (или дела недели), которые ставят флаг, — мёртвое
+    const { ACTIVITIES } = await import('../src/content');
+    const set = new Set([
+      ...EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))),
+      ...ACTIVITIES.flatMap((a) => (a.effect.flags ?? []).map((f) => f.flag)),
+    ]);
     for (const r of FLAG_RULES) {
       if (r.id.startsWith('them_') || r.id.startsWith('keeper_')) continue;
       expect(set.has(r.id), `правило ${r.id} никто не ставит`).toBe(true);
@@ -214,7 +218,7 @@ describe('автор гола в хронологии совпадает со с
   // объявляла гол случайным именем из roster.scorers — разные «авторы» одного гола.
   // apply.scorer фиксирует, кого назвал текст; pushGoal (match.ts) обязан использовать
   // именно его. Здесь проверяем контент: ключ проставлен и совпадает с текстом.
-  const US_KEYS = ['partner', 'striker', 'cb', 'dm', 'keeper'];
+  const US_KEYS = ['partner', 'striker', 'cb', 'dm', 'keeper', 'winger', 'lb', 'rb', 'cb2', 'sub'];
   const THEM_KEYS = ['striker', 'winger', 'mid'];
 
   it('assist и teamGoal — apply.scorer обязателен и назван в тексте', async () => {

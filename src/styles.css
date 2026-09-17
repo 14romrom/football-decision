@@ -393,3 +393,11 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .attr-train { display: inline-flex; gap: 2px; margin-left: 5px; vertical-align: middle; }
 .attr-train b { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.18); }
 .attr-train b.on { background: var(--accent); }
+
+/* Откуда вариант: «відкрив Бачення» / «з тижня» — связь кнопки с голосом или неделей, не с удачей. */
+.origin { display: inline-block; margin-left: 8px; font-style: normal; font-weight: 600; font-size: 11px; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,0.08); vertical-align: middle; }
+.origin.origin-week { color: var(--accent); }
+.origin.voice-vision { color: #c9a5ff; } .origin.voice-instinct { color: #ffd166; } .origin.voice-body { color: #ff8a8a; }
+.origin.voice-composure { color: #8fb8ff; } .origin.voice-ego { color: #f0a35e; } .origin.voice-team { color: #6ee7a0; }
+.option-insight { border-left: 3px solid #444b5c; }
+.origin-note { font-size: 13px; color: var(--muted); font-style: italic; margin: 0 0 8px; }

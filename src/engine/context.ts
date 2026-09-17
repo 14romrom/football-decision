@@ -2,14 +2,13 @@
 // Всё, что здесь считается, потом показывается игроку списком после броска —
 // это единственный способ увидеть, что прошлые решения на что-то повлияли.
 
-import { ATTR_MOD, BALANCE, POSITION_ORDER } from './balance';
+import { BALANCE, POSITION_ORDER } from './balance';
 import { neutralConditions, signatureAttrs, type MatchConditions } from './conditions';
+import { attrMod } from './attr';
+import { VOICE_LABEL, voiceAudible } from './voices';
 import { ATTRIBUTE_LABEL, type Effect, type EpisodeOption, type Episode, type FlagRule, type MatchState, type ModLine, type Player, type Position } from './types';
 
-export function attrMod(attr: number): number {
-  const { base, step, max } = ATTR_MOD;
-  return Math.max(0, Math.min(max, Math.floor((attr - base) / step)));
-}
+export { attrMod };
 
 const EFFECT_ORDER: Effect[] = ['limited', 'standard', 'great'];
 
@@ -97,6 +96,23 @@ export function computeContext(
     if (rule.attributes && !rule.attributes.includes(option.attribute)) continue;
     if (rule.phases && !rule.phases.includes(phase)) continue;
     mods.push({ label: rule.label, value: rule.value });
+  }
+
+  // Голоса имеют вес (плейтест 17.09: «голоса ни на что не влияют»). Голос атрибута,
+  // который слышно на варианте, ведёт: +1 — ты в своей стихии. Его и Команда бонуса
+  // к броску не дают, но серия одного из них глушит другого: три раза подряд слушал
+  // Его — командные варианты на −1 («Его заглушило команду»), и наоборот.
+  const v = BALANCE.voice;
+  if (option.voice && voiceAudible(option.voice.who, option, state, player)
+    && option.voice.who !== 'ego' && option.voice.who !== 'team') {
+    mods.push({ label: VOICE_LABEL[option.voice.who] + ' веде', value: v.listenBonus });
+  }
+  const streak = state.voices.streak;
+  if (streak.who === 'ego' && streak.count >= v.streakAt && option.goals.team >= 2) {
+    mods.push({ label: 'Его заглушило команду', value: v.streakPenalty });
+  }
+  if (streak.who === 'team' && streak.count >= v.streakAt && option.goals.personal >= 2) {
+    mods.push({ label: 'команда чекає на пас', value: v.streakPenalty });
   }
 
   // Условия матча. Каждая строка — то, что игрок прочитал на брифинге.

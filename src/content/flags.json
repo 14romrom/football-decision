@@ -100,5 +100,128 @@
     "attributes": [
       "composure"
     ]
+  },
+  {
+    "id": "them_dribbler",
+    "label": "їхній дриблер — за фінтами не встигаєш",
+    "value": -1,
+    "attributes": [
+      "positioning",
+      "pace"
+    ],
+    "phases": [
+      "defense"
+    ]
+  },
+  {
+    "id": "them_playmaker",
+    "label": "їхній плеймейкер бачить кожну лінію",
+    "value": -1,
+    "attributes": [
+      "positioning",
+      "vision"
+    ],
+    "phases": [
+      "defense"
+    ]
+  },
+  {
+    "id": "them_veteran",
+    "label": "ветеран не купується на фінти",
+    "value": -1,
+    "attributes": [
+      "dribbling"
+    ],
+    "phases": [
+      "attack"
+    ]
+  },
+  {
+    "id": "them_youngster",
+    "label": "молодий провалюється за тобою",
+    "value": 1,
+    "attributes": [
+      "dribbling",
+      "pace"
+    ],
+    "phases": [
+      "attack"
+    ]
+  },
+  {
+    "id": "them_hard",
+    "label": "різкий опорник б’є по ногах",
+    "value": -1,
+    "attributes": [
+      "first_touch",
+      "strength"
+    ],
+    "phases": [
+      "transition"
+    ]
+  },
+  {
+    "id": "them_rookie",
+    "label": "новачок губить позицію",
+    "value": 1,
+    "attributes": [
+      "vision",
+      "passing"
+    ],
+    "phases": [
+      "attack"
+    ]
+  },
+  {
+    "id": "them_star",
+    "label": "їхнього лідера не відпустиш ні на крок",
+    "value": -1,
+    "attributes": [
+      "positioning"
+    ],
+    "phases": [
+      "defense"
+    ]
+  },
+  {
+    "id": "them_target",
+    "label": "здорованя не виграти в повітрі",
+    "value": -1,
+    "attributes": [
+      "strength"
+    ],
+    "phases": [
+      "defense"
+    ]
+  },
+  {
+    "id": "them_captain",
+    "label": "їхній капітан говорить із суддею за двох",
+    "value": -1,
+    "attributes": [
+      "composure"
+    ],
+    "phases": [
+      "transition"
+    ]
+  },
+  {
+    "id": "them_local",
+    "label": "улюбленець трибун — стадіон за нього",
+    "value": -1,
+    "attributes": [
+      "composure"
+    ],
+    "phases": [
+      "defense"
+    ]
+  },
+  {
+    "id": "sub_threat",
+    "label": "{sub} дихає в спину",
+    "value": -1,
+    "attributes": [
+      "composure"
+    ]
   }
 ]

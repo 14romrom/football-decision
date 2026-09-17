@@ -134,6 +134,7 @@ describe('вариации сетапа и флаги (сезон)', () => {
   it('каждый флаг из контента известен: есть правило в flags.json или это системный флаг', async () => {
     const { FLAG_RULES } = await import('../src/content');
     const SYSTEM = ['booked', 'injured', 'sent_off', 'tired'];
+    // them_<trait> ставит движок по характеристикам соперника из roster.json (match.ts).
     const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
     const used = new Set<string>();
     for (const e of EPISODES) {
@@ -148,7 +149,10 @@ describe('вариации сетапа и флаги (сезон)', () => {
     for (const f of used) expect(known.has(f), `флаг ${f}`).toBe(true);
     // и наоборот: правило без эпизода, который ставит флаг, — мёртвое
     const set = new Set(EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))));
-    for (const r of FLAG_RULES) expect(set.has(r.id), `правило ${r.id} никто не ставит`).toBe(true);
+    for (const r of FLAG_RULES) {
+      if (r.id.startsWith('them_')) continue;
+      expect(set.has(r.id), `правило ${r.id} никто не ставит`).toBe(true);
+    }
   });
 
   it('у каждого реактивного эпизода есть флаг-триггер, который кто-то ставит, и каждый вариант умеет его снять', () => {
@@ -187,7 +191,7 @@ describe('плейсхолдеры имён', () => {
   it('в сыром контенте нет фамилий из ростера — только плейсхолдеры', async () => {
     const { EPISODES_RAW, ROSTER } = await import('../src/content');
     const surnames = [...Object.values(ROSTER.us.players), ...Object.values(ROSTER.them.players)]
-      .flatMap((p) => Object.values(p));
+      .flatMap((p) => [p.nom, p.gen, p.dat, p.ins]);
     const raw = JSON.stringify(EPISODES_RAW);
     for (const s of surnames) expect(raw, s).not.toContain(s);
   });

@@ -46,6 +46,8 @@ export type TimelineEvent = {
   past?: string;
   /** Этот эпизод напрямую привёл к голу соперника. */
   causedConcede?: boolean;
+  /** Автор гола (kind goalUs/goalThem) — для протокола и бомбардиров сезона. */
+  scorer?: string;
   /** Ироничная реплика по ситуации после исхода (см. engine/flavor.ts). */
   flavor?: string;
   /** Чёткие теги результата («⚽ Гол!», «Втрата м'яча») — что конкретно произошло,

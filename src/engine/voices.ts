@@ -7,7 +7,7 @@
 // Это первый слой «выбор имеет вес» — полный перенос между матчами будет в M2.
 
 import { BALANCE } from './balance';
-import { attrMod } from './context';
+import { attrMod } from './attr';
 import type { EpisodeOption, MatchState, Player, VoiceKey, VoiceTrace } from './types';
 
 export const VOICE_LABEL: Record<VoiceKey, string> = {

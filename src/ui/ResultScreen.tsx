@@ -11,15 +11,28 @@ function Stat({ label, value }: { label: string; value: number | string }) {
   );
 }
 
-type Props = { summary: MatchSummary; roster: Roster; xpEarned?: number; onRestart: () => void };
+type Props = { summary: MatchSummary; roster: Roster; playerName: string; xpEarned?: number; onRestart: () => void };
 
-export function ResultScreen({ summary, roster, xpEarned, onRestart }: Props) {
+/** Протокол: «Реєс 63′, Кнапп 78′ — їхній ветеран 12′». Персонаж по фамилии рядом с партнёрами —
+ *  плейтест 17.09: герой нигде не звучал, кроме брифинга. */
+function protocol(summary: MatchSummary): string | null {
+  if (summary.goals.length === 0) return null;
+  const side = (s: 'us' | 'them') => summary.goals.filter((g) => g.side === s).map((g) => `${g.scorer} ${g.minute}′`).join(', ');
+  const us = side('us');
+  const them = side('them');
+  return [us, them].filter(Boolean).join(' — ');
+}
+
+export function ResultScreen({ summary, roster, playerName, xpEarned, onRestart }: Props) {
   const gap = Math.abs(summary.coachRating - summary.fanRating);
   const low = Math.min(summary.coachRating, summary.fanRating);
+  const goals = protocol(summary);
 
   return (
     <div className="result">
       <h1>{roster.us.name.nom} {summary.scoreUs}:{summary.scoreThem} {roster.them.name.nom}</h1>
+      {goals && <p className="protocol">{goals}</p>}
+      <p className="season-line"><b>{playerName}</b> · тренер {summary.coachRating.toFixed(1)} · трибуни {summary.fanRating.toFixed(1)}</p>
 
       <section className="stats">
         <Stat label="голи" value={summary.stats.goals} />

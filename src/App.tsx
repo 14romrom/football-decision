@@ -18,6 +18,11 @@ import {
   type Career,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
+import { readSeason, writeSeason } from './telemetry/season-storage';
+import {
+  createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, SEASON_ROUNDS, US, type Season,
+} from './engine/season';
+import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
 import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent } from './engine/types';
 import { logDecision } from './telemetry/log';
@@ -35,6 +40,7 @@ type Stage =
   | { k: 'episode'; episode: Episode; minute: number }
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[] }
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
+  | { k: 'season'; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number }
   | { k: 'train' };
 
@@ -61,6 +67,13 @@ function Game() {
   const [career, setCareer] = useState<Career>(careerRef.current);
   const setCareerBoth = useCallback((c: Career) => { careerRef.current = c; writeCareer(c); setCareer(c); }, []);
 
+  // Сезон: расписание и таблица (M5-лайт). Создаётся при первом заходе, живёт в localStorage.
+  const seasonRef = useRef<Season>(readSeason() ?? createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS)));
+  const [season, setSeason] = useState<Season>(seasonRef.current);
+  const setSeasonBoth = useCallback((sn: Season) => { seasonRef.current = sn; writeSeason(sn); setSeason(sn); }, []);
+  useEffect(() => { writeSeason(seasonRef.current); }, []);
+  const clubName = useCallback((key: string) => (key === US ? ROSTER.us.name.nom : OPPONENTS[key]?.name.nom ?? key), []);
+
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   const [shown, setShown] = useState<TimelineEvent[]>([]);
   const [queue, setQueue] = useState<TimelineEvent[]>([]);
@@ -82,6 +95,18 @@ function Game() {
       const after = applyMatchToCareer(before, session.state, summary, hadDominantVoice);
       setCareerBoth(after);
 
+      // Тур закрыт: наш результат настоящий, чужие матчи — по силе клубов (свой rng по сиду сезона и туру).
+      const sn = seasonRef.current;
+      if (!isSeasonOver(sn)) {
+        const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
+        setSeasonBoth(recordRound(sn, {
+          scoreUs: summary.scoreUs, scoreThem: summary.scoreThem,
+          goals: summary.stats.goals, assists: summary.stats.assists,
+          coachRating: summary.coachRating, fanRating: summary.fanRating,
+          scorers: summary.goals.filter((g) => g.side === 'us').map((g) => g.scorer),
+        }, strengths, makeRng(sn.seed + sn.round * 7919)));
+      }
+
       pendingRef.current = {
         kind: 'result', summary, xpEarned, leveledFrom: before.level, leveledTo: after.level,
       };
@@ -98,8 +123,9 @@ function Game() {
     const seed = Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : Math.floor(Math.random() * 1e9);
     if (params.has('seed')) history.replaceState(null, '', location.pathname + location.hash);
     const rng = makeRng(seed);
-    // Условия матча — по сиду, тонус — из истории этого устройства.
-    const conditions = generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)));
+    // Условия матча — по сиду и расписанию сезона, тонус — из истории этого устройства.
+    const fixture = ourFixture(seasonRef.current) ?? undefined;
+    const conditions = generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)), fixture);
 
     // Перенос из карьеры: травма/карточка прошлого матча бьют по старту этого,
     // доверие тренера продолжается (с регрессией), а не сбрасывается на 55.
@@ -119,7 +145,12 @@ function Game() {
     sessionRef.current = session;
     setShown([]);
     setStage({ k: 'briefing', carryoverNote: penalty.note });
-  }, [setCareerBoth]);
+  }, [setCareerBoth, setSeasonBoth]);
+
+  const newSeason = useCallback(() => {
+    const prev = seasonRef.current;
+    setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS), prev.number + 1));
+  }, [setSeasonBoth]);
 
   const train = useCallback((attr: Attribute) => {
     const rng = makeRng(Date.now() ^ Math.floor(Math.random() * 1e9));
@@ -203,17 +234,29 @@ function Game() {
   }, [stage, proceed]);
 
   if (stage.k === 'menu') {
+    const fixture = ourFixture(season);
+    const row = ourRow(season);
     return (
       <div className="menu">
-        <h1>Один матч</h1>
+        <h1>Сезон {season.number}</h1>
         <p>
           Ти — {PLAYER.name}, {PLAYER.position} «{ROSTER.us.name.gen}». {career.level} рівень.
-          Дев’яносто хвилин, десять моментів, і в кожному треба обирати. Переграти не можна.
+          Дев’ять моментів за матч, і в кожному треба обирати. Переграти не можна.
         </p>
+        {fixture ? (
+          <p className="season-note">
+            Тур {fixture.round + 1} з {SEASON_ROUNDS}: «{clubName(fixture.opponentKey)}», {fixture.venue === 'home' ? 'вдома' : 'на виїзді'}.
+            {season.round > 0 && ` Зараз ${row.position}-е місце, ${row.points} оч.`}
+          </p>
+        ) : (
+          <p className="season-note">Сезон завершено.</p>
+        )}
         <p className="muted">
           Тренер і трибуни хочуть від тебе різного. Сили майже не відновлюються — хіба що в перерві.
         </p>
-        <button className="primary" onClick={start}>До матчу</button>
+        {fixture
+          ? <button className="primary" onClick={start}>До матчу</button>
+          : <button className="primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>}
         {career.trainedThisCycle ? (
           <p className="muted small">Тренування вже проведено — наступне після матчу.</p>
         ) : (
@@ -242,17 +285,33 @@ function Game() {
   }
 
   if (stage.k === 'result') {
-    const leveled = stage.leveledTo > stage.leveledFrom;
     return (
       <>
         <ResultScreen
           summary={stage.summary}
           roster={sessionRef.current!.roster}
+          playerName={PLAYER.name}
           xpEarned={stage.xpEarned}
-          onRestart={() => (leveled ? setStage({ k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo }) : setStage({ k: 'menu' }))}
+          onRestart={() => setStage({ k: 'season', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo })}
         />
         <DebugPanel session={sessionRef.current} />
       </>
+    );
+  }
+
+  if (stage.k === 'season') {
+    const leveled = stage.leveledTo > stage.leveledFrom;
+    const over = isSeasonOver(season);
+    return (
+      <SeasonScreen
+        season={season}
+        clubName={clubName}
+        teamGen={ROSTER.us.name.gen}
+        playerName={ROSTER.us.players.self.nom}
+        verdict={over ? seasonVerdict(season, career.coachTrust) : undefined}
+        onNext={() => (leveled ? setStage({ k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo }) : setStage({ k: 'menu' }))}
+        onNewSeason={() => { newSeason(); setStage(leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
+      />
     );
   }
 

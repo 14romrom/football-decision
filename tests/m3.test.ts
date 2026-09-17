@@ -240,7 +240,8 @@ describe('автор гола в хронологии', () => {
           if (!out.apply?.scorer) continue;
           const side = out.apply.concede ? 'them' : 'us';
           const namedPlayer = s.roster[side].players[out.apply.scorer].nom;
-          expect(out.text, `${opt.id}: текст исхода должен называть ${out.apply.scorer}`).toContain(namedPlayer);
+          // Характеристика соперника в начале предложения — с большой буквы (names.ts), сравниваем без регистра.
+          expect(out.text.toLowerCase(), `${opt.id}: текст исхода должен называть ${out.apply.scorer}`).toContain(namedPlayer.toLowerCase());
         }
       }
       const opt = next.episode.options[0];

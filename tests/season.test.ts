@@ -180,7 +180,7 @@ describe('реактивные эпизоды помнят прошлый мат
 
 describe('флаги-последствия между матчами', () => {
   const summary: MatchSummary = {
-    scoreUs: 1, scoreThem: 0, stats: state().stats, staminaLeft: 20, coachRating: 6, fanRating: 7, recap: [], points: 3,
+    scoreUs: 1, scoreThem: 0, stats: state().stats, staminaLeft: 20, coachRating: 6, fanRating: 7, recap: [], points: 3, goals: [],
   };
   const mark = { minute: 34, episodeId: 'ep_edge_of_box', optionId: 'pass_moraes', past: 'віддав Мораесу' };
 

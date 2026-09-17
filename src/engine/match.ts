@@ -3,7 +3,7 @@
 
 import { BALANCE, MOMENTUM_BY_TIER, MOMENTUM_COST_RECOVERY } from './balance';
 import { attrMod } from './context';
-import { fillNames, fillNamesDeep, type Roster } from './names';
+import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL } from './voices';
 import { mostSpecific, pickFlavor, scoreState, type FlavorRule } from './flavor';
@@ -165,7 +165,9 @@ export function createMatch(
     fanHype: clamp(start.fanHype, 0, 100),
     momentum: clamp(start.momentum, -3, 3),
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
-    flags: (carryover.flags ?? []).map((f) => f.flag),
+    // Характеристики соперника — флаги на матч: правила в flags.json (them_dribbler и т.п.),
+    // варианты сетапа через when.flags. Механизм тот же, что у последствий решений.
+    flags: [...(carryover.flags ?? []).map((f) => f.flag), ...opponentTraits(roster.them).map((t) => 'them_' + t)],
     marks: Object.fromEntries((carryover.flags ?? []).map((f) => [f.flag, { ...f.mark, previousMatch: true }])),
     voices: initVoiceTrace(),
     log: [{
@@ -196,6 +198,10 @@ const FILLER_NEUTRAL = [
   'Суперник перекочує м’яч упоперек поля, час іде.',
   '{striker} бореться за верховий м’яч і не дістає півкорпусу.',
   'Вкидання біля нашого штрафного, лава кричить про лінію.',
+  '{rb} вкидає з-за бровки, {winger} приймає і одразу повертає назад.',
+  '{lb} страхує за спиною у {cb2.gen}, поки той виходить на перехоплення.',
+  '{coach} кричить із брівки, і {cb2} піднімає руку: почув.',
+  '{winger} йде в обведення на своєму фланзі — і його зупиняють фолом.',
 ];
 const FILLER_LEADING = [
   'Лава вимагає тримати м’яч, рахунок нас влаштовує.',
@@ -267,7 +273,9 @@ function pushGoal(
   const state = session.state;
   // Если текст исхода уже назвал автора (apply.scorer) — лента называет того же игрока,
   // не случайное имя из scorers. Без ключа поведение прежнее: случайный игрок команды.
-  const name = () => (scorerKey ? namedScorer(session.roster, side, scorerKey) : scorer(session.roster, side, rng));
+  const name = scorerKey ? namedScorer(session.roster, side, scorerKey) : scorer(session.roster, side, rng);
+  // Характеристика соперника («їхній ветеран») в начале строки ленты — с большой буквы.
+  const Name = name.charAt(0).toUpperCase() + name.slice(1);
   if (side === 'us') {
     state.scoreUs += 1;
     state.momentum = clamp(state.momentum + 1, -3, 3);
@@ -275,7 +283,8 @@ function pushGoal(
     state.log.push({
       minute,
       kind: 'goalUs',
-      text: text ?? (name() + ' проштовхує м’яч у сітку — гол! ' + state.scoreUs + ':' + state.scoreThem + '.'),
+      scorer: name,
+      text: text ?? (Name + ' проштовхує м’яч у сітку — гол! ' + state.scoreUs + ':' + state.scoreThem + '.'),
     });
   } else {
     state.scoreThem += 1;
@@ -284,7 +293,8 @@ function pushGoal(
     state.log.push({
       minute,
       kind: 'goalThem',
-      text: text ?? (name() + ' тікає і б’є в дальній. ' + state.scoreUs + ':' + state.scoreThem + '.'),
+      scorer: name,
+      text: text ?? (Name + ' тікає і б’є в дальній. ' + state.scoreUs + ':' + state.scoreThem + '.'),
     });
   }
 }
@@ -479,7 +489,8 @@ function applyEffects(
   if (apply.duelWon) state.stats.duelsWon += 1;
   if (apply.foul) state.stats.fouls += 1;
 
-  if (apply.goal) { state.stats.goals += 1; pushGoal(session, 'us', minute, rng, 'Гол! ' + (state.scoreUs + 1) + ':' + state.scoreThem + '.'); }
+  // Свой гол — по фамилии, как у партнёров: иначе персонаж в ленте безымянный (плейтест 17.09).
+  if (apply.goal) { state.stats.goals += 1; pushGoal(session, 'us', minute, rng, namedScorer(session.roster, 'us', 'self') + ' забиває — гол! ' + (state.scoreUs + 1) + ':' + state.scoreThem + '.', 'self'); }
   if (apply.assist) { state.stats.assists += 1; pushGoal(session, 'us', minute, rng, undefined, apply.scorer); }
   if (apply.teamGoal) pushGoal(session, 'us', minute, rng, undefined, apply.scorer);
 
@@ -595,6 +606,8 @@ export type MatchSummary = {
   fanRating: number;
   recap: string[];
   points: number;   // 3/1/0 — нужны балансному прогону, игроку не показываются
+  /** Протокол: кто и когда забил, с обеих сторон — для итогового экрана и бомбардиров сезона. */
+  goals: { minute: number; side: 'us' | 'them'; scorer: string }[];
 };
 
 const rate = (value: number) => Math.round(clamp(value, 1, 10) * 10) / 10;
@@ -641,6 +654,9 @@ export function finishMatch(session: MatchSession, rng: Rng): { events: Timeline
     fanRating,
     recap: buildRecap(state, coachRating, fanRating),
     points,
+    goals: state.log
+      .filter((e) => (e.kind === 'goalUs' || e.kind === 'goalThem') && e.scorer)
+      .map((e) => ({ minute: e.minute, side: e.kind === 'goalUs' ? 'us' as const : 'them' as const, scorer: e.scorer! })),
   };
   return { events: state.log.slice(before), summary };
 }

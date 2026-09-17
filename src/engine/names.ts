@@ -2,7 +2,10 @@
 // в эпизоды: в карьере команда сменится, а эпизод должен остаться.
 // Падежи хранятся в ростере, потому что «віддати {partner.dat}» иначе не собрать.
 
-export type NameForms = { nom: string; gen: string; dat: string; ins: string };
+/** Формы падежей. У соперников это не фамилия, а характеристика («їхній ветеран»,
+ *  «молодий вінгер») — тестеры просили не запоминать чужих; своих — наоборот, больше.
+ *  trait — механика и текст под характеристику: флаг them_<trait> на матч, см. match.ts. */
+export type NameForms = { nom: string; gen: string; dat: string; ins: string; trait?: string };
 
 export type TeamRoster = {
   name: { nom: string; gen: string };
@@ -19,10 +22,21 @@ const PLACEHOLDER = /\{([a-z]+(?:\.[a-z]+){0,2})\}/g;
 /** `{partner}` → фамилия своего игрока; `{partner.dat}` — в дательном;
  *  `{them.striker.gen}` — игрок соперника; `{us}` / `{them.gen}` — названия команд.
  *  Неизвестный ключ — ошибка, а не пустая строка: опечатка в контенте должна валить тест. */
+/** Начало предложения: пусто перед плейсхолдером, или точка/знак и пробел, или открывающая лапка. */
+const SENTENCE_START = /(^|[.!?…]\s+|«|\n\s*)$/;
+
 export function fillNames(text: string, roster: Roster): string {
-  return text.replace(PLACEHOLDER, (whole: string, path: string) => {
+  return text.replace(PLACEHOLDER, (whole: string, path: string, offset: number) => {
     // {trigger.*} — след решения, подставляется реактивным эпизодом в момент показа.
     if (path.startsWith('trigger.')) return whole;
+    const value = resolveName(path, roster, whole);
+    // Характеристики соперника пишутся с маленькой («їхній ветеран»), но в начале
+    // предложения — с большой, как и фамилии. Фамилиям это ничего не меняет.
+    return SENTENCE_START.test(text.slice(0, offset)) ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+  });
+}
+
+function resolveName(path: string, roster: Roster, whole: string): string {
     const all = path.split('.');
     const side = all[0] === 'us' || all[0] === 'them' ? all[0] : null;
     const team = side ? roster[side] : roster.us;
@@ -36,10 +50,14 @@ export function fillNames(text: string, roster: Roster): string {
     const player = team.players[parts[0]];
     const kase = parts[1] ?? 'nom';
     if (!player || !CASES.has(kase) || parts.length > 2) {
-      throw new Error('неизвестный плейсхолдер {' + path + '}');
+      throw new Error('неизвестный плейсхолдер ' + whole);
     }
-    return player[kase as keyof NameForms];
-  });
+    return player[kase as keyof NameForms] as string;
+}
+
+/** Характеристики игроков соперника (без дублей) — становятся флагами them_<trait> на матч. */
+export function opponentTraits(team: TeamRoster): string[] {
+  return [...new Set(Object.values(team.players).map((p) => p.trait).filter((t): t is string => !!t))];
 }
 
 /** Рекурсивно проходит по объекту контента и подставляет имена во все строки. */

@@ -34,7 +34,7 @@ export type Career = {
 
 /** Что переживает финальный свисток. Обида/долг партнёра и доверенный фланг — про людей,
  *  они помнят; злой защитник и жёлтая — про этот матч и этого соперника, их не несём. */
-export const CARRIED_FLAGS = ['partner_trusts', 'partner_annoyed', 'coach_flank'];
+export const CARRIED_FLAGS = ['partner_trusts', 'partner_annoyed', 'coach_flank', 'sub_threat'];
 
 export function defaultCareer(): Career {
   return {

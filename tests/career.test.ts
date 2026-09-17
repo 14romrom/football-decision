@@ -19,7 +19,7 @@ const state = (over: Partial<MatchState> = {}): MatchState => ({
 
 const summary = (over: Partial<MatchSummary> = {}): MatchSummary => ({
   scoreUs: 1, scoreThem: 0, stats: state().stats, staminaLeft: 20,
-  coachRating: 6, fanRating: 7, recap: [], points: 3, ...over,
+  coachRating: 6, fanRating: 7, recap: [], points: 3, goals: [], ...over,
 });
 
 describe('career: опыт и уровни', () => {

@@ -47,12 +47,16 @@ export function toneFromHistory(results: MatchResult[]): Tone {
   return { confidence, fatigue: results.length % 4 };
 }
 
+/** Условия матча. Соперник и поле — из расписания сезона, если оно есть (fixture);
+ *  без него — случайные, как в прогоне. Установка тренера и погода случайны всегда. */
 export function generateConditions(
   rng: Rng, opponents: Record<string, { strength: Strength }>, tone: Tone,
+  fixture?: { opponentKey: string; venue: 'home' | 'away' },
 ): MatchConditions {
-  const opponentKey = rng.pick(Object.keys(opponents));
+  const opponentKey = fixture?.opponentKey ?? rng.pick(Object.keys(opponents));
+  const venue: Venue = fixture?.venue ?? (rng.chance(0.5) ? 'home' : 'away');
   return {
-    venue: rng.chance(0.5) ? 'home' : 'away',
+    venue,
     opponentKey,
     strength: opponents[opponentKey].strength,
     instruction: rng.pick<Instruction>(['hold', 'press', 'free']),

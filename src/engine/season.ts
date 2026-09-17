@@ -29,6 +29,9 @@ export type Season = {
   player: PlayerSeasonStats;
   /** Голы своей команды по авторам (фамилия → голы) — привязанность к своим через протокол. */
   teamScorers: Record<string, number>;
+  /** Наши матчи по турам как есть — для недели между матчами (week.ts): серия поразок,
+   *  матчі без гола, оцінки. Суммы в player для таблицы оставлены, это не замена. */
+  rounds?: OurResult[];
 };
 
 export type TableRow = {
@@ -137,6 +140,7 @@ export function recordRound(
       coachSum: p.coachSum + ours.coachRating, fanSum: p.fanSum + ours.fanRating,
     },
     teamScorers,
+    rounds: [...(season.rounds ?? []), ours],
   };
 }
 

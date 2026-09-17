@@ -29,14 +29,32 @@ export type Career = {
   /** Флаги-последствия, дожившие до конца матча и уходящие в следующий: партнёр помнит,
    *  что ты ему отдал (или не отдал), тренер — что фланг твой. Реактивный эпизод
    *  всплывёт «ще минулого матчу». Потребляются при старте (consumeStartPenalty). */
-  carriedFlags?: { flag: string; mark: Mark; opponentKey?: string }[];
+  carriedFlags?: CarriedFlag[];
+  /** Сцены недели (week.ts), которые уже показывали: для once/cooldown и для «что выбрал». */
+  weekLog?: WeekLogEntry[];
+  /** Сдвиг старта следующего матча от выбора недели — потребляется в consumeStartPenalty. */
+  nextStart?: { stamina?: number; fanHype?: number; composure?: number; note?: string };
 };
+
+export type CarriedFlag = {
+  flag: string; mark: Mark; opponentKey?: string;
+  /** Отложенное следствие (week.ts): сколько матчей флаг едет молча, прежде чем сработать.
+   *  0/undefined — уже в следующем матче. Уменьшается на старте каждого матча. */
+  after?: number;
+};
+
+export type WeekLogEntry = { season: number; round: number; sceneId: string | null; optionId?: string };
 
 /** Что переживает финальный свисток. Обида/долг партнёра и доверенный фланг — про людей,
  *  они помнят; злой защитник и жёлтая — про этот матч и этого соперника, их не несём. */
 export const CARRIED_FLAGS = ['partner_trusts', 'partner_annoyed', 'coach_flank', 'sub_threat', 'keeper_read'];
 /** Флаги про конкретного соперника: переживают свисток только до матча с тем же клубом. */
 export const OPPONENT_BOUND_FLAGS = ['keeper_read'];
+
+/** Доверие тренера живёт в 0..100 — и в матче, и между матчами (week.ts). */
+export function clampTrust(v: number): number {
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
 
 export function defaultCareer(): Career {
   return {
@@ -104,7 +122,9 @@ export function nextMatchCoachTrust(endingTrust: number): number {
 
 export type StartPenalty = {
   staminaPenalty: number; coachTrustPenalty: number; note?: string;
-  flags: { flag: string; mark: Mark; opponentKey?: string }[];
+  flags: CarriedFlag[];
+  /** Сдвиг старта от недели между матчами (career.nextStart) — в match.ts:Carryover как есть. */
+  startDelta?: { stamina?: number; fanHype?: number; composure?: number };
 };
 
 /** Штрафы старта следующего матча от травмы/картки прошлого — и одновременно их
@@ -131,9 +151,21 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
     next.injuredMatches = career.injuredMatches - 1;
   }
 
-  const flags = career.carriedFlags ?? [];
-  next.carriedFlags = [];
-  return { career: next, penalty: { staminaPenalty, coachTrustPenalty, note, flags } };
+  // Отложенные флаги недели едут дальше с уменьшенным счётчиком; остальные — в этот матч.
+  const flags = (career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0));
+  next.carriedFlags = (career.carriedFlags ?? [])
+    .filter((f) => f.after && f.after > 0)
+    .map((f) => ({ ...f, after: f.after! - 1 }));
+  const startDelta = career.nextStart;
+  if (startDelta?.note) note = note ? note + ' ' + startDelta.note : startDelta.note;
+  next.nextStart = undefined;
+  return {
+    career: next,
+    penalty: {
+      staminaPenalty, coachTrustPenalty, note, flags,
+      ...(startDelta ? { startDelta: { stamina: startDelta.stamina, fanHype: startDelta.fanHype, composure: startDelta.composure } } : {}),
+    },
+  };
 }
 
 /** Обновление карьеры по итогам матча: опыт, уровень (без авто-траты очка — это отдельный
@@ -157,9 +189,15 @@ export function applyMatchToCareer(
   if (state.flags.includes('sent_off')) next.pendingSentOff = true;
   else if (state.flags.includes('booked')) next.careerYellows = career.careerYellows + 1;
   if (state.flags.includes('injured')) next.injuredMatches = Math.max(career.injuredMatches, 1);
-  next.carriedFlags = CARRIED_FLAGS
-    .filter((f) => state.flags.includes(f) && state.marks[f])
-    .map((f) => ({ flag: f, mark: state.marks[f], ...(OPPONENT_BOUND_FLAGS.includes(f) ? { opponentKey } : {}) }));
+  // К началу матча consumeStartPenalty оставляет в carriedFlags только отложенные флаги недели,
+  // ещё не сработавшие (after уже уменьшен — 0 значит «в следующем матче»). Матч их не трогает;
+  // к ним добавляются флаги, дожившие до свистка этого матча.
+  next.carriedFlags = [
+    ...(career.carriedFlags ?? []),
+    ...CARRIED_FLAGS
+      .filter((f) => state.flags.includes(f) && state.marks[f])
+      .map((f) => ({ flag: f, mark: state.marks[f], ...(OPPONENT_BOUND_FLAGS.includes(f) ? { opponentKey } : {}) })),
+  ];
   return next;
 }
 

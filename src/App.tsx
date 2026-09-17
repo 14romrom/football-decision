@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
+import { EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor, WEEKS } from './content';
+import { fillNames, fillNamesDeep } from './engine/names';
+import { applyWeekChoice, pickWeekScene, skipWeek, weekContext, weekPending, weekSceneText, type WeekOption, type WeekScene } from './engine/week';
+import { WeekScreen } from './ui/WeekScreen';
 import { generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
@@ -40,6 +43,7 @@ type Stage =
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
+  | { k: 'week'; scene: WeekScene; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
@@ -109,6 +113,13 @@ function Game() {
           coachRating: summary.coachRating, fanRating: summary.fanRating,
           scorers: summary.goals.filter((g) => g.side === 'us').map((g) => g.scorer),
         }, strengths, makeRng(sn.seed + sn.round * 7919)));
+        // Неделя между матчами: сцена выбирается сразу по итогам тура (детерминированно по сиду,
+        // чтобы перезагрузка показала ту же), нет подходящей — неделя записывается пустой.
+        const sn2 = seasonRef.current;
+        const ctx = weekContext(sn2, careerRef.current, ourRow(sn2).position);
+        if (ctx && !isSeasonOver(sn2) && !pickWeekScene(WEEKS, ctx, careerRef.current, makeRng(sn2.seed + sn2.round * 104729 + 7))) {
+          setCareerBoth(skipWeek(careerRef.current, ctx));
+        }
       }
 
       pendingRef.current = {
@@ -142,7 +153,7 @@ function Game() {
       episodeMemory(BALANCE.match.memory.horizon), FLAG_RULES,
       {
         coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,
-        coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
+        coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags, startDelta: penalty.startDelta,
       },
     );
     rngRef.current = rng;
@@ -155,6 +166,22 @@ function Game() {
     const prev = seasonRef.current;
     setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS), prev.number + 1));
   }, [setSeasonBoth]);
+
+  /** Ещё не показанная неделя после последнего тура — сцена та же, что выбрана в proceed. */
+  const pendingWeek = useCallback((): { scene: WeekScene; ctx: ReturnType<typeof weekContext> & object } | null => {
+    const sn = seasonRef.current;
+    const career = careerRef.current;
+    const ctx = weekContext(sn, career, ourRow(sn).position);
+    if (!ctx || isSeasonOver(sn) || !weekPending(career, ctx)) return null;
+    const scene = pickWeekScene(WEEKS, ctx, career, makeRng(sn.seed + sn.round * 104729 + 7));
+    return scene ? { scene, ctx } : null;
+  }, []);
+
+  const afterSeason = useCallback((leveledFrom: number, leveledTo: number) => {
+    const w = pendingWeek();
+    if (w) setStage({ k: 'week', scene: w.scene, leveledFrom, leveledTo });
+    else setStage(leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
+  }, [pendingWeek]);
 
   const confirmLevelUp = useCallback((attr: Attribute) => {
     const after = spendPoint(careerRef.current, attr);
@@ -232,12 +259,46 @@ function Game() {
     proceed();
   }, [stage, proceed]);
 
+  // Перезагрузка на экране недели: меню сначала отдаёт незакрытую неделю. Именно через stage,
+  // а не рендером на месте — выбор меняет карьеру, и неделя перестала бы быть «незакрытой»
+  // до того, как игрок прочитал результат.
+  useEffect(() => {
+    if (stage.k !== 'menu') return;
+    const w = pendingWeek();
+    if (w) setStage({ k: 'week', scene: w.scene, leveledFrom: career.level, leveledTo: career.level });
+  }, [stage.k, career.level, pendingWeek]);
+
+  /** Сцена недели с именами: партнёр и тренер — свои, {them.*} — следующий соперник. */
+  function renderWeek(scene: WeekScene, leveledFrom: number, leveledTo: number) {
+    const sn = seasonRef.current;
+    const fixture = ourFixture(sn);
+    const roster = rosterFor(fixture?.opponentKey ?? Object.keys(OPPONENTS)[0], makeRng(sn.seed + sn.round));
+    const filled = fillNamesDeep(scene, roster);
+    const text = fillNames(weekSceneText(scene, careerRef.current), roster);
+    return (
+      <WeekScreen
+        key={scene.id + sn.round}
+        scene={filled}
+        text={text}
+        options={filled.options}
+        onChoose={(option: WeekOption) => {
+          const ctx = weekContext(sn, careerRef.current, ourRow(sn).position)!;
+          const { career: after, badges } = applyWeekChoice(careerRef.current, scene, option, ctx);
+          setCareerBoth(after);
+          return badges;
+        }}
+        onNext={() => setStage(leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}
+      />
+    );
+  }
+
   if (stage.k === 'menu' && career.unspentPoints > 0) {
     // Непотраченное очко уровня — сначала оно, потом меню: иначе после перезагрузки оно пропадало.
     return <LevelUpScreen player={PLAYER} career={career} fromLevel={career.level - career.unspentPoints} toLevel={career.level} onConfirm={confirmLevelUp} />;
   }
 
   if (stage.k === 'menu') {
+    if (pendingWeek()) return null;
     const fixture = ourFixture(season);
     const row = ourRow(season);
     return (
@@ -308,10 +369,14 @@ function Game() {
         teamGen={ROSTER.us.name.gen}
         playerName={ROSTER.us.players.self.nom}
         verdict={over ? seasonVerdict(season, career.coachTrust) : undefined}
-        onNext={() => (leveled ? setStage({ k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo }) : setStage({ k: 'menu' }))}
+        onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
         onNewSeason={() => { newSeason(); setStage(leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
       />
     );
+  }
+
+  if (stage.k === 'week') {
+    return renderWeek(stage.scene, stage.leveledFrom, stage.leveledTo);
   }
 
   if (stage.k === 'levelup') {

@@ -340,7 +340,3 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .de-next { display: block; margin: 0 auto; letter-spacing: .06em; }
 
 .tag.target { color: var(--ink); border-color: var(--muted); font-variant-numeric: tabular-nums; }
-
-/* Тиждень між матчами — тонкий экран под замену новым UI (ui/WeekScreen.tsx). */
-.week .setup { margin-bottom: 14px; }
-.week-result { margin: 0 0 10px; line-height: 1.5; }

@@ -83,20 +83,12 @@
   `{trigger.when}` / `{trigger.When}`, а не «на {trigger.minute}-й»: для перенесённого флага это
   «ще минулого матчу». Каждый флаг из контента — либо правило в `flags.json`, либо системный
   (`booked`/`injured`/`sent_off`/`tired`); правило без эпизода, который его ставит, валит тест.
-- **Тиждень між матчами** — `engine/week.ts` + `content/weeks.json`, экран `WeekScreen` тонкий (под
-  замену новым UI, логика только в движке). Сцена — 2–3 варианта без броска, эффект через
-  `apply`: `coachTrust` сразу, `stamina`/`fanHype`/`composure`/`note` — на старт следующего матча
-  (`career.nextStart` → `Carryover.startDelta`), флаги — `{ flag, after, past }` в `carriedFlags`:
-  `after` — сколько матчей флаг едет молча, `past` — поступок для `{trigger.past}`, «когда» пишет
-  `whenTextFor()` в `Mark.whenText`. Флаг недели обязан иметь реактивный эпизод (тест). В тексте сцены
-  с `when.flags` допустимы `{trigger.past}`/`{trigger.when}` по первому флагу. Не ставить в неделе
-  проценты и не давать прямых бонусов к броску — только через существующие флаги и ресурсы старта.
 
 ## Команды
 
 ```
 npm run dev      # localhost:5179 (см. .claude/launch.json)
-npm test         # 147 тестов: движок, контент, условия, M3, career, сезон, лига, цепочки, тиждень, критерии приёмки
+npm test         # 133 теста: движок, контент, условия, M3, career, сезон, лига, цепочки, критерии приёмки
 npm run sim      # балансный прогон ботами; --random-conditions — со случайными условиями матча
 npm run sim -- --season 12   # повторы эпизодов и текстов сетапа на дистанции сезона
 npm run build    # dist/ — деплоится на GitHub Pages workflow'ом

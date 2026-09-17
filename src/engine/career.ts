@@ -65,8 +65,10 @@ export function xpForMatch(summary: MatchSummary, hadDominantVoice: boolean): nu
 }
 
 /** Кумулятивный порог опыта для каждого уровня: первые уровни быстро, дальше — реже.
- *  LEVEL_THRESHOLDS[i] — сколько опыта нужно для уровня i+2 (уровень 1 — старт без опыта). */
-export const LEVEL_THRESHOLDS = [20, 45, 75, 110, 150, 195, 245, 300, 360, 425];
+ *  LEVEL_THRESHOLDS[i] — сколько опыта нужно для уровня i+2 (уровень 1 — старт без опыта).
+ *  Удвоены 17.09 вместе с ценой очка (+1 к модификатору): при ~23 опыта за матч — 2-й уровень
+ *  после второго матча, 5-й к концу сезона из десяти; было 6–7-й, и персонаж уезжал от баланса. */
+export const LEVEL_THRESHOLDS = [40, 90, 150, 220, 300, 390, 490, 600, 720, 850];
 
 export function levelForXp(xp: number): number {
   let level = 1;
@@ -180,11 +182,14 @@ export function applyMatchToCareer(
   career: Career, state: MatchState, summary: MatchSummary, hadDominantVoice: boolean, opponentKey?: string,
 ): Career {
   const xp = career.xp + xpForMatch(summary, hadDominantVoice);
+  // Уровень не откатывается: после удвоения порогов (17.09) сохранённый уровень тестера может
+  // быть выше, чем даёт таблица, — он остаётся, а следующий придёт по новой таблице.
+  const level = Math.max(career.level, levelForXp(xp));
   const next: Career = {
     ...career,
     xp,
-    level: levelForXp(xp),
-    unspentPoints: (career.unspentPoints ?? 0) + (levelForXp(xp) - career.level),
+    level,
+    unspentPoints: (career.unspentPoints ?? 0) + (level - career.level),
     coachTrust: nextMatchCoachTrust(state.coachTrust),
     matchesPlayed: career.matchesPlayed + 1,
     voiceCounts: { ...career.voiceCounts },

@@ -129,10 +129,21 @@ describe('career: последствия карточек и травм пере
   });
 });
 
+describe('career: уровень не откатывается при смене порогов', () => {
+  it('сохранённый уровень выше табличного остаётся, очки не уходят в минус', () => {
+    const old = { ...defaultCareer(), xp: 80, level: 4 };   // по старой таблице 80 xp — уровень 4, по новой — 2
+    const after = applyMatchToCareer(old, state(), summary({ coachRating: 5, fanRating: 5 }), false);
+    expect(after.level).toBe(4);
+    expect(after.unspentPoints).toBe(0);
+  });
+});
+
 describe('career: очко уровня живёт в карьере, пока не потрачено', () => {
   it('новый уровень даёт очко; spendPoint тратит его на атрибут; без очков — ничего', () => {
     const big = summary({ coachRating: 10, fanRating: 10 });
-    let career = applyMatchToCareer(defaultCareer(), state(), big, true);   // 8 + 20 + 3 = 31 xp → уровень 2
+    let career = applyMatchToCareer(defaultCareer(), state(), big, true);   // 8 + 20 + 3 = 31 xp — ещё уровень 1
+    expect(career.level).toBe(1);
+    career = applyMatchToCareer(career, state(), big, true);              // 62 xp → уровень 2 (порог 40)
     expect(career.level).toBe(2);
     expect(career.unspentPoints).toBe(1);
     career = spendPoint(career, 'passing');

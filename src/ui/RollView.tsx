@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import type { EpisodeOption, Resolution, ResultBadge } from '../engine/types';
 import { EFFECT_LABEL, pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 
-type Props = { option: EpisodeOption; res: Resolution; flavor?: string; badges?: ResultBadge[]; onNext: () => void };
+/** continues — цепочка сработала: следующее решение будет на этой же минуте (плейтест 17.09:
+ *  «сцена продолжилась, но это было неочевидно»). */
+type Props = { option: EpisodeOption; res: Resolution; flavor?: string; badges?: ResultBadge[]; continues?: string; onNext: () => void };
 
 // Бросок должен быть событием, а не обновлением страницы: сначала пауза,
 // потом кубик, потом объяснение модификаторов, и только затем — исход.
 const STEP_DELAYS = [900, 700, 600];
 
-export function RollView({ option, res, flavor, badges, onNext }: Props) {
+export function RollView({ option, res, flavor, badges, continues, onNext }: Props) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
@@ -67,7 +69,8 @@ export function RollView({ option, res, flavor, badges, onNext }: Props) {
           )}
           <p className="outcome">{outcome.text}</p>
           {flavor && <p className="flavor">{flavor}</p>}
-          <button className="primary" onClick={onNext}>Далі</button>
+          {continues && <p className="continues">Момент триває — наступне рішення на цій же хвилині.</p>}
+          <button className="primary" onClick={onNext}>{continues ? `Далі → ${continues}` : 'Далі'}</button>
         </>
       )}
     </div>

@@ -275,3 +275,8 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .protocol { color: var(--muted); font-size: 14px; margin: -6px 0 14px; }
 .menu .season-note { color: var(--muted); font-size: 14px; }
 .menu .link { margin-right: 14px; }
+
+/* ——— цепочки: сцена продолжается ——— */
+.tag.chain { color: var(--hype); border-color: var(--hype); }
+.link-mark { color: var(--hype); }
+.continues { color: var(--hype); font-size: 14px; text-align: center; margin: 4px 0 8px; }

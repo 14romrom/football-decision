@@ -36,15 +36,20 @@ type Stage =
   | { k: 'menu' }
   | { k: 'briefing'; carryoverNote?: string }
   | { k: 'feed' }
-  | { k: 'episode'; episode: Episode; minute: number }
-  | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[] }
+  | { k: 'episode'; episode: Episode; minute: number; link: boolean }
+  | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
-  | { kind: 'episode'; episode: Episode; minute: number }
+  | { kind: 'episode'; episode: Episode; minute: number; link: boolean }
   | { kind: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number };
+
+/** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
+const CHAIN_NEXT: Record<string, string> = {
+  fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний', ep_rebound_follow_up: 'добивання',
+};
 
 /** Пауза на событие ленты: гол должен успеть прозвучать, проходной момент — нет. */
 function delayFor(e: TimelineEvent): number {
@@ -81,7 +86,8 @@ function Game() {
     const rng = rngRef.current!;
     const next = nextEpisode(session, rng);
     if (next) {
-      pendingRef.current = { kind: 'episode', episode: next.episode, minute: next.minute };
+      // Звено цепочки приходит без ленты: та же минута, сцена продолжается.
+      pendingRef.current = { kind: 'episode', episode: next.episode, minute: next.minute, link: session.chainLinks > 0 && next.events.length === 0 };
       setQueue([...lead, ...next.events]);
     } else {
       const { events, summary } = finishMatch(session, rng);
@@ -169,7 +175,7 @@ function Game() {
       if (!p) return;
       if (p.kind === 'episode') {
         shownAtRef.current = performance.now();
-        setStage({ k: 'episode', episode: p.episode, minute: p.minute });
+        setStage({ k: 'episode', episode: p.episode, minute: p.minute, link: p.link });
       } else {
         setStage({ k: 'result', summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo });
       }
@@ -215,7 +221,8 @@ function Game() {
     // Исход применяется сразу: реплика после броска должна знать счёт и минуту
     // уже с учётом этого исхода. В ленту события попадают по кнопке «Далі».
     const { events } = applyChoice(session, stage.episode, option, res, rng, FLAVOR);
-    setStage({ k: 'roll', episode: stage.episode, option, res, events });
+    const continues = session.pendingFollowUp ? CHAIN_NEXT[session.pendingFollowUp] ?? 'далі' : undefined;
+    setStage({ k: 'roll', episode: stage.episode, option, res, events, continues });
   }, [stage]);
 
   const afterRoll = useCallback(() => {
@@ -323,6 +330,7 @@ function Game() {
             player={session.player}
             conditions={session.conditions}
             flagRules={session.flagRules}
+            link={stage.link}
             onChoose={choose}
           />
         )}
@@ -332,6 +340,7 @@ function Game() {
             res={stage.res}
             flavor={stage.events.find((e) => e.kind === 'episode')?.flavor}
             badges={stage.events.find((e) => e.kind === 'episode')?.badges}
+            continues={stage.continues}
             onNext={afterRoll}
           />
         )}

@@ -12,8 +12,20 @@ type Props = {
   player: Player;
   conditions: MatchConditions;
   flagRules: FlagRule[];
+  /** Звено цепочки — та же минута, сцена продолжается. */
+  link?: boolean;
   onChoose: (option: EpisodeOption) => void;
 };
+
+/** Куда ведёт вариант при удаче: подпись «→ удар» на кнопке. Цепочка зависит от исхода,
+ *  но направление известно заранее — игрок должен видеть, что решение не последнее. */
+const CHAIN_LABEL: Record<string, string> = {
+  fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний', ep_rebound_follow_up: 'добивання',
+};
+function chainHint(o: EpisodeOption): string | null {
+  const target = o.outcomes.clean.apply?.followUp ?? o.outcomes.cost.apply?.followUp;
+  return target ? (CHAIN_LABEL[target] ?? 'далі') : null;
+}
 
 /** Полоска стоимости: цена действия показывается объёмом, а не числом (п. 4.4 ТЗ). */
 function CostBar({ cost }: { cost: number }) {
@@ -28,10 +40,10 @@ function CostBar({ cost }: { cost: number }) {
   );
 }
 
-export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, onChoose }: Props) {
+export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, link, onChoose }: Props) {
   return (
     <div className="card episode">
-      <div className="card-minute">{minute}′</div>
+      <div className="card-minute">{minute}′{link && <span className="link-mark"> · продовження</span>}</div>
       <p className="setup">{episode.setup}</p>
       <div className="options">
         {availableOptions(episode, state).map((o) => {
@@ -59,6 +71,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                   )}
                 </span>
                 <span className="tag scale">{EFFECT_LABEL[ctx.effect]}</span>
+                {chainHint(o) && <span className="tag chain">→ {chainHint(o)}</span>}
                 <CostBar cost={optionCost(o)} />
               </span>
             </button>

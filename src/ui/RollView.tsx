@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { EpisodeOption, Resolution, ResultBadge } from '../engine/types';
 import { ATTRIBUTE_LABEL } from '../engine/types';
 import { EFFECT_LABEL, pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
-import { THRESHOLDS } from '../engine/balance';
+import { cleanTarget, THRESHOLDS } from '../engine/balance';
 
 // Экран броска в духе Disco Elysium (плейтест 17.09: шкалы и составные полосы «учат считать,
 // а не читать»). Два кубика — видно, что выпало и почему катастрофу не выкупить; баннер —
@@ -63,7 +63,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         <div className={`d10 ${step >= 1 ? 'shown' : 'rolling'}`}>{step >= 1 ? res.dice[1] : '·'}</div>
         {step >= 2 && (
           <div className="dice-sum">
-            {res.rawRoll} на кубиках {fmt(flat)} поправок<br /><b>{res.totalScore}</b> проти цілі <b>{THRESHOLDS[res.position].cost}</b>
+            {res.rawRoll} на кубиках {fmt(flat)} поправок<br /><b>{res.totalScore}</b> проти цілі <b>{cleanTarget(res.position)}</b>
           </div>
         )}
       </div>

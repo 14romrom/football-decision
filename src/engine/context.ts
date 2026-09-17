@@ -30,13 +30,13 @@ function isDefensiveAction(option: EpisodeOption, phase: Episode['phase']): bool
 export function fatiguePenalty(stamina: number, cost: number): ModLine {
   const c = BALANCE.contextMod;
   const base = stamina < 20 ? c.staminaCritical : stamina < 40 ? c.staminaLow : 0;
-  if (base === 0) return { label: '', value: 0 };
+  if (base === 0) return { label: '', value: 0, source: 'player' };
   const share = cost >= c.fatigueFullCost ? 1 : cost >= c.fatigueHalfCost ? 0.5 : 0.25;
   const value = -Math.max(1, Math.round(-base * share));
   const label = stamina < 20
     ? (share === 1 ? 'ноги стали' : 'ноги стали, але це дешево')
     : (share === 1 ? 'втомився' : 'втомився, але це дешево');
-  return { label, value };
+  return { label, value, source: 'player' };
 }
 
 export type ContextResult = {
@@ -59,7 +59,7 @@ export function computeContext(
   // Строка атрибута показывается всегда, со значением: игрок должен видеть, что его скилл
   // участвует в броске, даже когда бонус нулевой.
   const am = attrMod(player.attrs[option.attribute]);
-  mods.push({ label: ATTRIBUTE_LABEL[option.attribute] + ' (' + player.attrs[option.attribute] + ')', value: am });
+  mods.push({ label: ATTRIBUTE_LABEL[option.attribute] + ' (' + player.attrs[option.attribute] + ')', value: am, source: 'player' });
 
   const c = BALANCE.contextMod;
 
@@ -68,29 +68,29 @@ export function computeContext(
   // это и делает «берегти сили» тактикой, а не приговором (плейтест: 8 из 9 решений
   // при силах ≤10 проваливались, потому что штраф был одинаковым для всего).
   const tired = fatiguePenalty(state.stamina, option.staminaCost);
-  if (state.stamina >= 70) mods.push({ label: 'свіжість', value: c.staminaHigh });
+  if (state.stamina >= 70) mods.push({ label: 'свіжість', value: c.staminaHigh, source: 'player' });
   else if (tired.value !== 0) mods.push(tired);
 
   if (state.momentum !== 0) {
     const m = Math.max(c.momentumMin, Math.min(c.momentumMax, state.momentum));
-    mods.push({ label: m > 0 ? 'кураж' : 'провали тиснуть', value: m });
+    mods.push({ label: m > 0 ? 'кураж' : 'провали тиснуть', value: m, source: 'player' });
   }
 
   // Попередній момент провалився — наступне рішення важче (тестер 17.09: «−1 після невдачі»).
   const lastTier = [...state.log].reverse().find((e) => e.kind === 'episode')?.tier;
-  if (lastTier === 'fail' || lastTier === 'badFail') mods.push({ label: 'після провалу', value: c.afterFail });
+  if (lastTier === 'fail' || lastTier === 'badFail') mods.push({ label: 'після провалу', value: c.afterFail, source: 'player' });
 
   if (state.minute > 80) {
-    if (state.composureNow >= 70) mods.push({ label: 'спокійний у кінцівці', value: c.composureLateGood });
-    else if (state.composureNow < 30) mods.push({ label: 'кінець матчу, нерви', value: c.composureLateBad });
+    if (state.composureNow >= 70) mods.push({ label: 'спокійний у кінцівці', value: c.composureLateGood, source: 'player' });
+    else if (state.composureNow < 30) mods.push({ label: 'кінець матчу, нерви', value: c.composureLateBad, source: 'player' });
   }
 
   if (state.flags.includes('booked') && isDefensiveAction(option, phase)) {
-    mods.push({ label: 'жовта, йдеш обережніше', value: c.bookedDefending });
+    mods.push({ label: 'жовта, йдеш обережніше', value: c.bookedDefending, source: 'player' });
   }
 
   if (state.flags.includes('injured')) {
-    mods.push({ label: 'пошкодження', value: c.injured });
+    mods.push({ label: 'пошкодження', value: c.injured, source: 'player' });
   }
 
   // Последствия прошлых решений: флаг стоит — строка есть. Это и есть
@@ -100,7 +100,7 @@ export function computeContext(
     if (rule.attributes && !rule.attributes.includes(option.attribute)) continue;
     if (rule.phases && !rule.phases.includes(phase)) continue;
     if (rule.options && !rule.options.includes(option.id)) continue;
-    mods.push({ label: rule.label, value: rule.value });
+    mods.push({ label: rule.label, value: rule.value, source: rule.source ?? 'field' });
   }
 
   // Голоса имеют вес (плейтест 17.09: «голоса ни на что не влияют»). Голос атрибута,
@@ -110,31 +110,31 @@ export function computeContext(
   const v = BALANCE.voice;
   if (option.voice && voiceAudible(option.voice.who, option, state, player)
     && option.voice.who !== 'ego' && option.voice.who !== 'team') {
-    mods.push({ label: VOICE_LABEL[option.voice.who] + ' веде', value: v.listenBonus });
+    mods.push({ label: VOICE_LABEL[option.voice.who] + ' веде', value: v.listenBonus, source: 'player' });
   }
   const streak = state.voices.streak;
   if (streak.who === 'ego' && streak.count >= v.streakAt && option.goals.team >= 2) {
-    mods.push({ label: 'Его заглушило команду', value: v.streakPenalty });
+    mods.push({ label: 'Его заглушило команду', value: v.streakPenalty, source: 'player' });
   }
   if (streak.who === 'team' && streak.count >= v.streakAt && option.goals.personal >= 2) {
-    mods.push({ label: 'команда чекає на пас', value: v.streakPenalty });
+    mods.push({ label: 'команда чекає на пас', value: v.streakPenalty, source: 'player' });
   }
 
   // Условия матча. Каждая строка — то, что игрок прочитал на брифинге.
   const k = BALANCE.conditions;
   if (cond.venue === 'home' && signatureAttrs(player).includes(option.attribute)) {
-    mods.push({ label: 'рідні трибуни чекають саме цього', value: k.homeSignatureBonus });
+    mods.push({ label: 'рідні трибуни чекають саме цього', value: k.homeSignatureBonus, source: 'field' });
   }
   if (cond.venue === 'away' && state.minute >= k.awayLateMinute) {
-    mods.push({ label: 'чужий стадіон, кінцівка', value: k.awayLateNerves });
+    mods.push({ label: 'чужий стадіон, кінцівка', value: k.awayLateNerves, source: 'field' });
   }
-  if (cond.strength === 'strong') mods.push({ label: 'сильний суперник', value: k.strongOpponent });
-  if (cond.strength === 'weak') mods.push({ label: 'слабкий суперник', value: k.weakOpponent });
+  if (cond.strength === 'strong') mods.push({ label: 'сильний суперник', value: k.strongOpponent, source: 'field' });
+  if (cond.strength === 'weak') mods.push({ label: 'слабкий суперник', value: k.weakOpponent, source: 'field' });
   if (cond.weather === 'rain' && (option.attribute === 'dribbling' || option.attribute === 'passing')) {
-    mods.push({ label: 'мокрий газон', value: k.rainPenalty });
+    mods.push({ label: 'мокрий газон', value: k.rainPenalty, source: 'field' });
   }
   if (cond.weather === 'wind' && (option.attribute === 'finishing' || (phase === 'setpiece' && option.attribute === 'passing'))) {
-    mods.push({ label: 'вітер', value: k.windPenalty });
+    mods.push({ label: 'вітер', value: k.windPenalty, source: 'field' });
   }
 
   // Сдвиги формы риска. Накапливаем и зажимаем в один шаг: контекст может

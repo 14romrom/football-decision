@@ -3,16 +3,39 @@ import type { EpisodeOption, Resolution, ResultBadge } from '../engine/types';
 import { EFFECT_LABEL, pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 import { THRESHOLDS } from '../engine/balance';
 
+/** Три источника итога: кубик, ти (атрибут, голос, стан), поле (суперник, погода, люди). */
+function parts(res: Resolution) {
+  const sum = (src: 'player' | 'field', sign: 1 | -1) =>
+    res.mods.filter((m) => m.source === src && Math.sign(m.value) === sign).reduce((s, m) => s + m.value, 0);
+  return {
+    dice: res.rawRoll,
+    youPlus: sum('player', 1), fieldPlus: sum('field', 1),
+    minus: sum('player', -1) + sum('field', -1),   // отрицательное число
+    you: sum('player', 1) + sum('player', -1), field: sum('field', 1) + sum('field', -1),
+  };
+}
+
+const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
+
 /** Шкала итога: провал | вийшло, але… | чисто — и где на ней оказался score. Без чисел
  *  порогов, только положение: плейтест 17.09 — «6 на кубику, а результат чистый, непонятно».
+ *  Над зонами — из чего сложился итог: кубик, ти, поле; минусы — красный откат от итога.
  *  Катастрофа — по сырым кубикам, на шкале её нет, о ней говорит отдельная строка. */
 function ScoreBar({ res }: { res: Resolution }) {
   const t = THRESHOLDS[res.position];
-  const lo = 2;
-  const hi = t.cost + 7;
+  const lo = 0;
+  const hi = t.cost + 8;
   const pct = (v: number) => Math.max(0, Math.min(100, ((v - lo) / (hi - lo)) * 100));
+  const p = parts(res);
+  const gross = p.dice + p.youPlus + p.fieldPlus;   // без минусов; итог = gross + minus
   return (
     <div className="scorebar" aria-label="шкала результату">
+      <div className="scorebar-parts">
+        <span className="part part-dice" style={{ left: `${pct(lo)}%`, width: `${pct(p.dice) - pct(lo)}%` }} />
+        {p.youPlus > 0 && <span className="part part-you" style={{ left: `${pct(p.dice)}%`, width: `${pct(p.dice + p.youPlus) - pct(p.dice)}%` }} />}
+        {p.fieldPlus > 0 && <span className="part part-field" style={{ left: `${pct(p.dice + p.youPlus)}%`, width: `${pct(gross) - pct(p.dice + p.youPlus)}%` }} />}
+        {p.minus < 0 && <span className="part part-minus" style={{ left: `${pct(res.totalScore)}%`, width: `${pct(gross) - pct(res.totalScore)}%` }} />}
+      </div>
       <div className="scorebar-zones">
         <span className="zone zone-fail" style={{ width: `${pct(t.fail)}%` }}>провал</span>
         <span className="zone zone-cost" style={{ width: `${pct(t.cost) - pct(t.fail)}%` }}>вийшло, але…</span>
@@ -63,16 +86,21 @@ export function RollView({ option, res, flavor, badges, continues, onNext }: Pro
         <ul className="mods">
           {res.mods.length === 0 && <li className="mod"><span>без поправок</span><b /></li>}
           {res.mods.map((m) => (
-            <li key={m.label} className={`mod ${m.value > 0 ? 'plus' : m.value < 0 ? 'minus' : 'zero'}`}>
-              <span>{m.label}</span>
+            <li key={m.label} className={`mod src-${m.source} ${m.value > 0 ? 'plus' : m.value < 0 ? 'minus' : 'zero'}`}>
+              <span><i className="src-dot" />{m.label}</span>
               <b>{m.value > 0 ? `+${m.value}` : m.value < 0 ? `−${Math.abs(m.value)}` : '+0'}</b>
             </li>
           ))}
         </ul>
-        {/* Сумма — не вероятность, а арифметика броска: кубик плюс поправки. */}
-        <p className="total">
-          {res.rawRoll} {res.totalScore - res.rawRoll >= 0 ? '+' : '−'} {Math.abs(res.totalScore - res.rawRoll)} = <b>{res.totalScore}</b>
-        </p>
+        {/* Сумма — не вероятность, а арифметика броска: кубик, ти, поле. */}
+        {(() => { const p = parts(res); return (
+          <p className="total">
+            <span className="chip chip-dice">🎲 {p.dice}</span>
+            <span className={`chip chip-you ${p.you < 0 ? 'neg' : ''}`}>ти {fmt(p.you)}</span>
+            <span className={`chip chip-field ${p.field < 0 ? 'neg' : ''}`}>поле {fmt(p.field)}</span>
+            <span className="eq">=</span> <b>{res.totalScore}</b>
+          </p>
+        ); })()}
         <ScoreBar res={res} />
         </>
       )}

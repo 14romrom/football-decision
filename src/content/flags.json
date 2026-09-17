@@ -309,6 +309,7 @@
       "pace",
       "strength",
       "dribbling"
-    ]
+    ],
+    "source": "player"
   }
 ]

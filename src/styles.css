@@ -293,3 +293,20 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .zone-cost { background: #d9a441; }
 .zone-clean { background: #6ee7a0; }
 .scorebar-mark { position: absolute; top: -5px; width: 4px; height: 28px; margin-left: -2px; background: var(--ink); border-radius: 2px; box-shadow: 0 0 0 2px var(--bg); }
+
+/* ——— источники поправок: кубик / ти / поле ——— */
+.chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 13px; margin: 0 3px; color: var(--ink); }
+.chip-dice { background: #3a3f4c; }
+.chip-you { background: rgba(111, 208, 140, 0.22); }
+.chip-field { background: rgba(122, 167, 255, 0.22); }
+.chip.neg { background: rgba(217, 83, 79, 0.22); }
+.scorebar-parts { position: relative; height: 6px; margin-bottom: 3px; }
+.scorebar-parts .part { position: absolute; top: 0; height: 6px; border-radius: 3px; }
+.part-dice { background: #6b7280; }
+.part-you { background: var(--accent); }
+.part-field { background: var(--hype); }
+.part-minus { background: var(--bad); opacity: 0.85; }
+.mod .src-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; background: var(--hype); }
+.mod.src-player .src-dot { background: var(--accent); }
+.scorebar-mark { top: -2px; height: 32px; }
+.total .eq { margin-left: 4px; }

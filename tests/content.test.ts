@@ -191,8 +191,8 @@ describe('стартовый футболист', () => {
 describe('плейсхолдеры имён', () => {
   it('в сыром контенте нет фамилий из ростера — только плейсхолдеры', async () => {
     const { EPISODES_RAW, ROSTER } = await import('../src/content');
-    const surnames = [...Object.values(ROSTER.us.players), ...Object.values(ROSTER.them.players)]
-      .flatMap((p) => [p.nom, p.gen, p.dat, p.ins]);
+    // Только свои: у соперника не фамилии, а описания («їхній центральний»), они — обычные слова.
+    const surnames = Object.values(ROSTER.us.players).flatMap((p) => [p.nom, p.gen, p.dat, p.ins]);
     const raw = JSON.stringify(EPISODES_RAW);
     for (const s of surnames) expect(raw, s).not.toContain(s);
   });

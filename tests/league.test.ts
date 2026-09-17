@@ -130,6 +130,23 @@ describe('имена: персонаж, своя команда, характе�
     }
   });
 
+  it('у роли соперника несколько имён, на матч выбирается одно; варианты склоняются', () => {
+    for (const k of keys) {
+      for (const [role, p] of Object.entries(OPPONENTS[k].players)) {
+        expect((p.variants ?? []).length, `${k}/${role}`).toBeGreaterThanOrEqual(2);
+        for (const v of p.variants ?? []) for (const c of ['nom', 'gen', 'dat', 'ins'] as const) expect(v[c].length, `${k}/${role}/${c}`).toBeGreaterThan(3);
+      }
+      expect(OPPONENTS[k].players.cb, `${k}: стоппер`).toBeTruthy();
+    }
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 30; seed++) seen.add(rosterFor('olvar', makeRng(seed)).them.players.mid.nom);
+    expect(seen.size).toBeGreaterThan(1);
+    expect(seen.has('їхній чорнороб')).toBe(true);
+    // без rng — каноническое имя, характеристика на месте
+    expect(rosterFor('olvar').them.players.mid.nom).toBe('їхній чорнороб');
+    expect(rosterFor('olvar', makeRng(3)).them.players.mid.trait).toBe('hard');
+  });
+
   it('характеристики соперника — флаги them_* на матч, у каждой есть правило модификатора', () => {
     const ruleIds = new Set(FLAG_RULES.map((r) => r.id));
     for (const k of keys) {

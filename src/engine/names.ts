@@ -5,7 +5,13 @@
 /** Формы падежей. У соперников это не фамилия, а характеристика («їхній ветеран»,
  *  «молодий вінгер») — тестеры просили не запоминать чужих; своих — наоборот, больше.
  *  trait — механика и текст под характеристику: флаг them_<trait> на матч, см. match.ts. */
-export type NameForms = { nom: string; gen: string; dat: string; ins: string; trait?: string };
+export type NameForms = {
+  nom: string; gen: string; dat: string; ins: string; trait?: string;
+  /** Другие имена той же роли (характеристика та же, слова другие): «їхній чорнороб» / «їхній
+   *  опорник» / «їхній шостий». Выбирается раз на матч (rosterFor с rng) — плейтест 17.09:
+   *  одна характеристика на ~90 упоминаний в текстах повторяется до тошноты. */
+  variants?: NameForms[];
+};
 
 export type TeamRoster = {
   name: { nom: string; gen: string };

@@ -7,6 +7,7 @@ import { fillNamesDeep, type Roster, type TeamRoster } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
 import type { Episode, FlagRule, Player } from '../engine/types';
+import type { Rng } from '../engine/rng';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
@@ -17,8 +18,18 @@ export const DEFAULT_OPPONENT = 'sandorea';
 
 /** Ростер «мы + соперник по умолчанию» — для прогона, тестов и экрана /stats. */
 export const ROSTER: Roster = { us: rosterJson.us as TeamRoster, them: OPPONENTS[DEFAULT_OPPONENT] };
-export function rosterFor(opponentKey: string): Roster {
-  return { us: ROSTER.us, them: OPPONENTS[opponentKey] ?? OPPONENTS[DEFAULT_OPPONENT] };
+/** Ростер на матч. С rng — у каждой роли соперника выбирается одно из имён (характеристика или
+ *  вариант), одно на весь матч; без rng — каноническое, для тестов и /stats. */
+export function rosterFor(opponentKey: string, rng?: Rng): Roster {
+  const them = OPPONENTS[opponentKey] ?? OPPONENTS[DEFAULT_OPPONENT];
+  if (!rng) return { us: ROSTER.us, them };
+  const players: TeamRoster['players'] = {};
+  for (const [role, p] of Object.entries(them.players)) {
+    const pool = [p, ...(p.variants ?? [])];
+    const pick = rng.pick(pool);
+    players[role] = { nom: pick.nom, gen: pick.gen, dat: pick.dat, ins: pick.ins, trait: p.trait };
+  }
+  return { us: ROSTER.us, them: { ...them, players } };
 }
 
 /** Сырой контент с плейсхолдерами: имена подставляет createMatch под соперника матча. */

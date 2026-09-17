@@ -42,7 +42,7 @@ export function runMatch(seed: number, policy: PolicyName, mode: ConditionsMode 
     ? generateConditions(rng, OPPONENTS, { confidence: rng.int(-2, 2), fatigue: rng.int(0, 3) })
     : neutralConditions();
   const session = createMatch(
-    `sim-${policy}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions, [], FLAG_RULES,
+    `sim-${policy}-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, [], FLAG_RULES,
   );
   const tiers: Tier[] = [];
   let emptyAtMinute: number | null = null;
@@ -150,7 +150,7 @@ export function runSeason(seedBase: number, matches: number): { repeats: number[
     const seed = seedBase + k;
     const rng = makeRng(seed);
     const conditions = generateConditions(rng, OPPONENTS, { confidence: rng.int(-2, 2), fatigue: k % 4 });
-    const session = createMatch(`season-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions, memory, FLAG_RULES);
+    const session = createMatch(`season-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, memory, FLAG_RULES);
     let setupRepeats = 0;
     let slots = 0;
     for (;;) {

@@ -138,7 +138,7 @@ function Game() {
     const player = effectivePlayer(PLAYER, consumedCareer);
 
     const session = createMatch(
-      `${Date.now().toString(36)}-${seed}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey), conditions,
+      `${Date.now().toString(36)}-${seed}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions,
       episodeMemory(BALANCE.match.memory.horizon), FLAG_RULES,
       {
         coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,

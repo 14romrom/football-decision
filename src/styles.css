@@ -274,3 +274,4 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .verdict h2 { margin: 0 0 6px; }
 .protocol { color: var(--muted); font-size: 14px; margin: -6px 0 14px; }
 .menu .season-note { color: var(--muted); font-size: 14px; }
+.menu .link { margin-right: 14px; }

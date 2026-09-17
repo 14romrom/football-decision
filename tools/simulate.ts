@@ -4,7 +4,7 @@
 
 import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
-import { applyChoice, createMatch, finishMatch, nextEpisode, optionCost } from '../src/engine/match';
+import { applyChoice, availableOptions, createMatch, finishMatch, nextEpisode, optionCost } from '../src/engine/match';
 import type { MatchSummary } from '../src/engine/match';
 import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, rosterFor } from '../src/content';
 import { generateConditions, neutralConditions, type MatchConditions } from '../src/engine/conditions';
@@ -50,7 +50,7 @@ export function runMatch(seed: number, policy: PolicyName, mode: ConditionsMode 
   for (;;) {
     const next = nextEpisode(session, rng);
     if (!next) break;
-    const option = POLICIES[policy](next.episode.options, (n) => rng.int(0, n - 1));
+    const option = POLICIES[policy](availableOptions(next.episode, session.state), (n) => rng.int(0, n - 1));
     const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
     applyChoice(session, next.episode, option, res, rng);
     tiers.push(res.tier);
@@ -161,11 +161,13 @@ export function runSeason(seedBase: number, matches: number): { repeats: number[
       const key = next.episode.id + '|' + next.episode.setup.replace(/\d+-й/g, 'N-й');
       if (setupsSeen.has(key)) setupRepeats += 1;
       setupsSeen.add(key);
-      const option = POLICIES.random(next.episode.options, (n) => rng.int(0, n - 1));
+      const option = POLICIES.random(availableOptions(next.episode, session.state), (n) => rng.int(0, n - 1));
       const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
       applyChoice(session, next.episode, option, res, rng);
     }
-    const ids = session.usedEpisodeIds;
+    // Звенья цепочек (fin_*) не планируются — их повторение не считается.
+    const links = new Set(EPISODES_RAW.filter((e) => e.followUpOnly).map((e) => e.id));
+    const ids = session.usedEpisodeIds.filter((id) => !links.has(id));
     const seenAll = new Set(history.flat());
     const seenLast2 = new Set(history.slice(-2).flat());
     repeats.push(ids.filter((id) => seenAll.has(id)).length / ids.length);

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { runMatch, runSuite } from '../tools/simulate';
 import { makeRng } from '../src/engine/rng';
-import { applyChoice, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
+import { applyChoice, availableOptions, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
 import { EPISODES, PLAYER, ROSTER } from '../src/content';
 import { BALANCE } from '../src/engine/balance';
@@ -74,7 +74,7 @@ describe('условия матча', () => {
 });
 
 describe('матч целиком', () => {
-  it('каждый матч — ровно 10 эпизодов без повторов, последний после 85-й минуты', () => {
+  it('каждый матч — 9 слотов без повторов (плюс не больше двух цепочек), последний после 85-й минуты', () => {
     for (const seed of seeds(600, 9000)) {
       const rng = makeRng(seed);
       const session = createMatch(`t-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER);
@@ -82,12 +82,17 @@ describe('матч целиком', () => {
       for (;;) {
         const next = nextEpisode(session, rng);
         if (!next) break;
-        const option = next.episode.options[rng.int(0, next.episode.options.length - 1)];
+        const options = availableOptions(next.episode, session.state);
+        const option = options[rng.int(0, options.length - 1)];
         const res = resolveOption(session.state, session.player, option, next.episode.phase, rng);
         applyChoice(session, next.episode, option, res, rng);
         minutes.push(next.minute);
       }
-      expect(minutes.length, `seed ${seed}`).toBe(BALANCE.match.episodeMinutes.length);
+      // Цепочка (apply.followUp) добавляет решения в тот же слот: минута повторяется, id — нет.
+      const slots = new Set(minutes).size;
+      expect(slots, `seed ${seed}`).toBe(BALANCE.match.episodeMinutes.length);
+      const links = minutes.length - slots;
+      expect(links, `seed ${seed}`).toBeLessThanOrEqual(BALANCE.match.chain.maxChainsPerMatch * BALANCE.match.chain.maxLinksPerSlot);
       expect(new Set(session.usedEpisodeIds).size, `seed ${seed}`).toBe(minutes.length);
       expect(Math.max(...minutes), `seed ${seed}`).toBeGreaterThan(85);
       expect(minutes.filter((m) => m > 45).length, `seed ${seed}`).toBeGreaterThan(4);
@@ -130,7 +135,7 @@ describe('правило «никаких процентов» (п. 1 и п. 13 
   // тестеров и есть предмет измерения, а не подсказка игроку.
   const GAMEPLAY_UI = [
     'MatchScreen', 'EpisodeCard', 'RollView', 'ResultScreen', 'DebugPanel', 'BriefingScreen', 'PlayerCard',
-    'TrainingScreen', 'LevelUpScreen',
+    'SeasonScreen', 'LevelUpScreen',
   ];
 
   it('в игровых экранах нет процентов, шансов и ожидаемых значений', async () => {

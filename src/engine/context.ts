@@ -95,6 +95,7 @@ export function computeContext(
     if (!state.flags.includes(rule.id)) continue;
     if (rule.attributes && !rule.attributes.includes(option.attribute)) continue;
     if (rule.phases && !rule.phases.includes(phase)) continue;
+    if (rule.options && !rule.options.includes(option.id)) continue;
     mods.push({ label: rule.label, value: rule.value });
   }
 

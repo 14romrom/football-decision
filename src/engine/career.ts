@@ -3,7 +3,6 @@
 // хранилище отдельно (telemetry/career-storage.ts), здесь только правила.
 
 import { BALANCE } from './balance';
-import type { Rng } from './rng';
 import type { Attribute, Mark, MatchState, Player, VoiceKey } from './types';
 import type { MatchSummary } from './match';
 
@@ -24,17 +23,17 @@ export type Career = {
   /** Накопленный профиль голосов за карьеру — материал для будущих черт (M4). */
   voiceCounts: Record<VoiceKey, number>;
   matchesPlayed: number;
-  /** Один бросок тренировки на цикл «между матчами»; сбрасывается при старте нового матча. */
-  trainedThisCycle: boolean;
   /** Флаги-последствия, дожившие до конца матча и уходящие в следующий: партнёр помнит,
    *  что ты ему отдал (или не отдал), тренер — что фланг твой. Реактивный эпизод
    *  всплывёт «ще минулого матчу». Потребляются при старте (consumeStartPenalty). */
-  carriedFlags?: { flag: string; mark: Mark }[];
+  carriedFlags?: { flag: string; mark: Mark; opponentKey?: string }[];
 };
 
 /** Что переживает финальный свисток. Обида/долг партнёра и доверенный фланг — про людей,
  *  они помнят; злой защитник и жёлтая — про этот матч и этого соперника, их не несём. */
-export const CARRIED_FLAGS = ['partner_trusts', 'partner_annoyed', 'coach_flank', 'sub_threat'];
+export const CARRIED_FLAGS = ['partner_trusts', 'partner_annoyed', 'coach_flank', 'sub_threat', 'keeper_read'];
+/** Флаги про конкретного соперника: переживают свисток только до матча с тем же клубом. */
+export const OPPONENT_BOUND_FLAGS = ['keeper_read'];
 
 export function defaultCareer(): Career {
   return {
@@ -47,7 +46,6 @@ export function defaultCareer(): Career {
     pendingSentOff: false,
     voiceCounts: { ego: 0, team: 0, composure: 0, vision: 0, instinct: 0, body: 0 },
     matchesPlayed: 0,
-    trainedThisCycle: false,
   };
 }
 
@@ -102,7 +100,7 @@ export function nextMatchCoachTrust(endingTrust: number): number {
 
 export type StartPenalty = {
   staminaPenalty: number; coachTrustPenalty: number; note?: string;
-  flags: { flag: string; mark: Mark }[];
+  flags: { flag: string; mark: Mark; opponentKey?: string }[];
 };
 
 /** Штрафы старта следующего матча от травмы/картки прошлого — и одновременно их
@@ -137,7 +135,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
 /** Обновление карьеры по итогам матча: опыт, уровень (без авто-траты очка — это отдельный
  *  экран выбора), доверие тренера, счётчик жёлтых/травм, профиль голосов. */
 export function applyMatchToCareer(
-  career: Career, state: MatchState, summary: MatchSummary, hadDominantVoice: boolean,
+  career: Career, state: MatchState, summary: MatchSummary, hadDominantVoice: boolean, opponentKey?: string,
 ): Career {
   const xp = career.xp + xpForMatch(summary, hadDominantVoice);
   const next: Career = {
@@ -147,10 +145,6 @@ export function applyMatchToCareer(
     coachTrust: nextMatchCoachTrust(state.coachTrust),
     matchesPlayed: career.matchesPlayed + 1,
     voiceCounts: { ...career.voiceCounts },
-    // Окно тренировки открывается здесь, на границе «матч закончился», а не при
-    // старте следующего — иначе между результатом и меню кнопка ещё выглядела бы
-    // использованной с прошлого раза.
-    trainedThisCycle: false,
   };
   for (const [voice, count] of Object.entries(state.voices.counts) as [VoiceKey, number][]) {
     next.voiceCounts[voice] += count;
@@ -160,16 +154,7 @@ export function applyMatchToCareer(
   if (state.flags.includes('injured')) next.injuredMatches = Math.max(career.injuredMatches, 1);
   next.carriedFlags = CARRIED_FLAGS
     .filter((f) => state.flags.includes(f) && state.marks[f])
-    .map((f) => ({ flag: f, mark: state.marks[f] }));
+    .map((f) => ({ flag: f, mark: state.marks[f], ...(OPPONENT_BOUND_FLAGS.includes(f) ? { opponentKey } : {}) }));
   return next;
 }
 
-export const TRAIN_THRESHOLD = 13; // 2d10 >= 13 — около 36%, тренировка не гарантирована
-
-export function trainAttribute(career: Career, attr: Attribute, rng: Rng): { career: Career; success: boolean; roll: number } {
-  const roll = rng.roll();
-  const success = roll >= TRAIN_THRESHOLD;
-  if (!success) return { career: { ...career, trainedThisCycle: true }, success, roll };
-  const attrPoints = { ...career.attrPoints, [attr]: (career.attrPoints[attr] ?? 0) + 1 };
-  return { career: { ...career, attrPoints, trainedThisCycle: true }, success, roll };
-}

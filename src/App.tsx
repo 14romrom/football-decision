@@ -5,7 +5,6 @@ import { readHistory, episodeMemory, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
 import { BriefingScreen } from './ui/BriefingScreen';
 import { PlayerCard } from './ui/PlayerCard';
-import { TrainingScreen } from './ui/TrainingScreen';
 import { LevelUpScreen } from './ui/LevelUpScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
@@ -14,7 +13,7 @@ import {
   type MatchSession, type MatchSummary,
 } from './engine/match';
 import {
-  applyMatchToCareer, consumeStartPenalty, effectivePlayer, trainAttribute, xpForMatch,
+  applyMatchToCareer, consumeStartPenalty, effectivePlayer, xpForMatch,
   type Career,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
@@ -41,8 +40,7 @@ type Stage =
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[] }
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
-  | { k: 'levelup'; fromLevel: number; toLevel: number }
-  | { k: 'train' };
+  | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
   | { kind: 'episode'; episode: Episode; minute: number }
@@ -92,7 +90,7 @@ function Game() {
       const before = careerRef.current;
       const hadDominantVoice = dominantVoice(session.state.voices) !== null;
       const xpEarned = xpForMatch(summary, hadDominantVoice);
-      const after = applyMatchToCareer(before, session.state, summary, hadDominantVoice);
+      const after = applyMatchToCareer(before, session.state, summary, hadDominantVoice, session.conditions.opponentKey);
       setCareerBoth(after);
 
       // Тур закрыт: наш результат настоящий, чужие матчи — по силе клубов (свой rng по сиду сезона и туру).
@@ -151,13 +149,6 @@ function Game() {
     const prev = seasonRef.current;
     setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS), prev.number + 1));
   }, [setSeasonBoth]);
-
-  const train = useCallback((attr: Attribute) => {
-    const rng = makeRng(Date.now() ^ Math.floor(Math.random() * 1e9));
-    const { career: after, success, roll } = trainAttribute(careerRef.current, attr, rng);
-    setCareerBoth(after);
-    return { attr, success, roll };
-  }, [setCareerBoth]);
 
   const confirmLevelUp = useCallback((attr: Attribute) => {
     const c = careerRef.current;
@@ -257,11 +248,6 @@ function Game() {
         {fixture
           ? <button className="primary" onClick={start}>До матчу</button>
           : <button className="primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>}
-        {career.trainedThisCycle ? (
-          <p className="muted small">Тренування вже проведено — наступне після матчу.</p>
-        ) : (
-          <button className="link" onClick={() => setStage({ k: 'train' })}>Тренування</button>
-        )}
         <a className="link" href="#/player">Картка гравця</a>
         <a className="link" href="#/stats">Розподіл виборів</a>
       </div>
@@ -317,10 +303,6 @@ function Game() {
 
   if (stage.k === 'levelup') {
     return <LevelUpScreen player={PLAYER} career={career} fromLevel={stage.fromLevel} toLevel={stage.toLevel} onConfirm={confirmLevelUp} />;
-  }
-
-  if (stage.k === 'train') {
-    return <TrainingScreen player={PLAYER} career={career} onTrain={train} onBack={() => setStage({ k: 'menu' })} />;
   }
 
   const session = sessionRef.current!;

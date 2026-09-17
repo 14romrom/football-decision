@@ -223,5 +223,82 @@
     "attributes": [
       "composure"
     ]
+  },
+  {
+    "id": "keeper_divesEarly",
+    "label": "воротар падає рано",
+    "value": 2,
+    "options": [
+      "wait_keeper",
+      "panenka",
+      "nutmeg_low"
+    ]
+  },
+  {
+    "id": "keeper_divesEarly",
+    "label": "воротар падає рано — на силу без нього",
+    "value": -1,
+    "options": [
+      "power_shot"
+    ]
+  },
+  {
+    "id": "keeper_staysBig",
+    "label": "воротар стоїть до останнього",
+    "value": 2,
+    "options": [
+      "corner_power",
+      "top_corner",
+      "curl_far",
+      "curl_far_top"
+    ]
+  },
+  {
+    "id": "keeper_staysBig",
+    "label": "воротар стоїть до останнього — його не обдуриш",
+    "value": -2,
+    "options": [
+      "wait_keeper",
+      "panenka",
+      "nutmeg_low",
+      "chip_keeper"
+    ]
+  },
+  {
+    "id": "keeper_nearPost",
+    "label": "воротар тримається ближньої стійки",
+    "value": 2,
+    "options": [
+      "curl_far",
+      "curl_far_top",
+      "outside_foot"
+    ]
+  },
+  {
+    "id": "keeper_nearPost",
+    "label": "воротар закрив ближню",
+    "value": -1,
+    "options": [
+      "power_shot",
+      "shoot_low"
+    ]
+  },
+  {
+    "id": "keeper_comesOut",
+    "label": "воротар виходить рано",
+    "value": 2,
+    "options": [
+      "chip_keeper",
+      "nutmeg_low",
+      "outside_foot"
+    ]
+  },
+  {
+    "id": "keeper_comesOut",
+    "label": "воротар уже вийшов — закручувати нема куди",
+    "value": -1,
+    "options": [
+      "curl_far"
+    ]
   }
 ]

@@ -2,7 +2,7 @@ import { ATTRIBUTE_LABEL, type Episode, type EpisodeOption, type FlagRule, type 
 import { VOICE_LABEL, voiceAudible } from '../engine/voices';
 import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
-import { optionCost } from '../engine/match';
+import { availableOptions, optionCost } from '../engine/match';
 import { EFFECT_LABEL, POSITION_LABEL } from '../engine/resolve';
 
 type Props = {
@@ -34,7 +34,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
       <div className="card-minute">{minute}′</div>
       <p className="setup">{episode.setup}</p>
       <div className="options">
-        {episode.options.map((o) => {
+        {availableOptions(episode, state).map((o) => {
           // Показываем ярлыки уже со сдвигами от контекста: если ноги встали,
           // игрок должен видеть, что надёжный вариант перестал быть надёжным.
           const ctx = computeContext(state, player, o, episode.phase, conditions, flagRules);

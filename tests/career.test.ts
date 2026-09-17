@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { makeRng } from '../src/engine/rng';
 import { BALANCE } from '../src/engine/balance';
 import {
   applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, levelForXp,
-  LEVEL_THRESHOLDS, nextMatchCoachTrust, trainAttribute, TRAIN_THRESHOLD, xpForMatch, xpToNextLevel,
+  LEVEL_THRESHOLDS, nextMatchCoachTrust, xpForMatch, xpToNextLevel,
 } from '../src/engine/career';
 import { PLAYER } from '../src/content';
 import type { MatchState } from '../src/engine/types';
@@ -112,14 +111,6 @@ describe('career: последствия карточек и травм пере
     expect(penalty.coachTrustPenalty).toBe(0);
     expect(penalty.note).toBeUndefined();
   });
-
-  it('окно тренировки открывается на конце матча, а не на старте следующего', () => {
-    // Иначе между экраном результата и меню кнопка тренировки ещё выглядела бы
-    // использованной с прошлого цикла — окно должно открыться сразу по финальному свистку.
-    const trained = { ...defaultCareer(), trainedThisCycle: true };
-    expect(applyMatchToCareer(trained, state(), summary(), false).trainedThisCycle).toBe(false);
-    expect(consumeStartPenalty(trained).career.trainedThisCycle).toBe(true); // старт матча этого не трогает
-  });
 });
 
 describe('career: профиль голосов копится за карьеру', () => {
@@ -130,30 +121,5 @@ describe('career: профиль голосов копится за карьер
     expect(career.voiceCounts.ego).toBe(4);
     expect(career.voiceCounts.team).toBe(2);
     expect(career.matchesPlayed).toBe(2);
-  });
-});
-
-describe('career: тренировка — бросок, не менюшка', () => {
-  it('успех при 2d10 >= порога добавляет очко и гасит цикл; провал — только гасит цикл', () => {
-    const fixed = (n: number) => ({ ...makeRng(1), roll: () => n });
-    const ok = trainAttribute(defaultCareer(), 'passing', fixed(TRAIN_THRESHOLD));
-    expect(ok.success).toBe(true);
-    expect(ok.career.attrPoints.passing).toBe(1);
-    expect(ok.career.trainedThisCycle).toBe(true);
-
-    const bad = trainAttribute(defaultCareer(), 'passing', fixed(TRAIN_THRESHOLD - 1));
-    expect(bad.success).toBe(false);
-    expect(bad.career.attrPoints.passing ?? 0).toBe(0);
-    expect(bad.career.trainedThisCycle).toBe(true);
-  });
-
-  it('вероятность успеха — заметная неопределённость, не монетка и не гарантия', () => {
-    const rng = makeRng(42);
-    let successes = 0;
-    const n = 2000;
-    for (let i = 0; i < n; i++) if (trainAttribute(defaultCareer(), 'passing', rng).success) successes++;
-    const rate = successes / n;
-    expect(rate).toBeGreaterThan(0.25);
-    expect(rate).toBeLessThan(0.5);
   });
 });

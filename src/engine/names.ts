@@ -12,12 +12,16 @@ export type TeamRoster = {
   players: Record<string, NameForms>;
   /** Ключи игроков, чьи фамилии попадают в ленту как авторы голов. */
   scorers: string[];
+  /** Воротарь соперника — без имени, но со скрытой звичкою: divesEarly / staysBig / nearPost / comesOut.
+   *  Флаг keeper_<trait> на матч; игрок узнаёт её только через чтение (keeper_read). */
+  keeper?: { trait: string };
 };
 
 export type Roster = { us: TeamRoster; them: TeamRoster };
 
 const CASES = new Set(['nom', 'gen', 'dat', 'ins']);
-const PLACEHOLDER = /\{([a-z]+(?:\.[a-z]+){0,2})\}/g;
+// Ключи с цифрой (cb2) — тоже плейсхолдеры: плейтест 17.09 показал в ленте сырой «{cb2.gen}».
+const PLACEHOLDER = /\{([a-z0-9]+(?:\.[a-z]+){0,2})\}/g;
 
 /** `{partner}` → фамилия своего игрока; `{partner.dat}` — в дательном;
  *  `{them.striker.gen}` — игрок соперника; `{us}` / `{them.gen}` — названия команд.

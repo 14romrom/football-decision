@@ -133,7 +133,8 @@ describe('вариации сетапа и флаги (сезон)', () => {
 
   it('каждый флаг из контента известен: есть правило в flags.json или это системный флаг', async () => {
     const { FLAG_RULES } = await import('../src/content');
-    const SYSTEM = ['booked', 'injured', 'sent_off', 'tired'];
+    // keeper_read ставит и движок (бачення/аналітик), и контент (первый удар) — системный.
+    const SYSTEM = ['booked', 'injured', 'sent_off', 'tired', 'keeper_read'];
     // them_<trait> ставит движок по характеристикам соперника из roster.json (match.ts).
     const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
     const used = new Set<string>();
@@ -150,7 +151,7 @@ describe('вариации сетапа и флаги (сезон)', () => {
     // и наоборот: правило без эпизода, который ставит флаг, — мёртвое
     const set = new Set(EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))));
     for (const r of FLAG_RULES) {
-      if (r.id.startsWith('them_')) continue;
+      if (r.id.startsWith('them_') || r.id.startsWith('keeper_')) continue;
       expect(set.has(r.id), `правило ${r.id} никто не ставит`).toBe(true);
     }
   });
@@ -200,7 +201,7 @@ describe('плейсхолдеры имён', () => {
     // fillNamesDeep бросает на неизвестном ключе при импорте контента;
     // здесь проверяем, что после подстановки фигурных скобок не осталось.
     // {trigger.*} — плейсхолдер решения, его заполняет реактивный эпизод в момент показа
-    for (const e of EPISODES) expect(JSON.stringify(e), e.id).not.toMatch(/\{(?!trigger\.)[a-z.]+\}/);
+    for (const e of EPISODES) expect(JSON.stringify(e), e.id).not.toMatch(/\{(?!trigger\.)[a-z0-9.]+\}/);
   });
 });
 

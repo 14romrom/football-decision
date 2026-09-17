@@ -29,6 +29,12 @@ export type MatchSession = {
   /** Память сезона (id → возраст в матчах) — для реактивных эпизодов, которые всплывают
    *  по флагу, а не из плана: без неё «долг партнёра» выпадал три матча подряд. */
   memory: EpisodeMemory;
+  /** Цепочка в текущем слоте: следующее звено, число звеньев, сколько цепочек уже было. */
+  pendingFollowUp: string | null;
+  chainLinks: number;
+  chainsUsed: number;
+  /** След предыдущего звена — для {trigger.past} в тексте следующего. */
+  chainMark: { minute: number; past: string } | null;
   state: MatchState;
   schedule: number[];
   /** Эпизод на каждый слот, подобранный заранее. См. planEpisodes. */
@@ -76,11 +82,25 @@ function toMemory(recent: string[] | EpisodeMemory): EpisodeMemory {
   return memory;
 }
 
+/** Возраст семьи в памяти: самый свежий из эпизодов этой семьи. */
+function familyAges(memory: EpisodeMemory, episodes: Episode[]): Record<string, number> {
+  const ages: Record<string, number> = {};
+  for (const e of episodes) {
+    const age = memory[e.id];
+    if (!e.family || age === undefined) continue;
+    ages[e.family] = Math.min(ages[e.family] ?? age, age);
+  }
+  return ages;
+}
+
 function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = []): string[] {
   const m = BALANCE.match;
   const memory = toMemory(recent);
+  const families = familyAges(memory, episodes);
   // Память на сезон: сыгранное недавно почти не выпадает, пока есть свежее, и медленно возвращается.
-  const weightOf = (e: Episode) => e.weight * memoryWeight(memory[e.id]);
+  // Семья давит слабее: пенальті вчора — сегодня другой пенальті возможен, но реже.
+  const weightOf = (e: Episode) => e.weight * memoryWeight(memory[e.id])
+    * (e.family ? m.familyFloor + (1 - m.familyFloor) * memoryWeight(families[e.family]) : 1);
 
   // Квота обороны: заранее выбираем слоты, в которых будет только защитный эпизод.
   // Плейтест показал, что без квоты матч — сплошные атаки и переходы.
@@ -95,7 +115,7 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
   const slots = schedule
     .map((minute, index) => ({
       index,
-      candidates: episodes.filter((e) => !isReactive(e) && fitsMinute(e, minute) && (!defenseSlots.has(index) || e.phase === 'defense')),
+      candidates: episodes.filter((e) => !isReactive(e) && !e.followUpOnly && fitsMinute(e, minute) && (!defenseSlots.has(index) || e.phase === 'defense')),
     }))
     .sort((a, b) => a.candidates.length - b.candidates.length);
 
@@ -134,7 +154,7 @@ export type Carryover = {
   coachTrust?: number; staminaPenalty?: number; coachTrustPenalty?: number;
   /** Флаги-последствия из прошлого матча (career.ts:carriedFlags) — партнёр помнит пас,
    *  тренер — фланг. Реактивный эпизод скажет «ще минулого матчу», см. fillTrigger. */
-  flags?: { flag: string; mark: Mark }[];
+  flags?: { flag: string; mark: Mark; opponentKey?: string }[];
 };
 
 export function createMatch(
@@ -147,6 +167,13 @@ export function createMatch(
   const episodes = fillNamesDeep(rawEpisodes, roster);
   const rules = fillNamesDeep(flagRules, roster);
   const start = startResources(conditions);
+  // Флаги про конкретного соперника (keeper_read) доживают только до матча с тем же клубом.
+  const carried = (carryover.flags ?? []).filter((f) => !f.opponentKey || f.opponentKey === conditions.opponentKey);
+  // Чтение воротаря до первого удара: сильное бачення поля или аналитик на брифинге.
+  const visionReads = attrMod(player.attrs.vision) >= BALANCE.keeperRead.visionMod;
+  const readsKeeper = !!roster.them.keeper && (visionReads || !!conditions.keeperTip)
+    && !carried.some((f) => f.flag === 'keeper_read');
+  const keeperReadPast = conditions.keeperTip ? 'вислухав аналітика про воротаря' : 'прочитав воротаря ще на розминці';
   const last = BALANCE.match.episodeMinutes.length - 1;
   const schedule = BALANCE.match.episodeMinutes.map((m, i) => {
     const j = BALANCE.match.minuteJitter;
@@ -167,8 +194,16 @@ export function createMatch(
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
     // Характеристики соперника — флаги на матч: правила в flags.json (them_dribbler и т.п.),
     // варианты сетапа через when.flags. Механизм тот же, что у последствий решений.
-    flags: [...(carryover.flags ?? []).map((f) => f.flag), ...opponentTraits(roster.them).map((t) => 'them_' + t)],
-    marks: Object.fromEntries((carryover.flags ?? []).map((f) => [f.flag, { ...f.mark, previousMatch: true }])),
+    flags: [
+      ...carried.map((f) => f.flag),
+      ...opponentTraits(roster.them).map((t) => 'them_' + t),
+      ...(roster.them.keeper ? ['keeper_' + roster.them.keeper.trait] : []),
+      ...(readsKeeper ? ['keeper_read'] : []),
+    ],
+    marks: {
+      ...Object.fromEntries(carried.map((f) => [f.flag, { ...f.mark, previousMatch: true }])),
+      ...(readsKeeper ? { keeper_read: { minute: 0, episodeId: 'briefing', optionId: 'read', past: keeperReadPast } } : {}),
+    },
     voices: initVoiceTrace(),
     log: [{
       minute: 0,
@@ -181,6 +216,7 @@ export function createMatch(
   return {
     matchId, seed, player, roster, conditions, episodes, flagRules: rules, reactiveUsed: 0, state, schedule,
     memory: toMemory(recentEpisodeIds),
+    pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
     usedEpisodeIds: [], nextIndex: 0, finished: false,
   };
@@ -383,7 +419,7 @@ function pickReactive(session: MatchSession, rng: Rng): Episode | null {
   const state = session.state;
   const minute = session.schedule[i];
   const pool = session.episodes.filter((e) =>
-    isReactive(e) && fitsMinute(e, minute) && !session.usedEpisodeIds.includes(e.id)
+    isReactive(e) && !e.followUpOnly && fitsMinute(e, minute) && !session.usedEpisodeIds.includes(e.id)
     && e.requires!.flags!.every((f) => state.flags.includes(f))
     && !(e.requires?.notFlags?.some((f) => state.flags.includes(f)) ?? false));
   if (pool.length === 0) return null;
@@ -424,7 +460,9 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
   const episodes = session.episodes;
   const i = session.nextIndex;
   const byId = (id: string) => episodes.find((e) => e.id === id) ?? null;
-  const blocked = (e: Episode) => blockedNow(e, session.state);
+  // Уже сыгранный — тоже закрыт: цепочка могла забрать плановый эпизод раньше его слота
+  // (фол → штрафний, а штрафний стоял в плане на 62-ю).
+  const blocked = (e: Episode) => blockedNow(e, session.state) || session.usedEpisodeIds.includes(e.id);
 
   const planned = byId(session.plan[i]);
   if (!planned) return null;
@@ -443,7 +481,7 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
   // Менять не с чем — берём свежий эпизод вне плана. Играть «тягнути час» при 0:1
   // хуже, чем нарушить раскладку; квоту обороны при этом сохраняем.
   const fresh = episodes.filter((e) =>
-    !isReactive(e) && !blocked(e) && fitsMinute(e, session.schedule[i])
+    !isReactive(e) && !e.followUpOnly && !blocked(e) && fitsMinute(e, session.schedule[i])
     && !session.plan.includes(e.id) && !session.usedEpisodeIds.includes(e.id)
     && (planned.phase !== 'defense' || e.phase === 'defense'));
   if (fresh.length > 0) {
@@ -460,10 +498,40 @@ export function nextEpisode(
 ): { episode: Episode; minute: number; events: TimelineEvent[] } | null {
   if (session.nextIndex >= session.schedule.length) return null;
   const minute = session.schedule[session.nextIndex];
+  // Звено цепочки: тот же слот, без ленты между решениями — сцена продолжается.
+  if (session.pendingFollowUp) {
+    const link = session.episodes.find((e) => e.id === session.pendingFollowUp)!;
+    session.pendingFollowUp = null;
+    const filled = session.chainMark ? fillTrigger(link, session.chainMark) : link;
+    return { episode: withSetup(filled, session, rng), minute, events: [] };
+  }
   const events = advanceTo(session, minute, rng);
   const episode = pickEpisode(session, rng);
   if (!episode) return null;
   return { episode, minute, events };
+}
+
+/** Варианты, доступные сейчас: условные («по підказці») — только при флагах. */
+export function availableOptions(episode: Episode, state: MatchState): EpisodeOption[] {
+  return episode.options.filter((o) => {
+    const r = o.requires;
+    if (!r) return true;
+    if (r.flags && !r.flags.every((f) => state.flags.includes(f))) return false;
+    if (r.notFlags && r.notFlags.some((f) => state.flags.includes(f))) return false;
+    return true;
+  });
+}
+
+/** Сработает ли цепочка из этого исхода: звено существует, лимиты не выбраны, звено ещё не играли. */
+function chainTarget(session: MatchSession, apply: ApplyEffect | undefined): Episode | null {
+  if (!apply?.followUp) return null;
+  const c = BALANCE.match.chain;
+  const target = session.episodes.find((e) => e.id === apply.followUp);
+  if (!target) throw new Error('followUp «' + apply.followUp + '» не найден в пуле');
+  if (session.chainLinks >= c.maxLinksPerSlot) return null;
+  if (session.chainLinks === 0 && session.chainsUsed >= c.maxChainsPerMatch) return null;
+  if (session.usedEpisodeIds.includes(target.id)) return null;
+  return target;
 }
 
 // ——— применение исхода ————————————————————————————————————————————
@@ -565,7 +633,12 @@ export function applyChoice(
   }
 
   if (option.voice) recordVoice(state.voices, option.voice.who);
+  const link = chainTarget(session, outcome.apply);
   const conceded = applyEffects(session, outcome.apply, minute, rng, { episodeId: episode.id, optionId: option.id, past: option.past });
+  // Цепочка не сработала — исход достраивается запасным apply (пенальті б’є {striker}).
+  if (!link && outcome.apply?.followUpElse) {
+    applyEffects(session, outcome.apply.followUpElse, minute, rng, { episodeId: episode.id, optionId: option.id, past: option.past });
+  }
   if (crit) {
     state.momentum = clamp(state.momentum + BALANCE.crit.momentum, -3, 3);
     addHype(session, BALANCE.crit.fanHype);
@@ -590,7 +663,16 @@ export function applyChoice(
   });
 
   session.usedEpisodeIds.push(episode.id);
-  session.nextIndex += 1;
+  if (link) {
+    if (session.chainLinks === 0) session.chainsUsed += 1;
+    session.chainLinks += 1;
+    session.pendingFollowUp = link.id;
+    session.chainMark = { minute, past: option.past };
+  } else {
+    session.chainLinks = 0;
+    session.chainMark = null;
+    session.nextIndex += 1;
+  }
 
   return { events: state.log.slice(before), conceded };
 }

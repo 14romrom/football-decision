@@ -27,6 +27,8 @@ export type MatchConditions = {
   instruction: Instruction;
   weather: Weather;
   tone: Tone;
+  /** Аналитик перед матчем рассказал про воротаря — флаг keeper_read с первой минуты. */
+  keeperTip?: boolean;
 };
 
 export type MatchResult = 'W' | 'D' | 'L';
@@ -62,6 +64,7 @@ export function generateConditions(
     instruction: rng.pick<Instruction>(['hold', 'press', 'free']),
     weather: rng.weighted<Weather>(['clear', 'rain', 'heat', 'wind'], (w) => (w === 'clear' ? 3 : 1)),
     tone,
+    keeperTip: rng.chance(BALANCE.keeperRead.analystChance),
   };
 }
 

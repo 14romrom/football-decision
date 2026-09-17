@@ -13,7 +13,7 @@ import {
   type MatchSession, type MatchSummary,
 } from './engine/match';
 import {
-  applyMatchToCareer, consumeStartPenalty, effectivePlayer, xpForMatch,
+  applyMatchToCareer, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
   type Career,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
@@ -157,9 +157,10 @@ function Game() {
   }, [setSeasonBoth]);
 
   const confirmLevelUp = useCallback((attr: Attribute) => {
-    const c = careerRef.current;
-    setCareerBoth({ ...c, attrPoints: { ...c.attrPoints, [attr]: (c.attrPoints[attr] ?? 0) + 1 } });
-    setStage({ k: 'menu' });
+    const after = spendPoint(careerRef.current, attr);
+    setCareerBoth(after);
+    // Два уровня за матч — два очка, экран покажется ещё раз.
+    setStage(after.unspentPoints > 0 ? { k: 'levelup', fromLevel: after.level - after.unspentPoints, toLevel: after.level } : { k: 'menu' });
   }, [setCareerBoth]);
 
   const kickoff = useCallback(() => {
@@ -230,6 +231,11 @@ function Game() {
     setShown((s) => [...s, ...stage.events]);
     proceed();
   }, [stage, proceed]);
+
+  if (stage.k === 'menu' && career.unspentPoints > 0) {
+    // Непотраченное очко уровня — сначала оно, потом меню: иначе после перезагрузки оно пропадало.
+    return <LevelUpScreen player={PLAYER} career={career} fromLevel={career.level - career.unspentPoints} toLevel={career.level} onConfirm={confirmLevelUp} />;
+  }
 
   if (stage.k === 'menu') {
     const fixture = ourFixture(season);

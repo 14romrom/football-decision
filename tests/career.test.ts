@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { BALANCE } from '../src/engine/balance';
 import {
   applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, levelForXp,
-  LEVEL_THRESHOLDS, nextMatchCoachTrust, xpForMatch, xpToNextLevel,
+  LEVEL_THRESHOLDS, nextMatchCoachTrust, spendPoint, xpForMatch, xpToNextLevel,
 } from '../src/engine/career';
 import { PLAYER } from '../src/content';
 import type { MatchState } from '../src/engine/types';
@@ -110,6 +110,19 @@ describe('career: последствия карточек и травм пере
     expect(penalty.staminaPenalty).toBe(0);
     expect(penalty.coachTrustPenalty).toBe(0);
     expect(penalty.note).toBeUndefined();
+  });
+});
+
+describe('career: очко уровня живёт в карьере, пока не потрачено', () => {
+  it('новый уровень даёт очко; spendPoint тратит его на атрибут; без очков — ничего', () => {
+    const big = summary({ coachRating: 10, fanRating: 10 });
+    let career = applyMatchToCareer(defaultCareer(), state(), big, true);   // 8 + 20 + 3 = 31 xp → уровень 2
+    expect(career.level).toBe(2);
+    expect(career.unspentPoints).toBe(1);
+    career = spendPoint(career, 'passing');
+    expect(career.unspentPoints).toBe(0);
+    expect(career.attrPoints.passing).toBe(1);
+    expect(spendPoint(career, 'passing')).toBe(career);   // очков нет — карьера та же
   });
 });
 

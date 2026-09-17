@@ -23,6 +23,9 @@ export type Career = {
   /** Накопленный профиль голосов за карьеру — материал для будущих черт (M4). */
   voiceCounts: Record<VoiceKey, number>;
   matchesPlayed: number;
+  /** Очки уровня, ещё не потраченные на атрибут. Хранятся в карьере, а не в состоянии экрана:
+   *  плейтест 17.09 — перезагрузка на экране выбора теряла очко навсегда («не засчитывается»). */
+  unspentPoints: number;
   /** Флаги-последствия, дожившие до конца матча и уходящие в следующий: партнёр помнит,
    *  что ты ему отдал (или не отдал), тренер — что фланг твой. Реактивный эпизод
    *  всплывёт «ще минулого матчу». Потребляются при старте (consumeStartPenalty). */
@@ -46,6 +49,7 @@ export function defaultCareer(): Career {
     pendingSentOff: false,
     voiceCounts: { ego: 0, team: 0, composure: 0, vision: 0, instinct: 0, body: 0 },
     matchesPlayed: 0,
+    unspentPoints: 0,
   };
 }
 
@@ -142,6 +146,7 @@ export function applyMatchToCareer(
     ...career,
     xp,
     level: levelForXp(xp),
+    unspentPoints: (career.unspentPoints ?? 0) + (levelForXp(xp) - career.level),
     coachTrust: nextMatchCoachTrust(state.coachTrust),
     matchesPlayed: career.matchesPlayed + 1,
     voiceCounts: { ...career.voiceCounts },
@@ -158,3 +163,13 @@ export function applyMatchToCareer(
   return next;
 }
 
+
+/** Потратить очко уровня на атрибут. Без очков — карьера не меняется. */
+export function spendPoint(career: Career, attr: Attribute): Career {
+  if ((career.unspentPoints ?? 0) <= 0) return career;
+  return {
+    ...career,
+    unspentPoints: career.unspentPoints - 1,
+    attrPoints: { ...career.attrPoints, [attr]: (career.attrPoints[attr] ?? 0) + 1 },
+  };
+}

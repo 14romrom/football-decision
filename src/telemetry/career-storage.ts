@@ -11,7 +11,12 @@ export function readCareer(): Career {
     if (!raw) return defaultCareer();
     // Слияние с дефолтом — если в будущем добавится новое поле Career, старые
     // сохранения не сломают чтение, просто получат значение по умолчанию.
-    return { ...defaultCareer(), ...(JSON.parse(raw) as Partial<Career>) };
+    const career = { ...defaultCareer(), ...(JSON.parse(raw) as Partial<Career>) };
+    // Миграция 17.09: до unspentPoints очко уровня жило только в состоянии экрана и терялось при
+    // перезагрузке. Каждый уровень выше первого даёт одно очко — недостающие возвращаем.
+    const spent = Object.values(career.attrPoints).reduce((s, v) => s + (v ?? 0), 0);
+    career.unspentPoints = Math.max(career.unspentPoints ?? 0, career.level - 1 - spent);
+    return career;
   } catch {
     return defaultCareer();
   }

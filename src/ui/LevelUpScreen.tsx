@@ -3,9 +3,11 @@ import { ATTRIBUTE_GROUPS, ATTRIBUTE_LABEL, type Attribute, type Player } from '
 import { attrMod } from '../engine/context';
 import type { Career } from '../engine/career';
 
-// Показывается сразу после результата, если матч поднял уровень. Одно очко —
-// в один атрибут по выбору игрока, не автоматически: рост должен ощущаться
-// как решение, а не как строчка в логе.
+// Показывается сразу после результата, если матч поднял уровень, и снова из меню, пока очко
+// не потрачено (career.unspentPoints). Одно очко — в один атрибут по выбору игрока, не
+// автоматически: рост должен ощущаться как решение, а не как строчка в логе.
+// Плейтест 17.09: экран принимали за тренировку и не понимали, что нужно выбрать и подтвердить —
+// поэтому шаги названы явно, а кнопка повторяет выбор.
 
 type Props = { player: Player; career: Career; fromLevel: number; toLevel: number; onConfirm: (attr: Attribute) => void };
 
@@ -16,8 +18,8 @@ export function LevelUpScreen({ player, career, fromLevel, toLevel, onConfirm }:
     <div className="levelup">
       <h1>Новий рівень: {toLevel}</h1>
       <p className="muted">
-        {fromLevel === toLevel - 1 ? `Було ${fromLevel}, стало ${toLevel}.` : `Одразу з ${fromLevel} до ${toLevel} — сильний матч.`}
-        {' '}Обери, що прокачати: +1 назавжди.
+        {fromLevel === toLevel - 1 ? `Було ${fromLevel}, стало ${toLevel}.` : `Рівень ${toLevel}, непотрачених очок: ${toLevel - fromLevel} — по одному за раз.`}
+        {' '}Це не тренування — це ріст: обери один атрибут, він отримає +1 назавжди, потім підтверди.
       </p>
 
       {ATTRIBUTE_GROUPS.map((g) => (
@@ -38,8 +40,11 @@ export function LevelUpScreen({ player, career, fromLevel, toLevel, onConfirm }:
         </section>
       ))}
 
+      <p className={selected ? 'levelup-pick' : 'levelup-pick muted'}>
+        {selected ? `Обрано: ${ATTRIBUTE_LABEL[selected]} → +1` : 'Крок 1: натисни на атрибут. Крок 2: підтверди.'}
+      </p>
       <button className="primary" disabled={!selected} onClick={() => selected && onConfirm(selected)}>
-        Підтвердити
+        {selected ? `Підтвердити +1 до «${ATTRIBUTE_LABEL[selected]}»` : 'Спершу обери атрибут'}
       </button>
     </div>
   );

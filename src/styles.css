@@ -258,7 +258,9 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .train-attr b { font-size: 1.1em; font-variant-numeric: tabular-nums; }
 .train-attr i { font-style: normal; font-size: 0.85em; font-weight: 600; opacity: 0.8; }
 .train-attr i.zero { opacity: 0.4; }
-.train-attr.picked { border-color: var(--accent); background: rgba(110, 231, 160, 0.08); }
+.train-attr.picked { border-color: var(--accent); background: rgba(110, 231, 160, 0.18); box-shadow: 0 0 0 2px var(--accent) inset; }
+.levelup-pick { margin: 6px 0 10px; font-size: 15px; }
+button.primary:disabled { opacity: 0.45; cursor: default; }
 
 .xp-earned { text-align: center; opacity: 0.75; margin: -0.4rem 0 1rem; }
 .muted.small { font-size: 0.85em; }

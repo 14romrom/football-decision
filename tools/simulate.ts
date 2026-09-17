@@ -1,6 +1,7 @@
 // Балансный прогон: N матчей на фиксированных сидах четырьмя ботовыми политиками.
 // Гонять после каждого изменения balance.ts:  npm run sim -- 2000
 // Повторы на дистанции сезона:              npm run sim -- --season 12
+// Тиждень між матчами, политики недели:     npm run sim -- --weeks 200
 
 import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
@@ -10,6 +11,11 @@ import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, rosterFor } from '../src/c
 import { generateConditions, neutralConditions, type MatchConditions } from '../src/engine/conditions';
 import { BALANCE, POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeMemory, EpisodeOption, Tier } from '../src/engine/types';
+import { ACTIVITIES } from '../src/content';
+import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, type Career } from '../src/engine/career';
+import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, type Season } from '../src/engine/season';
+import { applyWeek, offerWeek, recordWeek, weekContext, type Activity } from '../src/engine/week';
+import { dominantVoice } from '../src/engine/voices';
 
 export type PolicyName = 'always_safe' | 'always_risky' | 'greedy_personal' | 'random' | 'max_cost';
 
@@ -203,6 +209,88 @@ function printSeason(matches: number) {
   console.log(`\nРазных эпизодов за сезон: ${r.uniqueSeen.toFixed(1)} из ${r.poolSize} (сыграно ${matches * BALANCE.match.episodeMinutes.length} слотов)\n`);
 }
 
+// ——— тиждень між матчами: политики недели на дистанции сезона ————————————————
+
+export type WeekPolicy = 'none' | 'random' | 'always_body' | 'always_ego' | 'always_train' | 'rest_and_video';
+
+/** Кого бот берёт из шести предложений. Матчи — случайной политикой, как в seasonReport. */
+const WEEK_POLICIES: Record<WeekPolicy, (offers: Activity[], pick: (n: number) => number) => Activity[]> = {
+  none: () => [],
+  random: (o, pick) => { const a = [...o]; const out: Activity[] = []; while (a.length && out.length < BALANCE.week.picks) out.push(a.splice(pick(a.length), 1)[0]); return out; },
+  always_body: (o) => o.filter((a) => a.voice === 'body' || a.voice === 'instinct').slice(0, BALANCE.week.picks),
+  always_ego: (o) => o.filter((a) => a.voice === 'ego' || a.voice === 'team').slice(0, BALANCE.week.picks),
+  always_train: (o) => o.filter((a) => a.effect.train).slice(0, BALANCE.week.picks),
+  rest_and_video: (o) => o.filter((a) => ['recovery', 'sleep', 'video_analyst', 'watch_opponent'].includes(a.id)).slice(0, BALANCE.week.picks),
+};
+
+export type CareerRun = { avgResult: number; avgCoach: number; avgFan: number; points: number; level: number; distinctOffered: number; modsGained: number };
+
+/** Сезон одним игроком: неделя → матч → карьера, как в App. Сила соперника — из расписания. */
+export function runCareer(seed: number, policy: WeekPolicy): CareerRun {
+  let career: Career = defaultCareer();
+  let season: Season = createSeason(seed, Object.keys(OPPONENTS));
+  const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
+  let sumResult = 0; let sumCoach = 0; let sumFan = 0; let n = 0;
+  const offeredAll = new Set<string>();
+  while (!isSeasonOver(season)) {
+    const fixture = ourFixture(season)!;
+    const rng = makeRng(seed * 31 + season.round);
+    const conditions = generateConditions(rng, OPPONENTS, { confidence: 0, fatigue: 0 }, fixture);
+    const { career: consumed, penalty } = consumeStartPenalty(career);
+    career = consumed;
+    const player = effectivePlayer(PLAYER, career, penalty.attrBonus);
+    const session = createMatch(`career-${seed}-${season.round}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, [], FLAG_RULES,
+      { coachTrust: career.coachTrust, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags, startDelta: penalty.startDelta });
+    for (;;) {
+      const next = nextEpisode(session, rng);
+      if (!next) break;
+      const option = POLICIES.random(availableOptions(next.episode, session.state, session.player), (k) => rng.int(0, k - 1));
+      const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
+      applyChoice(session, next.episode, option, res, rng);
+    }
+    const { summary } = finishMatch(session, rng);
+    career = applyMatchToCareer(career, session.state, summary, dominantVoice(session.state.voices) !== null, conditions.opponentKey);
+    season = recordRound(season, {
+      scoreUs: summary.scoreUs, scoreThem: summary.scoreThem, goals: summary.stats.goals, assists: summary.stats.assists,
+      coachRating: summary.coachRating, fanRating: summary.fanRating, scorers: [],
+    }, strengths, makeRng(seed + season.round * 7919));
+    sumResult += (summary.coachRating + summary.fanRating) / 2; sumCoach += summary.coachRating; sumFan += summary.fanRating; n += 1;
+    if (isSeasonOver(season)) break;
+    const ctx = weekContext(season, career, ourRow(season).position)!;
+    const wrng = makeRng(seed * 7 + season.round * 104729);
+    const offers = offerWeek(ACTIVITIES, ctx, career, wrng);
+    offers.forEach((a) => offeredAll.add(a.id));
+    const chosen = WEEK_POLICIES[policy](offers, (k) => wrng.int(0, k - 1));
+    // Тренировка «на выбор» — первый атрибут голоса.
+    const choices = chosen.map((a) => ({ activity: a, ...(a.effect.train === 'choice' ? { trainAttr: (a.voice === 'body' ? 'pace' : 'dribbling') as 'pace' | 'dribbling' } : {}) }));
+    career = recordWeek(applyWeek(career, choices).career, ctx, offers, chosen);
+  }
+  const modsGained = Object.values(career.attrPoints).reduce((s, v) => s + (v ?? 0), 0);
+  return { avgResult: sumResult / n, avgCoach: sumCoach / n, avgFan: sumFan / n, points: ourRow(season).points, level: career.level, distinctOffered: offeredAll.size, modsGained };
+}
+
+export function weeksReport(seasons: number) {
+  const policies: WeekPolicy[] = ['none', 'random', 'always_body', 'always_ego', 'always_train', 'rest_and_video'];
+  return policies.map((policy) => {
+    const runs = Array.from({ length: seasons }, (_, i) => runCareer(70000 + i, policy));
+    const avg = (f: (r: CareerRun) => number) => runs.reduce((s, r) => s + f(r), 0) / runs.length;
+    return { policy, avgResult: avg((r) => r.avgResult), avgCoach: avg((r) => r.avgCoach), avgFan: avg((r) => r.avgFan), points: avg((r) => r.points), level: avg((r) => r.level), distinctOffered: avg((r) => r.distinctOffered), modsGained: avg((r) => r.modsGained) };
+  });
+}
+
+function printWeeks(seasons: number) {
+  const rows = weeksReport(seasons);
+  console.log(`\nТиждень між матчами: ${seasons} сезонов по 10 матчей на политику недели, матчи — случайной политикой\n`);
+  const head = [pad('політика тижня', 16), pad('результат', 10, true), pad('тренер', 8, true), pad('трибуны', 9, true), pad('очки', 6, true), pad('рівень', 7, true), pad('+моди', 6, true), pad('різних справ', 13, true)].join(' ');
+  console.log(head); console.log('-'.repeat(head.length));
+  for (const r of rows) {
+    console.log([pad(r.policy, 16), pad(r.avgResult.toFixed(2), 10, true), pad(r.avgCoach.toFixed(2), 8, true), pad(r.avgFan.toFixed(2), 9, true), pad(r.points.toFixed(1), 6, true), pad(r.level.toFixed(1), 7, true), pad(r.modsGained.toFixed(1), 6, true), pad(r.distinctOffered.toFixed(1), 13, true)].join(' '));
+  }
+  const results = rows.map((r) => r.avgResult);
+  const gap = (Math.max(...results) - Math.min(...results)) / Math.min(...results);
+  console.log(`\nРазрыв лучшей и худшей политики недели по результату: ${(gap * 100).toFixed(1)}%  (порог 15%) — ${gap <= 0.15 ? 'ок' : 'МНОГО'}\n`);
+}
+
 // ——— вывод ————————————————————————————————————————————————————————
 
 function pad(v: string | number, w: number, right = false) {
@@ -213,6 +301,8 @@ function pad(v: string | number, w: number, right = false) {
 function main() {
   const seasonAt = process.argv.indexOf('--season');
   if (seasonAt >= 0) { printSeason(Number(process.argv[seasonAt + 1] ?? 12)); return; }
+  const weeksAt = process.argv.indexOf('--weeks');
+  if (weeksAt >= 0) { printWeeks(Number(process.argv[weeksAt + 1] ?? 200)); return; }
   const n = Number(process.argv[2] ?? 1000);
   const mode: ConditionsMode = process.argv.includes('--random-conditions') ? 'random' : 'neutral';
   const reports = runSuite(n, mode);

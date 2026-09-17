@@ -160,6 +160,8 @@ export type Carryover = {
   /** Реплики второго голоса из последних матчей (telemetry/history.ts:recentFlavor) —
    *  считаются уже прочитанными, чтобы сезон не повторял одни и те же строки. */
   flavorSeen?: string[];
+  /** Сдвиг стартовых ресурсов от недели між матчами (career.ts:NextMatchPrep.start). */
+  startDelta?: { stamina?: number; composure?: number; fanHype?: number; momentum?: number };
 };
 
 export function createMatch(
@@ -191,11 +193,11 @@ export function createMatch(
     minute: 0,
     scoreUs: 0,
     scoreThem: 0,
-    stamina: clamp(start.stamina - (carryover.staminaPenalty ?? 0), 0, 100),
-    composureNow: clamp(start.composure, 0, 100),
+    stamina: clamp(start.stamina - (carryover.staminaPenalty ?? 0) + (carryover.startDelta?.stamina ?? 0), 0, 100),
+    composureNow: clamp(start.composure + (carryover.startDelta?.composure ?? 0), 0, 100),
     coachTrust: clamp((carryover.coachTrust ?? BALANCE.coachTrustStart) - (carryover.coachTrustPenalty ?? 0), 0, 100),
-    fanHype: clamp(start.fanHype, 0, 100),
-    momentum: clamp(start.momentum, -3, 3),
+    fanHype: clamp(start.fanHype + (carryover.startDelta?.fanHype ?? 0), 0, 100),
+    momentum: clamp(start.momentum + (carryover.startDelta?.momentum ?? 0), -3, 3),
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
     // Характеристики соперника — флаги на матч: правила в flags.json (them_dribbler и т.п.),
     // варианты сетапа через when.flags. Механизм тот же, что у последствий решений.
@@ -426,9 +428,9 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
 /** Подстановка следа решения в реактивный эпизод: {trigger.past}, {trigger.minute},
  *  {trigger.when} — «на 34-й» или «ще минулого матчу», если флаг принесён из прошлого
  *  матча; {trigger.When} — то же с большой буквы для начала предложения. */
-function fillTrigger<T>(value: T, mark: { minute: number; past: string; previousMatch?: boolean }): T {
+export function fillTrigger<T>(value: T, mark: { minute: number; past: string; previousMatch?: boolean; whenText?: string }): T {
   if (typeof value === 'string') {
-    const when = mark.previousMatch ? 'ще минулого матчу' : 'на ' + mark.minute + '-й';
+    const when = mark.whenText ?? (mark.previousMatch ? 'ще минулого матчу' : 'на ' + mark.minute + '-й');
     return value
       .replace(/\{trigger\.past\}/g, mark.past)
       .replace(/\{trigger\.minute\}/g, String(mark.minute))

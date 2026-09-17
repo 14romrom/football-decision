@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
+import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
+import { fillNamesDeep } from './engine/names';
+import { applyWeek, coachLocksCity, offerWeek, recordWeek, weekContext, weekPending, type Activity, type WeekChoice } from './engine/week';
+import { WeekScreen } from './ui/WeekScreen';
 import { generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFlavor, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
@@ -40,6 +43,7 @@ type Stage =
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
+  | { k: 'week'; offers: Activity[]; locked: boolean; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
@@ -136,7 +140,7 @@ function Game() {
     // доверие тренера продолжается (с регрессией), а не сбрасывается на 55.
     const { career: consumedCareer, penalty } = consumeStartPenalty(careerRef.current);
     setCareerBoth(consumedCareer);
-    const player = effectivePlayer(PLAYER, consumedCareer);
+    const player = effectivePlayer(PLAYER, consumedCareer, penalty.attrBonus);
 
     const session = createMatch(
       `${Date.now().toString(36)}-${seed}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions,
@@ -144,7 +148,7 @@ function Game() {
       {
         coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,
         coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
-        flavorSeen: recentFlavor(BALANCE.match.memory.horizon),
+        flavorSeen: recentFlavor(BALANCE.match.memory.horizon), startDelta: penalty.startDelta,
       },
     );
     rngRef.current = rng;
@@ -157,6 +161,22 @@ function Game() {
     const prev = seasonRef.current;
     setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS), prev.number + 1));
   }, [setSeasonBoth]);
+
+  /** Ещё не закрытая неделя после последнего тура: шесть предложений детерминированно по сиду. */
+  const pendingWeek = useCallback(() => {
+    const sn = seasonRef.current;
+    const career = careerRef.current;
+    const ctx = weekContext(sn, career, ourRow(sn).position);
+    if (!ctx || isSeasonOver(sn) || !weekPending(career, ctx)) return null;
+    const offers = offerWeek(ACTIVITIES, ctx, career, makeRng(sn.seed + sn.round * 104729 + 7));
+    return { offers, ctx, locked: coachLocksCity(ctx) };
+  }, []);
+
+  const afterSeason = useCallback((leveledFrom: number, leveledTo: number) => {
+    const w = pendingWeek();
+    if (w) setStage({ k: 'week', offers: w.offers, locked: w.locked, leveledFrom, leveledTo });
+    else setStage(leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
+  }, [pendingWeek]);
 
   const confirmLevelUp = useCallback((attr: Attribute) => {
     const after = spendPoint(careerRef.current, attr);
@@ -236,6 +256,16 @@ function Game() {
     proceed();
   }, [stage, proceed]);
 
+  // Перезагрузка на экране недели: меню сначала отдаёт незакрытую неделю — через stage, не рендером
+  // на месте (выбор меняет карьеру, и неделя перестала бы быть «незакрытой» до показа итога).
+  useEffect(() => {
+    if (stage.k !== 'menu') return;
+    const w = pendingWeek();
+    if (w) setStage({ k: 'week', offers: w.offers, locked: w.locked, leveledFrom: career.level, leveledTo: career.level });
+  }, [stage.k, career.level, pendingWeek]);
+
+  if (stage.k === 'menu' && pendingWeek()) return null;
+
   if (stage.k === 'menu' && career.unspentPoints > 0) {
     // Непотраченное очко уровня — сначала оно, потом меню: иначе после перезагрузки оно пропадало.
     return <LevelUpScreen player={PLAYER} career={career} fromLevel={career.level - career.unspentPoints} toLevel={career.level} onConfirm={confirmLevelUp} />;
@@ -312,8 +342,31 @@ function Game() {
         teamGen={ROSTER.us.name.gen}
         playerName={ROSTER.us.players.self.nom}
         verdict={over ? seasonVerdict(season, career.coachTrust) : undefined}
-        onNext={() => (leveled ? setStage({ k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo }) : setStage({ k: 'menu' }))}
+        onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
         onNewSeason={() => { newSeason(); setStage(leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
+      />
+    );
+  }
+
+  if (stage.k === 'week') {
+    const sn = seasonRef.current;
+    const fixture = ourFixture(sn);
+    const roster = rosterFor(fixture?.opponentKey ?? Object.keys(OPPONENTS)[0], makeRng(sn.seed + sn.round));
+    const { leveledFrom, leveledTo } = stage;
+    return (
+      <WeekScreen
+        key={sn.number + ':' + sn.round}
+        offers={fillNamesDeep(stage.offers, roster)}
+        locked={stage.locked}
+        onConfirm={(choices: WeekChoice[]) => {
+          const ctx = weekContext(sn, careerRef.current, ourRow(sn).position)!;
+          // Применяем по исходным (без имён) делам: эффекты те же, id те же.
+          const raw = choices.map((c) => ({ ...c, activity: stage.offers.find((a) => a.id === c.activity.id)! }));
+          const { career: after, tags } = applyWeek(careerRef.current, raw);
+          setCareerBoth(recordWeek(after, ctx, stage.offers, raw.map((c) => c.activity)));
+          return tags;
+        }}
+        onNext={() => setStage(leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}
       />
     );
   }

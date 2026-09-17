@@ -31,7 +31,31 @@ export type Career = {
   /** Флаги-последствия, дожившие до конца матча и уходящие в следующий: партнёр помнит,
    *  что ты ему отдал (или не отдал), тренер — что фланг твой. Реактивный эпизод
    *  всплывёт «ще минулого матчу». Потребляются при старте (consumeStartPenalty). */
-  carriedFlags?: { flag: string; mark: Mark; opponentKey?: string }[];
+  carriedFlags?: CarriedFlag[];
+  /** Тиждень між матчами (week.ts): что выбрано по турам — для once/cooldown/памяти и телеметрии. */
+  weekLog?: WeekLogEntry[];
+  /** Что неделя приготовила к следующему матчу — потребляется в consumeStartPenalty. */
+  nextMatch?: NextMatchPrep;
+  /** Прогресс тренировок по атрибутам: BALANCE.week.trainToPoint тренировок = +1 очко навсегда. */
+  training?: Partial<Record<Attribute, number>>;
+};
+
+export type CarriedFlag = {
+  flag: string; mark: Mark; opponentKey?: string;
+  /** Отложенное следствие: сколько матчей флаг едет молча, прежде чем сработать (0 — в следующем). */
+  after?: number;
+};
+
+export type WeekLogEntry = { season: number; round: number; chosen: string[]; offered: string[] };
+
+/** Подготовка к одному матчу от недели: временные +/−1 к модификаторам (в единицах значения,
+ *  POINT_VALUE за мод), сдвиг стартовых ресурсов, строки в брифинг. Живёт один матч. */
+export type NextMatchPrep = {
+  attrBonus?: Partial<Record<Attribute, number>>;
+  start?: { stamina?: number; composure?: number; fanHype?: number; momentum?: number };
+  notes?: string[];
+  /** Травма/мікротравма вылечены неделей: injuredMatches обнуляется, knock не переносится. */
+  healed?: boolean;
 };
 
 /** Что переживает финальный свисток. Обида/долг партнёра и доверенный фланг — про людей,
@@ -39,6 +63,11 @@ export type Career = {
 export const CARRIED_FLAGS = ['partner_trusts', 'partner_annoyed', 'coach_flank', 'sub_threat', 'keeper_read'];
 /** Флаги про конкретного соперника: переживают свисток только до матча с тем же клубом. */
 export const OPPONENT_BOUND_FLAGS = ['keeper_read'];
+
+/** Доверие тренера живёт в 0..100 — и в матче, и между матчами (week.ts). */
+export function clampTrust(v: number): number {
+  return Math.max(0, Math.min(100, Math.round(v)));
+}
 
 export function defaultCareer(): Career {
   return {
@@ -97,10 +126,14 @@ export const POINT_VALUE = ATTR_MOD.step;
 /** Игрок для этого матча: базовые атрибуты + очки прокачки × POINT_VALUE, зажато в 1..99.
  *  attrMod() сам ограничивает модификатор потолком +12 — раскачать бросок до абсурда
  *  прокачкой нельзя, даже если атрибут дойдёт до 99. */
-export function effectivePlayer(base: Player, career: Career): Player {
+export function effectivePlayer(base: Player, career: Career, matchBonus?: Partial<Record<Attribute, number>>): Player {
   const attrs = { ...base.attrs };
   for (const [attr, bonus] of Object.entries(career.attrPoints) as [Attribute, number][]) {
     attrs[attr] = Math.max(1, Math.min(99, attrs[attr] + bonus * POINT_VALUE));
+  }
+  // Временный сдвиг от недели (week.ts): голос гучніший/тихіший на один матч.
+  for (const [attr, bonus] of Object.entries(matchBonus ?? {}) as [Attribute, number][]) {
+    attrs[attr] = Math.max(1, Math.min(99, attrs[attr] + bonus));
   }
   return { ...base, attrs };
 }
@@ -144,7 +177,10 @@ export function nextMatchCoachTrust(endingTrust: number): number {
 
 export type StartPenalty = {
   staminaPenalty: number; coachTrustPenalty: number; note?: string;
-  flags: { flag: string; mark: Mark; opponentKey?: string }[];
+  flags: CarriedFlag[];
+  /** От недели: временные модификаторы и сдвиг старта (career.nextMatch), уже потреблённые. */
+  attrBonus?: Partial<Record<Attribute, number>>;
+  startDelta?: NextMatchPrep['start'];
 };
 
 /** Штрафы старта следующего матча от травмы/картки прошлого — и одновременно их
@@ -165,15 +201,26 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
     next.careerYellows = 0;
   }
 
-  if (career.injuredMatches > 0) {
+  const prep = career.nextMatch;
+  if (career.injuredMatches > 0 && !prep?.healed) {
     staminaPenalty = 20;
     note = note ? note + ' Ще й тіло не до кінця відновилося.' : 'Ти граєш після травми — сили менше з першої хвилини.';
     next.injuredMatches = career.injuredMatches - 1;
+  } else if (prep?.healed) {
+    next.injuredMatches = 0;
   }
 
-  const flags = career.carriedFlags ?? [];
-  next.carriedFlags = [];
-  return { career: next, penalty: { staminaPenalty, coachTrustPenalty, note, flags } };
+  // Отложенные флаги недели едут дальше с уменьшенным счётчиком; остальные — в этот матч.
+  const flags = (career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0));
+  next.carriedFlags = (career.carriedFlags ?? [])
+    .filter((f) => f.after && f.after > 0)
+    .map((f) => ({ ...f, after: f.after! - 1 }));
+  if (prep?.notes?.length) note = [note, ...prep.notes].filter(Boolean).join(' ');
+  next.nextMatch = undefined;
+  return {
+    career: next,
+    penalty: { staminaPenalty, coachTrustPenalty, note, flags, attrBonus: prep?.attrBonus, startDelta: prep?.start },
+  };
 }
 
 /** Обновление карьеры по итогам матча: опыт, уровень (без авто-траты очка — это отдельный
@@ -200,9 +247,14 @@ export function applyMatchToCareer(
   if (state.flags.includes('sent_off')) next.pendingSentOff = true;
   else if (state.flags.includes('booked')) next.careerYellows = career.careerYellows + 1;
   if (state.flags.includes('injured')) next.injuredMatches = Math.max(career.injuredMatches, 1);
-  next.carriedFlags = CARRIED_FLAGS
-    .filter((f) => state.flags.includes(f) && state.marks[f])
-    .map((f) => ({ flag: f, mark: state.marks[f], ...(OPPONENT_BOUND_FLAGS.includes(f) ? { opponentKey } : {}) }));
+  // К началу матча consumeStartPenalty оставляет в carriedFlags только отложенные флаги недели;
+  // к ним добавляются флаги, дожившие до свистка этого матча.
+  next.carriedFlags = [
+    ...(career.carriedFlags ?? []),
+    ...CARRIED_FLAGS
+      .filter((f) => state.flags.includes(f) && state.marks[f])
+      .map((f) => ({ flag: f, mark: state.marks[f], ...(OPPONENT_BOUND_FLAGS.includes(f) ? { opponentKey } : {}) })),
+  ];
   return next;
 }
 

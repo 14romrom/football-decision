@@ -1,0 +1,950 @@
+[
+  {
+    "id": "gym",
+    "voice": "body",
+    "title": "Зал",
+    "line": "Залізо не сперечається і не дає порад. За це його й люблять.",
+    "weight": 2,
+    "effect": {
+      "louder": [
+        "body"
+      ],
+      "stamina": -8,
+      "train": "choice",
+      "note": "Тиждень у залі: Тіло гучніше, сили на старті менші."
+    }
+  },
+  {
+    "id": "recovery",
+    "voice": "body",
+    "title": "Відновлення",
+    "line": "Лежати — це теж робота. Принаймні так ти скажеш тренеру.",
+    "effect": {
+      "stamina": 12,
+      "coachTrust": -3,
+      "heal": true,
+      "note": "Тиждень відновлення: сили на старті більші, тренер не бачив тебе на базі."
+    }
+  },
+  {
+    "id": "ice_bath",
+    "voice": "body",
+    "title": "Крижана ванна",
+    "line": "Три хвилини, після яких життя здається теплим.",
+    "cooldown": 2,
+    "effect": {
+      "stamina": 8,
+      "momentum": -1,
+      "heal": true,
+      "note": "Крижана ванна: тіло свіже, кураж — ні."
+    }
+  },
+  {
+    "id": "swim",
+    "voice": "body",
+    "title": "Басейн",
+    "line": "У воді ніхто не б’є по ногах. Тому там і нудно.",
+    "cooldown": 2,
+    "effect": {
+      "louder": [
+        "body"
+      ],
+      "stamina": 4,
+      "train": "stamina",
+      "note": "Басейн: сили на старті трохи більші, Тіло чутно."
+    }
+  },
+  {
+    "id": "hill_runs",
+    "voice": "body",
+    "title": "Біг у гору",
+    "line": "Гора не втомлюється. Ти — так. Це і є тренування.",
+    "cooldown": 2,
+    "effect": {
+      "stamina": -10,
+      "train": "stamina",
+      "coachTrust": 3,
+      "note": "Біг у гору: витривалість тренована, старт важкий."
+    }
+  },
+  {
+    "id": "masseur",
+    "voice": "body",
+    "title": "Масажист",
+    "line": "Він знає про твої ноги більше, ніж ти. І мовчить.",
+    "when": {
+      "injured": true
+    },
+    "weight": 8,
+    "effect": {
+      "stamina": 6,
+      "heal": true,
+      "note": "Масажист: мікротравма забута, сили на місці."
+    }
+  },
+  {
+    "id": "dietician",
+    "voice": "body",
+    "title": "Дієтолог",
+    "line": "Він забрав у тебе все смачне і назвав це планом.",
+    "cooldown": 3,
+    "effect": {
+      "stamina": 5,
+      "quieter": [
+        "ego"
+      ],
+      "train": "stamina",
+      "note": "Дієтолог: сили трохи більші, Его в образі."
+    }
+  },
+  {
+    "id": "doctor",
+    "voice": "body",
+    "title": "Лікар",
+    "line": "Він дивиться на знімок, потім на тебе, потім знову на знімок.",
+    "when": {
+      "injured": true
+    },
+    "weight": 8,
+    "effect": {
+      "heal": true,
+      "quieter": [
+        "body"
+      ],
+      "coachTrust": 2,
+      "note": "Лікар: травму лікують, тиждень без тренувань."
+    }
+  },
+  {
+    "id": "punchbag",
+    "voice": "body",
+    "title": "Груша після поразки",
+    "line": "Груша не відповідає. Саме тому ти й прийшов.",
+    "when": {
+      "result": "loss"
+    },
+    "cooldown": 2,
+    "effect": {
+      "train": "strength",
+      "composure": -5,
+      "momentum": 1,
+      "note": "Груша: корпус тренований, спокій — ні."
+    }
+  },
+  {
+    "id": "sleep",
+    "voice": "body",
+    "title": "Десять годин сну",
+    "line": "Найкраще тренування, яке ти вмієш. Ніхто не платить.",
+    "cooldown": 2,
+    "effect": {
+      "stamina": 10,
+      "composure": 3,
+      "note": "Виспався: сили на старті більші."
+    }
+  },
+  {
+    "id": "video_analyst",
+    "voice": "vision",
+    "title": "Відео з аналітиком",
+    "line": "Він показує тобі воротаря на повторі. Воротар не знає, що його вивчають. Це його проблема.",
+    "cooldown": 2,
+    "weight": 2,
+    "effect": {
+      "louder": [
+        "vision"
+      ],
+      "stamina": -4,
+      "flags": [
+        {
+          "flag": "keeper_read",
+          "after": 0,
+          "past": "розібрав їхнього воротаря на відео"
+        }
+      ],
+      "note": "Відео: воротаря прочитано ще до розминки, Бачення гучніше."
+    }
+  },
+  {
+    "id": "tactics_coach",
+    "voice": "vision",
+    "title": "Розбір тактики з тренером",
+    "line": "Дві години зі стрілочками. Він щасливий. Ти вдаєш.",
+    "cooldown": 2,
+    "effect": {
+      "train": "positioning",
+      "coachTrust": 5,
+      "quieter": [
+        "ego"
+      ],
+      "note": "Розбір із тренером: позиція тренована, тренер задоволений."
+    }
+  },
+  {
+    "id": "book",
+    "voice": "vision",
+    "title": "Книга",
+    "line": "Біографія тренера, якого ти не застав. Половина — про дисципліну. Ти дочитав до половини.",
+    "cooldown": 3,
+    "effect": {
+      "louder": [
+        "vision"
+      ],
+      "quieter": [
+        "ego"
+      ],
+      "train": "vision",
+      "note": "Книга: Бачення гучніше, Его трохи тихіше."
+    }
+  },
+  {
+    "id": "watch_opponent",
+    "voice": "vision",
+    "title": "Подивитись суперника наживо",
+    "line": "Ти сидиш на трибуні в кепці. Тебе впізнали через три хвилини.",
+    "cooldown": 2,
+    "effect": {
+      "louder": [
+        "vision"
+      ],
+      "stamina": -3,
+      "flags": [
+        {
+          "flag": "keeper_read",
+          "after": 0,
+          "past": "дивився їхній матч із трибуни"
+        }
+      ],
+      "note": "Бачив суперника наживо: їхнього форварда читаєш із першої хвилини."
+    }
+  },
+  {
+    "id": "chess_with_dm",
+    "voice": "vision",
+    "title": "Шахи з опорником",
+    "line": "{dm} грає чорними і не поспішає. Як і на полі.",
+    "cooldown": 2,
+    "effect": {
+      "train": "positioning",
+      "louder": [
+        "team"
+      ],
+      "note": "Шахи з {dm}: позиція тренована, Команда трохи гучніша."
+    }
+  },
+  {
+    "id": "set_pieces",
+    "voice": "vision",
+    "title": "Вивчити стандарти",
+    "line": "Сорок варіантів кутового. На матчі буде один. Ти не знаєш який.",
+    "cooldown": 2,
+    "effect": {
+      "louder": [
+        "vision"
+      ],
+      "train": "vision",
+      "note": "Стандарти вивчені: Бачення гучніше на стандартах."
+    }
+  },
+  {
+    "id": "own_mistakes",
+    "voice": "vision",
+    "title": "Розбір власних помилок",
+    "line": "Аналітик каже «не переймайся». Потім показує повтор. Тричі.",
+    "when": {
+      "result": "loss"
+    },
+    "weight": 2,
+    "effect": {
+      "louder": [
+        "vision"
+      ],
+      "momentum": -1,
+      "coachTrust": 3,
+      "note": "Розбір помилок: Бачення гучніше, кураж нижчий."
+    }
+  },
+  {
+    "id": "vr_sim",
+    "voice": "vision",
+    "title": "VR-симулятор",
+    "line": "Клуб купив його за гроші спонсора. Хтось має ним користуватись. Цього тижня — ти.",
+    "when": {
+      "minLevel": 3
+    },
+    "cooldown": 3,
+    "effect": {
+      "train": "vision",
+      "composure": -2,
+      "note": "VR: бачення поля треноване. Трохи нудить."
+    }
+  },
+  {
+    "id": "futsal",
+    "voice": "instinct",
+    "title": "Футзал із друзями",
+    "line": "Друзі грають, як у дев’ятому класі. Ти — теж, і це найкраще.",
+    "cooldown": 2,
+    "weight": 2,
+    "effect": {
+      "louder": [
+        "instinct"
+      ],
+      "stamina": -5,
+      "train": "first_touch",
+      "note": "Футзал: Інстинкт гучніший, ноги трохи втомлені."
+    }
+  },
+  {
+    "id": "juggling_beach",
+    "voice": "instinct",
+    "title": "Жонглювання на пляжі",
+    "line": "Тисяча дотиків. Дев’ятсот — на камеру.",
+    "cooldown": 2,
+    "effect": {
+      "train": "first_touch",
+      "fanHype": 3,
+      "note": "Пляж: перший дотик тренований, трибуни бачили сторіз."
+    }
+  },
+  {
+    "id": "academy_kids",
+    "voice": "instinct",
+    "title": "Тренування з дітьми академії",
+    "line": "Восьмирічний обіграв тебе двічі. Ти сказав, що піддався. Він не повірив.",
+    "cooldown": 2,
+    "effect": {
+      "louder": [
+        "instinct"
+      ],
+      "coachTrust": 3,
+      "train": "dribbling",
+      "note": "Діти академії: Інстинкт гучніший, тренер оцінив."
+    }
+  },
+  {
+    "id": "freestyle_stories",
+    "voice": "instinct",
+    "title": "Фрістайл для сторіз",
+    "line": "Двадцять дублів одного трюку. У сторіз — один. Ідеальний.",
+    "cooldown": 2,
+    "effect": {
+      "train": "dribbling",
+      "fanHype": 4,
+      "quieter": [
+        "team"
+      ],
+      "note": "Фрістайл: дриблінг тренований, трибуни підписалися."
+    }
+  },
+  {
+    "id": "wall_until_dark",
+    "voice": "instinct",
+    "title": "Стінка на базі до темряви",
+    "line": "Стінка повертає м’яч точно. Це більше, ніж можна сказати про {partner.gen}.",
+    "cooldown": 2,
+    "effect": {
+      "train": "first_touch",
+      "stamina": -5,
+      "louder": [
+        "instinct"
+      ],
+      "note": "Стінка до темряви: перший дотик тренований, сили менші."
+    }
+  },
+  {
+    "id": "beach_football",
+    "voice": "instinct",
+    "title": "Пляжний футбол",
+    "line": "Пісок забирає ноги і повертає техніку. Обмін нечесний, але ти згоден.",
+    "cooldown": 3,
+    "effect": {
+      "train": "dribbling",
+      "stamina": -8,
+      "louder": [
+        "instinct"
+      ],
+      "note": "Пляжний футбол: дриблінг тренований, ноги важкі."
+    }
+  },
+  {
+    "id": "yoga",
+    "voice": "composure",
+    "title": "Йога",
+    "line": "Інструкторка каже дихати. Ти дихав і до цього. Виявляється, неправильно.",
+    "cooldown": 2,
+    "weight": 2,
+    "effect": {
+      "louder": [
+        "composure"
+      ],
+      "quieter": [
+        "ego"
+      ],
+      "train": "composure",
+      "note": "Йога: Холоднокровність гучніша, Его тихіше."
+    }
+  },
+  {
+    "id": "meditation",
+    "voice": "composure",
+    "title": "Медитація",
+    "line": "Десять хвилин тиші. На четвертій ти вже думав про кутовий.",
+    "cooldown": 2,
+    "effect": {
+      "composure": 8,
+      "train": "composure",
+      "note": "Медитація: спокій на старті вищий."
+    }
+  },
+  {
+    "id": "hospital_visit",
+    "voice": "composure",
+    "title": "Провідати хворих",
+    "line": "Хлопчик у палаті знає твою статистику краще за тебе. Ти пообіцяв гол. Тепер це проблема.",
+    "cooldown": 3,
+    "effect": {
+      "louder": [
+        "composure"
+      ],
+      "fanHype": 5,
+      "quieter": [
+        "ego"
+      ],
+      "stamina": -3,
+      "note": "Лікарня: Холоднокровність гучніша, трибуни знають."
+    }
+  },
+  {
+    "id": "school_masterclass",
+    "voice": "composure",
+    "title": "Майстер-клас у школі",
+    "line": "Тридцять дітей питають, скільки ти заробляєш. Учителька — теж, але очима.",
+    "cooldown": 3,
+    "effect": {
+      "louder": [
+        "composure"
+      ],
+      "fanHype": 4,
+      "stamina": -3,
+      "note": "Школа: Холоднокровність чутно, трибуни тепліші."
+    }
+  },
+  {
+    "id": "press_conf_proper",
+    "voice": "composure",
+    "title": "Прес-конференція як треба",
+    "line": "Ти сказав «ми команда» чотири рази. Ніхто не помітив. Це і є майстерність.",
+    "when": {
+      "result": "loss"
+    },
+    "cooldown": 2,
+    "effect": {
+      "coachTrust": 5,
+      "quieter": [
+        "ego"
+      ],
+      "composure": 3,
+      "note": "Преса: тренер задоволений, Его — ні."
+    }
+  },
+  {
+    "id": "decline_interview",
+    "voice": "composure",
+    "title": "Відмовитись від інтерв’ю",
+    "line": "«Без коментарів» — найкраща фраза у футболі. Друга — «запитайте тренера».",
+    "cooldown": 2,
+    "effect": {
+      "composure": 6,
+      "fanHype": -2,
+      "note": "Без інтерв’ю: спокій на старті вищий, трибуни трохи холодніші."
+    }
+  },
+  {
+    "id": "psychologist",
+    "voice": "composure",
+    "title": "Психолог",
+    "line": "Він питає, що ти відчував на 88-й. Ти відчував, що треба було бити.",
+    "when": {
+      "result": "loss"
+    },
+    "weight": 2,
+    "effect": {
+      "louder": [
+        "composure"
+      ],
+      "coachTrust": 2,
+      "train": "composure",
+      "note": "Психолог: Холоднокровність гучніша, тренер помітив."
+    }
+  },
+  {
+    "id": "church",
+    "voice": "composure",
+    "title": "Сходити до церкви",
+    "line": "Ти не впевнений, кому молишся. Але лінія воротаря — теж не наука.",
+    "cooldown": 3,
+    "effect": {
+      "composure": 6,
+      "fanHype": 3,
+      "note": "Церква: спокій вищий, трибуни в цьому місті — тепліші."
+    }
+  },
+  {
+    "id": "team_dinner",
+    "voice": "team",
+    "title": "Вечеря з командою",
+    "line": "{cb} замовляє за всіх. {keeper} платить за всіх. Так тут заведено.",
+    "cooldown": 2,
+    "weight": 2,
+    "effect": {
+      "louder": [
+        "team"
+      ],
+      "coachTrust": 3,
+      "stamina": -4,
+      "note": "Вечеря з командою: Команда гучніша, тренер задоволений."
+    }
+  },
+  {
+    "id": "time_with_partner",
+    "voice": "team",
+    "title": "Час із партнером",
+    "line": "{partner} показує тобі відео своїх голів. Усі — з твоїх передач. Він цього не сказав.",
+    "cooldown": 2,
+    "effect": {
+      "louder": [
+        "team"
+      ],
+      "quieter": [
+        "ego"
+      ],
+      "flags": [
+        {
+          "flag": "partner_trusts",
+          "after": 0,
+          "past": "провів тиждень із партнером поза базою"
+        }
+      ],
+      "note": "Тиждень із {partner.ins}: він шукатиме тебе на полі."
+    }
+  },
+  {
+    "id": "apologize_partner",
+    "voice": "team",
+    "title": "Поговорити з партнером",
+    "line": "{partner} робить вигляд, що не ображений. Це найгірша з образ.",
+    "when": {
+      "flags": [
+        "partner_annoyed"
+      ]
+    },
+    "weight": 8,
+    "effect": {
+      "removeFlags": [
+        "partner_annoyed"
+      ],
+      "louder": [
+        "team"
+      ],
+      "flags": [
+        {
+          "flag": "partner_trusts",
+          "after": 0,
+          "past": "прийшов до партнера першим і вибачився"
+        }
+      ],
+      "note": "Розмова з {partner.ins}: образу знято."
+    }
+  },
+  {
+    "id": "lend_money",
+    "voice": "team",
+    "title": "Позичити гроші партнеру",
+    "line": "{striker} каже «до зарплати». Зарплата в п’ятницю. Він не уточнив, якого місяця.",
+    "cooldown": 4,
+    "effect": {
+      "flags": [
+        {
+          "flag": "partner_trusts",
+          "after": 0,
+          "past": "позичив партнеру гроші до зарплати"
+        },
+        {
+          "flag": "partner_annoyed",
+          "after": 3,
+          "past": "нагадав партнеру про борг"
+        }
+      ],
+      "note": "Позичив {striker.dat}: він тобі винен — на полі теж."
+    }
+  },
+  {
+    "id": "learn_language",
+    "voice": "team",
+    "title": "Вивчити мову",
+    "line": "Ти знаєш «пас», «назад» і «суддя сліпий». Це вже розмовний рівень.",
+    "cooldown": 3,
+    "effect": {
+      "louder": [
+        "team"
+      ],
+      "quieter": [
+        "body"
+      ],
+      "note": "Мова: Команда гучніша."
+    }
+  },
+  {
+    "id": "charity_team",
+    "voice": "team",
+    "title": "Благодійність із командою",
+    "line": "Фотограф просить усміхатися. {dm} не вміє. Це найчесніше фото сезону.",
+    "cooldown": 3,
+    "effect": {
+      "coachTrust": 3,
+      "fanHype": 4,
+      "quieter": [
+        "ego"
+      ],
+      "louder": [
+        "team"
+      ],
+      "note": "Благодійність: тренер і трибуни задоволені, Его — не дуже."
+    }
+  },
+  {
+    "id": "partner_birthday",
+    "voice": "team",
+    "title": "День народження партнера",
+    "line": "{cb2} святкує тридцять. Каже, що двадцять дев’ять. Усі кивають.",
+    "cooldown": 4,
+    "effect": {
+      "louder": [
+        "team"
+      ],
+      "stamina": -8,
+      "momentum": 1,
+      "note": "День народження {cb2.gen}: Команда гучніша, сили менші."
+    }
+  },
+  {
+    "id": "card_night",
+    "voice": "team",
+    "title": "Картярський вечір",
+    "line": "{keeper} програв {rb.dat} три зарплати і футболку. Футболку шкода.",
+    "cooldown": 3,
+    "effect": {
+      "louder": [
+        "team"
+      ],
+      "composure": -4,
+      "stamina": -3,
+      "note": "Карти з командою: Команда гучніша, спокій нижчий."
+    }
+  },
+  {
+    "id": "team_meeting",
+    "voice": "team",
+    "title": "Збори команди",
+    "line": "Без тренера. {cb} говорить перший і довго. Решта дивляться в підлогу. Це працює.",
+    "when": {
+      "position": "bottom"
+    },
+    "weight": 8,
+    "effect": {
+      "louder": [
+        "team"
+      ],
+      "momentum": 1,
+      "coachTrust": -2,
+      "note": "Збори без тренера: Команда гучніша, тренер підозрює."
+    }
+  },
+  {
+    "id": "apologize_sub",
+    "voice": "team",
+    "title": "Вибачитись перед дублером",
+    "line": "{sub} каже «та нічого». {sub} бреше. Ти — теж, але ввічливо.",
+    "when": {
+      "flags": [
+        "sub_threat"
+      ]
+    },
+    "weight": 8,
+    "effect": {
+      "removeFlags": [
+        "sub_threat"
+      ],
+      "louder": [
+        "team"
+      ],
+      "coachTrust": 2,
+      "note": "Розмова з {sub.ins}: він більше не дихає в спину."
+    }
+  },
+  {
+    "id": "cb_wedding",
+    "voice": "team",
+    "title": "Весілля захисника",
+    "line": "{cb} одружується. Тамада знає твоє прізвище. Це не комплімент.",
+    "when": {
+      "minRound": 3
+    },
+    "once": true,
+    "effect": {
+      "louder": [
+        "team"
+      ],
+      "stamina": -10,
+      "fanHype": 2,
+      "note": "Весілля {cb.gen}: Команда гучніша, сили — ні."
+    }
+  },
+  {
+    "id": "autographs",
+    "voice": "ego",
+    "title": "Автограф-сесія",
+    "line": "Черга на сорок хвилин. Двоє просять підписати футболку {striker.gen}.",
+    "when": {
+      "hasScored": true
+    },
+    "cooldown": 2,
+    "weight": 2,
+    "effect": {
+      "fanHype": 6,
+      "momentum": 1,
+      "stamina": -4,
+      "quieter": [
+        "team"
+      ],
+      "note": "Автографи: трибуни за тебе, Его гучніше, сили менші."
+    }
+  },
+  {
+    "id": "sponsor_shoot",
+    "voice": "ego",
+    "title": "Спонсорська зйомка",
+    "line": "Ти тримаєш напій, який не п’єш, і посміхаєшся, як не вмієш.",
+    "when": {
+      "fanRatingMin": 6.5
+    },
+    "cooldown": 3,
+    "effect": {
+      "fanHype": 5,
+      "coachTrust": -3,
+      "stamina": -3,
+      "note": "Зйомка: трибуни знають твоє обличчя, тренер — твої запізнення."
+    }
+  },
+  {
+    "id": "insta_date",
+    "voice": "ego",
+    "title": "Побачення з інстаграм-моделлю",
+    "line": "Вона знає, що ти граєш у футбол. Вона не знає, за кого.",
+    "when": {
+      "hasScored": true
+    },
+    "cooldown": 3,
+    "effect": {
+      "momentum": 2,
+      "fanHype": 3,
+      "stamina": -10,
+      "quieter": [
+        "team"
+      ],
+      "coachTrust": -4,
+      "note": "Побачення: кураж є, сили — ні; фото з базою вже в сторіз."
+    }
+  },
+  {
+    "id": "new_car",
+    "voice": "ego",
+    "title": "Купити машину",
+    "line": "Паркінг біля бази — два місця. Тепер одне.",
+    "when": {
+      "minLevel": 2
+    },
+    "once": true,
+    "effect": {
+      "momentum": 1,
+      "fanHype": 3,
+      "coachTrust": -5,
+      "note": "Машина: Его гучніше, тренер бачив, як ти паркувався."
+    }
+  },
+  {
+    "id": "veneers",
+    "voice": "ego",
+    "title": "Вініри",
+    "line": "Тепер ти посміхаєшся на табло. Не забиваєш — але посміхаєшся.",
+    "when": {
+      "minLevel": 3
+    },
+    "once": true,
+    "effect": {
+      "fanHype": 6,
+      "quieter": [
+        "body",
+        "vision",
+        "instinct"
+      ],
+      "note": "Вініри: трибуни в захваті, тиждень без тренувань."
+    }
+  },
+  {
+    "id": "podcast",
+    "voice": "ego",
+    "title": "Подкаст про ментальність",
+    "line": "Ти годину говорив про дисципліну. Запис — у неділю о третій ночі.",
+    "when": {
+      "minLevel": 2
+    },
+    "cooldown": 3,
+    "effect": {
+      "louder": [
+        "composure"
+      ],
+      "coachTrust": -3,
+      "fanHype": 2,
+      "note": "Подкаст: Холоднокровність чутно, тренер просить менше говорити."
+    }
+  },
+  {
+    "id": "ref_stories",
+    "voice": "ego",
+    "title": "Поскаржитись на суддю в сторіз",
+    "line": "Двісті тисяч переглядів. Один із них — суддівський комітет.",
+    "when": {
+      "result": "loss"
+    },
+    "cooldown": 3,
+    "effect": {
+      "fanHype": 8,
+      "coachTrust": -5,
+      "flags": [
+        {
+          "flag": "ref_annoyed",
+          "after": 1,
+          "past": "назвав суддівство ганьбою в сторіз"
+        }
+      ],
+      "note": "Сторіз про суддю: трибуни в захваті, судді — з пам’яттю."
+    }
+  },
+  {
+    "id": "dubai_birthday",
+    "voice": "ego",
+    "title": "День народження в Дубаї",
+    "line": "Сорок градусів, тридцять гостей, двадцять годин перельоту. Тренер рахував інакше.",
+    "when": {
+      "minLevel": 3
+    },
+    "once": true,
+    "effect": {
+      "momentum": 2,
+      "stamina": -15,
+      "coachTrust": -10,
+      "flags": [
+        {
+          "flag": "sub_threat",
+          "after": 0,
+          "past": "полетів на день народження в Дубай"
+        }
+      ],
+      "note": "Дубай: кураж є, сил немає, дублер тренувався."
+    }
+  },
+  {
+    "id": "clothing_brand",
+    "voice": "ego",
+    "title": "Запустити бренд одягу",
+    "line": "Логотип — твої ініціали. Дизайнер сказав, що це сміливо. Він мав на увазі інше.",
+    "when": {
+      "minLevel": 4
+    },
+    "once": true,
+    "effect": {
+      "fanHype": 4,
+      "quieter": [
+        "team"
+      ],
+      "note": "Бренд: трибуни знають, Команда шепочеться про «бізнесмена»."
+    }
+  },
+  {
+    "id": "play_yourself",
+    "voice": "ego",
+    "title": "Пограти в себе у відеогрі",
+    "line": "Твій рейтинг — 64. Ти написав розробникам. Вони не відповіли.",
+    "cooldown": 3,
+    "effect": {
+      "momentum": 1,
+      "note": "Відеогра: кураж трохи вищий. Це все."
+    }
+  },
+  {
+    "id": "tattoo",
+    "voice": "ego",
+    "title": "Нове тату",
+    "line": "Дата дебюту на передпліччі. Дата дебюту за дубль — ні.",
+    "when": {
+      "minLevel": 2
+    },
+    "once": true,
+    "effect": {
+      "momentum": 1,
+      "fanHype": 2,
+      "stamina": -3,
+      "note": "Тату: Его гучніше, рука тиждень боліла."
+    }
+  },
+  {
+    "id": "big_interview",
+    "voice": "ego",
+    "title": "Інтерв’ю великому виданню",
+    "line": "Заголовок вони придумали до розмови. Розмова була для фото.",
+    "when": {
+      "position": "top"
+    },
+    "cooldown": 3,
+    "effect": {
+      "fanHype": 6,
+      "coachTrust": -2,
+      "momentum": 1,
+      "note": "Інтерв’ю: трибуни за тебе, тренер читав заголовок."
+    }
+  },
+  {
+    "id": "restaurant",
+    "voice": "ego",
+    "title": "Відкрити ресторан",
+    "line": "Меню — від шефа, назва — від тебе. Обидва не в захваті.",
+    "when": {
+      "minSeason": 2
+    },
+    "once": true,
+    "effect": {
+      "fanHype": 5,
+      "stamina": -6,
+      "quieter": [
+        "team"
+      ],
+      "note": "Ресторан: трибуни їдять там, сили — на відкриття."
+    }
+  },
+  {
+    "id": "horse",
+    "voice": "ego",
+    "title": "Купити коня",
+    "line": "Він теж не знає навіщо.",
+    "when": {
+      "minSeason": 2
+    },
+    "once": true,
+    "effect": {
+      "momentum": 1,
+      "note": "Кінь: нічого не змінилося. Але тепер у тебе є кінь."
+    }
+  }
+]

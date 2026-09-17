@@ -50,7 +50,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   const outcome = pickOutcome(option, res);
   const flat = res.totalScore - res.rawRoll;
   const m = margin(res);
-  const tag = `${POSITION_LABEL[res.position]}: ${TIER_LABEL[res.tier].toLowerCase().replace('…', '')}${m ? ', ' + m : ''}`;
+  const tag = `${POSITION_LABEL[res.position]} ${THRESHOLDS[res.position].cost}: ${TIER_LABEL[res.tier].toLowerCase().replace('…', '')}${m ? ', ' + m : ''}`;
   const mods = res.mods.filter((m) => m.value !== 0 || m === res.mods[0]);
 
   return (
@@ -62,7 +62,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         <div className={`d10 ${step >= 1 ? 'shown' : 'rolling'}`}>{step >= 1 ? res.dice[1] : '·'}</div>
         {step >= 2 && (
           <div className="dice-sum">
-            {res.rawRoll} на кубиках<br />{fmt(flat)} поправок = <b>{res.totalScore}</b>
+            {res.rawRoll} на кубиках {fmt(flat)} поправок<br /><b>{res.totalScore}</b> проти цілі <b>{THRESHOLDS[res.position].cost}</b>
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
 import { availableOptions, optionCost } from '../engine/match';
 import { EFFECT_LABEL, POSITION_LABEL } from '../engine/resolve';
+import { THRESHOLDS } from '../engine/balance';
 
 type Props = {
   episode: Episode;
@@ -70,6 +71,9 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                     <i className="shift-mark" title="форма ризику змістилася через твій стан">↯</i>
                   )}
                 </span>
+                {/* Цель проверки — как «Medium 10» в Disco Elysium: 2d10 + поправки проти цього числа.
+                    Число, а не вероятность; зависит от формы риска после сдвигов контекста. */}
+                <span className="tag target">ціль {THRESHOLDS[ctx.position].cost}</span>
                 <span className="tag scale">{EFFECT_LABEL[ctx.effect]}</span>
                 {chainHint(o) && <span className="tag chain">→ {chainHint(o)}</span>}
                 <CostBar cost={optionCost(o)} />

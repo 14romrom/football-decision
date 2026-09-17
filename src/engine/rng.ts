@@ -5,6 +5,9 @@ export type Rng = {
   /** Игровой бросок: 2d10, 2..20, колокол со средним 11. Замена d20 после плейтеста:
    *  серии 5-5-5-1 воспринимались как поломка, а скилл терялся на фоне плоского разброса. */
   roll(): number;
+  /** Грани последнего roll(): экран броска показывает два кубика, а не сумму (Disco Elysium).
+   *  Тесты подменяют roll() фиксированным числом — тогда пары нет, экран делит сумму сам. */
+  lastDice?: [number, number];
   pick<T>(items: T[]): T;
   /** Взвешенный выбор; веса должны быть > 0. */
   weighted<T>(items: T[], weight: (item: T) => number): T;
@@ -21,10 +24,15 @@ export function makeRng(seed: number): Rng {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
   const int = (lo: number, hi: number) => lo + Math.floor(next() * (hi - lo + 1));
-  return {
+  const rng: Rng = {
     next,
     int,
-    roll: () => int(1, 10) + int(1, 10),
+    roll: () => {
+      const a = int(1, 10);
+      const b = int(1, 10);
+      rng.lastDice = [a, b];
+      return a + b;
+    },
     pick: <T,>(items: T[]) => items[int(0, items.length - 1)],
     weighted: <T,>(items: T[], weight: (item: T) => number) => {
       const total = items.reduce((s, i) => s + weight(i), 0);
@@ -37,4 +45,5 @@ export function makeRng(seed: number): Rng {
     },
     chance: (p: number) => next() < p,
   };
+  return rng;
 }

@@ -6,7 +6,7 @@ import { attrMod } from './context';
 import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL } from './voices';
-import { mostSpecific, pickFlavor, scoreState, type FlavorRule } from './flavor';
+import { mostSpecific, pickFlavorLine, scoreState, type FlavorRule } from './flavor';
 import { pickOutcome, resultBadges } from './resolve';
 import type { Rng } from './rng';
 import type {
@@ -687,7 +687,7 @@ export function applyChoice(
     tier: res.tier,
     effect: res.effect,
     causedConcede: conceded,
-    flavor: pickFlavor(flavorRules, state, res.tier, rng),
+    ...(() => { const f = pickFlavorLine(flavorRules, state, res.tier, rng); return f ? { flavor: f.text, flavorVoice: f.voice } : {}; })(),
     badges: resultBadges(outcome.apply),
   });
 

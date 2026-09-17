@@ -50,6 +50,8 @@ export type TimelineEvent = {
   scorer?: string;
   /** Ироничная реплика по ситуации после исхода (см. engine/flavor.ts). */
   flavor?: string;
+  /** Чей это голос — по условию реплики: КУРАЖ, ТІЛО, ТРЕНЕР, ТАБЛО, ГОДИННИК, СУДДЯ, ТРИБУНИ. */
+  flavorVoice?: string;
   /** Чёткие теги результата («⚽ Гол!», «Втрата м'яча») — что конкретно произошло,
    *  отдельно от яруса броска (тот про качество попытки, не про итог). См. resolve.ts. */
   badges?: ResultBadge[];
@@ -235,6 +237,8 @@ export type ModLine = { label: string; value: number; source: ModSource };
 
 export type Resolution = {
   rawRoll: number;          // что выпало на кубиках
+  /** Две грани 2d10 — для экрана броска. Сумма всегда равна rawRoll. */
+  dice: [number, number];
   roll: number;             // то же; поле оставлено для телеметрии
   attrMod: number;
   mods: ModLine[];          // контекстные модификаторы, включая attrMod-строку

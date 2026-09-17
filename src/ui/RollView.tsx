@@ -1,65 +1,44 @@
 import { useEffect, useState } from 'react';
 import type { EpisodeOption, Resolution, ResultBadge } from '../engine/types';
+import { ATTRIBUTE_LABEL } from '../engine/types';
 import { EFFECT_LABEL, pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 import { THRESHOLDS } from '../engine/balance';
 
-/** Три источника итога: кубик, ти (атрибут, голос, стан), поле (суперник, погода, люди). */
-function parts(res: Resolution) {
-  const sum = (src: 'player' | 'field', sign: 1 | -1) =>
-    res.mods.filter((m) => m.source === src && Math.sign(m.value) === sign).reduce((s, m) => s + m.value, 0);
-  return {
-    dice: res.rawRoll,
-    youPlus: sum('player', 1), fieldPlus: sum('field', 1),
-    minus: sum('player', -1) + sum('field', -1),   // отрицательное число
-    you: sum('player', 1) + sum('player', -1), field: sum('field', 1) + sum('field', -1),
-  };
+// Экран броска в духе Disco Elysium (плейтест 17.09: шкалы и составные полосы «учат считать,
+// а не читать»). Два кубика — видно, что выпало и почему катастрофу не выкупить; баннер —
+// что произошло; исход говорит голосом атрибута с пометкой [форма: ярус, запас]; реплика по
+// ситуации — второй голос; поправки — одной строкой мелко, цвет по источнику (ти / поле).
+
+type Props = {
+  option: EpisodeOption; res: Resolution; flavor?: string; flavorVoice?: string; badges?: ResultBadge[];
+  /** Цепочка сработала: куда ведёт сцена — подпись на кнопке. */
+  continues?: string;
+  onNext: () => void;
+};
+
+const STEP_DELAYS = [900, 700, 600];
+
+const BANNER: Record<Resolution['tier'], string> = {
+  clean: 'перевірку пройдено', cost: 'вийшло, але…', fail: 'не вийшло', badFail: 'катастрофа',
+};
+
+/** Запас — словами, без чисел порогов: «на волосині» / «із запасом». */
+function margin(res: Resolution): string | null {
+  if (res.critical) return null;
+  const t = THRESHOLDS[res.position];
+  const s = res.totalScore;
+  if (res.tier === 'clean') return s - t.cost <= 1 ? 'на волосині' : s - t.cost >= 4 ? 'із запасом' : null;
+  if (res.tier === 'cost') return t.cost - s <= 1 ? 'майже чисто' : s - t.fail <= 1 ? 'ледь не провал' : null;
+  if (res.tier === 'fail') return t.fail - s <= 1 ? 'не вистачило кроку' : null;
+  return null;
 }
 
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
 
-/** Шкала итога: провал | вийшло, але… | чисто — и где на ней оказался score. Без чисел
- *  порогов, только положение: плейтест 17.09 — «6 на кубику, а результат чистый, непонятно».
- *  Над зонами — из чего сложился итог: кубик, ти, поле; минусы — красный откат от итога.
- *  Катастрофа — по сырым кубикам, на шкале её нет, о ней говорит отдельная строка. */
-function ScoreBar({ res }: { res: Resolution }) {
-  const t = THRESHOLDS[res.position];
-  const lo = 0;
-  const hi = t.cost + 8;
-  const pct = (v: number) => Math.max(0, Math.min(100, ((v - lo) / (hi - lo)) * 100));
-  const p = parts(res);
-  const gross = p.dice + p.youPlus + p.fieldPlus;   // без минусов; итог = gross + minus
-  return (
-    <div className="scorebar" aria-label="шкала результату">
-      <div className="scorebar-parts">
-        <span className="part part-dice" style={{ left: `${pct(lo)}%`, width: `${pct(p.dice) - pct(lo)}%` }} />
-        {p.youPlus > 0 && <span className="part part-you" style={{ left: `${pct(p.dice)}%`, width: `${pct(p.dice + p.youPlus) - pct(p.dice)}%` }} />}
-        {p.fieldPlus > 0 && <span className="part part-field" style={{ left: `${pct(p.dice + p.youPlus)}%`, width: `${pct(gross) - pct(p.dice + p.youPlus)}%` }} />}
-        {p.minus < 0 && <span className="part part-minus" style={{ left: `${pct(res.totalScore)}%`, width: `${pct(gross) - pct(res.totalScore)}%` }} />}
-      </div>
-      <div className="scorebar-zones">
-        <span className="zone zone-fail" style={{ width: `${pct(t.fail)}%` }}>провал</span>
-        <span className="zone zone-cost" style={{ width: `${pct(t.cost) - pct(t.fail)}%` }}>вийшло, але…</span>
-        <span className="zone zone-clean" style={{ width: `${100 - pct(t.cost)}%` }}>чисто</span>
-      </div>
-      <i className="scorebar-mark" style={{ left: `${pct(res.totalScore)}%` }} />
-    </div>
-  );
-}
-
-/** continues — цепочка сработала: следующее решение будет на этой же минуте (плейтест 17.09:
- *  «сцена продолжилась, но это было неочевидно»). */
-type Props = { option: EpisodeOption; res: Resolution; flavor?: string; badges?: ResultBadge[]; continues?: string; onNext: () => void };
-
-// Бросок должен быть событием, а не обновлением страницы: сначала пауза,
-// потом кубик, потом объяснение модификаторов, и только затем — исход.
-const STEP_DELAYS = [900, 700, 600];
-
-export function RollView({ option, res, flavor, badges, continues, onNext }: Props) {
+export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext }: Props) {
   const [step, setStep] = useState(0);
 
-  useEffect(() => {
-    setStep(0);
-  }, [option.id, res.roll]);
+  useEffect(() => { setStep(0); }, [option.id, res.roll]);
 
   useEffect(() => {
     if (step >= STEP_DELAYS.length) return;
@@ -67,66 +46,64 @@ export function RollView({ option, res, flavor, badges, continues, onNext }: Pro
     return () => clearTimeout(t);
   }, [step]);
 
-  // Один источник истины с applyChoice (resolve.ts:pickOutcome) — иначе на критическом
-  // успехе тут показывался бы обычный «чисто», а в ленту уходил бы другой, крит-текст.
+  // Один источник истины с applyChoice (resolve.ts:pickOutcome).
   const outcome = pickOutcome(option, res);
+  const flat = res.totalScore - res.rawRoll;
+  const m = margin(res);
+  const tag = `${POSITION_LABEL[res.position]}: ${TIER_LABEL[res.tier].toLowerCase().replace('…', '')}${m ? ', ' + m : ''}`;
+  const mods = res.mods.filter((m) => m.value !== 0 || m === res.mods[0]);
 
   return (
-    <div className="card roll" onClick={() => setStep(STEP_DELAYS.length)}>
-      <div className="roll-head">
-        {option.label} · {POSITION_LABEL[res.position]} · {EFFECT_LABEL[res.effect]}
-      </div>
+    <div className="card roll de" onClick={() => setStep(STEP_DELAYS.length)}>
+      <div className="roll-head">{option.label} · {POSITION_LABEL[res.position]} · {EFFECT_LABEL[res.effect]}</div>
 
-      <div className={`die ${step >= 1 ? 'shown' : 'rolling'}`}>
-        {step >= 1 ? res.rawRoll : '…'}
+      <div className="dice-row">
+        <div className={`d10 ${step >= 1 ? 'shown' : 'rolling'}`}>{step >= 1 ? res.dice[0] : '·'}</div>
+        <div className={`d10 ${step >= 1 ? 'shown' : 'rolling'}`}>{step >= 1 ? res.dice[1] : '·'}</div>
+        {step >= 2 && (
+          <div className="dice-sum">
+            {res.rawRoll} на кубиках<br />{fmt(flat)} поправок = <b>{res.totalScore}</b>
+          </div>
+        )}
       </div>
 
       {step >= 2 && (
         <>
-        <ul className="mods">
-          {res.mods.length === 0 && <li className="mod"><span>без поправок</span><b /></li>}
-          {res.mods.map((m) => (
-            <li key={m.label} className={`mod src-${m.source} ${m.value > 0 ? 'plus' : m.value < 0 ? 'minus' : 'zero'}`}>
-              <span><i className="src-dot" />{m.label}</span>
-              <b>{m.value > 0 ? `+${m.value}` : m.value < 0 ? `−${Math.abs(m.value)}` : '+0'}</b>
-            </li>
-          ))}
-        </ul>
-        {/* Сумма — не вероятность, а арифметика броска: кубик, ти, поле. */}
-        {(() => { const p = parts(res); return (
-          <p className="total">
-            <span className="chip chip-dice">🎲 {p.dice}</span>
-            <span className={`chip chip-you ${p.you < 0 ? 'neg' : ''}`}>ти {fmt(p.you)}</span>
-            <span className={`chip chip-field ${p.field < 0 ? 'neg' : ''}`}>поле {fmt(p.field)}</span>
-            <span className="eq">=</span> <b>{res.totalScore}</b>
-          </p>
-        ); })()}
-        <ScoreBar res={res} />
+          <div className={`banner banner-${res.tier}`}>{BANNER[res.tier]}</div>
+          {res.critical === 'fail' && (
+            <p className="crit-note">{res.dice[0]} і {res.dice[1]} — на такому ризику це катастрофа, навичка тут не рятує.</p>
+          )}
+          {res.critical === 'success' && <p className="crit-note">Двадцять. Таке не пояснюють.</p>}
         </>
       )}
 
       {step >= 3 && (
         <>
-          <div className={`tier tier-${res.tier}`}>{TIER_LABEL[res.tier]}</div>
-          {res.critical === 'fail' && (
-            <p className="crit-note">{res.rawRoll} на кубиках — на такому ризику це катастрофа, навичка тут не рятує.</p>
-          )}
-          {res.critical === 'success' && (
-            <p className="crit-note">Двадцять. Таке не пояснюють.</p>
+          <p className="line">
+            <span className="voice-name src-player">{ATTRIBUTE_LABEL[option.attribute]}</span>
+            <span className="voice-tag"> [{tag}]</span> — {outcome.text}
+          </p>
+          {flavor && (
+            <p className="line line-second">
+              <span className="voice-name src-field">{flavorVoice ?? 'ТРИБУНИ'}</span> — {flavor}
+            </p>
           )}
           {badges && badges.length > 0 && (
             <ul className="badges">
               {badges.map((b) => (
-                <li key={b.label} className={`badge badge-${b.tone}`}>
-                  <span className="badge-icon">{b.icon}</span>{b.label}
-                </li>
+                <li key={b.label} className={`badge badge-${b.tone}`}><span className="badge-icon">{b.icon}</span>{b.label}</li>
               ))}
             </ul>
           )}
-          <p className="outcome">{outcome.text}</p>
-          {flavor && <p className="flavor">{flavor}</p>}
+          <p className="modline">
+            {mods.map((m, i) => (
+              <span key={m.label} className={`modchip src-${m.source} ${m.value < 0 ? 'neg' : ''}`}>
+                {i > 0 && <span className="dot"> · </span>}{fmt(m.value)} {m.label}
+              </span>
+            ))}
+          </p>
           {continues && <p className="continues">Момент триває — наступне рішення на цій же хвилині.</p>}
-          <button className="primary" onClick={onNext}>{continues ? `Далі → ${continues}` : 'Далі'}</button>
+          <button className="primary de-next" onClick={onNext}>{continues ? `Далі → ${continues}` : 'Далі ►'}</button>
         </>
       )}
     </div>

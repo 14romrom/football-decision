@@ -28,10 +28,16 @@ export function resolveOption(
 ): Resolution {
   const ctx = computeContext(state, player, option, phase, cond, flagRules);
   const rawRoll = rng.roll();
+  // Пара граней — из rng; подменённый в тестах roll() пары не оставляет, делим сумму поровну.
+  const last = rng.lastDice;
+  const dice: [number, number] = last && last[0] + last[1] === rawRoll
+    ? last
+    : [Math.max(1, Math.min(10, Math.ceil(rawRoll / 2))), Math.max(1, Math.min(10, Math.floor(rawRoll / 2)))];
   const totalScore = rawRoll + ctx.flat;
   const tier = tierFor(ctx.position, rawRoll, totalScore);
   return {
     rawRoll,
+    dice,
     roll: rawRoll,
     attrMod: ctx.attrMod,
     mods: ctx.mods,

@@ -46,7 +46,24 @@ export function mostSpecific<T extends { when: SituationWhen }>(
 }
 
 export function pickFlavor(rules: FlavorRule[], state: MatchState, tier: Tier, rng: Rng): string | undefined {
+  return pickFlavorLine(rules, state, tier, rng)?.text;
+}
+
+/** Кто говорит реплику — по тому, на что она реагирует. Экран броска показывает её как
+ *  вторую реплику после голоса атрибута (Disco Elysium): «КУРАЖ [+2] — Знову…». */
+export function flavorVoice(when: SituationWhen): string {
+  if (when.momentumMin !== undefined || when.momentumMax !== undefined) return 'КУРАЖ';
+  if (when.tired) return 'ТІЛО';
+  if (when.booked) return 'СУДДЯ';
+  if (when.lowTrust) return 'ТРЕНЕР';
+  if (when.score) return 'ТАБЛО';
+  if (when.minMinute !== undefined) return 'ГОДИННИК';
+  return 'ТРИБУНИ';
+}
+
+export function pickFlavorLine(rules: FlavorRule[], state: MatchState, tier: Tier, rng: Rng): { text: string; voice: string } | undefined {
   const top = mostSpecific(rules, state, undefined, tier);
   if (top.length === 0) return undefined;
-  return rng.pick(rng.pick(top).lines);
+  const rule = rng.pick(top);
+  return { text: rng.pick(rule.lines), voice: flavorVoice(rule.when) };
 }

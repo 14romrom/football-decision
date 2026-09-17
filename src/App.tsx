@@ -345,6 +345,7 @@ function Game() {
             option={stage.option}
             res={stage.res}
             flavor={stage.events.find((e) => e.kind === 'episode')?.flavor}
+            flavorVoice={stage.events.find((e) => e.kind === 'episode')?.flavorVoice}
             badges={stage.events.find((e) => e.kind === 'episode')?.badges}
             continues={stage.continues}
             onNext={afterRoll}

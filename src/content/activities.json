@@ -533,7 +533,7 @@
     "id": "apologize_partner",
     "voice": "team",
     "title": "Поговорити з партнером",
-    "line": "{partner} робить вигляд, що не ображений. Це найгірша з образ.",
+    "line": "{partner} вдає, що не ображений. Це найгірша з образ.",
     "when": {
       "flags": [
         "partner_annoyed"

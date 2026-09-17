@@ -7,7 +7,11 @@ import type { MatchConditions } from './conditions';
 import type { Rng } from './rng';
 import type { MatchState, SituationWhen, Tier } from './types';
 
-export type FlavorRule = { when: SituationWhen; lines: string[] };
+/** voice — кто говорит; без него голос выводится из условия (flavorVoice). */
+export type FlavorRule = { when: SituationWhen; lines: string[]; voice?: string };
+
+/** Сцена, о которой реплика: семья и фаза эпизода. */
+export type Scene = { family?: string; phase?: string };
 
 export function scoreState(state: MatchState): 'leading' | 'trailing' | 'level' {
   const diff = state.scoreUs - state.scoreThem;
@@ -17,9 +21,11 @@ export function scoreState(state: MatchState): 'leading' | 'trailing' | 'level' 
 /** Подходит ли условие к текущему моменту матча. Условия матча (venue/weather/strength)
  *  необязательны: реплики их не знают, варианты сетапа — знают. */
 export function matchesSituation(
-  w: SituationWhen, state: MatchState, conditions?: MatchConditions, tier?: Tier,
+  w: SituationWhen, state: MatchState, conditions?: MatchConditions, tier?: Tier, scene?: Scene,
 ): boolean {
   if (w.tier && w.tier !== tier) return false;
+  if (w.family && w.family !== scene?.family) return false;
+  if (w.phase && w.phase !== scene?.phase) return false;
   if (w.score && w.score !== scoreState(state)) return false;
   if (w.minMinute !== undefined && state.minute < w.minMinute) return false;
   if (w.maxMinute !== undefined && state.minute > w.maxMinute) return false;
@@ -37,16 +43,16 @@ export function matchesSituation(
 
 /** Самое конкретное из подходящих правил побеждает: реплика про жёлтую важнее общей. */
 export function mostSpecific<T extends { when: SituationWhen }>(
-  rules: T[], state: MatchState, conditions?: MatchConditions, tier?: Tier,
+  rules: T[], state: MatchState, conditions?: MatchConditions, tier?: Tier, scene?: Scene,
 ): T[] {
-  const fitting = rules.filter((r) => matchesSituation(r.when, state, conditions, tier));
+  const fitting = rules.filter((r) => matchesSituation(r.when, state, conditions, tier, scene));
   if (fitting.length === 0) return [];
   const best = Math.max(...fitting.map((r) => Object.keys(r.when).length));
   return fitting.filter((r) => Object.keys(r.when).length === best);
 }
 
-export function pickFlavor(rules: FlavorRule[], state: MatchState, tier: Tier, rng: Rng): string | undefined {
-  return pickFlavorLine(rules, state, tier, rng)?.text;
+export function pickFlavor(rules: FlavorRule[], state: MatchState, tier: Tier, rng: Rng, scene?: Scene): string | undefined {
+  return pickFlavorLine(rules, state, tier, rng, scene)?.text;
 }
 
 /** Кто говорит реплику — по тому, на что она реагирует. Экран броска показывает её как
@@ -61,9 +67,30 @@ export function flavorVoice(when: SituationWhen): string {
   return 'ТРИБУНИ';
 }
 
-export function pickFlavorLine(rules: FlavorRule[], state: MatchState, tier: Tier, rng: Rng): { text: string; voice: string } | undefined {
-  const top = mostSpecific(rules, state, undefined, tier);
-  if (top.length === 0) return undefined;
-  const rule = rng.pick(top);
-  return { text: rng.pick(rule.lines), voice: flavorVoice(rule.when) };
+/** Семейная реплика знает сцену, общая — только счёт и минуту. Строгое «побеждает самое
+ *  конкретное» давало 34% повторов за сезон: у семьи на исход три строки, а edge_shot
+ *  выпадает дважды за матч. Поэтому пул — все подходящие правила с весом по конкретности
+ *  (3^ключей: семейная втрое вероятнее общей), а уже виденные в этом матче строки
+ *  выкидываются, пока есть свежие. */
+export function pickFlavorLine(
+  rules: FlavorRule[], state: MatchState, tier: Tier, rng: Rng, scene?: Scene, seen: Set<string> = new Set(),
+): { text: string; voice: string } | undefined {
+  const fitting = rules.filter((r) => matchesSituation(r.when, state, undefined, tier, scene));
+  if (fitting.length === 0) return undefined;
+  const pool: { text: string; voice: string; weight: number }[] = [];
+  for (const r of fitting) {
+    const weight = 3 ** Object.keys(r.when).length;
+    const voice = r.voice ?? flavorVoice(r.when);
+    for (const text of r.lines) pool.push({ text, voice, weight });
+  }
+  const fresh = pool.filter((l) => !seen.has(l.text));
+  const candidates = fresh.length > 0 ? fresh : pool;
+  const total = candidates.reduce((sum, l) => sum + l.weight, 0);
+  let x = rng.next() * total;
+  for (const l of candidates) {
+    x -= l.weight;
+    if (x <= 0) return { text: l.text, voice: l.voice };
+  }
+  const last = candidates[candidates.length - 1];
+  return { text: last.text, voice: last.voice };
 }

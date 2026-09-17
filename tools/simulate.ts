@@ -50,7 +50,7 @@ export function runMatch(seed: number, policy: PolicyName, mode: ConditionsMode 
   for (;;) {
     const next = nextEpisode(session, rng);
     if (!next) break;
-    const option = POLICIES[policy](availableOptions(next.episode, session.state), (n) => rng.int(0, n - 1));
+    const option = POLICIES[policy](availableOptions(next.episode, session.state, session.player), (n) => rng.int(0, n - 1));
     const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
     applyChoice(session, next.episode, option, res, rng);
     tiers.push(res.tier);
@@ -161,7 +161,7 @@ export function runSeason(seedBase: number, matches: number): { repeats: number[
       const key = next.episode.id + '|' + next.episode.setup.replace(/\d+-й/g, 'N-й');
       if (setupsSeen.has(key)) setupRepeats += 1;
       setupsSeen.add(key);
-      const option = POLICIES.random(availableOptions(next.episode, session.state), (n) => rng.int(0, n - 1));
+      const option = POLICIES.random(availableOptions(next.episode, session.state, session.player), (n) => rng.int(0, n - 1));
       const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
       applyChoice(session, next.episode, option, res, rng);
     }

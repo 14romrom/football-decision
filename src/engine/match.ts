@@ -5,13 +5,13 @@ import { BALANCE, MOMENTUM_BY_TIER, MOMENTUM_COST_RECOVERY } from './balance';
 import { attrMod } from './context';
 import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
-import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL } from './voices';
+import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL, voiceSees } from './voices';
 import { mostSpecific, pickFlavorLine, scoreState, type FlavorRule } from './flavor';
 import { pickOutcome, resultBadges } from './resolve';
 import type { Rng } from './rng';
 import type {
   ApplyEffect, Episode, EpisodeMemory, EpisodeOption, FlagRule, Mark, MatchState, Player, Resolution,
-  TimelineEvent, Tier,
+  TimelineEvent, Tier, Voice,
 } from './types';
 
 export type MatchSession = {
@@ -42,6 +42,8 @@ export type MatchSession = {
   usedEpisodeIds: string[];
   nextIndex: number;
   finished: boolean;
+  /** Реплики второго голоса, уже прочитанные в этом матче — flavor.ts не повторяет их, пока есть свежие. */
+  flavorSeen: Set<string>;
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -155,6 +157,9 @@ export type Carryover = {
   /** Флаги-последствия из прошлого матча (career.ts:carriedFlags) — партнёр помнит пас,
    *  тренер — фланг. Реактивный эпизод скажет «ще минулого матчу», см. fillTrigger. */
   flags?: { flag: string; mark: Mark; opponentKey?: string }[];
+  /** Реплики второго голоса из последних матчей (telemetry/history.ts:recentFlavor) —
+   *  считаются уже прочитанными, чтобы сезон не повторял одни и те же строки. */
+  flavorSeen?: string[];
 };
 
 export function createMatch(
@@ -218,7 +223,7 @@ export function createMatch(
     memory: toMemory(recentEpisodeIds),
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
-    usedEpisodeIds: [], nextIndex: 0, finished: false,
+    usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
   };
 }
 
@@ -541,14 +546,22 @@ export function nextEpisode(
 }
 
 /** Варианты, доступные сейчас: условные («по підказці») — только при флагах. */
-export function availableOptions(episode: Episode, state: MatchState): EpisodeOption[] {
+/** Варианты, которые игрок видит: условные — по флагам, «голос бачить» — по силе атрибута.
+ *  Без player варианты с insight скрыты: кто не передал игрока, тот не видит и подсказок. */
+export function availableOptions(episode: Episode, state: MatchState, player?: Player): EpisodeOption[] {
   return episode.options.filter((o) => {
+    if (o.insight && !(player && voiceSees(o.insight.who, player))) return false;
     const r = o.requires;
     if (!r) return true;
     if (r.flags && !r.flags.every((f) => state.flags.includes(f))) return false;
     if (r.notFlags && r.notFlags.some((f) => state.flags.includes(f))) return false;
     return true;
   });
+}
+
+/** Что сильные голоса заметили в сцене — строки над вариантами (см. EpisodeOption.insight). */
+export function sceneInsights(episode: Episode, state: MatchState, player: Player): Voice[] {
+  return availableOptions(episode, state, player).flatMap((o) => (o.insight ? [o.insight] : []));
 }
 
 /** Сработает ли цепочка из этого исхода: звено существует, лимиты не выбраны, звено ещё не играли. */
@@ -687,7 +700,13 @@ export function applyChoice(
     tier: res.tier,
     effect: res.effect,
     causedConcede: conceded,
-    ...(() => { const f = pickFlavorLine(flavorRules, state, res.tier, rng); return f ? { flavor: f.text, flavorVoice: f.voice } : {}; })(),
+    // Реплика знает семью сцены (пенальті, а не «удар») и, как и эпизоды, говорит именами ростера.
+    ...(() => {
+      const f = pickFlavorLine(flavorRules, state, res.tier, rng, { family: episode.family, phase: episode.phase }, session.flavorSeen);
+      if (!f) return {};
+      session.flavorSeen.add(f.text);
+      return { flavor: fillNames(f.text, session.roster), flavorVoice: f.voice };
+    })(),
     badges: resultBadges(outcome.apply),
   });
 

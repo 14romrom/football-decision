@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
 import { generateConditions, toneFromHistory } from './engine/conditions';
-import { readHistory, episodeMemory, recordResult } from './telemetry/history';
+import { readHistory, episodeMemory, recentFlavor, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
 import { BriefingScreen } from './ui/BriefingScreen';
 import { PlayerCard } from './ui/PlayerCard';
@@ -91,7 +91,8 @@ function Game() {
       setQueue([...lead, ...next.events]);
     } else {
       const { events, summary } = finishMatch(session, rng);
-      recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds);   // тонус и память следующего матча
+      // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
+      recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds, [...session.flavorSeen]);
 
       const before = careerRef.current;
       const hadDominantVoice = dominantVoice(session.state.voices) !== null;
@@ -143,6 +144,7 @@ function Game() {
       {
         coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,
         coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
+        flavorSeen: recentFlavor(BALANCE.match.memory.horizon),
       },
     );
     rngRef.current = rng;

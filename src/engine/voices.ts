@@ -39,6 +39,20 @@ export function dominantVoice(trace: VoiceTrace): { who: VoiceKey; count: number
   return count >= BALANCE.voiceDominantMin ? { who, count } : null;
 }
 
+/** Голос бачить: только атрибутные голоса и только по силе атрибута — не по состоянию матча,
+ *  иначе вариант мигал бы от эпизода к эпизоду. Его и Команда не видят, они хотят. */
+export function voiceSees(who: VoiceKey, player: Player): boolean {
+  const m = (a: keyof Player['attrs']) => attrMod(player.attrs[a]);
+  const sees = BALANCE.insightMinMod;
+  switch (who) {
+    case 'vision': return m('vision') >= sees || m('positioning') >= sees;
+    case 'instinct': return m('dribbling') >= sees || m('first_touch') >= sees;
+    case 'body': return m('pace') >= sees || m('strength') >= sees;
+    case 'composure': return m('composure') >= sees;
+    default: return false;
+  }
+}
+
 const listenedTwice = (state: MatchState, who: VoiceKey) => state.voices.streak.who === who && state.voices.streak.count >= 2;
 
 export function voiceAudible(who: VoiceKey, option: EpisodeOption, state: MatchState, player: Player): boolean {

@@ -2,7 +2,7 @@ import { ATTRIBUTE_LABEL, type Episode, type EpisodeOption, type FlagRule, type 
 import { VOICE_LABEL, voiceAudible } from '../engine/voices';
 import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
-import { availableOptions, optionCost } from '../engine/match';
+import { availableOptions, optionCost, sceneInsights } from '../engine/match';
 import { EFFECT_LABEL, POSITION_LABEL } from '../engine/resolve';
 import { THRESHOLDS } from '../engine/balance';
 
@@ -46,8 +46,13 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
     <div className="card episode">
       <div className="card-minute">{minute}′{link && <span className="link-mark"> · продовження</span>}</div>
       <p className="setup">{episode.setup}</p>
+      {/* Голос бачить: сильный атрибут заметил деталь, которой нет в сетапе, — и ниже
+          появился вариант, которого у другого билда нет. Факт, не совет. */}
+      {sceneInsights(episode, state, player).map((v) => (
+        <p key={v.who} className={`insight voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b> — {v.line}</p>
+      ))}
       <div className="options">
-        {availableOptions(episode, state).map((o) => {
+        {availableOptions(episode, state, player).map((o) => {
           // Показываем ярлыки уже со сдвигами от контекста: если ноги встали,
           // игрок должен видеть, что надёжный вариант перестал быть надёжным.
           const ctx = computeContext(state, player, o, episode.phase, conditions, flagRules);

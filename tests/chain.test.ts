@@ -76,7 +76,7 @@ describe('цепочки: исход ведёт в следующее решен
         const next = nextEpisode(s, rng);
         if (!next) break;
         perSlot.set(next.minute, (perSlot.get(next.minute) ?? 0) + 1);
-        const options = availableOptions(next.episode, s.state);
+        const options = availableOptions(next.episode, s.state, s.player);
         const opt = options[rng.int(0, options.length - 1)];
         applyChoice(s, next.episode, opt, resolveOption(s.state, s.player, opt, next.episode.phase, rng), rng);
       }
@@ -99,7 +99,7 @@ describe('цепочки: исход ведёт в следующее решен
     for (;;) {
       const next = nextEpisode(s, rng);
       if (!next) break;
-      const opt = availableOptions(next.episode, s.state)[0];
+      const opt = availableOptions(next.episode, s.state, s.player)[0];
       applyChoice(s, next.episode, opt, resolveOption(s.state, s.player, opt, next.episode.phase, rng), rng);
     }
     expect(s.usedEpisodeIds.filter((id) => id === 'ep_free_kick_close')).toHaveLength(1);
@@ -126,9 +126,9 @@ describe('условные варианты и правила по опциям'
     expect(availableOptions(fin, st([])).map((o) => o.id)).not.toContain('panenka');
     expect(availableOptions(fin, st(['keeper_read'])).map((o) => o.id)).not.toContain('panenka');
     expect(availableOptions(fin, st(['keeper_read', 'keeper_divesEarly'])).map((o) => o.id)).toContain('panenka');
-    // безусловных вариантов у любого эпизода 3–4
+    // безусловных вариантов у любого эпизода 3–4 (условные — по флагу или «голос бачить»)
     for (const e of EPISODES) {
-      const plain = e.options.filter((o) => !o.requires).length;
+      const plain = e.options.filter((o) => !o.requires && !o.insight).length;
       expect(plain, e.id).toBeGreaterThanOrEqual(3);
       expect(plain, e.id).toBeLessThanOrEqual(4);
     }
@@ -232,7 +232,7 @@ describe('плейсхолдеры с цифрой и строки ленты', 
       for (;;) {
         const next = nextEpisode(s, rng);
         if (!next) break;
-        const opt = availableOptions(next.episode, s.state)[0];
+        const opt = availableOptions(next.episode, s.state, s.player)[0];
         applyChoice(s, next.episode, opt, resolveOption(s.state, s.player, opt, next.episode.phase, rng), rng);
       }
       for (const e of s.state.log) expect(e.text, `seed ${seed}: ${e.text}`).not.toMatch(/[{}]/);

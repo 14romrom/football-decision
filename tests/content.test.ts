@@ -21,10 +21,14 @@ describe('форма контента', () => {
     expect(new Set(EPISODES.map((e) => e.id)).size).toBe(EPISODES.length);
   });
 
-  it('у каждого эпизода 3–4 опции и все четыре исхода в каждой', () => {
+  it('у каждого эпизода 3–4 безусловных опции (плюс не больше одной по флагу или голосу) и все четыре исхода в каждой', () => {
     for (const e of EPISODES) {
-      expect(e.options.length, e.id).toBeGreaterThanOrEqual(3);
-      expect(e.options.length, e.id).toBeLessThanOrEqual(4);
+      // Условные варианты — «по підказці» (requires.flags) и «голос бачить» (insight) — сверх
+      // базовых: игрок без сильного атрибута всё равно видит 3–4 кнопки.
+      const base = e.options.filter((o) => !o.requires && !o.insight);
+      expect(base.length, e.id).toBeGreaterThanOrEqual(3);
+      expect(base.length, e.id).toBeLessThanOrEqual(4);
+      expect(e.options.length - base.length, e.id).toBeLessThanOrEqual(1);
       expect(new Set(e.options.map((o) => o.id)).size, e.id).toBe(e.options.length);
       for (const o of e.options) {
         for (const t of TIERS) {

@@ -82,7 +82,7 @@ describe('матч целиком', () => {
       for (;;) {
         const next = nextEpisode(session, rng);
         if (!next) break;
-        const options = availableOptions(next.episode, session.state);
+        const options = availableOptions(next.episode, session.state, session.player);
         const option = options[rng.int(0, options.length - 1)];
         const res = resolveOption(session.state, session.player, option, next.episode.phase, rng);
         applyChoice(session, next.episode, option, res, rng);

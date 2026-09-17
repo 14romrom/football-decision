@@ -6,7 +6,7 @@ import type { EpisodeMemory } from '../engine/types';
 
 const KEY = 'football-decision.history.v1';
 
-export type HistoryEntry = { result: MatchResult; scoreUs: number; scoreThem: number; at: number; episodes?: string[] };
+export type HistoryEntry = { result: MatchResult; scoreUs: number; scoreThem: number; at: number; episodes?: string[]; flavor?: string[] };
 
 export function readHistory(): HistoryEntry[] {
   try {
@@ -29,9 +29,15 @@ export function episodeMemory(horizon: number): EpisodeMemory {
   return memory;
 }
 
-export function recordResult(scoreUs: number, scoreThem: number, episodes: string[]) {
+/** Реплики второго голоса, прочитанные в последних матчах, — чтобы следующий матч начинал
+ *  со свежих (flavor.ts берёт виденные только когда свежих не осталось). */
+export function recentFlavor(horizon: number): string[] {
+  return readHistory().slice(-horizon).flatMap((h) => h.flavor ?? []);
+}
+
+export function recordResult(scoreUs: number, scoreThem: number, episodes: string[], flavor: string[] = []) {
   const result: MatchResult = scoreUs > scoreThem ? 'W' : scoreUs < scoreThem ? 'L' : 'D';
   try {
-    localStorage.setItem(KEY, JSON.stringify([...readHistory(), { result, scoreUs, scoreThem, at: Date.now(), episodes }]));
+    localStorage.setItem(KEY, JSON.stringify([...readHistory(), { result, scoreUs, scoreThem, at: Date.now(), episodes, flavor }]));
   } catch { /* приватный режим — тонус просто останется нейтральным */ }
 }

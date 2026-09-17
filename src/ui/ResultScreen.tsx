@@ -1,3 +1,4 @@
+import { BALANCE } from '../engine/balance';
 import type { MatchSummary } from '../engine/match';
 import type { Roster } from '../engine/names';
 import { exportLogs } from '../telemetry/log';
@@ -72,7 +73,8 @@ export function ResultScreen({ summary, roster, playerName, xpEarned, onRestart 
         <p className="gap-note">Догодити обом одразу вдається рідко. Сьогодні вдалося.</p>
       )}
 
-      {xpEarned !== undefined && <p className="xp-earned">+{xpEarned} досвіду за матч</p>}
+      {/* Уровни выключены (BALANCE.growth.levels) — опыт не показываем: цифра без последствий только путает. */}
+      {BALANCE.growth.levels && xpEarned !== undefined && <p className="xp-earned">+{xpEarned} досвіду за матч</p>}
 
       <div className="actions">
         <button className="primary" onClick={onRestart}>Далі</button>

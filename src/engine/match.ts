@@ -290,12 +290,37 @@ function rollFillerGoal(session: MatchSession, rng: Rng): 'us' | 'them' | null {
   // Сильный соперник чаще забивает сам, слабый — чаще пропускает от партнёров.
   const edge = BALANCE.conditions.strongFillerGoal;
   const s = session.conditions.strength;
-  const pUs = clamp(m.fillerGoalBase + state.momentum * m.fillerGoalMomentum + (s === 'weak' ? edge : 0), 0.01, 0.2);
-  const pThem = clamp(m.fillerGoalBase - state.momentum * m.fillerGoalMomentum + (s === 'strong' ? edge : 0), 0.01, 0.2);
+  const pUs = clamp(m.fillerGoalUs + state.momentum * m.fillerGoalMomentum + (s === 'weak' ? edge : 0), 0.01, 0.2);
+  const pThem = clamp(m.fillerGoalThem - state.momentum * m.fillerGoalMomentum + (s === 'strong' ? edge : s === 'weak' ? -edge : 0), 0.01, 0.2);
   const r = rng.next();
   if (r < pUs) return 'us';
   if (r < pUs + pThem) return 'them';
   return null;
+}
+
+const KNOCK_TEXTS = [
+  'Стик у центрі — суддя не свистить, а ти встаєш не одразу. Задня поверхня стегна тягне.',
+  'Тебе накривають ззаду по ногах. Свисток є, штрафний є — а гомілка горить.',
+  '{them.mid} влітає в стик із запізненням. Ти догрався до кутового і тільки тоді відчув коліно.',
+  'Приземлення після боротьби у повітрі — і різкий біль у щиколотці. Лікар махає: грай.',
+];
+
+/** Чи станеться мікротравма на цьому проміжку: рідко, частіше проти різкого суперника і на сілих ногах. */
+function rollKnock(session: MatchSession, rng: Rng): boolean {
+  const k = BALANCE.knock;
+  const state = session.state;
+  if (state.flags.includes('knock') || state.flags.includes('injured')) return false;
+  let p = k.chancePerGap;
+  if (state.flags.includes('them_hard')) p *= k.hardOpponentScale;
+  if (state.stamina < k.tiredBelow) p *= k.tiredScale;
+  return rng.chance(p);
+}
+
+function pushKnock(session: MatchSession, minute: number, rng: Rng) {
+  const state = session.state;
+  state.flags.push('knock');
+  state.marks.knock = { minute, episodeId: 'feed', optionId: 'knock', past: 'відчув, як тягне нога після стику' };
+  state.log.push({ minute, kind: 'filler', text: fillNames(rng.pick(KNOCK_TEXTS), session.roster) + ' 🤕' });
 }
 
 /** Трибуны: дома громче, на выезде глуше. Все изменения fanHype идут через это. */
@@ -347,8 +372,9 @@ function syncTired(state: MatchState) {
 function tickTime(session: MatchSession, minutes: number) {
   const state = session.state;
   const heat = session.conditions.weather === 'heat' ? BALANCE.conditions.heatDrainScale : 1;
+  const knock = state.flags.includes('knock') ? BALANCE.knock.drainScale : 1;
   const endurance = 1 - attrMod(session.player.attrs.stamina) * BALANCE.staminaAttrDrainStep;
-  state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute * heat * endurance, 0, 100);
+  state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute * heat * knock * endurance, 0, 100);
   syncTired(state);
 
   const c = BALANCE.crowd;
@@ -375,10 +401,13 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   // иначе темп подачи текста начал бы менять счёт матча.
   const goal = rollFillerGoal(session, rng);
   const goalBeat = goal ? rng.int(1, beats) : -1;
+  // Мікротравма — теж подія ленти: стик між епізодами, після якого нога не слухається.
+  const knockBeat = !goal && rollKnock(session, rng) ? rng.int(1, beats) : -1;
   for (let i = 1; i <= beats; i++) {
     const minute = Math.round(from + (gap * i) / (beats + 1));
     tickTime(session, gap / (beats + 1));
     if (i === goalBeat) pushGoal(session, goal!, minute, rng);
+    else if (i === knockBeat) pushKnock(session, minute, rng);
     else state.log.push({ minute, kind: 'filler', text: fillerText(session, rng) });
   }
   tickTime(session, gap / (beats + 1));

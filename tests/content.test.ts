@@ -134,7 +134,7 @@ describe('вариации сетапа и флаги (сезон)', () => {
   it('каждый флаг из контента известен: есть правило в flags.json или это системный флаг', async () => {
     const { FLAG_RULES } = await import('../src/content');
     // keeper_read ставит и движок (бачення/аналітик), и контент (первый удар) — системный.
-    const SYSTEM = ['booked', 'injured', 'sent_off', 'tired', 'keeper_read'];
+    const SYSTEM = ['booked', 'injured', 'sent_off', 'tired', 'keeper_read', 'knock'];
     // them_<trait> ставит движок по характеристикам соперника из roster.json (match.ts).
     const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
     const used = new Set<string>();

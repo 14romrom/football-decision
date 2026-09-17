@@ -106,10 +106,18 @@ describe('контекстные модификаторы', () => {
     expect(computeContext(state({ stamina: 30 }), player, option({ staminaCost: 3 }), 'attack').flat).toBe(-1);
   });
 
-  it('кураж входит в score до +3, провалы давят не ниже −2', () => {
-    expect(computeContext(state({ momentum: 3 }), player, option(), 'attack').flat).toBe(3);
+  it('кураж входит в score симметрично: до +2 и не ниже −2', () => {
+    expect(computeContext(state({ momentum: 3 }), player, option(), 'attack').flat).toBe(2);
     expect(computeContext(state({ momentum: -2 }), player, option(), 'attack').flat).toBe(-2);
     expect(computeContext(state({ momentum: -3 }), player, option(), 'attack').flat).toBe(-2);
+  });
+
+  it('после провала следующий бросок на −1 — сверх куража', () => {
+    const failed = state({ log: [{ minute: 10, kind: 'episode', text: '', tier: 'fail' }] });
+    const mods = computeContext(failed, player, option(), 'attack').mods;
+    expect(mods.find((m) => m.label === 'після провалу')?.value).toBe(-1);
+    const fine = state({ log: [{ minute: 10, kind: 'episode', text: '', tier: 'cost' }] });
+    expect(computeContext(fine, player, option(), 'attack').mods.find((m) => m.label === 'після провалу')).toBeUndefined();
   });
 
   it('хладнокровие работает только после 80-й минуты', () => {

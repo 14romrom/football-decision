@@ -76,6 +76,10 @@ export function computeContext(
     mods.push({ label: m > 0 ? 'кураж' : 'провали тиснуть', value: m });
   }
 
+  // Попередній момент провалився — наступне рішення важче (тестер 17.09: «−1 після невдачі»).
+  const lastTier = [...state.log].reverse().find((e) => e.kind === 'episode')?.tier;
+  if (lastTier === 'fail' || lastTier === 'badFail') mods.push({ label: 'після провалу', value: c.afterFail });
+
   if (state.minute > 80) {
     if (state.composureNow >= 70) mods.push({ label: 'спокійний у кінцівці', value: c.composureLateGood });
     else if (state.composureNow < 30) mods.push({ label: 'кінець матчу, нерви', value: c.composureLateBad });

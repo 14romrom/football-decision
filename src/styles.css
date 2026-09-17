@@ -282,3 +282,14 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .tag.chain { color: var(--hype); border-color: var(--hype); }
 .link-mark { color: var(--hype); }
 .continues { color: var(--hype); font-size: 14px; text-align: center; margin: 4px 0 8px; }
+
+/* ——— шкала итога броска ——— */
+.total { text-align: center; color: var(--muted); font-size: 15px; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
+.total b { color: var(--ink); font-size: 18px; }
+.scorebar { position: relative; margin: 6px 0 14px; }
+.scorebar-zones { display: flex; height: 18px; border-radius: 9px; overflow: hidden; font-size: 11px; line-height: 18px; }
+.scorebar .zone { text-align: center; white-space: nowrap; overflow: hidden; color: #0b0d10; opacity: 0.85; }
+.zone-fail { background: #c0574f; }
+.zone-cost { background: #d9a441; }
+.zone-clean { background: #6ee7a0; }
+.scorebar-mark { position: absolute; top: -5px; width: 4px; height: 28px; margin-left: -2px; background: var(--ink); border-radius: 2px; box-shadow: 0 0 0 2px var(--bg); }

@@ -88,6 +88,8 @@ const BADGE_RULES: { test: (a: ApplyEffect) => boolean; badge: ResultBadge }[] =
   { test: (a) => !!a.foul, badge: { icon: '🟨', label: 'Фол', tone: 'bad' } },
   { test: (a) => !!a.addFlags?.includes('booked'), badge: { icon: '🟨', label: 'Жовта картка', tone: 'bad' } },
   { test: (a) => !!a.addFlags?.includes('injured'), badge: { icon: '🤕', label: 'Пошкодження', tone: 'bad' } },
+  { test: (a) => !!a.addFlags?.includes('knock'), badge: { icon: '🩹', label: 'Мікротравма', tone: 'bad' } },
+  { test: (a) => !!a.removeFlags?.includes('knock') && !a.addFlags?.includes('injured'), badge: { icon: '🩹', label: 'Нога відпустила', tone: 'good' } },
 ];
 
 export function resultBadges(apply: ApplyEffect | undefined): ResultBadge[] {

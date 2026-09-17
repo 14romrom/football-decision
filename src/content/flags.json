@@ -300,5 +300,15 @@
     "options": [
       "curl_far"
     ]
+  },
+  {
+    "id": "knock",
+    "label": "мікротравма — нога не слухається",
+    "value": -1,
+    "attributes": [
+      "pace",
+      "strength",
+      "dribbling"
+    ]
   }
 ]

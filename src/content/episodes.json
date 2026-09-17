@@ -3722,7 +3722,8 @@
             "apply": {
               "foul": true,
               "addFlags": [
-                "booked"
+                "booked",
+                "knock"
               ],
               "coachTrust": -5
             }
@@ -14224,7 +14225,10 @@
             "apply": {
               "stamina": -8,
               "composure": -5,
-              "coachTrust": -2
+              "coachTrust": -2,
+              "addFlags": [
+                "knock"
+              ]
             }
           }
         }
@@ -14304,7 +14308,10 @@
             "recap": "і отримав по ногах ще раз без свистка.",
             "apply": {
               "stamina": -4,
-              "composure": -3
+              "composure": -3,
+              "addFlags": [
+                "knock"
+              ]
             }
           },
           "badFail": {
@@ -16049,6 +16056,223 @@
                 "losses": 1,
                 "fanHype": -6
               }
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "rx_knock",
+    "phase": "transition",
+    "weight": 1.6,
+    "family": "body",
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90,
+      "flags": [
+        "knock"
+      ]
+    },
+    "setup": "{trigger.When} ти {trigger.past} — і з того часу нога не слухається: кожен ривок віддає в стегно. Лікар на брівці дивиться на тебе, {coach} — на лікаря. М’яч зараз не в тебе, і є хвилина вирішити, як грати далі.",
+    "setups": [
+      {
+        "when": {
+          "tired": true
+        },
+        "text": "{trigger.When} ти {trigger.past} — і тепер до сілих ніг додалася нога, яка не слухається. Кожен ривок віддає в стегно. {coach} дивиться на лікаря, лікар — на тебе."
+      },
+      {
+        "when": {
+          "flags": [
+            "sub_threat"
+          ]
+        },
+        "text": "{trigger.When} ти {trigger.past} — і нога не слухається. {sub} на брівці вже без манішки: {coach} чекає лише приводу. Є хвилина вирішити, чи даси ти йому цей привід."
+      },
+      {
+        "when": {
+          "score": "trailing",
+          "minMinute": 70
+        },
+        "text": "{trigger.When} ти {trigger.past} — і нога не слухається, а ви програєте, і хвилин лишилося мало. Берегти ногу зараз — значить берегти її для наступного матчу, якого, можливо, не буде в основі."
+      }
+    ],
+    "options": [
+      {
+        "id": "play_on",
+        "label": "Грати далі, як є",
+        "past": "грав далі на забитій нозі",
+        "attribute": "strength",
+        "basePosition": "risky",
+        "effect": "limited",
+        "staminaCost": 4,
+        "goals": {
+          "team": 2,
+          "personal": 1
+        },
+        "voice": {
+          "who": "body",
+          "line": "Болить — значить, жива. Біжи."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Біль відпускає на бігу — за десять хвилин ти про нього забуваєш. Тіло само знає, що робити.",
+            "recap": "і нога відпустила на бігу.",
+            "apply": {
+              "removeFlags": [
+                "knock"
+              ],
+              "composure": 3,
+              "coachTrust": 3,
+              "duelWon": true
+            }
+          },
+          "cost": {
+            "text": "Ти граєш, стискаючи зуби. Нога тримає, але кожен стик нагадує, де вона є. {coach} бачить, що ти не ховаєшся.",
+            "recap": "і дограв на зубах.",
+            "apply": {
+              "coachTrust": 3,
+              "stamina": -3
+            }
+          },
+          "fail": {
+            "text": "Через п’ять хвилин тягне сильніше. Ти вже не біжиш — ти йдеш, і всі це бачать.",
+            "recap": "і нога потягнула сильніше.",
+            "apply": {
+              "stamina": -8,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ривок — і щось рветься. Ти сідаєш на газон, лікар біжить. Дограєш, але наступний матч під питанням.",
+            "recap": "і порвав м’яз, граючи через біль.",
+            "apply": {
+              "addFlags": [
+                "injured"
+              ],
+              "removeFlags": [
+                "knock"
+              ],
+              "stamina": -12,
+              "coachTrust": -4,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "protect",
+        "label": "Берегти ногу — збавити темп",
+        "past": "беріг ногу, збавивши темп",
+        "attribute": "composure",
+        "basePosition": "controlled",
+        "effect": "limited",
+        "staminaCost": 2,
+        "goals": {
+          "team": 2,
+          "personal": 0
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Сезон довгий. Ривки — не сьогодні."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти граєш простіше, без ривків, і за чверть години нога відпускає. {coach} киває: розумно.",
+            "recap": "і зберіг ногу, граючи простіше.",
+            "apply": {
+              "removeFlags": [
+                "knock"
+              ],
+              "coachTrust": 4,
+              "composure": 2
+            }
+          },
+          "cost": {
+            "text": "Береш простіше — нога тримає, але атака без твоїх ривків тонша, і трибуни це відчувають.",
+            "recap": "і беріг ногу ціною темпу.",
+            "apply": {
+              "coachTrust": 3,
+              "fanHype": -3
+            }
+          },
+          "fail": {
+            "text": "Ти ховаєшся від стиків, і це видно всім: {coach} дивиться на лаву, {sub} встає розминатися.",
+            "recap": "і сховався від стиків так, що {sub} встав розминатися.",
+            "apply": {
+              "coachTrust": -4,
+              "addFlags": [
+                "sub_threat"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти бережеш ногу — і саме в цей момент {them.winger} тікає повз тебе. Ти не біжиш. Гол.",
+            "recap": "і не побіг за {them.winger.ins} — гол.",
+            "apply": {
+              "concede": true,
+              "scorer": "winger",
+              "coachTrust": -6,
+              "composure": -4
+            }
+          }
+        }
+      },
+      {
+        "id": "doctor",
+        "label": "Попросити лікаря на паузі",
+        "past": "покликав лікаря на паузі",
+        "attribute": "vision",
+        "basePosition": "risky",
+        "effect": "limited",
+        "staminaCost": 2,
+        "goals": {
+          "team": 2,
+          "personal": 0
+        },
+        "voice": {
+          "who": "vision",
+          "line": "Тейп і заморозка — дві хвилини. Без них — сорок."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Пауза, заморозка, тейп. Лікар каже «до кінця витримає» — і має рацію.",
+            "recap": "і лікар заморозив ногу до кінця матчу.",
+            "apply": {
+              "removeFlags": [
+                "knock"
+              ],
+              "stamina": 4,
+              "coachTrust": 2
+            }
+          },
+          "cost": {
+            "text": "Заморозка допомагає, суддя додає хвилину, {coach} киває — і дивиться на годинник.",
+            "recap": "і лікар допоміг, а суддя додав час.",
+            "apply": {
+              "removeFlags": [
+                "knock"
+              ],
+              "coachTrust": 3,
+              "stamina": -2
+            }
+          },
+          "fail": {
+            "text": "Лікар махає рукою: нічого страшного, грай. Нога з ним не згодна.",
+            "recap": "і лікар махнув рукою: грай.",
+            "apply": {
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Поки лікар возиться з ногою, {coach} уже говорить із {sub.ins}. Тобі дають дограти — під пильним поглядом.",
+            "recap": "і поки лікар возився, {coach} говорив із {sub.ins}.",
+            "apply": {
+              "coachTrust": -6,
+              "addFlags": [
+                "sub_threat"
+              ]
             }
           }
         }

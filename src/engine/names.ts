@@ -35,11 +35,13 @@ const PLACEHOLDER = /\{([a-z0-9]+(?:\.[a-z]+){0,2})\}/g;
 /** Начало предложения: пусто перед плейсхолдером, или точка/знак и пробел, или открывающая лапка. */
 const SENTENCE_START = /(^|[.!?…]\s+|«|\n\s*)$/;
 
-export function fillNames(text: string, roster: Roster): string {
+/** `extra` — плейсхолдеры вне ростера ({scorer}, {score} в ленте): подставляются раньше имён
+ *  и по тем же правилам заглавной буквы. */
+export function fillNames(text: string, roster: Roster, extra: Record<string, string> = {}): string {
   return text.replace(PLACEHOLDER, (whole: string, path: string, offset: number) => {
     // {trigger.*} — след решения, подставляется реактивным эпизодом в момент показа.
     if (path.startsWith('trigger.')) return whole;
-    const value = resolveName(path, roster, whole);
+    const value = extra[path] ?? resolveName(path, roster, whole);
     // Характеристики соперника пишутся с маленькой («їхній ветеран»), но в начале
     // предложения — с большой, как и фамилии. Фамилиям это ничего не меняет.
     return SENTENCE_START.test(text.slice(0, offset)) ? value.charAt(0).toUpperCase() + value.slice(1) : value;

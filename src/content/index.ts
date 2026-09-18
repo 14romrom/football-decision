@@ -40,6 +40,7 @@ export const EPISODES_RAW = episodesJson as unknown as Episode[];
 export const EPISODES = fillNamesDeep(EPISODES_RAW, ROSTER);
 export const PLAYER = playerJson as unknown as Player;
 export const FLAVOR = flavorJson as FlavorRule[];
+export { FEED_RULES as FEED } from '../engine/feed';
 /** Флаги-последствия; имена в подписях подставляет createMatch под ростер матча. */
 export const FLAG_RULES = flagsJson as FlagRule[];
 /** Дела тижня між матчами (engine/week.ts); имена подставляются при показе — партнёры свои. */

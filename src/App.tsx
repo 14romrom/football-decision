@@ -4,7 +4,7 @@ import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, offerWeek, recordWeek, weekContext, weekPending, type Activity, type WeekChoice } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
 import { generateConditions, toneFromHistory } from './engine/conditions';
-import { readHistory, episodeMemory, recentFlavor, recordResult } from './telemetry/history';
+import { readHistory, episodeMemory, recentFeed, recentFlavor, recordResult } from './telemetry/history';
 import { BALANCE } from './engine/balance';
 import { BriefingScreen } from './ui/BriefingScreen';
 import { PlayerCard } from './ui/PlayerCard';
@@ -96,7 +96,7 @@ function Game() {
     } else {
       const { events, summary } = finishMatch(session, rng);
       // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
-      recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds, [...session.flavorSeen]);
+      recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds, [...session.flavorSeen], [...session.feedSeen]);
 
       const before = careerRef.current;
       const hadDominantVoice = dominantVoice(session.state.voices) !== null;
@@ -148,7 +148,8 @@ function Game() {
       {
         coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,
         coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
-        flavorSeen: recentFlavor(BALANCE.match.memory.horizon), startDelta: penalty.startDelta,
+        flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon),
+        startDelta: penalty.startDelta,
         voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: consumedCareer.injuriesSeason,
       },
     );

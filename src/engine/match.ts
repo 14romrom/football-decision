@@ -4,6 +4,7 @@
 import { BALANCE, MOMENTUM_BY_TIER, MOMENTUM_COST_RECOVERY } from './balance';
 import { attrMod } from './context';
 import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
+import { pickFeedLine, type FeedKind } from './feed';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL, voiceSeesNow } from './voices';
 import { mostSpecific, pickFlavorLine, scoreState, type FlavorRule } from './flavor';
@@ -44,6 +45,8 @@ export type MatchSession = {
   finished: boolean;
   /** Реплики второго голоса, уже прочитанные в этом матче — flavor.ts не повторяет их, пока есть свежие. */
   flavorSeen: Set<string>;
+  /** Строки ленты, прочитанные в этом и прошлых матчах (feed.ts) — свежие в приоритете. */
+  feedSeen: Set<string>;
   injuriesSeason?: number;
 };
 
@@ -161,6 +164,8 @@ export type Carryover = {
   /** Реплики второго голоса из последних матчей (telemetry/history.ts:recentFlavor) —
    *  считаются уже прочитанными, чтобы сезон не повторял одни и те же строки. */
   flavorSeen?: string[];
+  /** То же для строк ленты (telemetry/history.ts:recentFeed). */
+  feedSeen?: string[];
   /** Сдвиг стартовых ресурсов от недели між матчами (career.ts:NextMatchPrep.start). */
   startDelta?: { stamina?: number; composure?: number; fanHype?: number; momentum?: number };
   /** Неделя сделала Его/Команду гучнішими: матч начинается с их серии (voices.ts:listenedTwice). */
@@ -224,69 +229,35 @@ export function createMatch(
       ...(carryover.voiceStreak ? { streak: { ...carryover.voiceStreak } } : {}),
       ...(carryover.voiceMute ? { muted: { ...carryover.voiceMute } } : {}),
     },
-    log: [{
-      minute: 0,
-      kind: 'kickoff',
-      text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». Свисток. '
-        + (conditions.venue === 'home' ? 'Трибуни встали.' : 'Свистять ще до першого дотику.'),
-    }],
+    log: [],
   };
 
-  return {
+  const session: MatchSession = {
     matchId, seed, player, roster, conditions, episodes, flagRules: rules, reactiveUsed: 0, state, schedule,
     memory: toMemory(recentEpisodeIds),
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
+    feedSeen: new Set(carryover.feedSeen ?? []),
     injuriesSeason: carryover.injuriesSeason,
   };
+  state.log.push({
+    minute: 0,
+    kind: 'kickoff',
+    text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». ' + feedLine(session, 'kickoff', rng),
+  });
+  return session;
 }
 
 // ——— лента между эпизодами ———————————————————————————————————————————
 
-// Тексты ленты с плейсхолдерами имён — подставляются в момент показа по ростеру сессии.
-const FILLER_NEUTRAL = [
-  'М’яч гуляє між захисниками, ніхто не хоче ризикувати першим.',
-  '{dm} накриває розігруючого, суперник відкочує назад.',
-  'Довга передача на хід — {keeper} виходить і забирає.',
-  'Пара фолів у центрі, гра рветься.',
-  '{partner} пробує флангом, але його зустрічають удвох.',
-  'Суперник перекочує м’яч упоперек поля, час іде.',
-  '{striker} бореться за верховий м’яч і не дістає півкорпусу.',
-  'Вкидання біля нашого штрафного, лава кричить про лінію.',
-  '{rb} вкидає з-за бровки, {winger} приймає і одразу повертає назад.',
-  '{lb} страхує за спиною у {cb2.gen}, поки той виходить на перехоплення.',
-  '{coach} кричить із брівки, і {cb2} піднімає руку: почув.',
-  '{winger} йде в обведення на своєму фланзі — і його зупиняють фолом.',
-];
-const FILLER_LEADING = [
-  'Лава вимагає тримати м’яч, рахунок нас влаштовує.',
-  '{cb} виносить без затій — зараз не до краси.',
-  'Суперник пішов уперед усією лінією, ззаду порожньо в обох.',
-];
-const FILLER_TRAILING = [
-  'Трибуни свистять: час щось робити.',
-  'Тренер махає рукою вперед — вище, вище.',
-  '{striker} б’є з-під захисника, повз.',
-];
-const FILLER_TIRED = [
-  'Ти впираєшся руками в коліна, поки м’яч на тій половині.',
-  'Ноги важкі, до найближчого суперника два кроки, яких немає.',
-];
-const FILLER_WEATHER: Record<string, string[]> = {
-  rain: ['Дощ сильнішає, м’яч ковзає по газону швидше за гравців.', 'Захисник послизнувся на рівному місці. Поки що не наш.'],
-  heat: ['Спека. Пауза на воду, і ніхто не сперечається.', 'Гра стає повільнішою: усі бережуть сили.'],
-  wind: ['Вітер зносить подачу за лицьову — воротар навіть не рухається.', 'Дальній удар суперника вітер відводить від стійки.'],
-};
-
-function fillerText(session: MatchSession, rng: Rng): string {
-  const state = session.state;
-  const pool = [...FILLER_NEUTRAL];
-  if (state.scoreUs > state.scoreThem) pool.push(...FILLER_LEADING);
-  if (state.scoreUs < state.scoreThem) pool.push(...FILLER_TRAILING);
-  if (state.stamina < BALANCE.tiredBelow) pool.push(...FILLER_TIRED);
-  pool.push(...(FILLER_WEATHER[session.conditions.weather] ?? []));
-  return fillNames(rng.pick(pool), session.roster);
+/** Строка ленты из feed.json: подставленные имена, отмечена как прочитанная. Пустой пул —
+ *  ошибка контента (у каждого вида есть безусловное правило, тест это проверяет). */
+function feedLine(session: MatchSession, kind: FeedKind, rng: Rng, extra: Record<string, string> = {}): string {
+  const raw = pickFeedLine(kind, session.state, session.conditions, rng, session.feedSeen);
+  if (!raw) throw new Error(`в feed.json нет строк вида ${kind}`);
+  session.feedSeen.add(raw);
+  return fillNames(raw, session.roster, extra);
 }
 
 function scorer(roster: Roster, side: 'us' | 'them', rng: Rng): string {
@@ -318,13 +289,6 @@ function rollFillerGoal(session: MatchSession, rng: Rng): 'us' | 'them' | null {
   return null;
 }
 
-const KNOCK_TEXTS = [
-  'Стик у центрі — суддя не свистить, а ти встаєш не одразу. Задня поверхня стегна тягне.',
-  'Тебе накривають ззаду по ногах. Свисток є, штрафний є — а гомілка горить.',
-  '{them.mid} влітає в стик із запізненням. Ти догрався до кутового і тільки тоді відчув коліно.',
-  'Приземлення після боротьби у повітрі — і різкий біль у щиколотці. Лікар махає: грай.',
-];
-
 /** Чи станеться мікротравма на цьому проміжку: рідко, частіше проти різкого суперника і на сілих ногах. */
 function rollKnock(session: MatchSession, rng: Rng): boolean {
   const k = BALANCE.knock;
@@ -340,7 +304,7 @@ function pushKnock(session: MatchSession, minute: number, rng: Rng) {
   const state = session.state;
   state.flags.push('knock');
   state.marks.knock = { minute, episodeId: 'feed', optionId: 'knock', past: 'відчув, як тягне нога після стику' };
-  state.log.push({ minute, kind: 'filler', text: fillNames(rng.pick(KNOCK_TEXTS), session.roster) + ' 🤕' });
+  state.log.push({ minute, kind: 'filler', text: feedLine(session, 'knock', rng) + ' 🤕' });
 }
 
 /** Трибуны: дома громче, на выезде глуше. Все изменения fanHype идут через это. */
@@ -355,29 +319,24 @@ function pushGoal(
   // Если текст исхода уже назвал автора (apply.scorer) — лента называет того же игрока,
   // не случайное имя из scorers. Без ключа поведение прежнее: случайный игрок команды.
   const name = scorerKey ? namedScorer(session.roster, side, scorerKey) : scorer(session.roster, side, rng);
-  // Характеристика соперника («їхній ветеран») в начале строки ленты — с большой буквы.
-  const Name = name.charAt(0).toUpperCase() + name.slice(1);
   if (side === 'us') {
     state.scoreUs += 1;
     state.momentum = clamp(state.momentum + 1, -3, 3);
     addHype(session, 6);
-    state.log.push({
-      minute,
-      kind: 'goalUs',
-      scorer: name,
-      text: text ?? (Name + ' проштовхує м’яч у сітку — гол! ' + state.scoreUs + ':' + state.scoreThem + '.'),
-    });
   } else {
     state.scoreThem += 1;
     state.momentum = clamp(state.momentum - 1, -3, 3);
     state.composureNow = clamp(state.composureNow - 6, 0, 100);
-    state.log.push({
-      minute,
-      kind: 'goalThem',
-      scorer: name,
-      text: text ?? (Name + ' тікає і б’є в дальній. ' + state.scoreUs + ':' + state.scoreThem + '.'),
-    });
   }
+  // Гол из исхода эпизода (scorerKey) — «эхо»: только кто и счёт, манеру уже описал исход.
+  // Гол ленты — с манерой: она и есть событие.
+  const kind: FeedKind = side === 'us' ? (scorerKey ? 'goalUsEcho' : 'goalUs') : (scorerKey ? 'goalThemEcho' : 'goalThem');
+  state.log.push({
+    minute,
+    kind: side === 'us' ? 'goalUs' : 'goalThem',
+    scorer: name,
+    text: text ?? feedLine(session, kind, rng, { scorer: name }) + ' ' + state.scoreUs + ':' + state.scoreThem + '.',
+  });
 }
 
 function syncTired(state: MatchState) {
@@ -412,7 +371,7 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   if (from < 45 && until >= 45) {
     state.stamina = clamp(state.stamina + BALANCE.halftimeRecovery, 0, 100);
     syncTired(state);
-    state.log.push({ minute: 45, kind: 'halftime', text: 'Перерва. ' + state.scoreUs + ':' + state.scoreThem + '. П’ятнадцять хвилин на лавці — ноги трохи відпустило.' });
+    state.log.push({ minute: 45, kind: 'halftime', text: feedLine(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
   }
 
   const gap = until - from;
@@ -428,7 +387,7 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
     tickTime(session, gap / (beats + 1));
     if (i === goalBeat) pushGoal(session, goal!, minute, rng);
     else if (i === knockBeat) pushKnock(session, minute, rng);
-    else state.log.push({ minute, kind: 'filler', text: fillerText(session, rng) });
+    else state.log.push({ minute, kind: 'filler', text: feedLine(session, 'filler', rng) });
   }
   tickTime(session, gap / (beats + 1));
   state.minute = until;

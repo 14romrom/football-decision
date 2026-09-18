@@ -83,14 +83,21 @@ export function pickFlavorLine(
     const voice = r.voice ?? flavorVoice(r.when);
     for (const text of r.lines) pool.push({ text, voice, weight });
   }
+  return pickFresh(pool, seen, rng);
+}
+
+/** Взвешенный выбор, где уже виденные строки уступают свежим: общий механизм реплик
+ *  (flavor.json) и ленты между эпизодами (feed.json). Виденные берутся, только когда свежих
+ *  не осталось, — тогда пул исчерпан и повтор честнее молчания. */
+export function pickFresh<T extends { text: string; weight: number }>(pool: T[], seen: Set<string>, rng: Rng): T | undefined {
+  if (pool.length === 0) return undefined;
   const fresh = pool.filter((l) => !seen.has(l.text));
   const candidates = fresh.length > 0 ? fresh : pool;
   const total = candidates.reduce((sum, l) => sum + l.weight, 0);
   let x = rng.next() * total;
   for (const l of candidates) {
     x -= l.weight;
-    if (x <= 0) return { text: l.text, voice: l.voice };
+    if (x <= 0) return l;
   }
-  const last = candidates[candidates.length - 1];
-  return { text: last.text, voice: last.voice };
+  return candidates[candidates.length - 1];
 }

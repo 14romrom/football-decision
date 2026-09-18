@@ -158,6 +158,17 @@ describe('имена: персонаж, своя команда, характе�
     }
   });
 
+  it('черты соперника не складываются: на бросок идёт одна, самая сильная (Сан-Дореа давала −3 на позиції)', () => {
+    // star, dribbler, playmaker — все −1 к позиції в обороне; тестер 18.09 получил −3 на «вибити головою».
+    const s = createMatch('t', 1, PLAYER, makeRng(1), EPISODES_RAW, rosterFor('sandorea'), neutralConditions('sandorea'), [], FLAG_RULES);
+    const ep = s.episodes.find((e) => e.id === 'ep_own_box_corner')!;
+    const clear = ep.options.find((o) => o.id === 'head_clear')!;   // positioning, defense
+    const ctx = computeContext(s.state, s.player, clear, ep.phase, s.conditions, s.flagRules);
+    const traitLines = ctx.mods.filter((m) => m.source === 'field' && m.value < 0);
+    expect(traitLines.length).toBe(1);
+    expect(traitLines[0].value).toBe(-1);
+  });
+
   it('своя команда: не меньше десяти именованных ролей, тренер и дублер — по имени', () => {
     const roles = Object.keys(ROSTER.us.players);
     expect(roles.length).toBeGreaterThanOrEqual(10);

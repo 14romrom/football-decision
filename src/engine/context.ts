@@ -95,6 +95,11 @@ export function computeContext(
 
   // Последствия прошлых решений: флаг стоит — строка есть. Это и есть
   // «я сам підготував цей момент» в цифрах.
+  // Черты соперника (them_*) не складываются: у «Сан-Дореа» star, dribbler и playmaker все
+  // бьют по позиції в обороне, и тестер 18.09 получал −3 на «вибити головою куди завгодно» —
+  // это не задумывалось, это три правила на одном атрибуте. На бросок идёт одна, самая
+  // сильная черта; остальные флаги (свои последствия, воротарь) — как и раньше, все.
+  let trait: { label: string; value: number; source: 'player' | 'field' } | null = null;
   for (const rule of flagRules) {
     if (!state.flags.includes(rule.id)) continue;
     // Правило с нулём — маркер: флаг нужен сценам (сетапы, реактивные эпизоды), а не броску.
@@ -102,8 +107,14 @@ export function computeContext(
     if (rule.attributes && !rule.attributes.includes(option.attribute)) continue;
     if (rule.phases && !rule.phases.includes(phase)) continue;
     if (rule.options && !rule.options.includes(option.id)) continue;
-    mods.push({ label: rule.label, value: rule.value, source: rule.source ?? 'field' });
+    const line = { label: rule.label, value: rule.value, source: rule.source ?? 'field' as const };
+    if (rule.id.startsWith('them_')) {
+      if (!trait || Math.abs(line.value) > Math.abs(trait.value)) trait = line;
+      continue;
+    }
+    mods.push(line);
   }
+  if (trait) mods.push(trait);
 
   // Голоса имеют вес (плейтест 17.09: «голоса ни на что не влияют»). Голос атрибута,
   // который слышно на варианте, ведёт: +1 — ты в своей стихии. Его и Команда бонуса

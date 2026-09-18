@@ -113,7 +113,10 @@ export type OurResult = {
   coachRating: number; fanRating: number;
   /** Авторы голов своей команды в этом матче (фамилии из ленты). */
   scorers: string[];
+  /** Лучший/худший момент (match.ts:pickMoments) — для стрічки. */
+  moments?: { best?: MomentRef; worst?: MomentRef };
 };
+export type MomentRef = { minute: number; past: string; recap: string; tier: string };
 
 /** Закрыть тур: наш результат — настоящий, два чужих матча — по силе клубов.
  *  rng — отдельный, по сиду сезона и туру, чтобы чужие результаты не зависели от того,

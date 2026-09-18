@@ -1871,6 +1871,294 @@
           }
         }
       ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "when": {
+        "moment": "worst"
+      },
+      "lines": [
+        "{moment.ord} хвилина. він реально {moment.past}? я вийшов покурити і пропустив шо було далі. краще б не повертався",
+        "{moment.minute}′. {self} {moment.past}. я досі не розумію навіщо. хтось поясніть. не {self}, він не пояснить",
+        "хто ще думає про {moment.acc}? {moment.past} — і все. і все. пишу з бару вже третю годину",
+        "на {moment.minute}-й {self} {moment.past}. я кричав так шо сусід зверху постукав. він теж дивився. він теж кричав"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "tato",
+      "when": {
+        "moment": "worst"
+      },
+      "lines": [
+        "син спитав чому {self} на {moment.minute}-й {moment.past}. я сказав шо так буває. він: а чому саме з ним",
+        "{moment.ord} хвилина, {self} {moment.past}. син заплакав. я сказав шо це футбол. він сказав шо не хоче більше футбол"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "xg",
+      "when": {
+        "moment": "worst"
+      },
+      "lines": [
+        "розібрав {moment.acc} хвилину: {self} {moment.past}. очікувана шкода від цього рішення 0,8. фактична — весь матч",
+        "{moment.minute}′: {moment.past}. це рішення коштувало більше ніж усі його паси разом. порахував. краще б не рахував"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "coachun",
+      "when": {
+        "moment": "worst"
+      },
+      "lines": [
+        "Тренера спитали про {moment.acc} хвилину. Він сказав: «{self} {moment.past}. Ми це розберемо». Розбір триватиме до наступного сезону.",
+        "На прес-конференції прозвучало «{moment.past}». Тренер зробив паузу на вісім секунд. Журналісти порахували."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "subfan",
+      "when": {
+        "moment": "worst",
+        "lowTrust": true
+      },
+      "lines": [
+        "{moment.ord}. {self} {moment.past}. {sub} на лаві дивився на це і, я впевнений, все зрозумів. тренер теж"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "tactics",
+      "when": {
+        "moment": "worst"
+      },
+      "lines": [
+        "подивився хайлайт {moment.minute}-ї хвилини: {self} {moment.past}. тактично це помилка. тред 1/40"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "self_fan_page",
+      "kind": "poll",
+      "when": {
+        "moment": "worst"
+      },
+      "lines": [
+        "{moment.ord} хвилина, {self} {moment.past}. це було:"
+      ],
+      "poll": [
+        "рішення",
+        "помилка",
+        "план тренера",
+        "я не дивився"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "kind": "live",
+      "live": [
+        1,
+        89
+      ],
+      "when": {
+        "moment": "worst"
+      },
+      "lines": [
+        "{moment.minute}′ {self} {moment.past}. НАВІЩО",
+        "{moment.minute}′ ні. ні ні ні",
+        "{moment.minute}′ {moment.past}. я все"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "abonement",
+      "when": {
+        "moment": "worst"
+      },
+      "lines": [
+        "{self}, поясни {moment.acc} хвилину. ти {moment.past}. я заплатив за це гроші. поясни",
+        "{self} {moment.minute}′. ти {moment.past}. одне питання: чому"
+      ],
+      "replyOptions": [
+        {
+          "text": "бо так бачив момент. наступного разу побачу інакше",
+          "reaction": "ок. наступного разу я теж побачу інакше. з іншого сектора",
+          "effect": {
+            "composure": 3,
+            "coachTrust": 2,
+            "note": "Пояснив свій гірший момент у стрічці."
+          }
+        },
+        {
+          "text": "моя помилка. без виправдань",
+          "reaction": "…несподівано. ок. поважаю. до наступного разу",
+          "effect": {
+            "fanHype": 4,
+            "composure": 2,
+            "note": "Визнав помилку у стрічці — трибуни це помітили."
+          }
+        },
+        {
+          "text": "ти б звідти взагалі не вдарив",
+          "reaction": "заскрінив. і тренеру надіслав. і мамі",
+          "effect": {
+            "fanHype": -3,
+            "coachTrust": -4,
+            "momentum": 1,
+            "note": "Відповів абонементу різко за гірший момент."
+          }
+        }
+      ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "when": {
+        "moment": "best"
+      },
+      "lines": [
+        "{moment.ord} хвилина. {self} {moment.past} — і {moment.recap} я переглянув 6 разів. буду переглядати ще",
+        "{moment.minute}′ {self} {moment.past}. якби я вмів так, я б не сидів на трибуні. хоча сидів би. з пивом",
+        "хочу шоб на {moment.minute}-й хвилині завжди було так: {self} {moment.past}. решту матчу можна вирізати"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "tato",
+      "when": {
+        "moment": "best"
+      },
+      "lines": [
+        "син після {moment.minute}-ї сказав шо буде як {self}. я сказав ок. він спитав чи можна не ходити в школу",
+        "{moment.ord} хвилина. {self} {moment.past}. син підстрибнув і вдарився об крісло. каже не боляче. це головне"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "xg",
+      "when": {
+        "moment": "best"
+      },
+      "lines": [
+        "{moment.minute}′: {moment.past}. xG цього рішення 0,07. він його реалізував. статистика плаче",
+        "порахував: {moment.ord} хвилина коштувала більше ніж усі інші 89. {self} {moment.past}. решта — доповнення"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "valmara",
+      "when": {
+        "moment": "best"
+      },
+      "lines": [
+        "{moment.minute}′. {self} {moment.past}. Ми теж це бачили. Ми ще дивимося.",
+        "Момент туру: {moment.ord} хвилина, {self} {moment.past}. Повтор — у закріпленому."
+      ],
+      "reply": {
+        "account": "ultra87",
+        "lines": [
+          "закріплений на весь сезон будь ласка",
+          "стажер нарешті шось написав нормально"
+        ]
+      }
+    },
+    {
+      "group": "self",
+      "account": "coachun",
+      "when": {
+        "moment": "best"
+      },
+      "lines": [
+        "Тренера спитали про {moment.acc} хвилину. «{self} {moment.past}. Так, ми це тренували». Не тренували."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "self_fan_page",
+      "kind": "poll",
+      "when": {
+        "moment": "best"
+      },
+      "lines": [
+        "{moment.ord} хвилина, {self} {moment.past}. це:"
+      ],
+      "poll": [
+        "клас",
+        "випадковість",
+        "тренер підказав",
+        "я вже бачив таке у FIFA"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "kind": "live",
+      "live": [
+        1,
+        89
+      ],
+      "when": {
+        "moment": "best"
+      },
+      "lines": [
+        "{moment.minute}′ {self} {moment.past} АААААА",
+        "{moment.minute}′ ЩО ВІН ЗРОБИВ",
+        "{moment.minute}′ {moment.past}. я живий. ледве"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "wag",
+      "when": {
+        "moment": "best"
+      },
+      "lines": [
+        "{self} на {moment.minute}-й {moment.past}. написала йому «клас». написала його дівчині «клас». нехай знають, що я підтримую всіх"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "model",
+      "when": {
+        "moment": "best",
+        "week": [
+          "insta_date"
+        ]
+      },
+      "lines": [
+        "{self} на {moment.minute}-й {moment.past} ✨ я не зрозуміла, але всі кричали. викладу з нашим фото, ок?"
+      ],
+      "replyOptions": [
+        {
+          "text": "ок",
+          "reaction": "❤️ вже",
+          "effect": {
+            "fanHype": 5,
+            "coachTrust": -3,
+            "flags": [
+              {
+                "flag": "viral_story",
+                "after": 0,
+                "past": "дозволив моделі викласти фото з голом"
+              }
+            ],
+            "note": "Дозволив фото з голом — трибуни в захваті, тренер ні."
+          }
+        },
+        {
+          "text": "без фото. тільки гол",
+          "reaction": "нуднооо. ок 🙄",
+          "effect": {
+            "coachTrust": 3,
+            "fanHype": -1,
+            "note": "Відмовив моделі у фото з голом."
+          }
+        }
+      ]
     }
   ]
 }

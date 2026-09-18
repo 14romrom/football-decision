@@ -5,7 +5,7 @@ import { makeRng } from '../src/engine/rng';
 import { createSeason, ourFixture, recordRound, US } from '../src/engine/season';
 import { defaultCareer } from '../src/engine/career';
 import { fillNames, opponentTraits } from '../src/engine/names';
-import { buildFeed, buildPostContext, matchesPost, POST_QUOTA, postQuota, POSTS, type PostContext, type PostGroup } from '../src/engine/posts';
+import { buildFeed, buildPostContext, matchesPost, minuteOrdinal, POST_QUOTA, postQuota, POSTS, type PostContext, type PostGroup } from '../src/engine/posts';
 import { OPPONENTS, rosterFor } from '../src/content';
 
 const keys = Object.keys(OPPONENTS);
@@ -14,6 +14,7 @@ const GROUPS: PostGroup[] = ['self', 'league', 'world', 'cross', 'meta'];
 const EXTRA = {
   last: 'Ольвар', 'last.gen': 'Ольвара', leader: 'Ольвар', 'leader.gen': 'Ольвара',
   bottom: 'Ріо-Секо', 'bottom.gen': 'Ріо-Секо', score: '1:2', position: '4', round: '5', quote: '…',
+  'moment.minute': '62', 'moment.ord': '62-га', 'moment.acc': '62-гу', 'moment.past': 'пішов в обведення', 'moment.recap': 'і втратив.',
 };
 
 /** Правило CLAUDE.md: реальных людей в контенте нет. Клубы — можно, это сатира на клубы. */
@@ -24,7 +25,7 @@ const ctx = (over: Partial<PostContext> = {}): PostContext => ({
   position: 3, clubs: 6, round: 4, coachTrust: 55, injured: false, flags: [],
   nextStrength: 'even', nextFlags: ['them_star'], nextVenue: 'home',
   leaderLost: false, bottomWon: false, voice: null, hasScored: true,
-  leaderKey: 'olvar', bottomKey: 'rioseco', lastOpponentKey: 'terranova', lastWeek: [], ...over,
+  leaderKey: 'olvar', bottomKey: 'rioseco', lastOpponentKey: 'terranova', lastWeek: [], moments: {}, ...over,
 });
 
 describe('стрічка: контент', () => {
@@ -114,6 +115,29 @@ describe('стрічка: контент', () => {
       expect(o.reaction.length).toBeGreaterThan(0);
       expect(o.effect.note.length).toBeGreaterThan(0);
     }
+  });
+
+  it('пост про момент цитирует именно то, что игрок выбрал, и не выпадает без момента', () => {
+    const worst = { minute: 62, past: 'пішов в обведення елястіко', recap: 'і втратив м’яч.', tier: 'badFail' };
+    const momentLines = new Set(POSTS.posts.filter((r) => r.when?.moment).flatMap((r) => r.lines));
+    let cited = 0;
+    for (let i = 0; i < 40; i++) {
+      for (const p of buildFeed(ctx({ result: 'loss', moments: { worst } }), makeRng(900 + i))) {
+        if (p.text.includes('пішов в обведення елястіко') || p.text.includes('62')) cited += 1;
+        expect(p.text).not.toContain('{moment');
+        if (p.reply) expect(p.reply.text).not.toContain('{moment');
+        for (const o of p.replyOptions ?? []) { expect(o.text).not.toContain('{moment'); expect(o.reaction).not.toContain('{moment'); }
+      }
+      for (const p of buildFeed(ctx({ result: 'loss', moments: {} }), makeRng(950 + i))) expect(momentLines.has(p.text), p.text).toBe(false);
+    }
+    expect(cited, "момент гарантирован, когда он есть").toBeGreaterThanOrEqual(36);
+  });
+
+  it('порядкова хвилина: 6-та, 62-га, 41-ша, 3-тя, 7-ма, 11-та, 40-ва; знахідний — 62-гу, 6-ту', () => {
+    expect([6, 62, 41, 3, 7, 11, 40, 90, 88].map((n) => minuteOrdinal(n))).toEqual(['6-та', '62-га', '41-ша', '3-тя', '7-ма', '11-та', '40-ва', '90-та', '88-ма']);
+    expect([62, 6, 1, 13].map((n) => minuteOrdinal(n, 'acc'))).toEqual(['62-гу', '6-ту', '1-шу', '13-ту']);
+    const feed = buildFeed(ctx({ result: 'loss', moments: { worst: { minute: 6, past: 'пішов в обведення', recap: 'і втратив.', tier: 'fail' } } }), makeRng(5));
+    for (const p of feed) expect(p.text).not.toMatch(/6га|6-га|6й хвилин/);
   });
 
   it('за сезон из десяти туров ни один пост не читается дважды', () => {

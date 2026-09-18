@@ -735,7 +735,28 @@ export type MatchSummary = {
   points: number;   // 3/1/0 — нужны балансному прогону, игроку не показываются
   /** Протокол: кто и когда забил, с обеих сторон — для итогового экрана и бомбардиров сезона. */
   goals: { minute: number; side: 'us' | 'them'; scorer: string }[];
+  /** Лучший и худший момент матча — чтобы стрічка цитировала именно то, что игрок выбрал
+   *  («62га хвилина. він реально пішов в обведення?»). Имена в past уже подставлены. */
+  moments?: { best?: Moment; worst?: Moment };
 };
+
+export type Moment = { minute: number; past: string; recap: string; tier: Tier; episodeId: string; optionId: string };
+
+/** Худший — катастрофа, потом решение, после которого пропустили, потом провал; лучший — гол,
+ *  ассист, чистый «вирішити», чистый. Если матч ровный, момента может не быть. */
+export function pickMoments(state: MatchState): { best?: Moment; worst?: Moment } {
+  const episodes = state.log.filter((e) => e.kind === 'episode' && e.past && e.recap);
+  const toMoment = (e: TimelineEvent): Moment => ({ minute: e.minute, past: e.past!, recap: e.recap!, tier: e.tier ?? 'fail', episodeId: e.episodeId ?? '', optionId: e.optionId ?? '' });
+  const worstScore = (e: TimelineEvent) => (e.tier === 'badFail' ? 3 : 0) + (e.causedConcede ? 2 : 0) + (e.tier === 'fail' ? 1 : 0);
+  const goalMinutes = new Set(state.log.filter((e) => e.kind === 'goalUs').map((e) => e.minute));
+  const bestScore = (e: TimelineEvent) => (e.tier !== 'clean' ? 0 : 1 + (goalMinutes.has(e.minute) ? 3 : 0) + (e.effect === 'great' ? 1 : 0));
+  const worst = [...episodes].sort((a, b) => worstScore(b) - worstScore(a))[0];
+  const best = [...episodes].sort((a, b) => bestScore(b) - bestScore(a))[0];
+  return {
+    ...(worst && worstScore(worst) > 0 ? { worst: toMoment(worst) } : {}),
+    ...(best && bestScore(best) > 0 ? { best: toMoment(best) } : {}),
+  };
+}
 
 const rate = (value: number) => Math.round(clamp(value, 1, 10) * 10) / 10;
 
@@ -784,6 +805,7 @@ export function finishMatch(session: MatchSession, rng: Rng): { events: Timeline
     goals: state.log
       .filter((e) => (e.kind === 'goalUs' || e.kind === 'goalThem') && e.scorer)
       .map((e) => ({ minute: e.minute, side: e.kind === 'goalUs' ? 'us' as const : 'them' as const, scorer: e.scorer! })),
+    moments: pickMoments(state),
   };
   return { events: state.log.slice(before), summary };
 }

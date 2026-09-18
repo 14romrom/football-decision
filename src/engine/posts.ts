@@ -10,7 +10,7 @@ import { pickFresh } from './flavor';
 import type { Rng } from './rng';
 import type { Career } from './career';
 import type { Season } from './season';
-import { standings, US } from './season';
+import { standings, US, type MomentRef } from './season';
 import type { VoiceKey } from './types';
 import type { ActivityEffect } from './week';
 
@@ -43,6 +43,9 @@ export type PostWhen = {
   /** Хотя бы одно из дел выбрано на неделе перед этим матчем (activities.json id) — стрічка
    *  реагирует на побачення, подкаст, Дубай. */
   week?: string[];
+  /** Пост про конкретный момент матча: в строках доступны {moment.minute}, {moment.past},
+   *  {moment.recap}; правило подходит, только если такой момент в матче был. */
+  moment?: 'best' | 'worst';
 };
 
 /** Вид поста (19.09, «форма»): poll — опрос с абсурдными вариантами, проценты раздаёт rng;
@@ -83,6 +86,8 @@ export type PostContext = {
   leaderKey: string; bottomKey: string; lastOpponentKey: string | null;
   /** Дела недели перед этим матчем (career.weekLog). */
   lastWeek: string[];
+  /** Лучший и худший момент последнего матча (season.rounds[].moments). */
+  moments: { best?: MomentRef; worst?: MomentRef };
 };
 
 const LOW_TRUST = 40;
@@ -123,6 +128,7 @@ export function buildPostContext(
     lastOpponentKey: ours ? (ours.home === US ? ours.away : ours.home) : null,
     // Неделя перед сыгранным туром записана с round = этот тур до инкремента (week.ts:recordWeek).
     lastWeek: (career.weekLog ?? []).find((w) => w.season === season.number && w.round === season.round - 1)?.chosen ?? [],
+    moments: last.moments ?? {},
   };
 }
 
@@ -157,6 +163,7 @@ export function matchesPost(w: PostWhen | undefined, c: PostContext): boolean {
   if (w.voice && w.voice !== c.voice) return false;
   if (w.hasScored !== undefined && w.hasScored !== c.hasScored) return false;
   if (w.week && !w.week.some((id) => c.lastWeek.includes(id))) return false;
+  if (w.moment && !c.moments[w.moment]) return false;
   return true;
 }
 
@@ -172,6 +179,33 @@ export type Post = {
   liveMinute?: number;
   replyOptions?: ReplyOption[];
 };
+
+/** Порядковое «хвилина» в називному («62-га», «6-та», «41-ша», «40-ва») и знахідному («62-гу», «6-ту»). */
+export function minuteOrdinal(n: number, kase: 'nom' | 'acc' = 'nom'): string {
+  const d = n % 10, dd = n % 100;
+  let end: string;
+  if (dd >= 11 && dd <= 19) end = kase === 'nom' ? 'та' : 'ту';
+  else if (n === 40) end = kase === 'nom' ? 'ва' : 'ву';
+  else if (d === 1) end = kase === 'nom' ? 'ша' : 'шу';
+  else if (d === 2) end = kase === 'nom' ? 'га' : 'гу';
+  else if (d === 3) end = kase === 'nom' ? 'тя' : 'тю';
+  else if (d === 7 || d === 8) end = kase === 'nom' ? 'ма' : 'му';
+  else end = kase === 'nom' ? 'та' : 'ту';
+  return `${n}-${end}`;
+}
+
+/** {moment.minute} / {moment.ord} («62-га») / {moment.acc} («62-гу») / {moment.past} /
+ *  {moment.recap} — момент матча, на который ссылается правило. Родовий и місцевий — «-ї» и «-й»
+ *  одинаковы для всех чисел, их пишут прямо в тексте: «{moment.minute}-ї хвилини», «на {moment.minute}-й». */
+function fillMoment(text: string, rule: PostRule, ctx: PostContext): string {
+  const m = rule.when?.moment ? ctx.moments[rule.when.moment] : undefined;
+  if (!m) return text;
+  return text
+    .replace(/\{moment\.ord\}/g, minuteOrdinal(m.minute, 'nom'))
+    .replace(/\{moment\.acc\}/g, minuteOrdinal(m.minute, 'acc'))
+    .replace(/\{moment\.minute\}/g, String(m.minute))
+    .replace(/\{moment\.past\}/g, m.past).replace(/\{moment\.recap\}/g, m.recap);
+}
 
 /** Проценты опроса: один вариант всегда «побеждает» неприлично, сумма — 100. */
 function pollResults(options: string[], rng: Rng): { text: string; pct: number }[] {
@@ -220,8 +254,11 @@ export function buildFeed(
       seen.add(pick.text);
       const account = content.accounts[pick.rule.account];
       const kind: PostKind = pick.rule.kind ?? 'post';
+      // Момент матча подставляется здесь: какой именно (best/worst) знает только правило.
+      const withMoment = (t: string) => fillMoment(t, pick.rule, ctx);
+      pick.text = withMoment(pick.text);
       // Удалённый твит: на экране «Цей твіт видалено», а оригинал живёт в ответе-скрине.
-      const replyText = pick.rule.reply ? rng.pick(pick.rule.reply.lines).replace('{quote}', pick.text) : undefined;
+      const replyText = pick.rule.reply ? withMoment(rng.pick(pick.rule.reply.lines)).replace('{quote}', pick.text) : undefined;
       const reply = pick.rule.reply && replyText !== undefined
         ? { account: content.accounts[pick.rule.reply.account], text: replyText }
         : undefined;
@@ -229,10 +266,32 @@ export function buildFeed(
         account, text: kind === 'deleted' ? 'Цей твіт видалено' : pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0, kind,
         ...(kind === 'poll' && pick.rule.poll ? { poll: pollResults(pick.rule.poll, rng) } : {}),
         ...(kind === 'live' && pick.rule.live ? { liveMinute: rng.int(pick.rule.live[0], pick.rule.live[1]) } : {}),
-        ...(pick.rule.replyOptions ? { replyOptions: pick.rule.replyOptions } : {}),
+        ...(pick.rule.replyOptions ? { replyOptions: pick.rule.replyOptions.map((o) => ({ ...o, text: withMoment(o.text), reaction: withMoment(o.reaction) })) } : {}),
       });
     }
   }
+  // Момент матча — самое личное, что есть в ленте: если он был, один пост о нём гарантирован
+  // (поражение — о худшем, победа — о лучшем, иначе как выпадет). Подменяет пост своей группы.
+  const wanted: ('best' | 'worst')[] = ctx.result === 'loss' ? ['worst', 'best'] : ctx.result === 'win' ? ['best', 'worst'] : rng.next() < 0.5 ? ['worst', 'best'] : ['best', 'worst'];
+  const which = wanted.find((k) => ctx.moments[k]);
+  if (which && !out.some((p) => p.text.includes(String(ctx.moments[which]!.minute)) && p.text.includes(ctx.moments[which]!.past))) {
+    const rules = content.posts.filter((r) => r.when?.moment === which && matchesPost(r.when, ctx) && r.lines.some((t) => !seen.has(t)));
+    const rule = rules.length ? rng.pick(rules) : null;
+    const slot = rule ? out.findIndex((p) => p.group === rule.group && p.kind === 'post' && !p.replyOptions) : -1;
+    if (rule && slot >= 0) {
+      const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
+      seen.add(text);
+      const fill = (t: string) => fillMoment(t, rule, ctx);
+      const reply = rule.reply ? { account: content.accounts[rule.reply.account], text: fill(rng.pick(rule.reply.lines)) } : undefined;
+      out[slot] = {
+        ...out[slot], account: content.accounts[rule.account], text: fill(text), reply, kind: rule.kind ?? 'post',
+        ...(rule.kind === 'poll' && rule.poll ? { poll: pollResults(rule.poll.map(fill), rng) } : {}),
+        ...(rule.kind === 'live' && rule.live ? { liveMinute: ctx.moments[which]!.minute } : {}),
+        ...(rule.replyOptions ? { replyOptions: rule.replyOptions.map((o) => ({ ...o, text: fill(o.text), reaction: fill(o.reaction) })) } : {}),
+      };
+    }
+  }
+
   // Ответить можно на один пост за стрічку: первый по ленте, остальные — просто читаются.
   let replyable = false;
   for (const p of out) {
@@ -250,7 +309,11 @@ export function buildFeed(
     if (rule && slot >= 0) {
       const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
       seen.add(text);
-      out[slot] = { ...out[slot], account: content.accounts[rule.account], text, reply: undefined, kind: 'post', replyOptions: rule.replyOptions };
+      const fill = (t: string) => fillMoment(t, rule, ctx);
+      out[slot] = {
+        ...out[slot], account: content.accounts[rule.account], text: fill(text), reply: undefined, kind: 'post',
+        replyOptions: rule.replyOptions!.map((o) => ({ ...o, text: fill(o.text), reaction: fill(o.reaction) })),
+      };
     }
   }
   // Перемешать и раздать время/лайки: издания собирают тысячи, фанаты — десятки.

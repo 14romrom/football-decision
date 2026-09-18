@@ -117,6 +117,7 @@ function Game() {
           goals: summary.stats.goals, assists: summary.stats.assists,
           coachRating: summary.coachRating, fanRating: summary.fanRating,
           scorers: summary.goals.filter((g) => g.side === 'us').map((g) => g.scorer),
+          moments: summary.moments ?? {},
         }, strengths, makeRng(sn.seed + sn.round * 7919)));
       }
 

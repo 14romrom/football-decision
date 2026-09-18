@@ -63,7 +63,10 @@
   `promo`, `live` (+`live: [от, до]`). **Ответ игрока** — `replyOptions: [{ text, reaction, effect }]`,
   `effect` как у дела недели; один на стрічку, подмешивается с `REPLY_CHANCE`; применяется через
   `applyWeek`, который дополняет `career.nextMatch`, не затирает (тест в posts.test.ts). Экран
-  `LevelUpScreen` — только при `BALANCE.growth.levels` или `unspentPoints > 0`.
+  `LevelUpScreen` — только при `BALANCE.growth.levels` или `unspentPoints > 0`. **Момент матча**:
+  `when.moment: worst|best` + `{moment.minute}`/`{moment.ord}`/`{moment.acc}`/`{moment.past}`/`{moment.recap}`
+  (`pickMoments` в match.ts → `OurResult.moments`); ключи плейсхолдеров — только строчные латинские
+  (`fillNames` иначе их не видит); один пост о моменте на стрічку гарантирован.
 - У каждого варианта есть `voice` (кто и что говорит), голос слышно только сильный — см. `voices.ts`.
 - **Голос бачить** (`EpisodeOption.insight`, Disco Elysium: пассивная проверка). Сильный атрибут
   (`BALANCE.insightMinMod`, `voices.ts:voiceSees`, только атрибутные голоса) замечает деталь, которой
@@ -193,7 +196,7 @@
 
 ```
 npm run dev      # localhost:5179 (см. .claude/launch.json)
-npm test         # 191 тест: движок, контент, условия, M3, career, сезон, лига, цепочки, реплики, лента, голос бачить, тиждень, стрічка, критерии приёмки
+npm test         # 197 тестов: движок, контент, условия, M3, career, сезон, лига, цепочки, реплики, лента, голос бачить, тиждень, стрічка, критерии приёмки
 npm run sim      # балансный прогон ботами; --random-conditions — со случайными условиями матча
 npm run sim -- --season 12   # повторы эпизодов и текстов сетапа на дистанции сезона
 npm run sim -- --weeks 150   # политики недели між матчами на дистанции сезона

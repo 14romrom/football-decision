@@ -11,8 +11,9 @@ import { BALANCE } from './balance';
 import { clampTrust, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
 import type { Season } from './season';
 import type { Rng } from './rng';
-import { ATTRIBUTE_LABEL, type Attribute, type Mark, type VoiceKey } from './types';
-import { VOICE_LABEL } from './voices';
+import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
+import { VOICE_LABEL, voiceSees } from './voices';
+import { attrMod } from './attr';
 
 /** Условие показа — по итогам сезона и карьеры; побеждает не самое конкретное, а вес:
  *  условия здесь отсекают, а не ранжируют (в отличие от сетапов). */
@@ -59,6 +60,31 @@ export type ActivityEffect = {
   note: string;
 };
 
+/** Исход дела (тиждень v3, 19.09): дело — история с неизвестным концом. Какой исход выпадет,
+ *  решает не случайность, а профиль голосов и скрытая проверка атрибута (без кубика на экране):
+ *  вечірка після Его-сезону частіше закінчується сваркою, побачення при сильній Холоднокровності —
+ *  тим, що вона розбирається у футболі. Каждый исход обязан оставить след (note + эффект). */
+export type ActivityOutcome = {
+  id: string;
+  /** Сцена исхода — 1–3 предложения в тоне игры. */
+  text: string;
+  /** Чей это вечер: совпадает с доминирующим голосом карьеры — вес ×outcomeVoiceBoost. */
+  voice?: VoiceKey;
+  /** Скрытая проверка: модификатор атрибута ≥ min — вес ×outcomeCheckPass, иначе ×outcomeCheckFail. */
+  check?: { attr: Attribute; min: number };
+  /** Ситуация, в которой исход вероятнее (после поражения — сварка): ×outcomeSituationBoost. */
+  boost?: ActivityWhen;
+  weight?: number;
+  effect: ActivityEffect;
+  /** Продолжение — сцена недели (content/weekscenes.json). Одна сцена за неделю. */
+  followUp?: string;
+};
+
+/** Сцена-продолжение: решение без кубика. Вариант с insight виден только тому, чей голос бачить
+ *  (weekVoiceSees) — прокачка открывает варианты и между матчами. */
+export type WeekSceneOption = { id: string; label: string; text: string; effect: ActivityEffect; insight?: { who: VoiceKey; line: string } };
+export type WeekScene = { id: string; setup: string; options: WeekSceneOption[] };
+
 export type Activity = {
   id: string;
   voice: VoiceKey;
@@ -69,7 +95,9 @@ export type Activity = {
   once?: boolean;
   cooldown?: number;
   weight?: number;
+  /** Эффект по умолчанию — когда исходов нет (дела v2) и для прогона. */
   effect: ActivityEffect;
+  outcomes?: ActivityOutcome[];
 };
 
 export type WeekContext = {
@@ -164,6 +192,106 @@ export function offerWeek(pool: Activity[], c: WeekContext, career: Career, rng:
   return offers;
 }
 
+/** Голос, которого слушали чаще всех за карьеру, — не меньше dominantMin раз и без ничьей. */
+export function dominantCareerVoice(career: Career): VoiceKey | null {
+  const entries = Object.entries(career.voiceCounts) as [VoiceKey, number][];
+  const top = entries.reduce((a, b) => (b[1] > a[1] ? b : a));
+  if (top[1] < BALANCE.week.dominantMin) return null;
+  return entries.filter(([, n]) => n === top[1]).length === 1 ? top[0] : null;
+}
+
+/** Голос бачить между матчами: атрибутные — по силе атрибута (как в матче), Его — на популярности
+ *  или как доминирующий, Команда — при доверии тренера. Открывает варианты в сценах недели. */
+export function weekVoiceSees(who: VoiceKey, player: Player, c: WeekContext, career: Career): boolean {
+  if (who === 'ego') return c.fanRating >= 7 || dominantCareerVoice(career) === 'ego';
+  if (who === 'team') return c.coachTrust >= BALANCE.teamSeesTrust || dominantCareerVoice(career) === 'team';
+  return voiceSees(who, player);
+}
+
+/** Какой исход выпадает: веса исходов × голос × проверка атрибута × ситуация. Детерминированно
+ *  по rng (тот же сид — тот же вечер), без кубика на экране: игрок видит сцену, а не бросок. */
+export function resolveOutcome(activity: Activity, player: Player, c: WeekContext, career: Career, rng: Rng): ActivityOutcome | null {
+  const outs = activity.outcomes ?? [];
+  if (outs.length === 0) return null;
+  const w = BALANCE.week;
+  const dominant = dominantCareerVoice(career);
+  const weighted = outs.map((o) => {
+    let weight = o.weight ?? 1;
+    if (o.voice && o.voice === dominant) weight *= w.outcomeVoiceBoost;
+    if (o.check) weight *= attrMod(player.attrs[o.check.attr]) >= o.check.min ? w.outcomeCheckPass : w.outcomeCheckFail;
+    if (o.boost && matchesActivity(o.boost, c)) weight *= w.outcomeSituationBoost;
+    return { o, weight };
+  });
+  const total = weighted.reduce((s, x) => s + x.weight, 0);
+  let r = rng.next() * total;
+  for (const x of weighted) { r -= x.weight; if (r <= 0) return x.o; }
+  return weighted[weighted.length - 1].o;
+}
+
+/** Тиждень v3: три дні по три пропозиції. Голоса разные внутри дня, не больше maxPerVoice дел
+ *  одного голоса за неделю (если голосов хватает); правила отбора те же, что у offerWeek. */
+export function offerWeekDays(pool: Activity[], c: WeekContext, career: Career, rng: Rng): Activity[][] {
+  const log = career.weekLog ?? [];
+  const thisSeason = log.filter((e) => e.season === c.season);
+  const lastChosen = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.chosen ?? []).includes(id)).map((e) => e.round));
+  const lastOffered = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.offered ?? []).includes(id)).map((e) => e.round));
+  const locked = coachLocksCity(c);
+  const fits = (a: Activity) => {
+    if (!matchesActivity(a.when, c)) return false;
+    if (locked && !BASE_VOICES.includes(a.voice) && !a.when?.flags?.length) return false;
+    if (a.once && thisSeason.some((e) => (e.chosen ?? []).includes(a.id))) return false;
+    if (a.cooldown && c.round - lastChosen(a.id) < a.cooldown) return false;
+    return true;
+  };
+  const used = new Set<string>();
+  const perVoice: Partial<Record<VoiceKey, number>> = {};
+  const days: Activity[][] = [];
+  const w = BALANCE.week;
+  for (let d = 0; d < w.days; d++) {
+    const day: Activity[] = [];
+    const dayVoices = new Set<VoiceKey>();
+    // Порядок голосов внутри дня — со сдвигом, чтобы Его не открывал каждый день.
+    const order = [...VOICE_ORDER.slice(d), ...VOICE_ORDER.slice(0, d)];
+    // Второй проход без лимита на голос — когда голосов не хватает (тренер закрив місто: три
+    // базовых голоса на три дня), иначе третий день оставался пустым.
+    for (const capped of [true, false]) {
+      for (const voice of order) {
+        if (day.length >= w.perDay) break;
+        if (dayVoices.has(voice) || (capped && (perVoice[voice] ?? 0) >= w.maxPerVoice)) continue;
+        const fitting = pool.filter((a) => a.voice === voice && !used.has(a.id) && fits(a));
+        if (fitting.length === 0) continue;
+        const weighted = fitting.map((a) => ({ a, weight: (a.weight ?? 1) * (c.round - lastOffered(a.id) < w.recentPenalty ? 0.25 : 1) }));
+        const total = weighted.reduce((s, x) => s + x.weight, 0);
+        let r = rng.next() * total;
+        let pick = weighted[weighted.length - 1].a;
+        for (const x of weighted) { r -= x.weight; if (r <= 0) { pick = x.a; break; } }
+        day.push(pick); used.add(pick.id); dayVoices.add(voice); perVoice[voice] = (perVoice[voice] ?? 0) + 1;
+      }
+    }
+    days.push(day);
+  }
+  return days;
+}
+
+/** Обида голосов: кто предлагал и не был взят — +1 неделя; на neglectWeeks голос замовкає на
+ *  matчі (quieter) и счётчик сбрасывается. Возвращает псевдо-дела с эффектом — их применяет applyWeek. */
+export function neglectPenalties(career: Career, offeredVoices: VoiceKey[], chosenVoices: VoiceKey[]): { career: Career; penalties: Activity[] } {
+  const next: Partial<Record<VoiceKey, number>> = { ...(career.voiceNeglect ?? {}) };
+  const penalties: Activity[] = [];
+  for (const v of new Set(offeredVoices)) {
+    if (chosenVoices.includes(v)) { next[v] = 0; continue; }
+    next[v] = (next[v] ?? 0) + 1;
+    if (next[v]! >= BALANCE.week.neglectWeeks) {
+      next[v] = 0;
+      penalties.push({
+        id: `neglect_${v}`, voice: v, title: `${VOICE_LABEL[v]} мовчить`, line: '',
+        effect: { quieter: [v], note: `${VOICE_LABEL[v]} мовчить: три тижні без жодної його справи.` },
+      });
+    }
+  }
+  return { career: { ...career, voiceNeglect: next }, penalties };
+}
+
 /** Атрибуты, которые кормят голос — те же, что в voices.ts. Его и Команда атрибутов не имеют:
  *  «гучніший» для них — кураж и трибуны, это делает само дело. */
 export const VOICE_ATTRS: Record<VoiceKey, Attribute[]> = {
@@ -248,8 +376,16 @@ export function whenTextFor(after: number): string {
 }
 
 /** Неделя записывается всегда — и с выбором, и без, — чтобы после перезагрузки не искать её заново. */
-export function recordWeek(career: Career, c: WeekContext, offered: Activity[], chosen: Activity[]): Career {
-  return { ...career, weekLog: [...(career.weekLog ?? []), { season: c.season, round: c.round, chosen: chosen.map((a) => a.id), offered: offered.map((a) => a.id) }] };
+export function recordWeek(
+  career: Career, c: WeekContext, offered: Activity[], chosen: Activity[],
+  extra: { outcomes?: string[]; scene?: { id: string; option: string } } = {},
+): Career {
+  return { ...career, weekLog: [...(career.weekLog ?? []), { season: c.season, round: c.round, chosen: chosen.map((a) => a.id), offered: offered.map((a) => a.id), ...extra }] };
+}
+
+/** Дело с выпавшим исходом — то, что реально применяется: эффект исхода вместо эффекта по умолчанию. */
+export function withOutcome(activity: Activity, outcome: ActivityOutcome | null): Activity {
+  return outcome ? { ...activity, effect: outcome.effect } : activity;
 }
 
 export function weekPending(career: Career, c: WeekContext): boolean {
@@ -259,4 +395,49 @@ export function weekPending(career: Career, c: WeekContext): boolean {
 /** Сколько раз игрок читал уже виденную реплику — не сюда; здесь: сколько разных дел видел за сезон. */
 export function distinctOffered(career: Career, season: number): number {
   return new Set((career.weekLog ?? []).filter((e) => e.season === season).flatMap((e) => e.offered ?? [])).size;
+}
+
+// ——— тиждень v3: дні → ісходи → сцена → підсумок —————————————————————————————
+
+export type WeekOffer = { activity: Activity; outcome: ActivityOutcome | null };
+export type WeekPick = { day: number; activityId: string; trainAttr?: Attribute; scene?: { id: string; option: string } };
+
+/** Неделя целиком: дни с предложениями, у каждого предложения — уже выпавший исход. Исход
+ *  считается заранее и тем же rng, что и предложения: перезагрузка не даёт перебросить вечер. */
+export function planWeek(pool: Activity[], player: Player, c: WeekContext, career: Career, rng: Rng): WeekOffer[][] {
+  return offerWeekDays(pool, c, career, rng).map((day) => day.map((activity) => ({ activity, outcome: resolveOutcome(activity, player, c, career, rng) })));
+}
+
+/** Закрыть неделю: выбранные дела с их исходами, сцена-продолжение и обида голосов — всё через
+ *  applyWeek, чтобы бирки и nextMatch собирались одним способом; сцена идёт голосом подсказки,
+ *  без подсказки — голосом дела, из которого выросла. */
+export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], picks: WeekPick[], scenes: WeekScene[]): { career: Career; tags: string[] } {
+  const choices: WeekChoice[] = [];
+  const chosen: Activity[] = [];
+  const outcomes: string[] = [];
+  let scene: { id: string; option: string } | undefined;
+  for (const p of picks) {
+    const offer = days[p.day]?.find((o) => o.activity.id === p.activityId);
+    if (!offer) continue;
+    chosen.push(offer.activity);
+    if (offer.outcome) outcomes.push(`${offer.activity.id}:${offer.outcome.id}`);
+    choices.push({ activity: withOutcome(offer.activity, offer.outcome), ...(p.trainAttr ? { trainAttr: p.trainAttr } : {}) });
+    if (p.scene) {
+      const sc = scenes.find((s) => s.id === p.scene!.id);
+      const opt = sc?.options.find((o) => o.id === p.scene!.option);
+      if (sc && opt) {
+        scene = p.scene;
+        choices.push({ activity: { id: `${sc.id}:${opt.id}`, voice: opt.insight?.who ?? offer.activity.voice, title: sc.id, line: '', effect: opt.effect } });
+      }
+    }
+  }
+  const offeredVoices = days.flat().map((o) => o.activity.voice);
+  const { career: withNeglect, penalties } = neglectPenalties(career, offeredVoices, choices.map((x) => x.activity.voice));
+  const { career: after, tags } = applyWeek(withNeglect, [...choices, ...penalties.map((activity) => ({ activity }))]);
+  return { career: recordWeek(after, c, days.flat().map((o) => o.activity), chosen, { outcomes, ...(scene ? { scene } : {}) }), tags };
+}
+
+/** Варианты сцены, которые видит игрок: с подсказкой — только когда голос бачить. */
+export function sceneOptionsFor(scene: WeekScene, sees: (who: VoiceKey) => boolean): WeekSceneOption[] {
+  return scene.options.filter((o) => !o.insight || sees(o.insight.who));
 }

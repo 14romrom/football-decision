@@ -91,9 +91,25 @@
   **Уровни выключены** (`BALANCE.growth.levels = false`, решение 17.09): опыт и уровень считаются,
   очков не дают; рост — только тренировки недели (`trainToPoint` = 3). Код уровней и `LevelUpScreen`
   оставлены, включаются одним полем; миграция карьеры фантомных очков при выключенных уровнях не даёт.
-- **Тиждень між матчами** — `engine/week.ts` + `content/activities.json` (57 дел), экран `WeekScreen`
-  тонкий. Шесть предложений — по одному на голос (`offerWeek`: условия `when`, `once`, `cooldown`,
-  недавно показанное весит меньше), взять до `BALANCE.week.picks`. Дело = «какой голос беру на матч»:
+- **Тиждень між матчами** — `engine/week.ts` + `content/activities.json` (66 дел), экран `WeekScreen`
+  тонкий. **v3 (19.09):** `BALANCE.week.days` × `perDay` предложений (`offerWeekDays`: голоса в дне
+  разные, ≤ `maxPerVoice` на неделю, при нехватке голосов лимит снимается — закрытый город), одно дело
+  в день, у дела `outcomes` (1–3, `ActivityOutcome`): вес × `outcomeVoiceBoost` если `voice` —
+  доминантный голос карьеры (`dominantCareerVoice`, ≥ `dominantMin`) × `outcomeCheckPass/Fail` по
+  `check {attr, min}` (модификатор) × `outcomeSituationBoost` если `boost` (условие `ActivityWhen`)
+  совпал. Исходы считаются в `planWeek` тем же rng, что предложения (перезагрузка не перебрасывает);
+  применяется эффект исхода вместо `effect` дела (`withOutcome`). `followUp` — id сцены из
+  `content/weekscenes.json` (`WeekScene`: setup + 3–4 варианта, ровно один с `insight {who, line}`,
+  показывается только если `weekVoiceSees(who)`: атрибутные — `voiceSees`, Его — трибуны ≥ 7 или
+  доминантный, Команда — доверие ≥ `teamSeesTrust`); одна сцена на неделю. `neglectPenalties`:
+  голос, предлагавший `neglectWeeks` недель подряд без выбора, — `quieter` на матч
+  (`career.voiceNeglect`). Всё закрывает `finishWeek` (isходы + сцена + обида → `applyWeek` →
+  `recordWeek` с `outcomes`/`scene`). **Правила исходов:** текст — 1–3 предложения с иронией, `note`
+  обязателен, эффект обязан оставить след (тест `week3`), ⅔ дел — с развилкой, ни один исход не
+  «просто хорошо/плохо» без цены или плюса; `train: "choice"` сохраняется в исходе, иначе выбор
+  атрибута на карточке пропадёт. Между днями — мировой пост (`buildPosts` в App, квота `world`).
+  `offerWeek` (шесть по голосу) остался для тестов и старых прогонов.
+  Старое (v2) ниже остаётся в силе. Дело = «какой голос беру на матч»:
   `louder`/`quieter` — ±1 к модификатору атрибутов голоса на один матч (`career.nextMatch.attrBonus`
   → `effectivePlayer(..., matchBonus)`), `stamina`/`composure`/`fanHype`/`momentum` — старт
   (`Carryover.startDelta`), `coachTrust` — сразу, `train` — счётчик, `trainToPoint` = +1 очко навсегда,
@@ -196,7 +212,7 @@
 
 ```
 npm run dev      # localhost:5179 (см. .claude/launch.json)
-npm test         # 196 тестов: движок, контент, условия, M3, career, сезон, лига, цепочки, реплики, лента, голос бачить, тиждень, стрічка, критерии приёмки
+npm test         # 211 тестов: движок, контент, условия, M3, career, сезон, лига, цепочки, реплики, лента, голос бачить, тиждень, тиждень v3, стрічка, критерии приёмки
 npm run sim      # балансный прогон ботами; --random-conditions — со случайными условиями матча
 npm run sim -- --season 12   # повторы эпизодов и текстов сетапа на дистанции сезона
 npm run sim -- --weeks 150   # политики недели між матчами на дистанции сезона

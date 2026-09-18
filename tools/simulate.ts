@@ -11,10 +11,10 @@ import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, rosterFor } from '../src/c
 import { generateConditions, neutralConditions, type MatchConditions } from '../src/engine/conditions';
 import { BALANCE, POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeMemory, EpisodeOption, Tier } from '../src/engine/types';
-import { ACTIVITIES } from '../src/content';
+import { ACTIVITIES, WEEK_SCENES } from '../src/content';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, type Career } from '../src/engine/career';
 import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, type Season } from '../src/engine/season';
-import { applyWeek, offerWeek, recordWeek, weekContext, type Activity } from '../src/engine/week';
+import { finishWeek, planWeek, sceneOptionsFor, weekContext, weekVoiceSees, type Activity, type WeekPick } from '../src/engine/week';
 import { dominantVoice } from '../src/engine/voices';
 
 export type PolicyName = 'always_safe' | 'always_risky' | 'greedy_personal' | 'random' | 'max_cost';
@@ -213,14 +213,14 @@ function printSeason(matches: number) {
 
 export type WeekPolicy = 'none' | 'random' | 'always_body' | 'always_ego' | 'always_train' | 'rest_and_video';
 
-/** Кого бот берёт из шести предложений. Матчи — случайной политикой, как в seasonReport. */
-const WEEK_POLICIES: Record<WeekPolicy, (offers: Activity[], pick: (n: number) => number) => Activity[]> = {
-  none: () => [],
-  random: (o, pick) => { const a = [...o]; const out: Activity[] = []; while (a.length && out.length < BALANCE.week.picks) out.push(a.splice(pick(a.length), 1)[0]); return out; },
-  always_body: (o) => o.filter((a) => a.voice === 'body' || a.voice === 'instinct').slice(0, BALANCE.week.picks),
-  always_ego: (o) => o.filter((a) => a.voice === 'ego' || a.voice === 'team').slice(0, BALANCE.week.picks),
-  always_train: (o) => o.filter((a) => a.effect.train).slice(0, BALANCE.week.picks),
-  rest_and_video: (o) => o.filter((a) => ['recovery', 'sleep', 'video_analyst', 'watch_opponent'].includes(a.id)).slice(0, BALANCE.week.picks),
+/** Кого бот берёт из трёх предложений дня (тиждень v3: одно дело в день). Матчи — случайной политикой. */
+const WEEK_POLICIES: Record<WeekPolicy, (day: Activity[], pick: (n: number) => number) => Activity | null> = {
+  none: () => null,
+  random: (d, pick) => (d.length ? d[pick(d.length)] : null),
+  always_body: (d) => d.find((a) => a.voice === 'body' || a.voice === 'instinct') ?? null,
+  always_ego: (d) => d.find((a) => a.voice === 'ego' || a.voice === 'team') ?? null,
+  always_train: (d) => d.find((a) => a.effect.train) ?? null,
+  rest_and_video: (d) => d.find((a) => ['recovery', 'sleep', 'video_analyst', 'watch_opponent'].includes(a.id)) ?? null,
 };
 
 export type CareerRun = { avgResult: number; avgCoach: number; avgFan: number; points: number; level: number; distinctOffered: number; modsGained: number };
@@ -258,12 +258,26 @@ export function runCareer(seed: number, policy: WeekPolicy): CareerRun {
     if (isSeasonOver(season)) break;
     const ctx = weekContext(season, career, ourRow(season).position)!;
     const wrng = makeRng(seed * 7 + season.round * 104729);
-    const offers = offerWeek(ACTIVITIES, ctx, career, wrng);
-    offers.forEach((a) => offeredAll.add(a.id));
-    const chosen = WEEK_POLICIES[policy](offers, (k) => wrng.int(0, k - 1));
-    // Тренировка «на выбор» — первый атрибут голоса.
-    const choices = chosen.map((a) => ({ activity: a, ...(a.effect.train === 'choice' ? { trainAttr: (a.voice === 'body' ? 'pace' : 'dribbling') as 'pace' | 'dribbling' } : {}) }));
-    career = recordWeek(applyWeek(career, choices).career, ctx, offers, chosen);
+    const days = planWeek(ACTIVITIES, effectivePlayer(PLAYER, career), ctx, career, wrng);
+    days.flat().forEach((o) => offeredAll.add(o.activity.id));
+    const picks: WeekPick[] = [];
+    let sceneUsed = false;
+    days.forEach((day, d) => {
+      const offer = day.find((o) => o.activity.id === WEEK_POLICIES[policy](day.map((o) => o.activity), (k) => wrng.int(0, k - 1))?.id);
+      if (!offer) return;
+      const effect = offer.outcome?.effect ?? offer.activity.effect;
+      // Тренировка «на выбор» — первый атрибут голоса.
+      const pick: WeekPick = { day: d, activityId: offer.activity.id, ...(effect.train === 'choice' ? { trainAttr: (offer.activity.voice === 'body' ? 'pace' : 'dribbling') as 'pace' | 'dribbling' } : {}) };
+      // Сцена-продолжение — случайный из видимых вариантов, одна на неделю, как на экране.
+      const scene = !sceneUsed && offer.outcome?.followUp ? WEEK_SCENES.find((sc) => sc.id === offer.outcome!.followUp) : undefined;
+      if (scene) {
+        const visible = sceneOptionsFor(scene, (who) => weekVoiceSees(who, effectivePlayer(PLAYER, career), ctx, career));
+        pick.scene = { id: scene.id, option: visible[wrng.int(0, visible.length - 1)].id };
+        sceneUsed = true;
+      }
+      picks.push(pick);
+    });
+    career = finishWeek(career, ctx, days, picks, WEEK_SCENES).career;
   }
   const modsGained = Object.values(career.attrPoints).reduce((s, v) => s + (v ?? 0), 0);
   return { avgResult: sumResult / n, avgCoach: sumCoach / n, avgFan: sumFan / n, points: ourRow(season).points, level: career.level, distinctOffered: offeredAll.size, modsGained };

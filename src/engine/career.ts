@@ -40,6 +40,9 @@ export type Career = {
   training?: Partial<Record<Attribute, number>>;
   /** Травм за текущий сезон — не больше BALANCE.injury.maxPerSeason (match.ts понижает до knock). */
   injuriesSeason?: number;
+  /** Сколько недель подряд голос предлагал дела, а игрок не брал (week.ts:neglect). На третьей
+   *  голос замовкає на матч: выбор голоса — ставка, а не вкус. */
+  voiceNeglect?: Partial<Record<VoiceKey, number>>;
 };
 
 export type CarriedFlag = {
@@ -48,7 +51,11 @@ export type CarriedFlag = {
   after?: number;
 };
 
-export type WeekLogEntry = { season: number; round: number; chosen: string[]; offered: string[] };
+export type WeekLogEntry = {
+  season: number; round: number; chosen: string[]; offered: string[];
+  /** Тиждень v3 (19.09): какие исходы выпали и что выбрано в сцене-продолжении. */
+  outcomes?: string[]; scene?: { id: string; option: string };
+};
 
 /** Подготовка к одному матчу от недели: временные +/−1 к модификаторам (в единицах значения,
  *  POINT_VALUE за мод), сдвиг стартовых ресурсов, строки в брифинг. Живёт один матч. */

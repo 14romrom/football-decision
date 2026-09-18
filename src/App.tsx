@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, rosterFor } from './content';
+import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES, rosterFor } from './content';
 import { fillNamesDeep } from './engine/names';
-import { applyWeek, coachLocksCity, offerWeek, recordWeek, weekContext, weekPending, type Activity, type WeekChoice } from './engine/week';
+import { applyWeek, coachLocksCity, finishWeek, planWeek, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
 import { generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
-import { buildFeed, buildPostContext, postQuota, type Post } from './engine/posts';
+import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } from './engine/posts';
 import { PostsScreen } from './ui/PostsScreen';
 import { fillNames, opponentTraits } from './engine/names';
 import { BALANCE } from './engine/balance';
@@ -29,7 +29,7 @@ import {
 } from './engine/season';
 import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
-import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent } from './engine/types';
+import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent, VoiceKey } from './engine/types';
 import { logDecision } from './telemetry/log';
 import { MatchScreen } from './ui/MatchScreen';
 import { EpisodeCard } from './ui/EpisodeCard';
@@ -47,7 +47,7 @@ type Stage =
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
   | { k: 'posts'; posts: Post[]; leveledFrom: number; leveledTo: number }
-  | { k: 'week'; offers: Activity[]; locked: boolean; leveledFrom: number; leveledTo: number }
+  | { k: 'week'; days: WeekOffer[][]; news: Post[]; locked: boolean; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
@@ -170,34 +170,18 @@ function Game() {
     setCareerBoth({ ...careerRef.current, injuriesSeason: 0 });   // лимит травм — на сезон
   }, [setSeasonBoth]);
 
-  /** Ещё не закрытая неделя после последнего тура: шесть предложений детерминированно по сиду. */
-  const pendingWeek = useCallback(() => {
-    const sn = seasonRef.current;
-    const career = careerRef.current;
-    const ctx = weekContext(sn, career, ourRow(sn).position);
-    if (!ctx || isSeasonOver(sn) || !weekPending(career, ctx)) return null;
-    const offers = offerWeek(ACTIVITIES, ctx, career, makeRng(sn.seed + sn.round * 104729 + 7));
-    return { offers, ctx, locked: coachLocksCity(ctx) };
-  }, []);
-
-  const afterPosts = useCallback((leveledFrom: number, leveledTo: number) => {
-    const w = pendingWeek();
-    if (w) setStage({ k: 'week', offers: w.offers, locked: w.locked, leveledFrom, leveledTo });
-    else setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
-  }, [pendingWeek]);
-
-  /** Стрічка після таблиці: пости про тур, лігу, наступного суперника і великий футбол.
-   *  Имена — ростер следующего соперника; клубы таблицы и последний соперник — через extra. */
-  const afterSeason = useCallback((leveledFrom: number, leveledTo: number) => {
+  /** Стрічка по текущему состоянию сезона: посты с именами следующего соперника. quota — сколько
+   *  и каких групп; seedSalt — чтобы стрічка після таблиці и пости між днями не совпадали. */
+  const buildPosts = useCallback((quota: Record<PostGroup, number>, seedSalt: number): Post[] => {
     const sn = seasonRef.current;
     const fixture = isSeasonOver(sn) ? null : ourFixture(sn);
     const nextKey = fixture?.opponentKey ?? Object.keys(OPPONENTS)[0];
-    const rng = makeRng(sn.seed + sn.round * 30011 + 3);
+    const rng = makeRng(sn.seed + sn.round * 30011 + seedSalt);
     const roster = rosterFor(nextKey, rng);
     const ctx = buildPostContext(sn, careerRef.current, fixture
       ? { opponentKey: fixture.opponentKey, venue: fixture.venue, strength: OPPONENTS[fixture.opponentKey].strength, traits: opponentTraits(roster.them) }
       : null);
-    if (!ctx) { afterPosts(leveledFrom, leveledTo); return; }
+    if (!ctx) return [];
     const club = (key: string) => (key === US ? ROSTER.us.name : OPPONENTS[key].name);
     const last = ctx.lastOpponentKey ? club(ctx.lastOpponentKey) : club(nextKey);
     const extra: Record<string, string> = {
@@ -207,15 +191,40 @@ function Game() {
       score: ctx.scoreUs + ':' + ctx.scoreThem, position: String(ctx.position), round: String(ctx.round),
     };
     const seen = new Set(recentPosts());
-    const raw = buildFeed(ctx, rng, seen, undefined, postQuota(sn.number));
+    const raw = buildFeed(ctx, rng, seen, undefined, quota);
     recordPosts(raw.map((p) => p.text));
     const fill = (t: string) => fillNames(t, roster, extra);
-    const posts: Post[] = raw.map((p) => ({
+    return raw.map((p) => ({
       ...p, text: fill(p.text), account: { ...p.account, name: fill(p.account.name) },
       reply: p.reply ? { account: { ...p.reply.account, name: fill(p.reply.account.name) }, text: fill(p.reply.text) } : undefined,
     }));
-    setStage({ k: 'posts', posts, leveledFrom, leveledTo });
-  }, [afterPosts]);
+  }, []);
+
+  /** Ещё не закрытая неделя после последнего тура: три дня по три дела и их исходы —
+   *  детерминированно по сиду, перезагрузка показывает те же карточки и те же вечера. */
+  const pendingWeek = useCallback(() => {
+    const sn = seasonRef.current;
+    const career = careerRef.current;
+    const ctx = weekContext(sn, career, ourRow(sn).position);
+    if (!ctx || isSeasonOver(sn) || !weekPending(career, ctx)) return null;
+    const days = planWeek(ACTIVITIES, effectivePlayer(PLAYER, career), ctx, career, makeRng(sn.seed + sn.round * 104729 + 7));
+    return { days, ctx, locked: coachLocksCity(ctx) };
+  }, []);
+
+  const afterPosts = useCallback((leveledFrom: number, leveledTo: number) => {
+    const w = pendingWeek();
+    // Пости між днями — тільки світові: свій тур уже обговорили у стрічці.
+    if (w) setStage({ k: 'week', days: w.days, news: buildPosts({ self: 0, league: 0, world: BALANCE.week.days - 1, cross: 0, meta: 0 }, 11), locked: w.locked, leveledFrom, leveledTo });
+    else setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
+  }, [pendingWeek, buildPosts]);
+
+  /** Стрічка після таблиці: пости про тур, лігу, наступного суперника і великий футбол.
+   *  Имена — ростер следующего соперника; клубы таблицы и последний соперник — через extra. */
+  const afterSeason = useCallback((leveledFrom: number, leveledTo: number) => {
+    const sn = seasonRef.current;
+    if (isSeasonOver(sn)) { afterPosts(leveledFrom, leveledTo); return; }
+    setStage({ k: 'posts', posts: buildPosts(postQuota(sn.number), 3), leveledFrom, leveledTo });
+  }, [afterPosts, buildPosts]);
 
   const confirmLevelUp = useCallback((attr: Attribute) => {
     const after = spendPoint(careerRef.current, attr);
@@ -300,8 +309,8 @@ function Game() {
   useEffect(() => {
     if (stage.k !== 'menu') return;
     const w = pendingWeek();
-    if (w) setStage({ k: 'week', offers: w.offers, locked: w.locked, leveledFrom: career.level, leveledTo: career.level });
-  }, [stage.k, career.level, pendingWeek]);
+    if (w) setStage({ k: 'week', days: w.days, news: buildPosts({ self: 0, league: 0, world: BALANCE.week.days - 1, cross: 0, meta: 0 }, 11), locked: w.locked, leveledFrom: career.level, leveledTo: career.level });
+  }, [stage.k, career.level, pendingWeek, buildPosts]);
 
   if (stage.k === 'menu' && pendingWeek()) return null;
 
@@ -410,17 +419,20 @@ function Game() {
     const fixture = ourFixture(sn);
     const roster = rosterFor(fixture?.opponentKey ?? Object.keys(OPPONENTS)[0], makeRng(sn.seed + sn.round));
     const { leveledFrom, leveledTo } = stage;
+    const ctx = weekContext(sn, careerRef.current, ourRow(sn).position)!;
+    const player = effectivePlayer(PLAYER, careerRef.current);
     return (
       <WeekScreen
         key={sn.number + ':' + sn.round}
-        offers={fillNamesDeep(stage.offers, roster)}
+        days={fillNamesDeep(stage.days, roster)}
+        scenes={fillNamesDeep(WEEK_SCENES, roster)}
+        sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
+        news={stage.news}
         locked={stage.locked}
-        onConfirm={(choices: WeekChoice[]) => {
-          const ctx = weekContext(sn, careerRef.current, ourRow(sn).position)!;
-          // Применяем по исходным (без имён) делам: эффекты те же, id те же.
-          const raw = choices.map((c) => ({ ...c, activity: stage.offers.find((a) => a.id === c.activity.id)! }));
-          const { career: after, tags } = applyWeek(careerRef.current, raw);
-          setCareerBoth(recordWeek(after, ctx, stage.offers, raw.map((c) => c.activity)));
+        onFinish={(picks: WeekPick[]) => {
+          // Применяем по исходным (без имён) делам и сценам: эффекты те же, id те же.
+          const { career: after, tags } = finishWeek(careerRef.current, ctx, stage.days, picks, WEEK_SCENES);
+          setCareerBoth(after);
           return tags;
         }}
         onNext={() => setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}

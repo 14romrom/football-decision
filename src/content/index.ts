@@ -4,12 +4,13 @@ import rosterJson from './roster.json';
 import flavorJson from './flavor.json';
 import flagsJson from './flags.json';
 import activitiesJson from './activities.json';
+import weekscenesJson from './weekscenes.json';
 import { fillNamesDeep, type Roster, type TeamRoster } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
 import type { Episode, FlagRule, Player } from '../engine/types';
 import type { Rng } from '../engine/rng';
-import type { Activity } from '../engine/week';
+import type { Activity, WeekScene } from '../engine/week';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
@@ -45,7 +46,5 @@ export { FEED_RULES as FEED } from '../engine/feed';
 export const FLAG_RULES = flagsJson as FlagRule[];
 /** Дела тижня між матчами (engine/week.ts); имена подставляются при показе — партнёры свои. */
 export const ACTIVITIES = activitiesJson as Activity[];
-
-
-
-
+/** Сцены-продолжения дела недели (outcome.followUp → id сцены); одна на тиждень. */
+export const WEEK_SCENES = weekscenesJson as WeekScene[];

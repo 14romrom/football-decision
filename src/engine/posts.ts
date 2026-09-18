@@ -12,6 +12,7 @@ import type { Career } from './career';
 import type { Season } from './season';
 import { standings, US } from './season';
 import type { VoiceKey } from './types';
+import type { ActivityEffect } from './week';
 
 export type PostGroup = 'self' | 'league' | 'world' | 'cross' | 'meta';
 
@@ -44,10 +45,26 @@ export type PostWhen = {
   week?: string[];
 };
 
+/** Вид поста (19.09, «форма»): poll — опрос с абсурдными вариантами, проценты раздаёт rng;
+ *  deleted — «Цей твіт видалено», а в ответе фанат цитирует скрин ({quote}); promo — реклама с
+ *  пометкой; live — лайв-твит с минутой матча вместо «N год», уходит в низ ленты. */
+export type PostKind = 'post' | 'poll' | 'deleted' | 'promo' | 'live';
+
+/** Ответ игрока на пост — решение без кубика: три реплики, у каждой последствие как у дела
+ *  недели (ActivityEffect: трибуны, тренер, кураж, флаг на матч) и реакция автора поста. */
+export type ReplyOption = { text: string; reaction: string; effect: ActivityEffect };
+
 export type PostRule = {
   group: PostGroup; account: string; when?: PostWhen; lines: string[];
   /** Ответ под постом — от другого аккаунта, одна из строк. */
   reply?: { account: string; lines: string[] };
+  kind?: PostKind;
+  /** Варианты опроса (kind: poll). */
+  poll?: string[];
+  /** Минута матча для лайв-твита (kind: live): [от, до]. */
+  live?: [number, number];
+  /** Пост, на который игрок может ответить. В одной стрічці — не больше одного такого. */
+  replyOptions?: ReplyOption[];
 };
 
 export type PostsContent = { accounts: Record<string, PostAccount>; posts: PostRule[] };
@@ -148,13 +165,31 @@ export type Post = {
   reply?: { account: PostAccount; text: string };
   /** Часы назад и «лайки» — декорация, детерминированная по rng. */
   hoursAgo: number; likes: number; reposts: number;
+  kind: PostKind;
+  /** Результаты опроса (kind: poll), проценты в сумме 100. */
+  poll?: { text: string; pct: number }[];
+  /** Минута лайв-твита (kind: live). */
+  liveMinute?: number;
+  replyOptions?: ReplyOption[];
 };
+
+/** Проценты опроса: один вариант всегда «побеждает» неприлично, сумма — 100. */
+function pollResults(options: string[], rng: Rng): { text: string; pct: number }[] {
+  const raw = options.map(() => rng.int(5, 30));
+  raw[rng.int(0, raw.length - 1)] += 60;
+  const total = raw.reduce((a, b) => a + b, 0);
+  const pct = raw.map((r) => Math.round((r / total) * 100));
+  pct[pct.length - 1] += 100 - pct.reduce((a, b) => a + b, 0);
+  return options.map((text, i) => ({ text, pct: pct[i] }));
+}
 
 /** Сколько постов каждой группы в одной стрічці. Доля игрового мира растёт с сезоном (решение
  *  пользователя 19.09): в первом сезоне игрок ещё не знает ни Кнаппа, ни «Терра-Нови», и шутка
  *  про них не читается — основа ленты общепонятная (великий футбол, мета), про нас — 2–3 поста;
  *  со второго сезона привязанность есть, и «наша ліга» занимает половину. */
 export const POST_QUOTA: Record<PostGroup, number> = { self: 3, league: 2, world: 3, cross: 1, meta: 1 };
+/** С какой вероятностью в стрічку подмешивается пост, на который можно ответить (если есть подходящий). */
+export const REPLY_CHANCE = 0.5;
 export const POST_QUOTA_BY_SEASON: Record<number, Record<PostGroup, number>> = {
   1: { self: 2, league: 1, world: 5, cross: 0, meta: 2 },
   2: POST_QUOTA,
@@ -184,10 +219,38 @@ export function buildFeed(
       taken.add(pick.text);
       seen.add(pick.text);
       const account = content.accounts[pick.rule.account];
-      const reply = pick.rule.reply
-        ? { account: content.accounts[pick.rule.reply.account], text: rng.pick(pick.rule.reply.lines) }
+      const kind: PostKind = pick.rule.kind ?? 'post';
+      // Удалённый твит: на экране «Цей твіт видалено», а оригинал живёт в ответе-скрине.
+      const replyText = pick.rule.reply ? rng.pick(pick.rule.reply.lines).replace('{quote}', pick.text) : undefined;
+      const reply = pick.rule.reply && replyText !== undefined
+        ? { account: content.accounts[pick.rule.reply.account], text: replyText }
         : undefined;
-      out.push({ account, text: pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0 });
+      out.push({
+        account, text: kind === 'deleted' ? 'Цей твіт видалено' : pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0, kind,
+        ...(kind === 'poll' && pick.rule.poll ? { poll: pollResults(pick.rule.poll, rng) } : {}),
+        ...(kind === 'live' && pick.rule.live ? { liveMinute: rng.int(pick.rule.live[0], pick.rule.live[1]) } : {}),
+        ...(pick.rule.replyOptions ? { replyOptions: pick.rule.replyOptions } : {}),
+      });
+    }
+  }
+  // Ответить можно на один пост за стрічку: первый по ленте, остальные — просто читаются.
+  let replyable = false;
+  for (const p of out) {
+    if (!p.replyOptions) continue;
+    if (replyable) delete p.replyOptions;
+    replyable = true;
+  }
+  // Пост с ответом сам по себе выпадает редко (квота self — 2–3 из большого пула), а решение в
+  // стрічці — фишка: если он есть в пуле, с вероятностью REPLY_CHANCE подменяем им один пост
+  // своей группы. Не всегда — иначе каждая стрічка превращается в допрос.
+  if (!replyable && rng.next() < REPLY_CHANCE) {
+    const candidates = content.posts.filter((r) => r.replyOptions && matchesPost(r.when, ctx) && r.lines.some((t) => !seen.has(t)));
+    const rule = candidates.length ? rng.pick(candidates) : null;
+    const slot = rule ? out.findIndex((p) => p.group === rule.group && !p.poll && p.kind === 'post') : -1;
+    if (rule && slot >= 0) {
+      const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
+      seen.add(text);
+      out[slot] = { ...out[slot], account: content.accounts[rule.account], text, reply: undefined, kind: 'post', replyOptions: rule.replyOptions };
     }
   }
   // Перемешать и раздать время/лайки: издания собирают тысячи, фанаты — десятки.
@@ -195,6 +258,8 @@ export function buildFeed(
     const j = rng.int(0, i);
     [out[i], out[j]] = [out[j], out[i]];
   }
+  // Лайв-твиты — в конец: они были раньше всех, ещё во время матча.
+  out.sort((a, b) => Number(a.kind === 'live') - Number(b.kind === 'live'));
   let hours = rng.int(1, 3);
   for (const p of out) {
     p.hoursAgo = hours;

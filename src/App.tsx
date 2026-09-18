@@ -182,7 +182,7 @@ function Game() {
   const afterPosts = useCallback((leveledFrom: number, leveledTo: number) => {
     const w = pendingWeek();
     if (w) setStage({ k: 'week', offers: w.offers, locked: w.locked, leveledFrom, leveledTo });
-    else setStage(leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
+    else setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
   }, [pendingWeek]);
 
   /** Стрічка після таблиці: пости про тур, лігу, наступного суперника і великий футбол.
@@ -381,13 +381,27 @@ function Game() {
         playerName={ROSTER.us.players.self.nom}
         verdict={over ? seasonVerdict(season, career.coachTrust) : undefined}
         onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
-        onNewSeason={() => { newSeason(); setStage(leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
+        onNewSeason={() => { newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
       />
     );
   }
 
   if (stage.k === 'posts') {
-    return <PostsScreen posts={stage.posts} onNext={() => afterPosts(stage.leveledFrom, stage.leveledTo)} />;
+    return (
+      <PostsScreen
+        posts={stage.posts}
+        self={{ name: ROSTER.us.players.self.nom, handle: '@reyes10' }}
+        onReply={(_post, option) => {
+          // Ответ в стрічці — последствия как у дела недели: через applyWeek, чтобы бирки,
+          // флаги и старт следующего матча считались в одном месте. Неделя потом дольёт своё.
+          const activity: Activity = { id: 'reply', voice: 'ego', title: 'Відповідь у стрічці', line: option.text, effect: option.effect };
+          const { career: after, tags } = applyWeek(careerRef.current, [{ activity }]);
+          setCareerBoth(after);
+          return tags;
+        }}
+        onNext={() => afterPosts(stage.leveledFrom, stage.leveledTo)}
+      />
+    );
   }
 
   if (stage.k === 'week') {
@@ -408,7 +422,7 @@ function Game() {
           setCareerBoth(recordWeek(after, ctx, stage.offers, raw.map((c) => c.activity)));
           return tags;
         }}
-        onNext={() => setStage(leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}
+        onNext={() => setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}
       />
     );
   }

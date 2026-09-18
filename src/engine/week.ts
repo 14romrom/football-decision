@@ -177,7 +177,14 @@ export type WeekChoice = { activity: Activity; trainAttr?: Attribute };
  *  в nextMatch на один матч. Возвращает бирки для экрана: что изменилось, словами. */
 export function applyWeek(career: Career, choices: WeekChoice[]): { career: Career; tags: string[] } {
   const next: Career = { ...career, training: { ...(career.training ?? {}) }, attrPoints: { ...career.attrPoints } };
-  const prep: NextMatchPrep = { attrBonus: {}, start: {}, notes: [] };
+  // Начинаем с того, что уже приготовлено к матчу (ответ в стрічці идёт раньше тижня, 19.09):
+  // иначе неделя затирала бы его последствия. consumeStartPenalty очищает всё разом.
+  const prev = career.nextMatch;
+  const prep: NextMatchPrep = {
+    attrBonus: { ...(prev?.attrBonus ?? {}) }, start: { ...(prev?.start ?? {}) }, notes: [...(prev?.notes ?? [])],
+    ...(prev?.voiceStreak ? { voiceStreak: prev.voiceStreak } : {}), ...(prev?.voiceMute ? { voiceMute: prev.voiceMute } : {}),
+    ...(prev?.healed ? { healed: true } : {}),
+  };
   const tags: string[] = [];
   let flags: CarriedFlag[] = career.carriedFlags ?? [];
   const bump = (attr: Attribute, mods: number) => { prep.attrBonus![attr] = (prep.attrBonus![attr] ?? 0) + mods * POINT_VALUE; };
@@ -229,7 +236,7 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
     prep.notes!.push(e.note);
   }
   next.carriedFlags = flags;
-  next.nextMatch = choices.length ? prep : undefined;
+  next.nextMatch = choices.length || prev ? prep : undefined;
   return { career: next, tags: [...new Set(tags)] };
 }
 

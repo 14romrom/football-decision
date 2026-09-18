@@ -13,7 +13,7 @@ const strengths = Object.fromEntries(keys.map((k) => [k, OPPONENTS[k].strength])
 const GROUPS: PostGroup[] = ['self', 'league', 'world', 'cross', 'meta'];
 const EXTRA = {
   last: 'Ольвар', 'last.gen': 'Ольвара', leader: 'Ольвар', 'leader.gen': 'Ольвара',
-  bottom: 'Ріо-Секо', 'bottom.gen': 'Ріо-Секо', score: '1:2', position: '4', round: '5',
+  bottom: 'Ріо-Секо', 'bottom.gen': 'Ріо-Секо', score: '1:2', position: '4', round: '5', quote: '…',
 };
 
 /** Правило CLAUDE.md: реальных людей в контенте нет. Клубы — можно, это сатира на клубы. */
@@ -44,7 +44,10 @@ describe('стрічка: контент', () => {
   });
 
   it('плейсхолдеры разрешаются любым ростером; реальных людей по имени нет', () => {
-    const texts = POSTS.posts.flatMap((r) => [...r.lines, ...(r.reply?.lines ?? [])]);
+    const texts = POSTS.posts.flatMap((r) => [
+      ...r.lines, ...(r.reply?.lines ?? []), ...(r.poll ?? []),
+      ...(r.replyOptions ?? []).flatMap((o) => [o.text, o.reaction]),
+    ]);
     for (const key of keys) {
       const roster = rosterFor(key, makeRng(2));
       for (const t of texts) expect(fillNames(t, roster, EXTRA), t).not.toMatch(/\{[a-z]/);
@@ -92,6 +95,27 @@ describe('стрічка: контент', () => {
     expect(postQuota(7)).toEqual(q2);
   });
 
+  it('форма: опрос в сумме 100, видалений твіт цитируется в ответе, лайв — с минутой и внизу, ответить можно на один пост', () => {
+    let sawPoll = false, sawDeleted = false, sawLive = false;
+    for (let i = 0; i < 60; i++) {
+      const feed = buildFeed(ctx({ result: 'loss', scoreUs: 0, scoreThem: 1, lastWeek: ['insta_date'], coachTrust: 30 }), makeRng(700 + i));
+      expect(feed.filter((p) => p.replyOptions).length).toBeLessThanOrEqual(1);
+      for (const p of feed) {
+        if (p.kind === 'poll') { sawPoll = true; expect(p.poll!.reduce((a, o) => a + o.pct, 0)).toBe(100); }
+        if (p.kind === 'deleted') { sawDeleted = true; expect(p.text).toBe('Цей твіт видалено'); expect(p.reply!.text).not.toContain('{quote}'); expect(p.reply!.text.length).toBeGreaterThan(20); }
+        if (p.kind === 'live') { sawLive = true; expect(p.liveMinute).toBeGreaterThan(0); }
+      }
+      const liveIdx = feed.map((p) => p.kind === 'live');
+      if (liveIdx.includes(true)) expect(liveIdx.indexOf(true)).toBeGreaterThanOrEqual(liveIdx.lastIndexOf(false));
+    }
+    expect(sawPoll && sawDeleted && sawLive).toBe(true);
+    // Ответ игрока — как дело недели: у каждого варианта есть эффект и реакция автора.
+    for (const r of POSTS.posts) for (const o of r.replyOptions ?? []) {
+      expect(o.reaction.length).toBeGreaterThan(0);
+      expect(o.effect.note.length).toBeGreaterThan(0);
+    }
+  });
+
   it('за сезон из десяти туров ни один пост не читается дважды', () => {
     const seen = new Set<string>();
     const all: string[] = [];
@@ -101,6 +125,22 @@ describe('стрічка: контент', () => {
       all.push(...feed.map((p) => p.text));
     }
     expect(new Set(all).size, 'повторы за сезон').toBe(all.length);
+  });
+});
+
+describe('стрічка: ответ игрока', () => {
+  it('последствия ответа переживают тиждень: applyWeek дополняет nextMatch, а не затирает', async () => {
+    const { applyWeek } = await import('../src/engine/week');
+    const reply = { id: 'reply', voice: 'ego' as const, title: 'Відповідь', line: '', effect: { fanHype: 5, coachTrust: -4, note: 'відповів' } };
+    const gym = { id: 'gym', voice: 'body' as const, title: 'Зал', line: '', effect: { stamina: -8, note: 'зал' } };
+    const c0 = defaultCareer();
+    const c1 = applyWeek(c0, [{ activity: reply }]).career;
+    expect(c1.nextMatch?.start?.fanHype).toBe(5);
+    expect(c1.coachTrust).toBe(c0.coachTrust - 4);
+    const c2 = applyWeek(c1, [{ activity: gym }]).career;
+    expect(c2.nextMatch?.start?.fanHype).toBe(5);
+    expect(c2.nextMatch?.start?.stamina).toBe(-8);
+    expect(c2.nextMatch?.notes).toEqual(['відповів', 'зал']);
   });
 });
 

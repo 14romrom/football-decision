@@ -151,7 +151,7 @@ export type Post = {
 };
 
 /** Сколько постов каждой группы в одной стрічці: про себя больше всего — это же его лента. */
-export const POST_QUOTA: Record<PostGroup, number> = { self: 3, league: 2, world: 2, cross: 1, meta: 1 };
+export const POST_QUOTA: Record<PostGroup, number> = { self: 3, league: 2, world: 3, cross: 1, meta: 1 };
 
 /** Стрічка: по квоте на группу, вес 3^ключей условия, виденные строки уступают свежим;
  *  порядок постов — перемешан, время «назад» растёт вниз по ленте. */

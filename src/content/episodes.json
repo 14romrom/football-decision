@@ -19594,7 +19594,7 @@
     "id": "ep_corner_zone_near",
     "family": "corner_defense",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -19804,7 +19804,7 @@
     "id": "ep_second_ball_edge",
     "family": "corner_defense",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -20014,7 +20014,7 @@
     "id": "ep_keeper_short_build",
     "family": "press",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -20225,7 +20225,7 @@
     "id": "ep_wing_double_team",
     "family": "wing",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -20434,7 +20434,7 @@
     "id": "ep_long_ball_own_box",
     "family": "duel",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -20650,7 +20650,7 @@
     "id": "ep_counter_three_on_two",
     "family": "last_man",
     "phase": "defense",
-    "weight": 0.6,
+    "weight": 1.1,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -20869,7 +20869,7 @@
     "id": "ep_free_kick_in_wall",
     "family": "free_kick",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -21083,7 +21083,7 @@
     "id": "ep_offside_line_break",
     "family": "last_man",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -21300,7 +21300,7 @@
     "id": "ep_runner_from_deep",
     "family": "partner",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -21512,7 +21512,7 @@
     "id": "ep_empty_net_cover",
     "family": "last_man",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 20,
       "maxMinute": 90
@@ -21731,7 +21731,7 @@
     "id": "ep_striker_back_to_goal",
     "family": "duel",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -21944,7 +21944,7 @@
     "id": "ep_goal_kick_second_ball",
     "family": "press",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 0.9,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -22158,7 +22158,7 @@
     "id": "ep_free_kick_wide",
     "family": "free_kick",
     "phase": "setpiece",
-    "weight": 1.1,
+    "weight": 1,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -22371,7 +22371,7 @@
     "id": "ep_corner_short_receiver",
     "family": "corner_attack",
     "phase": "setpiece",
-    "weight": 1.1,
+    "weight": 1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -22581,7 +22581,7 @@
     "id": "ep_penalty_against_edge",
     "family": "penalty",
     "phase": "defense",
-    "weight": 0.5,
+    "weight": 1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -22805,7 +22805,7 @@
     "id": "ep_long_throw_box",
     "family": "corner_attack",
     "phase": "setpiece",
-    "weight": 1.0,
+    "weight": 0.9,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -23021,7 +23021,7 @@
     "id": "ep_indirect_in_box",
     "family": "free_kick",
     "phase": "setpiece",
-    "weight": 1.0,
+    "weight": 0.9,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -23235,7 +23235,7 @@
     "id": "ep_one_on_one_angle",
     "family": "one_on_one",
     "phase": "attack",
-    "weight": 1.4,
+    "weight": 1.1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -23460,7 +23460,7 @@
     "id": "ep_wing_cross_choice",
     "family": "wing",
     "phase": "attack",
-    "weight": 1.3,
+    "weight": 1,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -23678,7 +23678,7 @@
     "id": "ep_keeper_spill",
     "family": "one_on_one",
     "phase": "attack",
-    "weight": 1.4,
+    "weight": 1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -23895,7 +23895,7 @@
     "id": "ep_past_keeper_angle",
     "family": "one_on_one",
     "phase": "attack",
-    "weight": 1.3,
+    "weight": 1,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -24109,7 +24109,7 @@
     "id": "ep_wing_overlap",
     "family": "wing",
     "phase": "attack",
-    "weight": 1.2,
+    "weight": 1,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -24322,7 +24322,7 @@
     "id": "ep_build_out_press",
     "family": "press",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.1,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -24368,7 +24368,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 6,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -24547,7 +24547,7 @@
     "id": "ep_pausa_back_to_goal",
     "family": "duel",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.1,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -24646,7 +24646,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 6,
+        "staminaCost": 9,
         "goals": {
           "team": 2,
           "personal": 2
@@ -24765,7 +24765,7 @@
     "id": "ep_late_run_timing",
     "family": "through",
     "phase": "attack",
-    "weight": 1.2,
+    "weight": 1.0,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -24805,7 +24805,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 7,
+        "staminaCost": 9,
         "goals": {
           "team": 2,
           "personal": 3
@@ -24977,7 +24977,7 @@
     "id": "ep_second_ball_attack_edge",
     "family": "corner_attack",
     "phase": "attack",
-    "weight": 0.85,
+    "weight": 1.0,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -25133,7 +25133,7 @@
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": -1,
-        "staminaCost": 5,
+        "staminaCost": 7,
         "goals": {
           "team": 2,
           "personal": 1
@@ -25194,7 +25194,7 @@
     "id": "ep_counter_without_ball",
     "family": "counter",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.0,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -25233,7 +25233,7 @@
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 8,
+        "staminaCost": 9,
         "goals": {
           "team": 3,
           "personal": 1
@@ -25404,7 +25404,7 @@
     "id": "ep_our_long_kick",
     "family": "duel",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.0,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -25498,7 +25498,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 2,
-        "staminaCost": 9,
+        "staminaCost": 10,
         "goals": {
           "team": 2,
           "personal": 3
@@ -25614,7 +25614,7 @@
     "id": "ep_half_space_pocket",
     "family": "through",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.1,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -25653,7 +25653,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 7,
+        "staminaCost": 9,
         "goals": {
           "team": 2,
           "personal": 3
@@ -25837,7 +25837,7 @@
     "id": "ep_tempo_control",
     "family": "coach",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.1,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -25941,7 +25941,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 6,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -26060,7 +26060,7 @@
     "id": "ep_scan_before_receive",
     "family": "press",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.0,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -26099,7 +26099,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 5,
+        "staminaCost": 7,
         "goals": {
           "team": 3,
           "personal": 2
@@ -26277,7 +26277,7 @@
     "id": "ep_break_first_line",
     "family": "through",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.0,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -26314,7 +26314,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 7,
+        "staminaCost": 9,
         "goals": {
           "team": 2,
           "personal": 3
@@ -26438,7 +26438,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 6,
+        "staminaCost": 8,
         "goals": {
           "team": 3,
           "personal": 2
@@ -26499,7 +26499,7 @@
     "id": "ep_decoy_run",
     "family": "partner",
     "phase": "attack",
-    "weight": 0.85,
+    "weight": 1.0,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -26539,7 +26539,7 @@
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 7,
+        "staminaCost": 9,
         "goals": {
           "team": 3,
           "personal": 0
@@ -26720,7 +26720,7 @@
     "id": "ep_shield_for_foul",
     "family": "duel",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 1.0,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -26818,7 +26818,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 6,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -27261,7 +27261,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 8,
+        "staminaCost": 9,
         "goals": {
           "team": 2,
           "personal": 2
@@ -27589,7 +27589,7 @@
     "id": "ep_var_wait",
     "family": "referee",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 0.9,
     "requires": {
       "minMinute": 20,
       "maxMinute": 88
@@ -27810,7 +27810,7 @@
     "id": "ep_pyro_pause",
     "family": "coach",
     "phase": "transition",
-    "weight": 0.85,
+    "weight": 0.8,
     "requires": {
       "minMinute": 15,
       "maxMinute": 85
@@ -28315,7 +28315,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 6,
+        "staminaCost": 8,
         "goals": {
           "team": 3,
           "personal": 2
@@ -28657,7 +28657,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 6,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -28734,7 +28734,7 @@
         "basePosition": "desperate",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 5,
+        "staminaCost": 7,
         "goals": {
           "team": 1,
           "personal": 3
@@ -28798,6 +28798,1750 @@
               "coachTrust": -9,
               "fanHype": -4,
               "composure": -8
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_cutback_arrival",
+    "family": "edge_shot",
+    "phase": "attack",
+    "weight": 1.3,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90
+    },
+    "setup": "{partner} дійшов до лицьової і не навішує — він відкочує назад, на дугу. Туди, куди ти приходиш другим темпом, поки всі їхні відкотилися до воріт разом із {striker.ins}. М’яч котиться тобі назустріч, повільно, як подарунок. Перед тобою метрів вісімнадцять і нікого.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "partner_trusts"
+          ]
+        },
+        "text": "{partner} дійшов до лицьової — і не дивиться в штрафний, він шукає тебе. Після того вечора він завжди шукає тебе. Відкат на дугу, повільний, точний. Усі їхні відкотилися до воріт. Вісімнадцять метрів і нікого."
+      },
+      {
+        "when": {
+          "score": "trailing",
+          "minMinute": 80
+        },
+        "text": "Кінцівка, ми програємо. {partner} дійшов до лицьової й відкочує на дугу, туди, куди ти прийшов другим темпом, — і це, можливо, останній момент. Усі їхні у воротах. Вісімнадцять метрів, і стадіон уже встав."
+      },
+      {
+        "when": {
+          "flags": [
+            "them_hard"
+          ]
+        },
+        "text": "{partner} відкочує з лицьової на дугу. Ти приходиш другим темпом — і чуєш за спиною {them.mid.gen}, який теж приходить другим темпом, у ноги. Вісімнадцять метрів до воріт і пів секунди до стику."
+      },
+      {
+        "when": {
+          "momentumMin": 2
+        },
+        "text": "{partner} відкочує з лицьової на дугу, і ти вже там — сьогодні ти всюди вчасно. М’яч котиться назустріч повільно. Вісімнадцять метрів і нікого. Такі моменти в такі дні не пропускають."
+      }
+    ],
+    "options": [
+      {
+        "id": "first_time_placed",
+        "label": "В дотик, низом у кут",
+        "past": "бив у дотик після відкату на дугу",
+        "attribute": "finishing",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 0,
+        "staminaCost": 6,
+        "goals": {
+          "team": 2,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "У дотик. Він котиться під удар — не зупиняй його."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти б’єш у дотик, внутрішньою, низом — м’яч проходить крізь ноги захисників у дальній кут. Воротар бачив його пізно. Гол з дуги, другим темпом, як малюють на дошці для АПЗ. {partner} біжить до тебе перший.",
+            "recap": "і забив у дотик після відкату на дугу.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 7,
+              "fanHype": 10
+            }
+          },
+          "cost": {
+            "text": "Ти б’єш у дотик — воротар тягне у стрибку на кутовий. Удар був той, стрибок — теж. Стадіон видихає з таким звуком, що {partner} обертається.",
+            "recap": "і пробив у дотик з дуги — воротар витягнув.",
+            "apply": {
+              "corner": true,
+              "coachTrust": 4,
+              "fanHype": 5
+            }
+          },
+          "fail": {
+            "text": "Ти б’єш у дотик — над перекладиною. Вісімнадцять метрів, нікого, м’яч сам котився під удар. {partner} на лицьовій опускає руки повільно.",
+            "recap": "і пробив у дотик з дуги вище.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -4,
+              "composure": -4
+            }
+          },
+          "badFail": {
+            "text": "Ти замахуєшся — і {them.mid} ззаду вибиває м’яч з-під ноги в підкаті. Він устає перший, ти ще на газоні, і вони біжать. Наші всі в штрафному. Контратака з дуги.",
+            "recap": "і дав вибити м’яч з-під удару на дузі — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -5,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "settle_and_curl",
+        "label": "Зупинити — і закрутити в дальню дев’ятку",
+        "past": "обробляв відкат і закручував у дев’ятку",
+        "attribute": "first_touch",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 2,
+        "staminaCost": 7,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Зупини. Подивись. І поклади в дев’ятку так, щоб показували з трьох ракурсів."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти зупиняєш м’яч одним дотиком, дивишся — воротар на лінії, стінка ніг перед ним — і закручуєш над усіма в дальню дев’ятку. Він навіть не стрибнув. Гол, який покажуть з трьох ракурсів, і кожен буде повільним.",
+            "recap": "і закрутив у дев’ятку після відкату.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 6,
+              "fanHype": 12,
+              "momentum": 1
+            }
+          },
+          "cost": {
+            "text": "Ти зупиняєш, дивишся, закручуєш — у перекладину. Перекладина, відскок, {striker} добиває — блок, кутовий. Три ракурси покажуть перекладину.",
+            "recap": "і закрутив після відкату в перекладину.",
+            "apply": {
+              "corner": true,
+              "coachTrust": 3,
+              "fanHype": 6
+            }
+          },
+          "fail": {
+            "text": "Ти зупиняєш — і за ту секунду захисник уже перед тобою. Закручуєш — у нього, в стегно. М’яч відлітає до їхнього воротаря. Ти дивився на дев’ятку. Він дивився на тебе.",
+            "recap": "і забарився з обробкою на дузі — блок.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -2,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти зупиняєш — {them.mid} забирає з-під ноги, поки ти дивишся на ворота. І одразу вперед: {them.striker} сам на нашій половині. Контратака з твоєї паузи.",
+            "recap": "і втратив на обробці на дузі — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -7,
+              "fanHype": -5,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "let_it_run_striker",
+        "label": "Пропустити на {striker.gen} за спиною",
+        "past": "пропускав відкат на {striker.gen}",
+        "attribute": "vision",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "team",
+          "line": "{striker} за спиною і сам. Пропусти — усі дивляться на тебе, ніхто на нього."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти показуєш удар і пропускаєш м’яч між ніг — {striker} за спиною приймає і б’є з першого дотику. Гол. Двоє захисників кинулися на твій замах, і обидва ще в повітрі.",
+            "recap": "і пропустив відкат на {striker.gen} — гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
+            }
+          },
+          "cost": {
+            "text": "Ти пропускаєш — {striker} б’є, воротар відбиває на кутовий. Ідея була така, що {coach} плеснув у долоні. Виконання — на воротаря.",
+            "recap": "і пропустив відкат на {striker.gen} — воротар витягнув.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 5,
+              "fanHype": 3
+            }
+          },
+          "fail": {
+            "text": "Ти пропускаєш — а {striker} не за спиною, він побіг на дальню. М’яч котиться повз усіх до лицьової. Ти пропустив у порожнечу. Красиво, і нікому.",
+            "recap": "і пропустив відкат у порожнечу.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти пропускаєш — і {them.cb} за спиною {striker.gen} читає це раніше за нього, забирає і виносить на {them.winger.gen}. Контратака. Ти віддав пас, якого не було, суперникові, якого не бачив.",
+            "recap": "і пропустив відкат у контратаку.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -5
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_second_wave_run",
+    "family": "through",
+    "phase": "attack",
+    "weight": 1.2,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90
+    },
+    "setup": "{striker} тягне обох центральних до лінії штрафного — вони йдуть за ним, як прив’язані. За їхніми спинами відкривається коридор, і {dm} з м’ячем це бачить. Ти на тридцяти метрах від воріт, без опікуна: другий темп, як його малюють для десятки. Треба вибрати, куди й коли бігти.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "them_veteran"
+          ]
+        },
+        "text": "{striker} тягне обох центральних до лінії штрафного — {them.cb} іде за ним, але повільно, і озирається на тебе: він старий і знає, що другий темп — це ти. {dm} з м’ячем бачить коридор. Ти на тридцяти метрах. Він теж рахує."
+      },
+      {
+        "when": {
+          "flags": [
+            "plan_possession"
+          ]
+        },
+        "text": "{striker} тягне обох центральних, коридор відкривається — і тренер на розборі показував саме це: «десятка приходить другим темпом, коли всі дивляться на дев’ятку». {dm} з м’ячем бачить. Ти на тридцяти метрах. Тепер — куди й коли."
+      },
+      {
+        "when": {
+          "score": "level",
+          "minMinute": 80
+        },
+        "text": "Кінцівка, нічия. {striker} тягне обох центральних, коридор за їхніми спинами відкривається на секунду. {dm} з м’ячем бачить. Ти на тридцяти метрах, без опікуна, і це той момент, для якого існує твоя позиція."
+      }
+    ],
+    "options": [
+      {
+        "id": "run_the_channel",
+        "label": "Рвонути в коридор — на пас у розріз",
+        "past": "біг другим темпом у коридор за спини",
+        "attribute": "pace",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 11,
+        "goals": {
+          "team": 2,
+          "personal": 3
+        },
+        "voice": {
+          "who": "body",
+          "line": "Зараз. Коридор живе секунду — і ти в ньому раніше за всіх."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти рвеш у коридор — {dm} кладе в розріз, і ти сам, з лінії штрафного, обличчям до воріт. Воротар виходить, ти обводиш ударом низом у дальній. Гол другим темпом. {striker} обіймає тебе, бо це він відкрив коридор.",
+            "recap": "і забіг другим темпом у коридор — гол.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 7,
+              "fanHype": 10
+            }
+          },
+          "cost": {
+            "text": "Ти рвеш у коридор — пас у розріз, але {them.cb} дотягується в підкаті й вибиває на кутовий. Ти біг правильно, {dm} віддав правильно, підкат теж був правильний.",
+            "recap": "і забіг у коридор — захисник вибив на кутовий.",
+            "apply": {
+              "corner": true,
+              "keyPass": true,
+              "coachTrust": 4,
+              "fanHype": 4,
+              "stamina": -2
+            }
+          },
+          "fail": {
+            "text": "Ти рвеш — а {dm} віддає {striker.dat} в ноги, спиною до воріт, як завжди. Ти в коридорі один, без м’яча, і коридор зачиняється за тобою. Тридцять метрів дарма.",
+            "recap": "і забіг у коридор, куди не віддали.",
+            "apply": {
+              "coachTrust": -2,
+              "stamina": -4
+            }
+          },
+          "badFail": {
+            "text": "Ти рвеш — прапорець. Офсайд на пів кроку, і пас {dm.gen} зараховують їм. {them.mid} розігрує швидко, поки ти повертаєшся з чужого штрафного, — {them.striker} б’є з лінії штрафного. Гол.",
+            "recap": "і забіг другим темпом в офсайд — гол у відповідь.",
+            "apply": {
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -7,
+              "fanHype": -4,
+              "composure": -6,
+              "stamina": -3
+            }
+          }
+        }
+      },
+      {
+        "id": "arrive_at_edge",
+        "label": "Прийти на дугу — під скидку {striker.gen}",
+        "past": "приходив другим темпом на дугу під скидку",
+        "attribute": "positioning",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 6,
+        "goals": {
+          "team": 2,
+          "personal": 3
+        },
+        "voice": {
+          "who": "vision",
+          "line": "Не за спини — на дугу. {striker} скине назад, і ти б’єш обличчям до воріт, коли всі біжать від них."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти приходиш на дугу, {dm} віддає {striker.dat}, той скидає назад п’ятою — і ти б’єш у дотик, низом, повз усіх, хто біг до воріт. Гол з дуги. Класика для десятки: три дотики трьох людей, і всі — в один бік.",
+            "recap": "і пробив у дотик після скидки {striker.gen} — гол.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 8,
+              "fanHype": 9
+            }
+          },
+          "cost": {
+            "text": "Ти приходиш на дугу — скидка, удар, воротар відбиває на кутовий. {coach} плескає: розіграш був із дошки. Гола на дошці не було.",
+            "recap": "і пробив із дуги після скидки — воротар витягнув.",
+            "apply": {
+              "corner": true,
+              "keyPass": true,
+              "coachTrust": 5,
+              "fanHype": 4
+            }
+          },
+          "fail": {
+            "text": "Ти приходиш на дугу — а {striker} не скидає, він розвертається і б’є сам, повз. Ти стоїш на дузі з порожньою ногою. Він розводить руками: не бачив.",
+            "recap": "і прийшов на дугу — скидки не було.",
+            "apply": {
+              "coachTrust": -2,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти приходиш на дугу, {striker} скидає — і {them.mid} перехоплює скидку на пів дорозі, а ти вже зробив замах у порожнечу. Він біжить, за спиною нікого. Контратака з дуги.",
+            "recap": "і чекав скидку на дузі — перехоплення, контратака.",
+            "apply": {
+              "counterAttack": true,
+              "coachTrust": -5,
+              "fanHype": -4,
+              "composure": -5
+            }
+          }
+        }
+      },
+      {
+        "id": "hold_and_switch",
+        "label": "Не бігти — попросити м’яч і перевести",
+        "past": "просив м’яч замість ривка й переводив",
+        "attribute": "passing",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": -2,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "team",
+          "line": "Коридор бачать усі. {winger} на дальньому — ні. Забери м’яч і переведи."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти просиш м’яч на себе, {dm} віддає, і ти переводиш на дальній край, де {winger} сам. Він доходить до лицьової, простріл, {striker} замикає — воротар відбиває на кутовий. Коридор був приманкою. Ти це бачив.",
+            "recap": "і перевів на {winger.gen} замість ривка — кутовий.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 6,
+              "fanHype": 3
+            }
+          },
+          "cost": {
+            "text": "Ти просиш м’яч і переводиш — {winger} приймає, його накривають, він повертає назад. Володіння наше, атака жива, коридор зачинився сам. {coach} киває: без ризику.",
+            "recap": "і перевів замість ривка — володіння збережено.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 4,
+              "composure": 2
+            }
+          },
+          "fail": {
+            "text": "Ти просиш м’яч — {dm} не віддає, він кидає в коридор, куди ніхто не побіг. {them.cb} забирає. Ти стояв. {striker} тягнув захисників дарма.",
+            "recap": "і не побіг у коридор, а пас туди пішов.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти просиш м’яч, отримуєш — і {them.mid} накриває ззаду, поки ти дивишся на дальній край. Втрата на тридцяти метрах, і вони йдуть у розтягнуту оборону. {them.striker} б’є — гол. Коридор був. Ти вибрав стояти.",
+            "recap": "і втратив на переводі замість ривка — гол.",
+            "apply": {
+              "losses": 1,
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -8,
+              "fanHype": -4,
+              "composure": -7
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_box_turn_shot",
+    "family": "edge_shot",
+    "phase": "attack",
+    "weight": 1.2,
+    "requires": {
+      "minMinute": 5,
+      "maxMinute": 90
+    },
+    "setup": "Пас від {partner.gen} — тобі в штрафний, спиною до воріт, на дванадцяти метрах. {them.cb} у спині, впритул, і воротар кричить йому «тримай». Розвернутися — це удар. Не розвернутися — це пас. Півсекунди, і він вирішить за тебе.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "them_veteran"
+          ]
+        },
+        "text": "Пас від {partner.gen} тобі в штрафний, спиною до воріт. У спині {them.cb} — старий, він не дає розвернутися вже двадцять років і робить це без фолу. Воротар кричить «тримай». Він тримає. Півсекунди."
+      },
+      {
+        "when": {
+          "flags": [
+            "keeper_read",
+            "keeper_nearPost"
+          ]
+        },
+        "text": "Пас від {partner.gen} тобі в штрафний, спиною до воріт. {them.cb} у спині. Воротар — ти знаєш — стоїть на ближній, завжди. Якщо розвернутися через ліве плече, відкриється дальня. Півсекунди, щоб розвернутися правильно."
+      },
+      {
+        "when": {
+          "venue": "home"
+        },
+        "text": "Пас від {partner.gen} тобі в штрафний, спиною до воріт, — і трибуна за воротами вже кричить «бий», хоча ти ще не бачиш воріт. {them.cb} у спині. Воротар кричить «тримай». Тридцять тисяч кричать інше."
+      }
+    ],
+    "options": [
+      {
+        "id": "spin_and_shoot",
+        "label": "Розвернутися через плече — і бити",
+        "past": "розвертався у штрафному спиною до воріт і бив",
+        "attribute": "first_touch",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 8,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "Через плече — одним рухом. Він тримає корпус, а не ноги."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти приймаєш і розвертаєшся через плече в один дотик — {them.cb} лишається за спиною, а ти вже б’єш низом у кут. Воротар стрибнув пізно. Гол з розвороту, на дванадцяти метрах, спиною до воріт секунду тому.",
+            "recap": "і забив з розвороту в штрафному.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 6,
+              "fanHype": 11
+            }
+          },
+          "cost": {
+            "text": "Ти розвертаєшся — він чіпляє за футболку на розвороті, і ти падаєш. Свисток, пенальті. {striker} ставить м’яч, воротар тягне. Розворот був, гола не було, футболка розтягнута.",
+            "recap": "і заробив пенальті на розвороті — {striker} не забив.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 3,
+              "fanHype": 5
+            }
+          },
+          "fail": {
+            "text": "Ти розвертаєшся — він іде разом, і удар виходить із-під нього, слабкий, у воротаря. Той забирає в руки і кидає далеко. Півсекунди минули, поки ти повертався.",
+            "recap": "і розвернувся у штрафному — удар у воротаря.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -2,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти розвертаєшся — він забирає м’яч на розвороті чисто і одразу вибиває на {them.winger.gen}. Наші попереду. Контратака зі штрафного, де ти секунду тому був спиною до воріт.",
+            "recap": "і втратив на розвороті у штрафному — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "lay_off_to_partner",
+        "label": "Скинути назад {partner.dat} під удар",
+        "past": "скидав назад {partner.dat} зі штрафного",
+        "attribute": "passing",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 0,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "team",
+          "line": "{partner} біжить за пасом. Скинь йому — він б’є обличчям до воріт, а ти спиною."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти приймаєш і скидаєш назад у дотик — {partner} набігає і б’є низом у кут. Гол. Ти спиною до воріт, він обличчям, і разом — гол. {them.cb} тримав тебе весь цей час. Правильно тримав.",
+            "recap": "і скинув зі штрафного {partner.dat} — гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "partner",
+              "coachTrust": 8,
+              "fanHype": 8,
+              "removeFlags": [
+                "partner_annoyed"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти скидаєш — {partner} б’є, блок, кутовий. Скидка була точна, удар був сильний, нога захисника була в правильному місці.",
+            "recap": "і скинув {partner.dat} — блок, кутовий.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 4,
+              "fanHype": 3
+            }
+          },
+          "fail": {
+            "text": "Ти скидаєш — {partner} не набіг, він зупинився, чекаючи, що ти розвернешся. М’яч котиться до лінії штрафного, {them.mid} виносить. Ви не домовилися.",
+            "recap": "і скинув зі штрафного в нікуди.",
+            "apply": {
+              "coachTrust": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти скидаєш — {them.mid} перехоплює на лінії штрафного і одразу вперед. Наші всі попереду. {them.striker} сам. Контратака з твоєї скидки.",
+            "recap": "і скинув зі штрафного в контратаку.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -5
+            }
+          }
+        }
+      },
+      {
+        "id": "hold_draw_foul",
+        "label": "Тримати м’яч — хай штовхне",
+        "past": "тримав м’яч у штрафному під фол",
+        "attribute": "strength",
+        "basePosition": "desperate",
+        "effect": "standard",
+        "difficulty": 0,
+        "staminaCost": 5,
+        "goals": {
+          "team": 2,
+          "personal": 2
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Не розвертайся. Стій і тримай — він штовхне, суддя поруч, точка поруч."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти тримаєш м’яч під собою, корпус між ним і м’ячем, — і він штовхає в спину. Свисток, пенальті. Ти не зробив жодного футбольного руху і заробив найбільше, що можна заробити у штрафному. Ти йдеш до точки.",
+            "recap": "і заробив пенальті, тримаючи м’яч у штрафному.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 5,
+              "fanHype": 7,
+              "followUp": "fin_penalty",
+              "followUpElse": {
+                "teamGoal": true,
+                "scorer": "striker",
+                "coachTrust": 3
+              }
+            }
+          },
+          "cost": {
+            "text": "Ти тримаєш — він штовхає, свисток. Штрафний, але з лінії штрафного: суддя вирішив, що контакт був до лінії. Стінка, {partner} б’є — над перекладиною. Пенальті було на пів метра.",
+            "recap": "і заробив штрафний з лінії, тримаючи м’яч.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 3,
+              "fanHype": 3
+            }
+          },
+          "fail": {
+            "text": "Ти тримаєш — а він не штовхає. Він чекає. І чекає. І приходить другий, і м’яч виколупують у дотик. Ти стояв, він стояв, і переграв тебе стоянням.",
+            "recap": "і тримав м’яч у штрафному, поки не забрали.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -4,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти тримаєш, він тисне, ти падаєш — і суддя показує жовту тобі: симуляція. Штрафний їм, і поки ти сперечаєшся, {them.mid} розігрує швидко. {them.striker} б’є — гол. Ти шукав пенальті. Знайшов картку і гол.",
+            "recap": "і отримав жовту за симуляцію в штрафному — гол.",
+            "apply": {
+              "addFlags": [
+                "booked"
+              ],
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -9,
+              "fanHype": -5,
+              "composure": -8
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_two_v_one_lead",
+    "family": "counter",
+    "phase": "attack",
+    "weight": 1.2,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90
+    },
+    "setup": "Ти ведеш контратаку сам, м’яч під ногою, {striker} біжить праворуч на паралельному курсі. Проти вас один {them.cb} — він задкує до штрафного і дивиться на м’яч, потім на {striker.gen}, потім знову на м’яч. Двоє на одного, і рішення — твоє, бо м’яч у тебе.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "them_veteran"
+          ]
+        },
+        "text": "Ти ведеш контратаку, {striker} біжить праворуч, проти вас один {them.cb} — старий, повільний і зовсім не наляканий. Він задкує рівно так, щоб ти не знав, кого він накриє. Двоє на одного, і він робить це двадцять років."
+      },
+      {
+        "when": {
+          "flags": [
+            "partner_annoyed"
+          ]
+        },
+        "text": "Ти ведеш контратаку, і праворуч біжить {striker} — не {partner}, той відстав і не поспішає, сьогодні він так. Проти вас один {them.cb}. Двоє на одного, рішення твоє, і хтось за спиною дивиться, кому ти віддаси."
+      },
+      {
+        "when": {
+          "score": "level",
+          "minMinute": 85
+        },
+        "text": "Останні хвилини, нічия, і ти ведеш контратаку — м’яч під ногою, {striker} праворуч, проти вас один {them.cb}. Стадіон затих так, як затихають перед тим, що вирішує матч. Двоє на одного."
+      },
+      {
+        "when": {
+          "tired": true
+        },
+        "text": "Ти ведеш контратаку на ногах, які вже не ведуть. {striker} праворуч, свіжий. Проти вас один {them.cb}, і він бачить, як ти біжиш. Двоє на одного — але один із двох уже не той."
+      }
+    ],
+    "options": [
+      {
+        "id": "draw_and_release",
+        "label": "Затримати — хай вибере, — і віддати {striker.dat}",
+        "past": "тягнув захисника на себе і віддавав у контратаці два на один",
+        "attribute": "composure",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 0,
+        "staminaCost": 5,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Не поспішай. Хай він зробить крок до тебе — і тільки тоді віддай."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти ведеш прямо на нього, не міняючи темпу, — і за мить до стику він робить крок на тебе. Тоді ти віддаєш. {striker} сам, закочує повз воротаря. Гол. Два на одного, зіграні як у підручнику, і підручник написав ти.",
+            "recap": "і розіграв два на одного до гола {striker.gen}.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
+            }
+          },
+          "cost": {
+            "text": "Ти затримуєш, він робить крок, ти віддаєш — {striker} б’є, воротар відбиває на кутовий. Ти зробив усе, крім останнього дотику, а він не твій.",
+            "recap": "і розіграв два на одного — воротар витягнув.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 5,
+              "fanHype": 4
+            }
+          },
+          "fail": {
+            "text": "Ти затримуєш — надто довго, і {them.mid} прибігає ззаду. Двоє на двох, і ти віддаєш {striker.dat} під ногу другого. Втрата. Ти чекав крок, якого він не зробив.",
+            "recap": "і затягнув два на одного, поки не прибіг другий.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти затримуєш — він не рухається, і ти віддаєш у момент, коли він цього й чекав: перехоплення, і {them.cb} одразу вперед, за спину нашим. {them.striker} закочує. Гол із твого контрвипаду — у наші ворота.",
+            "recap": "і віддав у контратаці два на один на перехоплення — гол.",
+            "apply": {
+              "losses": 1,
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -8,
+              "fanHype": -5,
+              "composure": -7
+            }
+          }
+        }
+      },
+      {
+        "id": "release_early",
+        "label": "Віддати зараз, поки він далеко",
+        "past": "віддавав рано в контратаці два на один",
+        "attribute": "passing",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": -1,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "team",
+          "line": "Віддай зараз. Хай {striker} вирішує сам — він це вміє."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти віддаєш одразу — {striker} приймає на ходу, {them.cb} іде на нього, і {striker} б’є повз нього в дальній. Воротар відбиває на кутовий. Просто, без затій, і майже гол.",
+            "recap": "і віддав рано в контратаці — удар {striker.gen}, кутовий.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 5,
+              "fanHype": 3
+            }
+          },
+          "cost": {
+            "text": "Ти віддаєш рано — {them.cb} встигає на {striker.gen}, той тримає м’яч, повертає тобі, і контратака перетворюється на позиційну атаку. Володіння наше, момент — ні.",
+            "recap": "і віддав рано — контратака стала позиційною.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 3,
+              "composure": 2
+            }
+          },
+          "fail": {
+            "text": "Ти віддаєш рано — {them.cb} читає й перехоплює, бо він дивився саме на {striker.gen}. Двоє на одного закінчилися одним пасом. Він виносить.",
+            "recap": "і віддав рано в контратаці — перехопили.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти віддаєш рано — {them.cb} перехоплює і одразу кидає вперед, за спини нашим, які ще біжать до чужих воріт. {them.striker} сам. Гол. Контратака у відповідь на контратаку, і обидві — з твого пасу.",
+            "recap": "і віддав рано на перехоплення — гол.",
+            "apply": {
+              "losses": 1,
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -8,
+              "fanHype": -4,
+              "composure": -7
+            }
+          }
+        }
+      },
+      {
+        "id": "go_alone_shoot",
+        "label": "Не віддавати — обвести і бити самому",
+        "past": "ішов сам у контратаці два на один",
+        "attribute": "dribbling",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 2,
+        "staminaCost": 10,
+        "goals": {
+          "team": 0,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Двоє на одного — це коли ти сам проти одного. {striker} подивиться."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти показуєш пас на {striker.gen}, {them.cb} кидається закривати — і ти проходиш повз нього з іншого боку, сам проти воротаря, і кладеш у дальній. Гол. {striker} біг увесь час дарма і біжить до тебе перший.",
+            "recap": "і обвів у контратаці два на один і забив сам.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 4,
+              "fanHype": 11,
+              "momentum": 1
+            }
+          },
+          "cost": {
+            "text": "Ти йдеш сам — {them.cb} чіпляє на вході в штрафний. Свисток, штрафний на дузі, жовта йому. {striker} дивиться на тебе так, як дивляться на тих, хто міг віддати.",
+            "recap": "і пішов сам у контратаці — штрафний на дузі.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 1,
+              "fanHype": 5,
+              "stamina": -2
+            }
+          },
+          "fail": {
+            "text": "Ти йдеш сам — він не кидається на пас, він чекає, і ти проходиш просто в нього. Втрата. {striker} стоїть праворуч сам і ще довго стоїть.",
+            "recap": "і пішов сам у контратаці два на один — втратив.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -5,
+              "fanHype": -3,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти йдеш сам, він забирає чисто — і одразу вперед, за спини. {them.striker} сам проти {cb.gen}. Гол. Ти хотів забити сам. Забили — теж без нікого.",
+            "recap": "і втратив, ідучи сам у контратаці, — гол.",
+            "apply": {
+              "losses": 1,
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -9,
+              "fanHype": -5,
+              "composure": -8
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_far_post_arrival",
+    "family": "edge_shot",
+    "phase": "attack",
+    "weight": 1.2,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90
+    },
+    "setup": "{winger} прострілює низом уздовж воріт — повз {striker.gen}, повз воротаря, повз усіх. М’яч котиться до дальньої стійки, де ти приходиш другим темпом, і за тобою — {them.cb}, на пів кроку. Дотик буде один. Твій або його.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "them_target"
+          ]
+        },
+        "text": "{winger} прострілює низом уздовж воріт — і всі їхні високі стоять на ближній, бо там {striker}. М’яч котиться до дальньої, де ти сам, а за тобою — {them.cb}, який раптом зрозумів, що дивився не туди. Дотик буде один."
+      },
+      {
+        "when": {
+          "weather": "rain"
+        },
+        "text": "{winger} прострілює низом по мокрому газону — м’яч летить швидше, ніж хтось розраховував, повз усіх до дальньої стійки. Ти приходиш туди другим темпом, {them.cb} на пів кроку. На такому газоні один дотик — це вже багато."
+      },
+      {
+        "when": {
+          "score": "trailing",
+          "minMinute": 85
+        },
+        "text": "Останні хвилини, ми програємо. {winger} прострілює низом уздовж воріт, повз усіх, до дальньої стійки. Ти приходиш туди, {them.cb} за спиною. Дотик буде один, і він, можливо, останній у матчі."
+      }
+    ],
+    "options": [
+      {
+        "id": "tap_in_first_time",
+        "label": "Замкнути в дотик",
+        "past": "замикав простріл на дальній у дотик",
+        "attribute": "finishing",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": -1,
+        "staminaCost": 6,
+        "goals": {
+          "team": 2,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "У дотик. Не дивись на ворота — вони прямо перед тобою."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти замикаєш у дотик, внутрішньою, у порожній кут — воротар ще на ближній. Гол з метра. Найпростіший гол сезону, і найважчий: треба було прийти туди раніше за {them.cb.gen}.",
+            "recap": "і замкнув простріл на дальній — гол.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 7,
+              "fanHype": 9
+            }
+          },
+          "cost": {
+            "text": "Ти замикаєш — {them.cb} дотягується ногою за мить до тебе, і м’яч від його ноги в стійку, потім за лицьову. Кутовий. Один дотик був його. На пів кроку.",
+            "recap": "і замикав на дальній — захисник вибив у стійку.",
+            "apply": {
+              "corner": true,
+              "coachTrust": 4,
+              "fanHype": 5
+            }
+          },
+          "fail": {
+            "text": "Ти замикаєш — м’яч ковзає з підйому вище, над перекладиною, з двох метрів. {winger} на бровці робить крок назад, ніби його вдарили. Тобі теж так здається.",
+            "recap": "і не замкнув простріл із двох метрів.",
+            "apply": {
+              "coachTrust": -4,
+              "fanHype": -5,
+              "composure": -5
+            }
+          },
+          "badFail": {
+            "text": "Ти замикаєш — і {them.cb} збиває тебе на лінії воріт, м’яч в аут, свистка нема, суддя не бачив. Ти лежиш у сітці, вони вибивають, і {them.winger} уже біжить. Контратака з лінії їхніх воріт.",
+            "recap": "і впав на дальній без свистка — контратака.",
+            "apply": {
+              "counterAttack": true,
+              "coachTrust": -3,
+              "fanHype": -3,
+              "composure": -5,
+              "stamina": -2
+            }
+          }
+        }
+      },
+      {
+        "id": "cushion_and_place",
+        "label": "Прийняти — і покласти повз воротаря, що повертається",
+        "past": "приймав на дальній і клав повз воротаря",
+        "attribute": "first_touch",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 7,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Один дотик — щоб зупинити. Другий — щоб покласти. Він не встигне на обидва."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти зупиняєш м’яч на дальній, воротар уже летить назад — і ти кладеш його над ним, у ближній, тепер ближній — це та стійка, до якої ти прийшов. Гол на паузі. {them.cb} за спиною просто дивиться.",
+            "recap": "і зупинив на дальній і поклав повз воротаря — гол.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 6,
+              "fanHype": 10,
+              "composure": 3
+            }
+          },
+          "cost": {
+            "text": "Ти зупиняєш — {them.cb} чіпляє за плече ззаду. Свисток, пенальті. {striker} б’є, воротар вгадує кут. Ти зупинив м’яч на лінії воріт і заробив те, що можна було не заробляти.",
+            "recap": "і заробив пенальті на дальній — {striker} не забив.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 3,
+              "fanHype": 4
+            }
+          },
+          "fail": {
+            "text": "Ти зупиняєш — і воротар устигає повернутися на лінію. Ти б’єш — у нього. З двох метрів. Другий дотик виявився зайвим, і всі на стадіоні це знали раніше за тебе.",
+            "recap": "і зупинив на дальній — воротар устиг.",
+            "apply": {
+              "coachTrust": -4,
+              "fanHype": -4,
+              "composure": -4
+            }
+          },
+          "badFail": {
+            "text": "Ти зупиняєш — {them.cb} забирає ззаду чисто, поки ти піднімаєш голову, і виносить далеко. {them.striker} сам на центрі, наші всі в штрафному. Контратака з дальньої стійки.",
+            "recap": "і втратив на дальній під захисником — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -5,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "square_back_to_striker",
+        "label": "Повернути поперек на {striker.gen}",
+        "past": "повертав простріл поперек на {striker.gen}",
+        "attribute": "passing",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "team",
+          "line": "Воротар за тобою, {striker} перед порожніми. Поверни поперек — і нема кому заважати."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти повертаєш поперек у дотик — {striker} стоїть перед порожніми воротами, бо воротар побіг за прострілом на дальню. Він закочує. Гол. Два паси вздовж воріт, і воротар пробіг між обома.",
+            "recap": "і повернув поперек на {striker.gen} — гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
+            }
+          },
+          "cost": {
+            "text": "Ти повертаєш поперек — {striker} б’є, воротар, ще лежачи, підставляє ногу. Кутовий. М’яч двічі пройшов уздовж воріт і жодного разу — крізь лінію.",
+            "recap": "і повернув поперек — воротар відбив ногою.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 4,
+              "fanHype": 4
+            }
+          },
+          "fail": {
+            "text": "Ти повертаєш поперек — за спину {striker.dat}, він уже пробіг. М’яч котиться до {them.cb.gen}, і той виносить. Ти віддав туди, де він був. Він був там пів секунди тому.",
+            "recap": "і повернув поперек за спину {striker.dat}.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти повертаєш поперек — {them.cb} перехоплює й одразу віддає на {them.winger.gen}. Наші в штрафному, включно з тобою на лінії воріт. Контратака з лінії воріт, і повертатися дев’яносто метрів.",
+            "recap": "і повернув поперек у контратаку.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -5
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_striker_dummy_for_you",
+    "family": "one_on_one",
+    "phase": "attack",
+    "weight": 1.2,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90
+    },
+    "setup": "{partner} віддає низом на {striker.gen}, і той — не приймає. Пропускає між ніг, і обидва центральні, які йшли на нього, лишаються з порожнім місцем. М’яч котиться далі, до тебе, і ти виходиш на воротаря з лінії штрафного. Він ще не вирішив, виходити чи ні.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "partner_trusts"
+          ]
+        },
+        "text": "{partner} віддає низом на {striker.gen} — і дивиться при цьому на тебе, він так робить після того вечора. {striker} пропускає між ніг, обидва центральні лишаються ні з чим. М’яч котиться тобі, ти виходиш на воротаря. Він ще не вирішив."
+      },
+      {
+        "when": {
+          "flags": [
+            "keeper_read",
+            "keeper_comesOut"
+          ]
+        },
+        "text": "{partner} віддає низом на {striker.gen}, той пропускає між ніг — і ти виходиш на воротаря з лінії штрафного. Він вийде. Ти це знаєш: він завжди виходить, рано і далеко. Над ним буде повітря."
+      },
+      {
+        "when": {
+          "score": "trailing"
+        },
+        "text": "Ми програємо, і {striker} робить те, чого не робив увесь матч: пропускає пас між ніг, і обидва центральні лишаються за спиною. М’яч тобі, ти виходиш на воротаря з лінії штрафного. Це, можливо, наш момент. Він ще не вирішив, чи вийти."
+      }
+    ],
+    "options": [
+      {
+        "id": "shoot_early_low",
+        "label": "Бити одразу, низом, поки він не вирішив",
+        "past": "бив рано низом після пропуску {striker.gen}",
+        "attribute": "finishing",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 0,
+        "staminaCost": 6,
+        "goals": {
+          "team": 2,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "Бий зараз. Він ще не вирішив — значить, він ніде."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти б’єш з лінії штрафного, низом, у кут, — воротар ще стояв між «вийти» і «лишитися». Гол. {striker} обертається: він пропустив м’яч і навіть не побачив, як той залетів.",
+            "recap": "і забив рано низом після пропуску {striker.gen}.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 7,
+              "fanHype": 9
+            }
+          },
+          "cost": {
+            "text": "Ти б’єш рано — воротар, не вирішивши, просто падає в бік удару, і м’яч від його ноги за лицьову. Кутовий. Він не вибирав. Йому пощастило.",
+            "recap": "і пробив рано — воротар відбив ногою, кутовий.",
+            "apply": {
+              "corner": true,
+              "coachTrust": 4,
+              "fanHype": 4
+            }
+          },
+          "fail": {
+            "text": "Ти б’єш рано — повз дальню стійку. Він так і не вирішив, і йому не треба було. {striker} стоїть із порожнім місцем, яке він відкрив.",
+            "recap": "і пробив рано повз стійку.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -4,
+              "composure": -4
+            }
+          },
+          "badFail": {
+            "text": "Ти замахуєшся — і один із центральних, що вже повернувся, вибиває з-під ноги. Він виносить на {them.winger.gen}, наші в штрафному. Контратака після найкращого пропуску сезону.",
+            "recap": "і дав вибити м’яч з-під удару після пропуску — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "take_one_touch_in",
+        "label": "Ще дотик — зайти в штрафний і подивитися, куди він піде",
+        "past": "заходив у штрафний після пропуску {striker.gen}",
+        "attribute": "composure",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 8,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Один дотик. Хай вирішить — і зроби протилежне."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти робиш дотик у штрафний — і він вирішує: виходить. Ти перекидаєш його м’яко, через плече, і м’яч сідає в сітку, поки він ще в повітрі. Гол. Він вирішив, і це було рішення для тебе.",
+            "recap": "і перекинув воротаря після пропуску — гол.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 6,
+              "fanHype": 11,
+              "composure": 3
+            }
+          },
+          "cost": {
+            "text": "Ти робиш дотик — він виходить і збиває тебе. Свисток, пенальті, жовта йому. {striker} ставить м’яч, воротар тягне. Ти зробив усе, крім останнього удару, і той був не твій.",
+            "recap": "і заробив пенальті після пропуску — {striker} не забив.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 3,
+              "fanHype": 5
+            }
+          },
+          "fail": {
+            "text": "Ти робиш дотик — надто сильний, і м’яч тікає до воротаря, який навіть не виходив. Він забирає в руки. Ти хотів подивитися. Подивився.",
+            "recap": "і затягнув із дотиком після пропуску — воротар забрав.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -4,
+              "fanHype": -4,
+              "composure": -4
+            }
+          },
+          "badFail": {
+            "text": "Ти робиш дотик — і центральний, який повернувся, забирає ззаду чисто. Він виносить на {them.striker.gen}, наші всі попереду. Контратака. Один зайвий дотик, і найкращий момент матчу — їхній.",
+            "recap": "і втратив на зайвому дотику після пропуску — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -5,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "return_to_striker",
+        "label": "Повернути {striker.dat} — він уже розвернувся",
+        "past": "повертав {striker.dat} після його пропуску",
+        "attribute": "vision",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "team",
+          "line": "Він пропустив і вже розвернувся. Поверни — і в нього порожній кут."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти повертаєш {striker.dat} — він розвернувся, воротар пішов на тебе, і перед ним порожній кут. Гол. Пас, пропуск, пас, гол — і жоден із вас не зробив зайвого дотику.",
+            "recap": "і повернув {striker.dat} після його пропуску — гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
+            }
+          },
+          "cost": {
+            "text": "Ти повертаєш — {striker} б’є, воротар відбиває на кутовий. Розіграш був такий, що {coach} встав. Гол не встав.",
+            "recap": "і повернув {striker.dat} — воротар витягнув.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 5,
+              "fanHype": 4
+            }
+          },
+          "fail": {
+            "text": "Ти повертаєш — а {striker} ще не розвернувся, і м’яч приходить йому в спину. Відскок, {them.cb} виносить. Ти повернув раніше, ніж він розвернувся.",
+            "recap": "і повернув {striker.dat} у спину.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти повертаєш — {them.cb} перехоплює між вами і одразу вперед. Наші попереду, і {them.striker} сам. Контратака з найкращого моменту матчу.",
+            "recap": "і повернув після пропуску в контратаку.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -5
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_cut_in_shot",
+    "family": "wing",
+    "phase": "attack",
+    "weight": 1.2,
+    "requires": {
+      "minMinute": 5,
+      "maxMinute": 90
+    },
+    "setup": "Ти отримуєш на правому фланзі, на лінії штрафного, і зміщуєшся всередину на сильну ногу — усі знають, що ти це зробиш, і {them.cb} із {them.mid.ins} стають у два ряди на лінії удару. Дальній кут видно між ними. На секунду.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "them_hard"
+          ]
+        },
+        "text": "Ти отримуєш на фланзі і зміщуєшся всередину на сильну ногу — і {them.mid} не стає на лінію удару, він іде в ноги. За ним {them.cb}. Дальній кут видно між ними на секунду, і стик буде раніше, ніж ця секунда мине."
+      },
+      {
+        "when": {
+          "flags": [
+            "keeper_read",
+            "keeper_nearPost"
+          ]
+        },
+        "text": "Ти зміщуєшся з флангу всередину на сильну ногу. {them.cb} і {them.mid} у два ряди на лінії удару. Воротар — ти знаєш — тримає ближню: він уже там, і дальній кут між двома рядами ніг відкритий рівно настільки, наскільки він не вірить у дальній."
+      },
+      {
+        "when": {
+          "momentumMin": 2
+        },
+        "text": "Ти отримуєш на фланзі і зміщуєшся всередину на сильну ногу — і сьогодні всі знають, що ти зробиш, і все одно не встигають. {them.cb} і {them.mid} у два ряди. Дальній кут між ними. Секунда — це багато, коли все виходить."
+      }
+    ],
+    "options": [
+      {
+        "id": "curl_far_corner",
+        "label": "Закрутити в дальній між ніг",
+        "past": "зміщувався всередину і закручував у дальній",
+        "attribute": "finishing",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 2,
+        "staminaCost": 7,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Усі знають — і що? Закрути між ними так, щоб знання не допомогло."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти закручуєш між двома рядами ніг — м’яч огинає всіх і сідає в дальню дев’ятку. Воротар бачив траєкторію і не встиг. Усі знали, що ти зробиш. Ніхто не знав, як.",
+            "recap": "і закрутив у дальню дев’ятку зі зміщення.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 6,
+              "fanHype": 12,
+              "momentum": 1
+            }
+          },
+          "cost": {
+            "text": "Ти закручуєш — м’яч від чиєїсь ноги в другому ряду змінює траєкторію і летить у стійку. Стійка, за лицьову, кутовий. Дев’ятка була. Нога теж.",
+            "recap": "і закрутив зі зміщення — рикошет у стійку.",
+            "apply": {
+              "corner": true,
+              "coachTrust": 3,
+              "fanHype": 6
+            }
+          },
+          "fail": {
+            "text": "Ти закручуєш — у перший ряд. Блок, м’яч відлітає до їхнього воротаря, і він забирає. Усі знали, що ти зробиш, і зробили те, що знали.",
+            "recap": "і закрутив зі зміщення в блок.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -2,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти закручуєш — блок, і м’яч відлітає до {them.winger.gen} на середину поля, де він один. Наші йшли на добивання. Він біжить. Контратака з твого фірмового удару.",
+            "recap": "і подарував блоком контратаку зі зміщення.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -5
+            }
+          }
+        }
+      },
+      {
+        "id": "one_more_step_inside",
+        "label": "Ще крок усередину — і бити зі стандартної точки",
+        "past": "робив зайвий крок усередину перед ударом",
+        "attribute": "dribbling",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 9,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "Ще крок. Перший ряд піде на тебе — і другий уже не встигне зсунутися."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти робиш ще крок усередину — {them.mid} іде на тебе, і другий ряд не встигає зсунутися. Удар низом у дальній кут з точки, з якої ти бив сто разів на тренуванні. Гол. Сто перший.",
+            "recap": "і забив зі стандартної точки після зайвого кроку.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 7,
+              "fanHype": 10
+            }
+          },
+          "cost": {
+            "text": "Ти робиш крок — {them.mid} зустрічає фолом на лінії штрафного. Свисток, штрафний з дуги, жовта йому. Ти не вдарив. Ти вийшов на штрафний з точки, з якої не гірше.",
+            "recap": "і заробив штрафний на дузі після кроку всередину.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 4,
+              "fanHype": 4,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
+            }
+          },
+          "fail": {
+            "text": "Ти робиш крок — і другий ряд устигає, і третій прибігає. Ти б’єш крізь п’ятьох. Блок. Ще крок виявився кроком до стіни.",
+            "recap": "і зробив зайвий крок — удар у стіну.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -2,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти робиш крок — і {them.mid} забирає м’яч на цьому кроці, чисто. Одразу вперед: {them.striker} сам на нашій половині. Контратака. Ще крок був зайвим у буквальному сенсі.",
+            "recap": "і втратив на зайвому кроці — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "reverse_to_overlap",
+        "label": "Показати удар — і віддати {rb.dat} на обгін",
+        "past": "показував удар і віддавав на обгін",
+        "attribute": "vision",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": -1,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "team",
+          "line": "Обидва ряди дивляться на твою ногу. {rb} біжить повз по бровці — і ніхто на нього не дивиться."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти показуєш замах, обидва ряди стискаються — і ти котиш назовні, {rb.dat} на обгін. Він доходить до лицьової, простріл, {striker} замикає — воротар відбиває на кутовий. Твій удар обманув шістьох, не відбувшись.",
+            "recap": "і показав удар, віддав на обгін — простріл, кутовий.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 6,
+              "fanHype": 4
+            }
+          },
+          "cost": {
+            "text": "Ти показуєш удар і віддаєш {rb.dat} — він навішує, {cb} виграє верх, але у воротаря. Володіння наше, {coach} задоволений: розіграш був із дошки. Гол на дошці не намалюєш.",
+            "recap": "і віддав на обгін після обманного замаху — воротар забрав.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 4,
+              "composure": 2
+            }
+          },
+          "fail": {
+            "text": "Ти показуєш удар — і віддаєш {rb.dat} за спину, в аут. Він біг швидше, ніж ти дивився. Обидва ряди розходяться з полегшенням.",
+            "recap": "і віддав на обгін в аут.",
+            "apply": {
+              "coachTrust": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти показуєш удар і віддаєш — {them.winger} перехоплює на бровці і біжить у порожній фланг, звідки прийшов {rb}. Контратака по краю, який ти щойно відкрив.",
+            "recap": "і віддав на обгін у контратаку.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -3,
+              "composure": -5
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_edge_volley",
+    "family": "edge_shot",
+    "phase": "attack",
+    "weight": 1.1,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90
+    },
+    "setup": "Їхній захисник виносить навіс головою — високо, без адреси, — і м’яч падає з неба на лінію штрафного, просто тобі. Він летить довго. {them.mid} біжить до тебе, воротар кричить «вийди», ніхто не виходить. Один дотик з льоту або два дотики з землі — треба вирішити, поки м’яч у повітрі.",
+    "setups": [
+      {
+        "when": {
+          "weather": "wind"
+        },
+        "text": "Їхній захисник виносить навіс головою, високо, — і вітер тримає м’яч у повітрі довше, ніж має право, а потім кидає його на лінію штрафного, просто тобі. Куди він упаде насправді, знає вітер. {them.mid} біжить. Вирішити треба, поки м’яч ще в повітрі."
+      },
+      {
+        "when": {
+          "score": "level",
+          "minMinute": 85
+        },
+        "text": "Останні хвилини, нічия. Їхній захисник виносить навіс головою, високо, і м’яч падає на лінію штрафного просто тобі. Довго летить. Стадіон встає, поки він у повітрі. {them.mid} біжить. Один дотик або два."
+      },
+      {
+        "when": {
+          "flags": [
+            "them_hard"
+          ]
+        },
+        "text": "Їхній захисник виносить навіс головою, і м’яч падає на лінію штрафного тобі. Летить довго — рівно стільки, щоб {them.mid} добіг і став навпроти твоєї опорної ноги. Він не дивиться на м’яч. Один дотик з льоту, або він зробить свій."
+      }
+    ],
+    "options": [
+      {
+        "id": "volley_first_time",
+        "label": "З льоту, як упаде",
+        "past": "бив з льоту з лінії штрафного після виносу",
+        "attribute": "finishing",
+        "basePosition": "desperate",
+        "effect": "great",
+        "difficulty": 2,
+        "staminaCost": 8,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "З льоту. Або дев’ятка, або трибуна — але всі побачать замах."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти б’єш з льоту, підйомом, у момент, коли м’яч торкається твого росту, — і він летить у дев’ятку, не обертаючись. Воротар стояв. Гол з льоту з лінії штрафного, який покажуть у нарізках за сезон, навіть якщо сезон буде поганий.",
+            "recap": "і забив з льоту з лінії штрафного.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 6,
+              "fanHype": 13,
+              "momentum": 1
+            }
+          },
+          "cost": {
+            "text": "Ти б’єш з льоту — м’яч у перекладину, від неї в поле, {striker} добиває, блок, кутовий. Стадіон видихнув на перекладині так, що не встиг вдихнути на добиванні.",
+            "recap": "і пробив з льоту в перекладину.",
+            "apply": {
+              "corner": true,
+              "coachTrust": 3,
+              "fanHype": 7
+            }
+          },
+          "fail": {
+            "text": "Ти б’єш з льоту — і м’яч летить туди, куди летять удари з льоту, коли не виходить: на трибуну, високо, за сектор. Хтось на трибуні ловить. Це його найкращий дотик за матч.",
+            "recap": "і пробив з льоту на трибуну.",
+            "apply": {
+              "coachTrust": -4,
+              "fanHype": -3,
+              "composure": -4
+            }
+          },
+          "badFail": {
+            "text": "Ти замахуєшся з льоту — і {them.mid} вибиває м’яч головою з-під замаху, а твоя нога йде йому в груди. Свисток, штрафний їм, жовта: висока нога. Він лежить, лікар біжить, і всі забули, що м’яч був у повітрі.",
+            "recap": "і отримав жовту за високу ногу на ударі з льоту.",
+            "apply": {
+              "foul": true,
+              "addFlags": [
+                "booked"
+              ],
+              "coachTrust": -6,
+              "fanHype": -3,
+              "composure": -5
+            }
+          }
+        }
+      },
+      {
+        "id": "chest_and_shoot",
+        "label": "Прийняти на груди — і бити другим дотиком",
+        "past": "приймав на груди на лінії штрафного і бив",
+        "attribute": "first_touch",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 6,
+        "goals": {
+          "team": 2,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "На груди — і одразу з відскоку. Два дотики, але швидких."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти приймаєш на груди, м’яч падає під ногу — і ти б’єш з відскоку, низом, у дальній. {them.mid} прибіг на секунду пізніше, ніж треба, і встиг тільки побачити. Гол.",
+            "recap": "і забив з відскоку після прийому на груди.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 7,
+              "fanHype": 9
+            }
+          },
+          "cost": {
+            "text": "Ти приймаєш на груди, б’єш — воротар тягне у стрибку на кутовий. Два дотики були правильні. Стрибок — теж.",
+            "recap": "і пробив після прийому на груди — воротар витягнув.",
+            "apply": {
+              "corner": true,
+              "coachTrust": 4,
+              "fanHype": 5
+            }
+          },
+          "fail": {
+            "text": "Ти приймаєш на груди — м’яч відскакує далі, ніж треба, і {them.mid} першим. Він виносить в аут. Два дотики стали одним — його.",
+            "recap": "і випустив м’яч із грудей на лінії штрафного.",
+            "apply": {
+              "coachTrust": -3,
+              "composure": -3
+            }
+          },
+          "badFail": {
+            "text": "Ти приймаєш на груди — {them.mid} забирає з-під ноги і одразу вперед. Наші йшли на добивання. {them.striker} сам. Контратака з твоєї лінії штрафного.",
+            "recap": "і втратив на прийомі на груди — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -4,
+              "composure": -6
+            }
+          }
+        }
+      },
+      {
+        "id": "head_it_on",
+        "label": "Головою — скинути {striker.dat} у штрафний",
+        "past": "скидав головою з лінії штрафного на {striker.gen}",
+        "attribute": "positioning",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 4,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "team",
+          "line": "Не бий. {striker} між захисниками, які дивляться вгору. Скинь — і він уже обличчям до воріт."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти скидаєш головою в штрафний — м’яко, за спини тих, хто дивився вгору, — і {striker} приймає обличчям до воріт, розвертатися не треба. Удар низом, гол. Ти торкнувся м’яча головою один раз, і цього вистачило.",
+            "recap": "і скинув головою на {striker.gen} — гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
+            }
+          },
+          "cost": {
+            "text": "Ти скидаєш головою — {striker} приймає, б’є, воротар відбиває на кутовий. Скидка була така, що {coach} показав великий палець. Удар — такий, що воротар показав рукавицю.",
+            "recap": "і скинув головою на {striker.gen} — воротар витягнув.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 5,
+              "fanHype": 4
+            }
+          },
+          "fail": {
+            "text": "Ти скидаєш головою — надто сильно, і м’яч летить за лицьову повз усіх. {striker} навіть не стрибав. Ти скинув у нікуди з лінії штрафного.",
+            "recap": "і скинув головою за лицьову.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти скидаєш головою — просто на {them.cb.gen}, який теж дивився вгору, тільки з іншого боку. Він виносить далеко, {them.winger} сам. Контратака з твоєї скидки.",
+            "recap": "і скинув головою на захисника — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -5,
+              "fanHype": -3,
+              "composure": -5
             }
           }
         }

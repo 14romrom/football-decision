@@ -3,7 +3,7 @@ import { makeRng, type Rng } from '../src/engine/rng';
 import { advanceTo, applyChoice, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
 import { computeContext } from '../src/engine/context';
-import { dominantVoice, initVoiceTrace, recordVoice, voiceAudible } from '../src/engine/voices';
+import { dominantVoice, initVoiceTrace, recordVoice, voiceAudible, VOICE_LABEL } from '../src/engine/voices';
 import { neutralConditions } from '../src/engine/conditions';
 import { BALANCE } from '../src/engine/balance';
 import { EPISODES, EPISODES_RAW, FLAG_RULES, PLAYER, ROSTER } from '../src/content';
@@ -188,9 +188,11 @@ describe('M3: голос имеет вес — слушают, и он стан�
     }
     const { summary } = finishMatch(s, rng);
     const last = summary.recap.at(-1)!;
-    if (s.state.voices.counts.ego >= BALANCE.voiceDominantMin) {
-      expect(last).toContain('найгучніше звучав Его');
-    }
+    // Пересказ называет тот голос, что звучал чаще всех (не обязательно Его: в эпизодах без
+    // варианта Его бот берёт первый попавшийся, и с ростом пула это уже не редкость).
+    const dominant = dominantVoice(s.state.voices);
+    if (dominant) expect(last).toContain(`найгучніше звучав ${VOICE_LABEL[dominant.who]}`);
+    else expect(last).not.toContain('найгучніше');
     expect(summary.recap.length).toBeGreaterThanOrEqual(4);
     expect(summary.recap.length).toBeLessThanOrEqual(6);
   });

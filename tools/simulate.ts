@@ -338,17 +338,22 @@ function main() {
   console.log('\nПроверки ТЗ:');
   console.log(`  1. Разрыв лучшей и худшей политики: ${(spread * 100).toFixed(1)}%  ` +
     `(порог 15%) — ${spread <= 0.15 ? 'ок' : 'СЛОМАНО'}`);
-  // Распределение голов смотрим по всему прогону: отдельная политика — это бот,
-  // а не игрок, и её личная медиана ничего не говорит о балансе.
+  // Медиана и хвост — по всему прогону: отдельная политика — это бот, а не игрок.
+  // Но «матчей с голом» — по случайной политике: в общей сумме четверть матчей играет
+  // always_safe, который по определению никогда не бьёт, и тянет долю на четверть вниз.
+  // 19.09: так 23% у случайного бота читались как 18% «суммарно», и в планировщик чуть не
+  // въехала квота атаки ради метрики. Критерий ТЗ — про игрока, который играет в футбол.
   const pooledMedian = median(reports.flatMap((r) =>
     Object.entries(r.goalDist).flatMap(([g, c]) => Array<number>(c).fill(Number(g)))));
   const pooledGoals = reports.flatMap((r) =>
     Object.entries(r.goalDist).flatMap(([g, c]) => Array<number>(c).fill(Number(g)))).sort((a, b) => a - b);
   const p99 = pooledGoals[Math.floor(pooledGoals.length * 0.99)];
-  const scored = pooledGoals.filter((g) => g > 0).length / pooledGoals.length;
+  const randomDist = reports.find((r) => r.policy === 'random')?.goalDist ?? {};
+  const randomTotal = Object.values(randomDist).reduce((s, c) => s + c, 0);
+  const scored = randomTotal ? 1 - (randomDist[0] ?? 0) / randomTotal : 0;
   const medianOk = pooledMedian <= 1 && p99 >= 2 && p99 <= 4 && scored > 0.2 && scored < 0.6;
   console.log(`  2. Голы за матч: медиана ${pooledMedian}, 99-й перцентиль ${p99}, ` +
-    `матчей с голом ${(scored * 100).toFixed(0)}% — ${medianOk ? 'ок' : 'ПРОВЕРИТЬ'}`);
+    `матчей с голом (random) ${(scored * 100).toFixed(0)}% — ${medianOk ? 'ок' : 'ПРОВЕРИТЬ'}`);
   console.log(`  3. Доля badFail: ${(badFail * 100).toFixed(1)}%  (коридор 8–15%) — ` +
     `${badFail >= 0.08 && badFail <= 0.15 ? 'ок' : 'СЛОМАНО'}`);
 

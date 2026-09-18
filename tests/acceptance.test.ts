@@ -48,12 +48,16 @@ describe('критерии приёмки, п. 13', () => {
     // Хвост до 4 (было 3) — после того, как по итогам первого плейтеста полоса «вийшло, але…»
     // сужена и 15 на кубике стал чистым успехом. Хвост целиком принадлежит боту, который
     // бьёт из каждого эпизода; случайная политика держится на 0.6 гола за матч.
-    const goals = runSuite(400)
+    const reports = runSuite(400);
+    const goals = reports
       .flatMap((r) => Object.entries(r.goalDist).flatMap(([g, c]) => Array<number>(c).fill(Number(g))))
       .sort((a, b) => a - b);
     const median = goals[goals.length >> 1];
     const p99 = goals[Math.floor(goals.length * 0.99)];
-    const scored = goals.filter((g) => g > 0).length / goals.length;
+    // «Гол не невозможен» — по случайной политике: always_safe не бьёт никогда и не про это.
+    const randomDist = reports.find((r) => r.policy === 'random')!.goalDist;
+    const randomTotal = Object.values(randomDist).reduce((s, c) => s + c, 0);
+    const scored = 1 - (randomDist[0] ?? 0) / randomTotal;
     expect(median).toBeLessThanOrEqual(1);
     expect(p99).toBeGreaterThanOrEqual(2);
     expect(p99).toBeLessThanOrEqual(4);

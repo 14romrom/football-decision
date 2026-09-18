@@ -5,7 +5,7 @@ import { makeRng } from '../src/engine/rng';
 import { createSeason, ourFixture, recordRound, US } from '../src/engine/season';
 import { defaultCareer } from '../src/engine/career';
 import { fillNames, opponentTraits } from '../src/engine/names';
-import { buildFeed, buildPostContext, matchesPost, POST_QUOTA, POSTS, type PostContext, type PostGroup } from '../src/engine/posts';
+import { buildFeed, buildPostContext, matchesPost, POST_QUOTA, postQuota, POSTS, type PostContext, type PostGroup } from '../src/engine/posts';
 import { OPPONENTS, rosterFor } from '../src/content';
 
 const keys = Object.keys(OPPONENTS);
@@ -79,6 +79,17 @@ describe('стрічка: контент', () => {
     expect(new Set(feed.map((p) => p.text)).size).toBe(feed.length);
     for (const p of feed) { expect(p.likes).toBeGreaterThan(0); expect(p.hoursAgo).toBeGreaterThan(0); }
     expect(feed.some((p) => p.reply)).toBe(true);
+  });
+
+  it('первый сезон — 2–3 поста про игровой мир, остальное общее; со второго — половина наша', () => {
+    const q1 = postQuota(1);
+    expect(q1.self + q1.league + q1.cross).toBeLessThanOrEqual(3);
+    expect(q1.world + q1.meta).toBeGreaterThanOrEqual(6);
+    const feed1 = buildFeed(ctx(), makeRng(31), new Set(), POSTS, q1);
+    expect(feed1.filter((p) => p.group === 'self' || p.group === 'league' || p.group === 'cross')).toHaveLength(3);
+    const q2 = postQuota(2);
+    expect(q2.self + q2.league + q2.cross).toBeGreaterThanOrEqual(5);
+    expect(postQuota(7)).toEqual(q2);
   });
 
   it('за сезон из десяти туров ни один пост не читается дважды', () => {

@@ -5,7 +5,7 @@ import { applyWeek, coachLocksCity, offerWeek, recordWeek, weekContext, weekPend
 import { WeekScreen } from './ui/WeekScreen';
 import { generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
-import { buildFeed, buildPostContext, type Post } from './engine/posts';
+import { buildFeed, buildPostContext, postQuota, type Post } from './engine/posts';
 import { PostsScreen } from './ui/PostsScreen';
 import { fillNames, opponentTraits } from './engine/names';
 import { BALANCE } from './engine/balance';
@@ -206,7 +206,7 @@ function Game() {
       score: ctx.scoreUs + ':' + ctx.scoreThem, position: String(ctx.position), round: String(ctx.round),
     };
     const seen = new Set(recentPosts());
-    const raw = buildFeed(ctx, rng, seen);
+    const raw = buildFeed(ctx, rng, seen, undefined, postQuota(sn.number));
     recordPosts(raw.map((p) => p.text));
     const fill = (t: string) => fillNames(t, roster, extra);
     const posts: Post[] = raw.map((p) => ({

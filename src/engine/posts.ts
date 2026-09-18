@@ -150,8 +150,18 @@ export type Post = {
   hoursAgo: number; likes: number; reposts: number;
 };
 
-/** Сколько постов каждой группы в одной стрічці: про себя больше всего — это же его лента. */
+/** Сколько постов каждой группы в одной стрічці. Доля игрового мира растёт с сезоном (решение
+ *  пользователя 19.09): в первом сезоне игрок ещё не знает ни Кнаппа, ни «Терра-Нови», и шутка
+ *  про них не читается — основа ленты общепонятная (великий футбол, мета), про нас — 2–3 поста;
+ *  со второго сезона привязанность есть, и «наша ліга» занимает половину. */
 export const POST_QUOTA: Record<PostGroup, number> = { self: 3, league: 2, world: 3, cross: 1, meta: 1 };
+export const POST_QUOTA_BY_SEASON: Record<number, Record<PostGroup, number>> = {
+  1: { self: 2, league: 1, world: 5, cross: 0, meta: 2 },
+  2: POST_QUOTA,
+};
+export function postQuota(season: number): Record<PostGroup, number> {
+  return POST_QUOTA_BY_SEASON[Math.min(season, 2)] ?? POST_QUOTA;
+}
 
 /** Стрічка: по квоте на группу, вес 3^ключей условия, виденные строки уступают свежим;
  *  порядок постов — перемешан, время «назад» растёт вниз по ленте. */
@@ -167,7 +177,7 @@ export function buildFeed(
       for (const text of rule.lines) pool.push({ text, weight, rule });
     }
     const taken = new Set<string>();
-    for (let i = 0; i < quota[group]; i++) {
+    for (let i = 0; i < (quota[group] ?? 0); i++) {
       const fresh = pool.filter((p) => !taken.has(p.text));
       const pick = pickFresh(fresh, seen, rng);
       if (!pick) break;

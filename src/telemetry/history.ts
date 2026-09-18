@@ -46,3 +46,23 @@ export function recordResult(scoreUs: number, scoreThem: number, episodes: strin
     localStorage.setItem(KEY, JSON.stringify([...readHistory(), { result, scoreUs, scoreThem, at: Date.now(), episodes, flavor, feed }]));
   } catch { /* приватный режим — тонус просто останется нейтральным */ }
 }
+
+// Прочитанные посты стрічки (engine/posts.ts) — отдельный ключ: стрічка собирается после того,
+// как матч уже записан, и живёт своим горизонтом.
+const POSTS_KEY = 'football-decision.posts.v1';
+const POSTS_KEEP = 400;
+
+export function recentPosts(): string[] {
+  try {
+    const raw = localStorage.getItem(POSTS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function recordPosts(texts: string[]) {
+  try {
+    localStorage.setItem(POSTS_KEY, JSON.stringify([...recentPosts(), ...texts].slice(-POSTS_KEEP)));
+  } catch { /* приватный режим */ }
+}

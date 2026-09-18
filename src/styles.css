@@ -401,3 +401,19 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .origin.voice-composure { color: #8fb8ff; } .origin.voice-ego { color: #f0a35e; } .origin.voice-team { color: #6ee7a0; }
 .option-insight { border-left: 3px solid #444b5c; }
 .origin-note { font-size: 13px; color: var(--muted); font-style: italic; margin: 0 0 8px; }
+
+/* Стрічка між матчами — пародія на твіттер (ui/PostsScreen.tsx). */
+.posts-list { display: grid; gap: 0; margin: 12px 0 16px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.post { padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.post:last-child { border-bottom: 0; }
+.post-head { display: flex; align-items: center; gap: 6px; font-size: 14px; flex-wrap: wrap; }
+.post-name { color: var(--ink); }
+.post-handle { color: var(--muted); font-size: 13px; }
+.verified { color: #6fb0ff; font-size: 12px; }
+.avatar { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #10261a; background: var(--accent); margin-right: 2px; }
+.avatar.small { width: 20px; height: 20px; font-size: 11px; }
+.avatar-news { background: #8fb8ff; } .avatar-club { background: var(--accent); } .avatar-fan { background: #f0a35e; } .avatar-parody { background: #c9a5ff; }
+.post-text { margin: 6px 0 8px; font-size: 15px; line-height: 1.4; color: var(--ink); }
+.post-foot { display: flex; gap: 18px; color: var(--muted); font-size: 13px; }
+.post-reply { display: flex; gap: 8px; margin-top: 10px; padding: 8px 10px; border-left: 2px solid var(--line); color: var(--muted); font-size: 14px; line-height: 1.35; }
+.post-reply b { color: var(--ink); }

@@ -4,7 +4,10 @@ import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, offerWeek, recordWeek, weekContext, weekPending, type Activity, type WeekChoice } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
 import { generateConditions, toneFromHistory } from './engine/conditions';
-import { readHistory, episodeMemory, recentFeed, recentFlavor, recordResult } from './telemetry/history';
+import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
+import { buildFeed, buildPostContext, type Post } from './engine/posts';
+import { PostsScreen } from './ui/PostsScreen';
+import { fillNames, opponentTraits } from './engine/names';
 import { BALANCE } from './engine/balance';
 import { BriefingScreen } from './ui/BriefingScreen';
 import { PlayerCard } from './ui/PlayerCard';
@@ -43,6 +46,7 @@ type Stage =
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
+  | { k: 'posts'; posts: Post[]; leveledFrom: number; leveledTo: number }
   | { k: 'week'; offers: Activity[]; locked: boolean; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
@@ -175,11 +179,42 @@ function Game() {
     return { offers, ctx, locked: coachLocksCity(ctx) };
   }, []);
 
-  const afterSeason = useCallback((leveledFrom: number, leveledTo: number) => {
+  const afterPosts = useCallback((leveledFrom: number, leveledTo: number) => {
     const w = pendingWeek();
     if (w) setStage({ k: 'week', offers: w.offers, locked: w.locked, leveledFrom, leveledTo });
     else setStage(leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
   }, [pendingWeek]);
+
+  /** Стрічка після таблиці: пости про тур, лігу, наступного суперника і великий футбол.
+   *  Имена — ростер следующего соперника; клубы таблицы и последний соперник — через extra. */
+  const afterSeason = useCallback((leveledFrom: number, leveledTo: number) => {
+    const sn = seasonRef.current;
+    const fixture = isSeasonOver(sn) ? null : ourFixture(sn);
+    const nextKey = fixture?.opponentKey ?? Object.keys(OPPONENTS)[0];
+    const rng = makeRng(sn.seed + sn.round * 30011 + 3);
+    const roster = rosterFor(nextKey, rng);
+    const ctx = buildPostContext(sn, careerRef.current, fixture
+      ? { opponentKey: fixture.opponentKey, venue: fixture.venue, strength: OPPONENTS[fixture.opponentKey].strength, traits: opponentTraits(roster.them) }
+      : null);
+    if (!ctx) { afterPosts(leveledFrom, leveledTo); return; }
+    const club = (key: string) => (key === US ? ROSTER.us.name : OPPONENTS[key].name);
+    const last = ctx.lastOpponentKey ? club(ctx.lastOpponentKey) : club(nextKey);
+    const extra: Record<string, string> = {
+      last: last.nom, 'last.gen': last.gen,
+      leader: club(ctx.leaderKey).nom, 'leader.gen': club(ctx.leaderKey).gen,
+      bottom: club(ctx.bottomKey).nom, 'bottom.gen': club(ctx.bottomKey).gen,
+      score: ctx.scoreUs + ':' + ctx.scoreThem, position: String(ctx.position), round: String(ctx.round),
+    };
+    const seen = new Set(recentPosts());
+    const raw = buildFeed(ctx, rng, seen);
+    recordPosts(raw.map((p) => p.text));
+    const fill = (t: string) => fillNames(t, roster, extra);
+    const posts: Post[] = raw.map((p) => ({
+      ...p, text: fill(p.text), account: { ...p.account, name: fill(p.account.name) },
+      reply: p.reply ? { account: { ...p.reply.account, name: fill(p.reply.account.name) }, text: fill(p.reply.text) } : undefined,
+    }));
+    setStage({ k: 'posts', posts, leveledFrom, leveledTo });
+  }, [afterPosts]);
 
   const confirmLevelUp = useCallback((attr: Attribute) => {
     const after = spendPoint(careerRef.current, attr);
@@ -349,6 +384,10 @@ function Game() {
         onNewSeason={() => { newSeason(); setStage(leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
       />
     );
+  }
+
+  if (stage.k === 'posts') {
+    return <PostsScreen posts={stage.posts} onNext={() => afterPosts(stage.leveledFrom, stage.leveledTo)} />;
   }
 
   if (stage.k === 'week') {

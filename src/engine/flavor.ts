@@ -38,6 +38,7 @@ export function matchesSituation(
   if (w.venue && w.venue !== conditions?.venue) return false;
   if (w.weather && w.weather !== conditions?.weather) return false;
   if (w.strength && w.strength !== conditions?.strength) return false;
+  if (w.instruction && w.instruction !== conditions?.instruction) return false;
   return true;
 }
 
@@ -74,6 +75,7 @@ export function flavorVoice(when: SituationWhen): string {
  *  выкидываются, пока есть свежие. */
 export function pickFlavorLine(
   rules: FlavorRule[], state: MatchState, tier: Tier, rng: Rng, scene?: Scene, seen: Set<string> = new Set(),
+  seenNow: Set<string> = new Set(),
 ): { text: string; voice: string } | undefined {
   const fitting = rules.filter((r) => matchesSituation(r.when, state, undefined, tier, scene));
   if (fitting.length === 0) return undefined;
@@ -83,16 +85,21 @@ export function pickFlavorLine(
     const voice = r.voice ?? flavorVoice(r.when);
     for (const text of r.lines) pool.push({ text, voice, weight });
   }
-  return pickFresh(pool, seen, rng);
+  return pickFresh(pool, seen, rng, seenNow);
 }
 
 /** Взвешенный выбор, где уже виденные строки уступают свежим: общий механизм реплик
  *  (flavor.json) и ленты между эпизодами (feed.json). Виденные берутся, только когда свежих
- *  не осталось, — тогда пул исчерпан и повтор честнее молчания. */
-export function pickFresh<T extends { text: string; weight: number }>(pool: T[], seen: Set<string>, rng: Rng): T | undefined {
+ *  не осталось, — тогда пул исчерпан и повтор честнее молчания. Две ступени: `seen` — за сезон
+ *  (история + этот матч), `seenNow` — только этот матч: когда сезонная память съела весь пул
+ *  (к 12-му туру у ленты так и бывает), повтор из прошлых матчей всё ещё лучше повтора в этом. */
+export function pickFresh<T extends { text: string; weight: number }>(
+  pool: T[], seen: Set<string>, rng: Rng, seenNow: Set<string> = new Set(),
+): T | undefined {
   if (pool.length === 0) return undefined;
   const fresh = pool.filter((l) => !seen.has(l.text));
-  const candidates = fresh.length > 0 ? fresh : pool;
+  const freshNow = fresh.length > 0 ? fresh : pool.filter((l) => !seenNow.has(l.text));
+  const candidates = freshNow.length > 0 ? freshNow : pool;
   const total = candidates.reduce((sum, l) => sum + l.weight, 0);
   let x = rng.next() * total;
   for (const l of candidates) {

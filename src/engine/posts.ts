@@ -39,6 +39,9 @@ export type PostWhen = {
   voice?: VoiceKey;
   /** Персонаж забивал хоть раз за сезон. */
   hasScored?: boolean;
+  /** Хотя бы одно из дел выбрано на неделе перед этим матчем (activities.json id) — стрічка
+   *  реагирует на побачення, подкаст, Дубай. */
+  week?: string[];
 };
 
 export type PostRule = {
@@ -61,6 +64,8 @@ export type PostContext = {
   voice: VoiceKey | null; hasScored: boolean;
   /** Ключи клубов для плейсхолдеров: лидер, дно, последний соперник. */
   leaderKey: string; bottomKey: string; lastOpponentKey: string | null;
+  /** Дела недели перед этим матчем (career.weekLog). */
+  lastWeek: string[];
 };
 
 const LOW_TRUST = 40;
@@ -99,6 +104,8 @@ export function buildPostContext(
     voice, hasScored: season.player.goals + season.player.assists > 0,
     leaderKey: leader.club, bottomKey: bottom.club,
     lastOpponentKey: ours ? (ours.home === US ? ours.away : ours.home) : null,
+    // Неделя перед сыгранным туром записана с round = этот тур до инкремента (week.ts:recordWeek).
+    lastWeek: (career.weekLog ?? []).find((w) => w.season === season.number && w.round === season.round - 1)?.chosen ?? [],
   };
 }
 
@@ -132,6 +139,7 @@ export function matchesPost(w: PostWhen | undefined, c: PostContext): boolean {
   if (w.bottomWon !== undefined && w.bottomWon !== c.bottomWon) return false;
   if (w.voice && w.voice !== c.voice) return false;
   if (w.hasScored !== undefined && w.hasScored !== c.hasScored) return false;
+  if (w.week && !w.week.some((id) => c.lastWeek.includes(id))) return false;
   return true;
 }
 

@@ -24,7 +24,7 @@ const ctx = (over: Partial<PostContext> = {}): PostContext => ({
   position: 3, clubs: 6, round: 4, coachTrust: 55, injured: false, flags: [],
   nextStrength: 'even', nextFlags: ['them_star'], nextVenue: 'home',
   leaderLost: false, bottomWon: false, voice: null, hasScored: true,
-  leaderKey: 'olvar', bottomKey: 'rioseco', lastOpponentKey: 'terranova', ...over,
+  leaderKey: 'olvar', bottomKey: 'rioseco', lastOpponentKey: 'terranova', lastWeek: [], ...over,
 });
 
 describe('стрічка: контент', () => {

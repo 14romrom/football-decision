@@ -211,6 +211,9 @@ export type SituationWhen = {
   venue?: 'home' | 'away' | 'neutral';
   weather?: 'clear' | 'rain' | 'heat' | 'wind';
   strength?: 'strong' | 'even' | 'weak';
+  /** Установка тренера на матч (conditions.instruction): «автобус» / гегенпресинг / вільна гра —
+   *  сетапы читают её словами, так установка перестаёт быть строкой брифинга. */
+  instruction?: 'hold' | 'press' | 'free' | 'none';
   flags?: string[];
   /** Семья и фаза сцены — чтобы реплика после броска знала, что это был пенальті, а не
    *  «какой-то удар». Сетапы своей семьи не знают — ключи только для flavor.json. */
@@ -232,6 +235,8 @@ export type Episode = {
   requires?: {
     minMinute?: number; maxMinute?: number; notFlags?: string[]; flags?: string[];
     score?: 'leading' | 'trailing' | 'level';
+    /** Эпизод имеет смысл только при такой установке (низкий блок — при «тримати»). */
+    instruction?: 'hold' | 'press' | 'free';
   };
   setup: string;
   /** Вариации сетапа по ситуации; побеждает самое конкретное подходящее правило,

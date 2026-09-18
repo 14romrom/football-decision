@@ -348,5 +348,60 @@
       "finishing"
     ],
     "source": "player"
+  },
+  {
+    "id": "viral_story",
+    "label": "сторіз бачили всі",
+    "value": 0
+  },
+  {
+    "id": "podcast_talk",
+    "label": "«ментальність» з подкасту",
+    "value": 0
+  },
+  {
+    "id": "flashy_week",
+    "label": "тиждень на видноті",
+    "value": 0
+  },
+  {
+    "id": "dubai_photos",
+    "label": "фото з Дубая",
+    "value": 0
+  },
+  {
+    "id": "new_car_photos",
+    "label": "машина на паркінгу бази",
+    "value": 0
+  },
+  {
+    "id": "tattoo_fresh",
+    "label": "свіже тату",
+    "value": 0
+  },
+  {
+    "id": "brand_launch",
+    "label": "бренд із ініціалами",
+    "value": 0
+  },
+  {
+    "id": "poster_boy",
+    "label": "обличчя з афіші",
+    "value": 0
+  },
+  {
+    "id": "plan_bus",
+    "label": "план тренера: автобус",
+    "value": 0
+  },
+  {
+    "id": "plan_press",
+    "label": "план тренера: гегенпресинг",
+    "value": 0
+  },
+  {
+    "id": "plan_possession",
+    "label": "план тренера: володіння",
+    "value": 0
   }
 ]

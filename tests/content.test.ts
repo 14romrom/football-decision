@@ -123,7 +123,7 @@ describe('связность и покрытие расписания', () => {
 });
 
 describe('вариации сетапа и флаги (сезон)', () => {
-  const WHEN_KEYS = ['tier', 'score', 'minMinute', 'maxMinute', 'tired', 'booked', 'lowTrust', 'momentumMin', 'momentumMax', 'venue', 'weather', 'strength', 'flags'];
+  const WHEN_KEYS = ['tier', 'score', 'minMinute', 'maxMinute', 'tired', 'booked', 'lowTrust', 'momentumMin', 'momentumMax', 'venue', 'weather', 'strength', 'instruction', 'flags'];
 
   it('setups: непустое условие из известных ключей, текст отличается от базового и от соседей', () => {
     for (const e of EPISODES) {
@@ -184,12 +184,17 @@ describe('вариации сетапа и флаги (сезон)', () => {
     }
   });
 
-  it('у каждого реактивного эпизода есть флаг-триггер, который кто-то ставит, и каждый вариант умеет его снять', () => {
+  it('у каждого реактивного эпизода есть флаг-триггер, который кто-то ставит, и каждый вариант умеет его снять', async () => {
     // Снимать на каждом исходе не обязательно: провал может оставить обиду партнёра
     // висеть дальше — это продолжение цепочки, а не утечка. Но вариант без единого
     // снимающего исхода означал бы, что цепочку закрыть нельзя. Жёлтая — системный флаг,
-    // её реактивный эпизод не снимает по определению.
-    const setters = new Set(EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))));
+    // её реактивный эпизод не снимает по определению. Ставить флаг может и дело недели
+    // (побачення → viral_story → провокация в матче, 18.09).
+    const { ACTIVITIES } = await import('../src/content');
+    const setters = new Set([
+      ...EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))),
+      ...ACTIVITIES.flatMap((a) => (a.effect.flags ?? []).map((f) => f.flag)),
+    ]);
     for (const e of EPISODES.filter((x) => x.requires?.flags?.length)) {
       const flag = e.requires!.flags![0];
       expect(setters.has(flag), `${e.id}: ${flag}`).toBe(true);

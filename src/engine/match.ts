@@ -47,6 +47,9 @@ export type MatchSession = {
   flavorSeen: Set<string>;
   /** Строки ленты, прочитанные в этом и прошлых матчах (feed.ts) — свежие в приоритете. */
   feedSeen: Set<string>;
+  /** Прочитанное только в этом матче — вторая ступень свежести (flavor.ts:pickFresh). */
+  feedSeenNow: Set<string>;
+  flavorSeenNow: Set<string>;
   injuriesSeason?: number;
 };
 
@@ -116,12 +119,21 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
     if (defenseSlots.size >= m.minDefense) break;
     if (episodes.some((e) => e.phase === 'defense' && fitsMinute(e, schedule[i]))) defenseSlots.add(i);
   }
+  // Квота атаки — симметрично: слоты, где будет только атакующий эпизод (BALANCE.match.minAttack).
+  const attackSlots = new Set<number>();
+  for (const i of order) {
+    if (attackSlots.size >= m.minAttack) break;
+    if (defenseSlots.has(i)) continue;
+    if (episodes.some((e) => e.phase === 'attack' && !e.followUpOnly && fitsMinute(e, schedule[i]))) attackSlots.add(i);
+  }
+  const phaseOk = (e: Episode, index: number) =>
+    defenseSlots.has(index) ? e.phase === 'defense' : attackSlots.has(index) ? e.phase === 'attack' : true;
 
   // Реактивные эпизоды заранее не планируются — они всплывают по флагам (см. pickEpisode).
   const slots = schedule
     .map((minute, index) => ({
       index,
-      candidates: episodes.filter((e) => !isReactive(e) && !e.followUpOnly && fitsMinute(e, minute) && (!defenseSlots.has(index) || e.phase === 'defense')),
+      candidates: episodes.filter((e) => !isReactive(e) && !e.followUpOnly && fitsMinute(e, minute) && phaseOk(e, index)),
     }))
     .sort((a, b) => a.candidates.length - b.candidates.length);
 
@@ -238,7 +250,7 @@ export function createMatch(
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
-    feedSeen: new Set(carryover.feedSeen ?? []),
+    feedSeen: new Set(carryover.feedSeen ?? []), feedSeenNow: new Set(), flavorSeenNow: new Set(),
     injuriesSeason: carryover.injuriesSeason,
   };
   state.log.push({
@@ -254,9 +266,10 @@ export function createMatch(
 /** Строка ленты из feed.json: подставленные имена, отмечена как прочитанная. Пустой пул —
  *  ошибка контента (у каждого вида есть безусловное правило, тест это проверяет). */
 function feedLine(session: MatchSession, kind: FeedKind, rng: Rng, extra: Record<string, string> = {}): string {
-  const raw = pickFeedLine(kind, session.state, session.conditions, rng, session.feedSeen);
+  const raw = pickFeedLine(kind, session.state, session.conditions, rng, session.feedSeen, undefined, session.feedSeenNow);
   if (!raw) throw new Error(`в feed.json нет строк вида ${kind}`);
   session.feedSeen.add(raw);
+  session.feedSeenNow.add(raw);
   return fillNames(raw, session.roster, extra);
 }
 
@@ -455,9 +468,10 @@ function withSetup(episode: Episode, session: MatchSession, rng: Rng): Episode {
 }
 
 /** Закрыт ли эпизод динамическим условием — флагом или счётом. Планировщик их не знает. */
-function blockedNow(e: Episode, state: MatchState): boolean {
+function blockedNow(e: Episode, state: MatchState, conditions: MatchConditions): boolean {
   if (e.requires?.notFlags?.some((f) => state.flags.includes(f))) return true;
   if (e.requires?.score && e.requires.score !== scoreState(state)) return true;
+  if (e.requires?.instruction && e.requires.instruction !== conditions.instruction) return true;
   return false;
 }
 
@@ -470,7 +484,7 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
   const byId = (id: string) => episodes.find((e) => e.id === id) ?? null;
   // Уже сыгранный — тоже закрыт: цепочка могла забрать плановый эпизод раньше его слота
   // (фол → штрафний, а штрафний стоял в плане на 62-ю).
-  const blocked = (e: Episode) => blockedNow(e, session.state) || session.usedEpisodeIds.includes(e.id);
+  const blocked = (e: Episode) => blockedNow(e, session.state, session.conditions) || session.usedEpisodeIds.includes(e.id);
 
   const planned = byId(session.plan[i]);
   if (!planned) return null;
@@ -684,9 +698,10 @@ export function applyChoice(
     causedConcede: conceded,
     // Реплика знает семью сцены (пенальті, а не «удар») и, как и эпизоды, говорит именами ростера.
     ...(() => {
-      const f = pickFlavorLine(flavorRules, state, res.tier, rng, { family: episode.family, phase: episode.phase }, session.flavorSeen);
+      const f = pickFlavorLine(flavorRules, state, res.tier, rng, { family: episode.family, phase: episode.phase }, session.flavorSeen, session.flavorSeenNow);
       if (!f) return {};
       session.flavorSeen.add(f.text);
+      session.flavorSeenNow.add(f.text);
       return { flavor: fillNames(f.text, session.roster), flavorVoice: f.voice };
     })(),
     badges: resultBadges(outcome.apply),

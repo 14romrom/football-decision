@@ -47,14 +47,16 @@ describe('цепочки: исход ведёт в следующее решен
   });
 
   it('заробив пенальті → сам б’єш; если цепочка не может сработать — б’є {striker} (followUpElse)', () => {
-    const { s, rng } = sessionAt(5, 'ep_penalty_shout');
+    // Сид 6: на сиде 5 после расширения пула (18.09) в ленте до первого эпизода случалась мікротравма,
+    // и слот занимал rx_knock — тест проверяет цепочку пенальти, а не ленту.
+    const { s, rng } = sessionAt(6, 'ep_penalty_shout');
     const ep = nextEpisode(s, rng)!;
     const dive = ep.episode.options.find((o) => o.id === 'go_down')!;
     applyChoice(s, ep.episode, dive, resolveOption(s.state, s.player, dive, ep.episode.phase, high(20)), rng);
     expect(s.pendingFollowUp).toBe('fin_penalty');
     expect(s.state.scoreUs).toBe(0);                           // гола ещё нет — бить будешь ты
 
-    const { s: s2, rng: rng2 } = sessionAt(5, 'ep_penalty_shout');
+    const { s: s2, rng: rng2 } = sessionAt(6, 'ep_penalty_shout');
     s2.chainsUsed = BALANCE.match.chain.maxChainsPerMatch;      // лимит цепочек выбран
     const ep2 = nextEpisode(s2, rng2)!;
     const dive2 = ep2.episode.options.find((o) => o.id === 'go_down')!;

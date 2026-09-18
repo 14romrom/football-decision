@@ -27,7 +27,7 @@ export const FEED_RULES = feedJson as FeedRule[];
  *  подставляет вызывающий. */
 export function pickFeedLine(
   kind: FeedKind, state: MatchState, conditions: MatchConditions, rng: Rng, seen: Set<string> = new Set(),
-  rules: FeedRule[] = FEED_RULES,
+  rules: FeedRule[] = FEED_RULES, seenNow: Set<string> = new Set(),
 ): string | undefined {
   const pool: { text: string; weight: number }[] = [];
   for (const r of rules) {
@@ -36,5 +36,5 @@ export function pickFeedLine(
     const weight = 3 ** Object.keys(r.when ?? {}).length;
     for (const text of r.lines) pool.push({ text, weight });
   }
-  return pickFresh(pool, seen, rng)?.text;
+  return pickFresh(pool, seen, rng, seenNow)?.text;
 }

@@ -97,6 +97,8 @@ export function computeContext(
   // «я сам підготував цей момент» в цифрах.
   for (const rule of flagRules) {
     if (!state.flags.includes(rule.id)) continue;
+    // Правило с нулём — маркер: флаг нужен сценам (сетапы, реактивные эпизоды), а не броску.
+    if (rule.value === 0) continue;
     if (rule.attributes && !rule.attributes.includes(option.attribute)) continue;
     if (rule.phases && !rule.phases.includes(phase)) continue;
     if (rule.options && !rule.options.includes(option.id)) continue;

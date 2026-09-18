@@ -175,6 +175,11 @@ export type EpisodeOption = {
   attribute: Attribute;
   basePosition: Position;
   effect: Effect;
+  /** Складність — сдвиг порогов чистого/«але» относительно формы риска (balance.ts:DIFFICULTY).
+   *  Форма — цена ошибки (полоса катастрофы), складність — насколько это трудно сделать: пас
+   *  назад під пресингом легко, но опасно; удар с 40 метров трудно, но безопасно. Без поля — 0.
+   *  На кнопке — «ціль N», своя у каждого варианта. */
+  difficulty?: number;
   staminaCost: number;               // 2..12
   goals: { team: 0 | 1 | 2 | 3; personal: 0 | 1 | 2 | 3 };
   /** Кто и что говорит с этого варианта. Слышно, только если голос сильный. */
@@ -260,6 +265,9 @@ export type Resolution = {
   position: Position;       // итоговая, после сдвигов
   basePosition: Position;
   effect: Effect;           // итоговый, после сдвигов
+  /** Складність варианта и порог чистого успеха с её учётом — то, что стояло на кнопке. */
+  difficulty: number;
+  target: number;
   tier: Tier;
   /** Катастрофа или критический успех по сырым кубикам — независимо от модификаторов. */
   critical: 'fail' | 'success' | null;

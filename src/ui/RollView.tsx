@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { EpisodeOption, Resolution, ResultBadge } from '../engine/types';
 import { ATTRIBUTE_LABEL } from '../engine/types';
 import { EFFECT_LABEL, pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
-import { cleanTarget, THRESHOLDS } from '../engine/balance';
+import { THRESHOLDS } from '../engine/balance';
 
 // Экран броска в духе Disco Elysium (плейтест 17.09: шкалы и составные полосы «учат считать,
 // а не читать»). Два кубика — видно, что выпало и почему катастрофу не выкупить; баннер —
@@ -26,7 +26,8 @@ const BANNER: Record<Resolution['tier'], string> = {
 /** Запас — словами, без чисел порогов: «на волосині» / «із запасом». */
 function margin(res: Resolution): string | null {
   if (res.critical) return null;
-  const t = THRESHOLDS[res.position];
+  const base = THRESHOLDS[res.position];
+  const t = { fail: base.fail + res.difficulty, cost: base.cost + res.difficulty };
   const s = res.totalScore;
   if (res.tier === 'clean') return s - t.cost <= 1 ? 'на волосині' : s - t.cost >= 4 ? 'із запасом' : null;
   if (res.tier === 'cost') return t.cost - s <= 1 ? 'майже чисто' : s - t.fail <= 1 ? 'ледь не провал' : null;
@@ -51,7 +52,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   const outcome = pickOutcome(option, res);
   const flat = res.totalScore - res.rawRoll;
   const m = margin(res);
-  const tag = `${POSITION_LABEL[res.position]} ${THRESHOLDS[res.position].cost}: ${TIER_LABEL[res.tier].toLowerCase().replace('…', '')}${m ? ', ' + m : ''}`;
+  const tag = `${POSITION_LABEL[res.position]} ${res.target}: ${TIER_LABEL[res.tier].toLowerCase().replace('…', '')}${m ? ', ' + m : ''}`;
   const mods = res.mods.filter((m) => m.value !== 0 || m === res.mods[0]);
 
   return (
@@ -63,7 +64,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         <div className={`d10 ${step >= 1 ? 'shown' : 'rolling'}`}>{step >= 1 ? res.dice[1] : '·'}</div>
         {step >= 2 && (
           <div className="dice-sum">
-            {res.rawRoll} на кубиках {fmt(flat)} поправок<br /><b>{res.totalScore}</b> проти цілі <b>{cleanTarget(res.position)}</b>
+            {res.rawRoll} на кубиках {fmt(flat)} поправок<br /><b>{res.totalScore}</b> проти цілі <b>{res.target}</b>
           </div>
         )}
       </div>

@@ -5,7 +5,7 @@ import { makeRng } from '../src/engine/rng';
 import { availableOptions, createMatch, sceneInsights } from '../src/engine/match';
 import { voiceSees } from '../src/engine/voices';
 import { neutralConditions } from '../src/engine/conditions';
-import { BALANCE } from '../src/engine/balance';
+import { BALANCE, cleanTarget } from '../src/engine/balance';
 import { EPISODES, EPISODES_RAW, FLAG_RULES, PLAYER, ROSTER } from '../src/content';
 import type { MatchState, Player, VoiceKey } from '../src/engine/types';
 
@@ -74,6 +74,21 @@ describe('голос бачить', () => {
       expect(o.voice?.who, label).toBe(o.insight.who);
       expect(SENSE[o.insight.who], label).toContain(o.attribute);
       expect(e.setup, label).not.toContain(o.insight.line);
+    }
+  });
+
+  it('знание делает действие проще: цель вставки ниже базы формы и ниже соседей той же формы и масштаба', () => {
+    // 18.09: раньше вставка была «не строго лучше остальных» — и тестеры спросили, зачем качать голос,
+    // если всё решает кубик. Теперь вставка — та же цена ошибки (форма), но меньшая складність.
+    for (const e of EPISODES_RAW) for (const o of e.options) {
+      if (!o.insight) continue;
+      const label = `${e.id}/${o.id}`;
+      expect(o.difficulty!, label).toBeLessThanOrEqual(-2);
+      const target = cleanTarget(o.basePosition, o.difficulty);
+      for (const s of e.options) {
+        if (s === o || s.requires || s.insight) continue;
+        if (s.basePosition === o.basePosition && s.effect === o.effect) expect(cleanTarget(s.basePosition, s.difficulty), `${label} vs ${s.id}`).toBeGreaterThan(target);
+      }
     }
   });
 

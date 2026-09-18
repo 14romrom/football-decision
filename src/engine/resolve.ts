@@ -1,19 +1,20 @@
 // Единственный бросок в игре: 2d10 + модификатор атрибута + контекст.
 // Функция чистая — rng приходит аргументом, поэтому её можно прогнать миллион раз.
 
-import { CATASTROPHE_BAND, CRIT_SUCCESS, THRESHOLDS } from './balance';
+import { CATASTROPHE_BAND, CRIT_SUCCESS, THRESHOLDS, cleanTarget } from './balance';
 import { computeContext } from './context';
 import type { ApplyEffect, Episode, EpisodeOption, FlagRule, MatchState, Outcome, Player, Position, Resolution, ResultBadge, Tier } from './types';
 import type { Rng } from './rng';
 import { neutralConditions, type MatchConditions } from './conditions';
 
-/** Ярус исхода. Катастрофа и критический успех — по сырым кубикам, остальное — по score. */
-export function tierFor(position: Position, rawRoll: number, score: number): Tier {
+/** Ярус исхода. Катастрофа и критический успех — по сырым кубикам, остальное — по score.
+ *  Складність двигает оба порога, полосу катастрофы — нет: трудное действие не становится опаснее. */
+export function tierFor(position: Position, rawRoll: number, score: number, difficulty = 0): Tier {
   if (rawRoll <= CATASTROPHE_BAND[position]) return 'badFail';
   if (rawRoll >= CRIT_SUCCESS) return 'clean';
   const t = THRESHOLDS[position];
-  if (score <= t.fail) return 'fail';
-  if (score <= t.cost) return 'cost';
+  if (score <= t.fail + difficulty) return 'fail';
+  if (score <= t.cost + difficulty) return 'cost';
   return 'clean';
 }
 
@@ -34,7 +35,8 @@ export function resolveOption(
     ? last
     : [Math.max(1, Math.min(10, Math.ceil(rawRoll / 2))), Math.max(1, Math.min(10, Math.floor(rawRoll / 2)))];
   const totalScore = rawRoll + ctx.flat;
-  const tier = tierFor(ctx.position, rawRoll, totalScore);
+  const difficulty = option.difficulty ?? 0;
+  const tier = tierFor(ctx.position, rawRoll, totalScore, difficulty);
   return {
     rawRoll,
     dice,
@@ -45,6 +47,8 @@ export function resolveOption(
     position: ctx.position,
     basePosition: option.basePosition,
     effect: ctx.effect,
+    difficulty,
+    target: cleanTarget(ctx.position, difficulty),
     tier,
     critical: rawRoll <= CATASTROPHE_BAND[ctx.position] ? 'fail' : rawRoll >= CRIT_SUCCESS ? 'success' : null,
   };

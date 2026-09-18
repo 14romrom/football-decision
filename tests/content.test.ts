@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { EPISODES, PLAYER } from '../src/content';
-import { BALANCE } from '../src/engine/balance';
+import { BALANCE, DIFFICULTY, cleanTarget } from '../src/engine/balance';
 import type { Attribute, Episode, Tier } from '../src/engine/types';
 
 const TIERS: Tier[] = ['badFail', 'fail', 'cost', 'clean'];
@@ -60,6 +60,26 @@ describe('форма контента', () => {
     for (const e of EPISODES) {
       expect(new Set(e.options.map((o) => o.basePosition)).size, e.id).toBeGreaterThanOrEqual(2);
     }
+  });
+
+  it('складність у каждой опции: в диапазоне, и цели в эпизоде не сводятся к шаблону формы', () => {
+    // 18.09: форма = цена ошибки, складність = насколько трудно. Откатить назад — 11, удар с 40 метров — 23.
+    for (const e of EPISODES) {
+      const targets = new Set<number>();
+      for (const o of e.options) {
+        expect(o.difficulty, `${e.id}/${o.id}`).toBeDefined();
+        expect(o.difficulty!, `${e.id}/${o.id}`).toBeGreaterThanOrEqual(DIFFICULTY.min);
+        expect(o.difficulty!, `${e.id}/${o.id}`).toBeLessThanOrEqual(DIFFICULTY.max);
+        if (!o.requires && !o.insight) targets.add(cleanTarget(o.basePosition, o.difficulty));
+      }
+      expect(targets.size, e.id).toBeGreaterThanOrEqual(2);
+      // Самый трудный вариант эпизода не может быть «утримати»: за 20+ должен стоять масштаб.
+      const hardest = [...e.options].sort((a, b) => cleanTarget(b.basePosition, b.difficulty) - cleanTarget(a.basePosition, a.difficulty))[0];
+      if (cleanTarget(hardest.basePosition, hardest.difficulty) >= 20) expect(hardest.effect, `${e.id}/${hardest.id}`).not.toBe('limited');
+    }
+    const all = EPISODES.flatMap((e) => e.options);
+    expect(all.filter((o) => o.difficulty! < 0).length / all.length).toBeGreaterThan(0.3);
+    expect(all.filter((o) => o.difficulty! > 0).length / all.length).toBeGreaterThan(0.2);
   });
 });
 

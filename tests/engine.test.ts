@@ -74,6 +74,18 @@ describe('пороги исходов', () => {
     }
   });
 
+  it('складність двигает оба порога, но не полосу катастрофы', () => {
+    const t = THRESHOLDS.risky;
+    const safeRoll = CATASTROPHE_BAND.risky + 1;
+    expect(tierFor('risky', safeRoll, t.cost + 1, 0)).toBe('clean');
+    expect(tierFor('risky', safeRoll, t.cost + 1, 3)).toBe('cost');     // важче: те же кубики — уже «але»
+    expect(tierFor('risky', safeRoll, t.cost + 4, 3)).toBe('clean');
+    expect(tierFor('risky', safeRoll, t.fail + 1, 3)).toBe('fail');
+    expect(tierFor('risky', safeRoll, t.cost - 2, -3)).toBe('clean');   // легше: чисто там, где было «але»
+    expect(tierFor('risky', CATASTROPHE_BAND.risky, 99, -3)).toBe('badFail'); // катастрофа не выкупается
+    expect(tierFor('risky', 20, -99, 4)).toBe('clean');
+  });
+
   it('двадцать на кубиках — чисто при любом score', () => {
     expect(tierFor('desperate', 20, -5)).toBe('clean');
   });

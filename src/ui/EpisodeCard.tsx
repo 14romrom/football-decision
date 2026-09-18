@@ -83,8 +83,9 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                   )}
                 </span>
                 {/* Цель проверки — как «Medium 10» в Disco Elysium: 2d10 + поправки проти цього числа.
-                    Число, а не вероятность; это порог чистого успеха, ниже — «вийшло, але…» или провал. */}
-                <span className="tag target">ціль {cleanTarget(ctx.position)}</span>
+                    Число, а не вероятность; это порог чистого успеха, ниже — «вийшло, але…» или провал.
+                    Своя у каждого варианта: форма риска + складність (EpisodeOption.difficulty). */}
+                <span className="tag target">ціль {cleanTarget(ctx.position, o.difficulty)}</span>
                 <span className="tag scale">{EFFECT_LABEL[ctx.effect]}</span>
                 {chainHint(o) && <span className="tag chain">→ {chainHint(o)}</span>}
                 <CostBar cost={optionCost(o)} />

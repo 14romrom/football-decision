@@ -1,7 +1,5 @@
 import type { MatchConditions } from '../engine/conditions';
 import { signatureAttrs } from '../engine/conditions';
-import { attrMod } from '../engine/context';
-import { ATTRIBUTE_LABEL } from '../engine/types';
 import type { Attribute, Player } from '../engine/types';
 import type { Opponent } from '../content';
 
@@ -48,42 +46,50 @@ function toneLines(c: MatchConditions): { title: string; note: string } {
   return { title, note: form + ' ' + legs };
 }
 
-function weakestLine(player: Player): string {
-  const keys = Object.keys(player.attrs) as Attribute[];
-  return keys.sort((a, b) => player.attrs[a] - player.attrs[b]).slice(0, 2)
-    .map((a) => `${ATTRIBUTE_LABEL[a]} +${attrMod(player.attrs[a])}`).join(', ');
-}
+type Props = {
+  conditions: MatchConditions; opponent: Opponent; player: Player;
+  /** Наслідки недели (бирки) — на програмці уходят в заметку о Реєсе; здесь остаются как подпись мелко. */
+  carryoverNote?: string;
+  /** Тур (1-based), клуб-хозяин для шапки, заметка о Реєсе и черта соперника — считаются в App (engine/programme.ts). */
+  round: number; usName: string; note: string; trait: string | null;
+  onStart: () => void;
+};
 
-type Props = { conditions: MatchConditions; opponent: Opponent; player: Player; carryoverNote?: string; onStart: () => void };
+// Програмка (19.09, макет «Брифинг як програмка»): тот же брифинг, но лист бумаги в руке перед выходом —
+// единственный светлый экран в игре. Рубрики: Реєс (заметка прозой), Суперник (+ черта голосом клуба),
+// Стадіон, Погода, Форма, Слово тренера цитатой в рамке. Без иронии: програмку пишет пресс-служба.
 
-export function BriefingScreen({ conditions, opponent, player, carryoverNote, onStart }: Props) {
+export function BriefingScreen({ conditions, opponent, player, carryoverNote, round, usName, note, trait, onStart }: Props) {
   const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
   const venue = conditions.venue === 'home'
-    ? { title: 'Вдома', note: `Трибуни знають тебе і чекають ${sig[0]} та ${sig[1]} — саме за це тут люблять.` }
+    ? { title: 'Вдома', note: `Трибуни знають тебе і чекають ${sig[0]} та ${sig[1]}.` }
     : { title: 'Виїзд', note: 'Чужий стадіон: свист замість підтримки, а в кінцівці — особливо.' };
-  const strength = opponent.strength === 'strong' ? 'Сильний суперник — кожне рішення дається важче.'
-    : opponent.strength === 'weak' ? 'Слабкий суперник — простір є, і його треба брати.'
-    : 'Рівний суперник.';
+  const strength = opponent.strength === 'strong' ? 'Сильний суперник.' : opponent.strength === 'weak' ? 'Слабкий суперник.' : 'Рівний суперник.';
   const weather = WEATHER[conditions.weather];
   const instr = INSTRUCTION[conditions.instruction === 'none' ? 'free' : conditions.instruction];
   const tone = toneLines(conditions);
+  const home = conditions.venue === 'home' ? usName : opponent.name.nom;
+  const away = conditions.venue === 'home' ? opponent.name.nom : usName;
+  const day = (round & 1) === 1 ? 'субота' : 'неділя';   // нечётные туры — субота; без оператора остатка (тест «никаких процентов»)
+  const time = conditions.venue === 'home' ? '18:00' : '20:00';
 
   return (
     <div className="briefing">
-      <h1>Перед матчем</h1>
-      <dl className="conditions">
-        <div><dt>Ти</dt><dd>
-          <b>{player.name}.</b> {signatureAttrs(player).map((a) => `${ATTRIBUTE_LABEL[a]} +${attrMod(player.attrs[a])}`).join(', ')} —
-          твоє; {weakestLine(player)} — ні. <a className="link" href="#/player">Картка</a>
-        </dd></div>
-        <div><dt>Суперник</dt><dd><b>«{opponent.name.nom}»</b> — {opponent.blurb}. {strength}</dd></div>
-        <div><dt>Стадіон</dt><dd><b>{venue.title}.</b> {venue.note}</dd></div>
-        <div><dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd></div>
-        <div><dt>Тренер</dt><dd><b>{instr.title}.</b> {instr.quote} {instr.note}</dd></div>
-        <div><dt>Тонус</dt><dd><b>{tone.title}.</b> {tone.note}</dd></div>
-        {carryoverNote && <div><dt>Наслідки</dt><dd>{carryoverNote}</dd></div>}
-      </dl>
-      <button className="primary" onClick={onStart}>Вийти на поле</button>
+      <div className="prog">
+        <div className="prog-top"><span>Офіційна програмка</span><span>Тур {round} · {day}</span></div>
+        <h1 className="prog-title">{home} — {away}<small>Стадіон «{home}» · початок о {time}</small></h1>
+        <div className="prog-rule" />
+        <dl className="prog-list">
+          <dt>Реєс</dt><dd><b>№10.</b> {note} <a className="prog-link" href="#/player">Картка гравця</a></dd>
+          <dt>Суперник</dt><dd><b>«{opponent.name.nom}»</b> — {opponent.blurb}. {strength}{trait && <> {trait}<span className="prog-warn">увага</span></>}</dd>
+          <dt>Стадіон</dt><dd><b>{venue.title}.</b> {venue.note}</dd>
+          <dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd>
+          <dt>Форма</dt><dd><b>{tone.title}.</b> {tone.note}</dd>
+          <dd className="prog-quote"><b>Слово тренера · установка: {instr.title.toLowerCase()}</b>{instr.quote} {instr.note}</dd>
+        </dl>
+        <div className="prog-foot"><span>Безкоштовно · не для продажу</span><span>{carryoverNote ? carryoverNote.toLowerCase() : 'надруковано вчора'}</span></div>
+      </div>
+      <button className="primary prog-cta" onClick={onStart}>Вийти на поле</button>
     </div>
   );
 }

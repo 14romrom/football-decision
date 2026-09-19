@@ -3,7 +3,7 @@ import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
-import { generateConditions, toneFromHistory } from './engine/conditions';
+import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
 import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } from './engine/posts';
 import { PostsScreen } from './ui/PostsScreen';
@@ -26,6 +26,7 @@ import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
 import { activeSlot } from './telemetry/slots';
 import { finaleFor, type FinaleKind } from './engine/finale';
+import { programmeNote, traitNote, type ProgrammeInput } from './engine/programme';
 import { applySettings } from './telemetry/settings';
 import { TitleScreen } from './ui/TitleScreen';
 import { Sticker } from './ui/Sticker';
@@ -93,6 +94,23 @@ function Game() {
   const [season, setSeason] = useState<Season>(seasonRef.current);
   const setSeasonBoth = useCallback((sn: Season) => { seasonRef.current = sn; writeSeason(sn); setSeason(sn); }, []);
   useEffect(() => { writeSeason(seasonRef.current); }, []);
+  /** Данные для заметки «Реєс» на програмці (engine/programme.ts): прошлый матч, серии, дела тижня, довіра. */
+  const programmeInput = (sn: Season, c: Career, cond: MatchConditions): ProgrammeInput => {
+    const played = sn.rounds ?? [];
+    const lastRes = sn.round > 0 ? played[sn.round - 1] : undefined;
+    const lastFix = sn.round > 0 ? sn.fixtures.find((f) => f.round === sn.round - 1 && (f.home === US || f.away === US)) : undefined;
+    const lastKey = lastFix ? (lastFix.home === US ? lastFix.away : lastFix.home) : undefined;
+    let scoring = 0; for (let i = played.length - 1; i >= 0; i--) { if ((played[i].goals + played[i].assists) > 0) scoring++; else break; }
+    let dry = 0; for (let i = played.length - 1; i >= 0; i--) { if ((played[i].goals + played[i].assists) === 0) dry++; else break; }
+    const week = (c.weekLog ?? []).filter((w) => w.season === sn.number && w.round === sn.round).slice(-1)[0];
+    const titles = (week?.chosen ?? []).map((id) => ACTIVITIES.find((a) => a.id === id)?.title ?? '').filter(Boolean);
+    return {
+      round: sn.round + 1,
+      last: lastRes && lastKey ? { scoreUs: lastRes.scoreUs, scoreThem: lastRes.scoreThem, opponentGen: OPPONENTS[lastKey]?.name.gen ?? lastKey } : null,
+      confidence: cond.tone.confidence, scoringStreak: scoring, dryStreak: dry, weekActivities: titles,
+      coachTrust: c.coachTrust, matchesPlayed: c.matchesPlayed,
+    };
+  };
   const clubName = useCallback((key: string) => (key === US ? ROSTER.us.name.nom : OPPONENTS[key]?.name.nom ?? key), []);
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
@@ -347,9 +365,6 @@ function Game() {
         ) : (
           <p className="season-line menu-fixture"><b>Сезон {season.number} завершено.</b></p>
         )}
-        <p className="muted">
-          Тренер і трибуни хочуть від тебе різного. Сили майже не відновлюються — хіба що в перерві.
-        </p>
         {fixture
           ? <button className="primary menu-primary" onClick={start}>До матчу</button>
           : <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>}
@@ -370,6 +385,10 @@ function Game() {
           opponent={OPPONENTS[session.conditions.opponentKey]}
           player={session.player}
           carryoverNote={stage.carryoverNote}
+          round={season.round + 1}
+          usName={ROSTER.us.name.nom}
+          note={programmeNote(programmeInput(season, career, session.conditions))}
+          trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
           onStart={kickoff}
         />
         <DebugPanel session={session} />

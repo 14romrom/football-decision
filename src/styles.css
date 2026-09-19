@@ -25,7 +25,8 @@ body {
 #root {
   max-width: 620px;
   margin: 0 auto;
-  padding: 16px 16px 80px;
+  /* Вырезы и системные полосы телефона (Capacitor, viewport-fit=cover): контент не под ними. */
+  padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
 }
 
 h1 { font-size: 22px; margin: 0 0 12px; }

@@ -24,6 +24,17 @@ npm run build    # статика в dist/
 
 Матч воспроизводится по сиду: `?seed=12345` в адресе запустит тот же матч.
 
+## Android
+
+Сборка в сторы решена 19.09 как **веб + Capacitor** (React и CSS остаются; анимация матча и
+мини-игры — Phaser в той же странице, когда дойдём). Локально JDK и Android SDK не нужны:
+`.github/workflows/android.yml` собирает debug-APK на каждый пуш в `main` и кладёт по постоянной
+ссылке — https://github.com/14romrom/football-decision/releases/download/android-latest/football-decision-debug.apk
+(на телефоне: разрешить «невідомі джерела», открыть). `versionCode` = номер прогона, новая сборка
+ставится поверх старой, карьера в localStorage сохраняется. `appId` — `ua.footballdecision.app`,
+менять только до первой публикации. Папка `android/` — сгенерированный проект Capacitor, в git
+без `assets/public` (это копия `dist`, делает `npx cap sync android`).
+
 ## Что где
 
 ```

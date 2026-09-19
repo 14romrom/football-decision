@@ -1,0 +1,44 @@
+# Сборка Android-оболочки (Capacitor) при каждом пуше в main: debug-APK кладётся в релиз
+# `android-latest` — постоянная ссылка для установки на телефон без Play Store:
+#   https://github.com/14romrom/football-decision/releases/download/android-latest/football-decision-debug.apk
+# Локально JDK и Android SDK не нужны: собирает раннер. versionCode = номер прогона, чтобы
+# новая сборка ставилась поверх старой без удаления (сохраняется localStorage с карьерой).
+name: android
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: android
+  cancel-in-progress: true
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - name: version from run number and commit
+        run: |
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"0.${{ github.run_number }}+$(git rev-parse --short HEAD)\"/" android/app/build.gradle
+          grep -n "version" android/app/build.gradle
+      - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug --no-daemon
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk football-decision-debug.apk
+      - uses: actions/upload-artifact@v4
+        with: { name: football-decision-debug, path: football-decision-debug.apk }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Android debug build
+          prerelease: true
+          body: "Остання debug-збірка з main. Встановлення: дозволити «невідомі джерела», відкрити APK. Версія — у налаштуваннях застосунку."
+          files: football-decision-debug.apk

@@ -643,7 +643,7 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 /* Кто ты и где — строкой под кнопкой, не карточкой (карточка с полосой читалась как шаблон — 19.09). */
 .title-career { margin: 10px 0 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
 .title-career b { color: var(--ink); font-weight: 600; }
-.title-career i, .slot-dd i { color: var(--muted); }
+.title-career i { color: var(--muted); }
 .voice-name { font-style: normal; font-family: var(--font-caps); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; font-size: .9em; }
 .voice-name.voice-ego { color: var(--v-ego); } .voice-name.voice-team { color: var(--v-team); } .voice-name.voice-vision { color: var(--v-vision); }
 .voice-name.voice-instinct { color: var(--v-instinct); } .voice-name.voice-body { color: var(--v-body); } .voice-name.voice-composure { color: var(--v-composure); }
@@ -660,20 +660,7 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .plain-screen h1 { font-size: 22px; margin: 0 0 6px; }
 .plain-screen > .muted { margin-bottom: 14px; }
 .plain-screen .conditions { margin: 0 0 6px; }
-.slot-row, .set-row {
-  display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.6rem; width: 100%; min-height: 52px; padding: 0.6rem 2px; text-align: left;
-  background: none; border: 0; border-top: 1px solid rgba(255,255,255,0.08); border-radius: 0; color: var(--ink); font: inherit; line-height: 1.45;
 }
-.slot-row:last-child, .set-row:last-child { border-bottom: 1px solid rgba(255,255,255,0.08); }
-.slot-row:hover, .set-row:hover, .slot-row:active, .set-row:active { background: #131316; border-color: rgba(255,255,255,0.08); }
-.slot-row:focus-visible, .set-row:focus-visible { outline: none; box-shadow: inset 3px 0 0 var(--ink); }
-.slot-dt { opacity: 0.55; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; padding-top: 0.15rem; }
-.slot-dd b { font-weight: 600; }
-/* Текущий слот — как своя строка в таблице сезона. */
-.slot-row.current { background: var(--panel); }
-.slot-row.current .slot-dt { opacity: .8; }
-.slot-row.empty .slot-dd { color: var(--muted); }
-.set-row.danger .slot-dd b { color: var(--bad-soft); }
 .sheet { margin-top: auto; padding: 14px 14px 12px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px; display: grid; gap: 8px; }
 .sheet p { margin: 0 0 4px; font-size: 14.5px; }
 .danger-btn { display: block; width: 100%; background: var(--bad); color: #fff; border: 0; border-radius: 6px; padding: 12px; font-family: var(--font-caps); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 14px; }
@@ -701,3 +688,20 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .toggle.on::after { left: 22px; }
 /* Налаштування возвращены к 42de5db по решению пользователя (19.09); хеш сборки там — mono, как было. */
 .settings .build { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+
+/* Слот = удостоверение (макет «було / стало» v2, 19.09): шапка картки гравця, чип состояния, пунктирный бланк для пустого. */
+.slot-list { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 8px; }
+.slot-list li { margin: 0; }
+.idc { display: block; width: 100%; text-align: left; padding: 12px 14px 10px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel); color: var(--ink); font: inherit; }
+.idc.now { border-color: #4a463c; }
+.idc.empty { background: transparent; border-style: dashed; color: var(--muted); }
+.idc:hover { border-color: var(--muted); }
+.idc:active { background: var(--panel-2); }
+.idc:focus-visible { outline: none; box-shadow: inset 3px 0 0 var(--ink); }
+.idc-name { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 19px; font-weight: 600; line-height: 1.2; }
+.idc.empty .idc-name { font-size: 16px; font-weight: 400; }
+.chip { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em; color: var(--muted); border: 1px solid var(--line-2); border-radius: 3px; padding: 1px 6px; font-weight: 400; font-style: normal; white-space: nowrap; }
+.idf { margin: 6px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; }
+.idf dt { color: var(--muted); } .idf dd { margin: 0; font-family: var(--font-mono); font-size: 12.5px; }
+.idm { display: block; margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--line-2); font-style: italic; color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+.idc.empty .idm { border-top-style: dashed; }

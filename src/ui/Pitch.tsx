@@ -8,7 +8,7 @@ type Spot = [number, number];
 /** Где на поле происходит сцена: доля ширины (0 — свои ворота, 1 — чужие) и высоты. */
 const FAMILY_SPOT: Record<string, Spot> = {
   edge_shot: [0.74, 0.5], one_on_one: [0.86, 0.5], finishing: [0.9, 0.48], penalty: [0.88, 0.5],
-  free_kick: [0.72, 0.42], corner_attack: [0.97, 0.06], through: [0.62, 0.5], wing: [0.7, 0.14],
+  free_kick: [0.72, 0.42], corner_attack: [0.96, 0.92], through: [0.62, 0.5], wing: [0.7, 0.14],
   counter: [0.5, 0.5], partner: [0.55, 0.5], press: [0.42, 0.5], duel: [0.34, 0.5], last_man: [0.2, 0.5],
   corner_defense: [0.04, 0.94], coach: [0.5, 0.97], referee: [0.5, 0.5], body: [0.5, 0.5],
 };

@@ -107,6 +107,8 @@ export function MatchScreen({
         {waiting && <button className="skip" onClick={onSkip}>далі ⟶</button>}
       </div>
 
+      {/* Карточка момента отделена от таймлайна панелью: сцена, варианты и зона «на кубик» — одно целое. */}
+      <section className="moment">
       {children}
 
       <footer className="dice-zone">
@@ -127,6 +129,7 @@ export function MatchScreen({
           {[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < staminaSegs ? 'on' : ''} />)}
         </span>
       </footer>
+      </section>
     </div>
   );
 }

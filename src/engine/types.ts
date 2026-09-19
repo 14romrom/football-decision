@@ -17,7 +17,7 @@ export const ATTRIBUTE_GROUPS: { title: string; attrs: Attribute[] }[] = [
 export const ATTRIBUTE_LABEL: Record<Attribute, string> = {
   finishing: 'удар', passing: 'пас', dribbling: 'дриблінг', first_touch: 'перший дотик',
   pace: 'швидкість', strength: 'корпус', stamina: 'витривалість',
-  composure: 'холоднокровність', vision: 'бачення поля', positioning: 'позиція',
+  composure: 'спокій', vision: 'бачення поля', positioning: 'позиція',
 };
 
 export type Player = {

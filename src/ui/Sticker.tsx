@@ -14,7 +14,7 @@ import { plural } from './pluralize';
 const POSITION_LABEL: Record<Player['position'], string> = {
   AM: 'атакувальний півзахисник', CM: 'центральний півзахисник', ST: 'нападник', LW: 'лівий вінгер',
 };
-const BOX_LABEL: Record<VoiceKey, string> = { vision: 'Бач', instinct: 'Інст', body: 'Тіло', composure: 'Холод', ego: 'Его', team: 'Ком' };
+const BOX_LABEL: Record<VoiceKey, string> = { vision: 'Бач', instinct: 'Інст', body: 'Тіло', composure: 'Спокій', ego: 'Его', team: 'Ком' };
 const ATTR_VOICES: VoiceKey[] = ['vision', 'instinct', 'body', 'composure'];
 
 /** Модификатор голоса — сильнейший из его атрибутов (так же voiceSees смотрит на лучший). */

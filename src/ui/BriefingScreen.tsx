@@ -12,7 +12,7 @@ import type { Opponent } from '../content';
 const ATTR_GEN: Record<Attribute, string> = {
   finishing: 'удар', passing: 'пас', dribbling: 'дриблінг', first_touch: 'перший дотик',
   pace: 'швидкість', strength: 'боротьбу', stamina: 'витривалість',
-  composure: 'холоднокровність', vision: 'бачення поля', positioning: 'позиційну гру',
+  composure: 'спокій', vision: 'бачення поля', positioning: 'позиційну гру',
 };
 
 const WEATHER: Record<MatchConditions['weather'], { title: string; note: string }> = {

@@ -53,7 +53,7 @@ describe('контекст и предложения', () => {
     for (const a of offers) expect(matchesActivity(a.when, c), a.id).toBe(true);
   });
 
-  it('после разгрома тренер закрывает город: только Тіло, Бачення, Холоднокровність', () => {
+  it('после разгрома тренер закрывает город: только Тіло, Бачення, Спокій', () => {
     const c = ctxFor(seasonWith([[0, 4]]));
     expect(coachLocksCity(c)).toBe(true);
     const offers = offerWeek(ACTIVITIES, c, defaultCareer(), makeRng(1));

@@ -81,7 +81,7 @@ export function computeContext(
   if (lastTier === 'fail' || lastTier === 'badFail') mods.push({ label: 'після провалу', value: c.afterFail, source: 'player', short: 'провал' });
 
   if (state.minute > 80) {
-    if (state.composureNow >= 70) mods.push({ label: 'спокійний у кінцівці', value: c.composureLateGood, source: 'player', short: 'спокій' });
+    if (state.composureNow >= 70) mods.push({ label: 'спокійний у кінцівці', value: c.composureLateGood, source: 'player', short: 'кінцівка' });
     else if (state.composureNow < 30) mods.push({ label: 'кінець матчу, нерви', value: c.composureLateBad, source: 'player', short: 'нерви' });
   }
 

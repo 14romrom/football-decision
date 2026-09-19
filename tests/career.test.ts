@@ -63,7 +63,7 @@ describe('career: эффективный игрок', () => {
   });
 
   it('pointEffect говорит, что очко сделает с голосом: розбудить, дасть зір — або нічого', () => {
-    // Стартовый Реєс: холоднокровність 52 (+1) → 56 (+2): Холоднокровність стане чутно.
+    // Стартовый Реєс: холоднокровність 52 (+1) → 56 (+2): Спокій стане чутно.
     expect(pointEffect(PLAYER, defaultCareer(), 'composure')).toMatchObject({ from: 52, to: 56, modFrom: 1, modTo: 2, voice: { who: 'composure', change: 'hears' } });
     // швидкість 55 (+2) → 59 (+3): Тіло почне бачити.
     expect(pointEffect(PLAYER, defaultCareer(), 'pace')).toMatchObject({ modFrom: 2, modTo: 3, voice: { who: 'body', change: 'sees' } });

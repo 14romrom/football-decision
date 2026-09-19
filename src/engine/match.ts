@@ -360,7 +360,7 @@ function syncTired(state: MatchState) {
 
 /** Прогон времени: расход сил + дрейф холоднокровності от трибун. Трибуни не заводят
  *  третий канал — они двигают composureNow, а он уже участвует и в пороговом моде
- *  после 80-й, и в слышимости голоса «Холоднокровність» (voices.ts). */
+ *  после 80-й, и в слышимости голоса «Спокій» (voices.ts). */
 function tickTime(session: MatchSession, minutes: number) {
   const state = session.state;
   const heat = session.conditions.weather === 'heat' ? BALANCE.conditions.heatDrainScale : 1;

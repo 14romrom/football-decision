@@ -50,7 +50,7 @@ describe('голос бачить', () => {
     }
   });
 
-  it('стартовый Реєс видит Бачення и Інстинкт, но не Тіло и Холоднокровність — билды играют разные сцены', () => {
+  it('стартовый Реєс видит Бачення и Інстинкт, но не Тіло и Спокій — билды играют разные сцены', () => {
     expect(voiceSees('vision', PLAYER)).toBe(true);
     expect(voiceSees('instinct', PLAYER)).toBe(true);
     expect(voiceSees('body', PLAYER)).toBe(false);

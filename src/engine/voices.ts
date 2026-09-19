@@ -13,7 +13,7 @@ import type { EpisodeOption, MatchState, Player, VoiceKey, VoiceTrace } from './
 export const VOICE_LABEL: Record<VoiceKey, string> = {
   ego: 'Его',
   team: 'Команда',
-  composure: 'Холоднокровність',
+  composure: 'Спокій',
   vision: 'Бачення',
   instinct: 'Інстинкт',
   body: 'Тіло',

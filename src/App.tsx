@@ -453,6 +453,11 @@ function Game() {
         shown={shown}
         waiting={stage.k === 'feed' && queue.length > 0}
         onSkip={skip}
+        episode={stage.k === 'episode' || stage.k === 'roll' ? stage.episode : null}
+        player={session.player}
+        conditions={session.conditions}
+        flagRules={session.flagRules}
+        tour={seasonRef.current.round + 1}
       >
         {stage.k === 'episode' && (
           <EpisodeCard

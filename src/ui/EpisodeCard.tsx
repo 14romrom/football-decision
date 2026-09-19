@@ -1,10 +1,16 @@
-import { ATTRIBUTE_LABEL, type Episode, type EpisodeOption, type FlagRule, type MatchState, type Player } from '../engine/types';
+import type { Episode, EpisodeOption, FlagRule, MatchState, Player } from '../engine/types';
 import { VOICE_LABEL, voiceAudible } from '../engine/voices';
 import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
-import { availableOptions, optionCost, sceneInsights } from '../engine/match';
-import { EFFECT_LABEL, POSITION_LABEL } from '../engine/resolve';
+import { availableOptions, sceneInsights } from '../engine/match';
+import { POSITION_LABEL } from '../engine/resolve';
 import { cleanTarget } from '../engine/balance';
+
+// Сцена как диалог (макет А2, 19.09): сетап — строка ленты, голоса говорят до вариантов
+// («ЕГО — …», как в Disco Elysium), варианты — нумерованный список с одной скобкой
+// «[форма ціль]». Атрибут, бонус и факторы — не на кнопке: они на экране броска и в зоне
+// «на кубик» (MatchScreen). Цена сил на кнопке тоже нет — она в разборе после броска; это
+// сознательный обмен читаемости на полноту (плейтест: 25 с на решение).
 
 type Props = {
   episode: Episode;
@@ -18,8 +24,7 @@ type Props = {
   onChoose: (option: EpisodeOption) => void;
 };
 
-/** Куда ведёт вариант при удаче: подпись «→ удар» на кнопке. Цепочка зависит от исхода,
- *  но направление известно заранее — игрок должен видеть, что решение не последнее. */
+/** Куда ведёт вариант при удаче — подпись в скобке: решение не последнее. */
 const CHAIN_LABEL: Record<string, string> = {
   fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний', ep_rebound_follow_up: 'добивання',
 };
@@ -28,72 +33,52 @@ function chainHint(o: EpisodeOption): string | null {
   return target ? (CHAIN_LABEL[target] ?? 'далі') : null;
 }
 
-/** Полоска стоимости: цена действия показывается объёмом, а не числом (п. 4.4 ТЗ). */
-function CostBar({ cost }: { cost: number }) {
-  const segments = 6;
-  const filled = Math.max(1, Math.round((cost / 14) * segments));
-  return (
-    <span className="cost" aria-label="ціна по силах">
-      {Array.from({ length: segments }, (_, i) => (
-        <i key={i} className={i < filled ? 'seg on' : 'seg'} />
-      ))}
-    </span>
-  );
-}
-
 export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, link, onChoose }: Props) {
+  const options = availableOptions(episode, state, player);
+  const insights = sceneInsights(episode, state, player);
+  // Реплики голосов — до вариантов, по одному разу на голос; слышно только сильный.
+  const said = new Set<string>();
+  const lines = options.flatMap((o) => {
+    if (!o.voice || !voiceAudible(o.voice.who, o, state, player) || said.has(o.voice.who)) return [];
+    said.add(o.voice.who);
+    return [o.voice];
+  });
   return (
-    <div className="card episode">
-      <div className="card-minute">{minute}′{link && <span className="link-mark"> · продовження</span>}</div>
-      <p className="setup">{episode.setup}</p>
-      {/* Голос бачить: сильный атрибут заметил деталь, которой нет в сетапе, — и ниже
-          появился вариант, которого у другого билда нет. Факт, не совет. */}
-      {sceneInsights(episode, state, player).map((v) => (
-        <p key={v.who} className={`insight voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b> — {v.line}</p>
+    <div className="scene">
+      <p className="tape-line current">
+        <span className="tape-minute">{minute}′</span>{link && <span className="link-mark"> · продовження</span>} — {episode.setup}
+      </p>
+      {insights.map((v) => (
+        <p key={'i' + v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b> — {v.line}</p>
       ))}
-      <div className="options">
-        {availableOptions(episode, state, player).map((o) => {
-          // Показываем ярлыки уже со сдвигами от контекста: если ноги встали,
-          // игрок должен видеть, что надёжный вариант перестал быть надёжным.
+      {lines.map((v) => (
+        <p key={v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b> — {v.line}</p>
+      ))}
+      <ol className="choices">
+        {options.map((o, i) => {
+          // Форма риска уже со сдвигами от контекста: игрок должен видеть, что надёжный
+          // вариант перестал быть надёжным.
           const ctx = computeContext(state, player, o, episode.phase, conditions, flagRules);
-          // Голос слышно, только когда он сильный: так объясняются сильные стороны и контекст.
-          const voice = o.voice && voiceAudible(o.voice.who, o, state, player) ? o.voice : null;
-          const shifted = ctx.position !== o.basePosition;
+          const chain = chainHint(o);
+          const origin = o.insight ? `відкрив ${VOICE_LABEL[o.insight.who]}`
+            : o.requires?.flags?.some((f) => f.startsWith('week_')) ? 'з тижня'
+            : o.requires?.flags?.includes('keeper_read') ? 'по підказці' : null;
           return (
-            <button key={o.id} className={`option ${o.insight ? 'option-insight' : ''}`} onClick={() => onChoose(o)}>
-              <span className="option-label">
-                {o.label}
-                {/* Откуда взялся вариант — чтобы игрок связал кнопку с голосом или с тижнем, а не с удачей. */}
-                {o.insight && <i className={`origin voice-${o.insight.who}`}>відкрив {VOICE_LABEL[o.insight.who]}</i>}
-                {!o.insight && o.requires?.flags?.some((f) => f.startsWith('week_')) && <i className="origin origin-week">з тижня</i>}
-                {!o.insight && o.requires?.flags?.includes('keeper_read') && <i className="origin origin-week">по підказці</i>}
-              </span>
-              {voice && (
-                <span className={`voice voice-${voice.who}`}><b>{VOICE_LABEL[voice.who]}:</b> «{voice.line}»</span>
-              )}
-              <span className="tags">
-                {/* Чем ты это делаешь и насколько хорошо: скилл виден до броска, как на листе персонажа. */}
-                <span className={`tag attr ${ctx.attrMod >= 3 ? 'strong' : ctx.attrMod === 0 ? 'weak' : ''}`}>
-                  {ATTRIBUTE_LABEL[o.attribute]} +{ctx.attrMod}
+            <li key={o.id}>
+              <button className={`choice ${o.insight ? `choice-insight voice-${o.insight.who}` : ''}`} onClick={() => onChoose(o)}>
+                <span className="choice-num">{i + 1}. -</span>
+                <span className="choice-text">
+                  <span className={`bracket risk-${ctx.position}`}>
+                    [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)}{chain ? ` → ${chain}` : ''}]
+                  </span>{' '}
+                  {o.label}
+                  {origin && <i className="origin">{origin}</i>}
                 </span>
-                <span className={`tag risk risk-${ctx.position}`}>
-                  {POSITION_LABEL[ctx.position]}
-                  {shifted && (
-                    <i className="shift-mark" title="форма ризику змістилася через твій стан">↯</i>
-                  )}
-                </span>
-                {/* Цель проверки — как «Medium 10» в Disco Elysium: 2d10 + поправки проти цього числа.
-                    Число, а не вероятность; это порог чистого успеха, ниже — «вийшло, але…» или провал.
-                    Своя у каждого варианта: форма риска + складність (EpisodeOption.difficulty). */}
-                <span className="tag target">ціль {cleanTarget(ctx.position, o.difficulty)}</span>
-                <span className="tag scale">{EFFECT_LABEL[ctx.effect]}</span>
-                {chainHint(o) && <span className="tag chain">→ {chainHint(o)}</span>}
-                <CostBar cost={optionCost(o)} />
-              </span>
-            </button>
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </div>
   );
 }

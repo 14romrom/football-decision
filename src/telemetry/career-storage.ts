@@ -3,12 +3,14 @@
 
 import { defaultCareer, type Career } from '../engine/career';
 import { BALANCE } from '../engine/balance';
+import { SLOT_BASES, slotKey } from './slots';
 
-const KEY = 'football-decision.career.v1';
+/** Ключ активного слота (slots.ts); `slot` явно — для сводки титула по всем слотам. */
+const key = (slot?: number) => slotKey(SLOT_BASES.career, slot);
 
-export function readCareer(): Career {
+export function readCareer(slot?: number): Career {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key(slot));
     if (!raw) return defaultCareer();
     // Слияние с дефолтом — если в будущем добавится новое поле Career, старые
     // сохранения не сломают чтение, просто получат значение по умолчанию.
@@ -30,6 +32,6 @@ export function readCareer(): Career {
 
 export function writeCareer(career: Career) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(career));
+    localStorage.setItem(key(), JSON.stringify(career));
   } catch { /* приватный режим — прогресс просто не переживёт вкладку */ }
 }

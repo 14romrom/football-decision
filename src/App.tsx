@@ -24,6 +24,7 @@ import {
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
+import { activeSlot } from './telemetry/slots';
 import {
   createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, SEASON_ROUNDS, US, type Season,
 } from './engine/season';
@@ -508,5 +509,7 @@ export function App() {
       />
     );
   }
-  return <Game />;
+  // Слот карьеры (telemetry/slots.ts): Game держит карьеру и сезон в refs, прочитанных при монтировании,
+  // поэтому смена слота на титуле — это смена key, а не setState внутри.
+  return <Game key={activeSlot()} />;
 }

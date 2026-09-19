@@ -3,14 +3,15 @@
 
 import type { MatchResult } from '../engine/conditions';
 import type { EpisodeMemory } from '../engine/types';
+import { SLOT_BASES, slotKey } from './slots';
 
-const KEY = 'football-decision.history.v1';
+const key = (slot?: number) => slotKey(SLOT_BASES.history, slot);
 
 export type HistoryEntry = { result: MatchResult; scoreUs: number; scoreThem: number; at: number; episodes?: string[]; flavor?: string[]; feed?: string[] };
 
-export function readHistory(): HistoryEntry[] {
+export function readHistory(slot?: number): HistoryEntry[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key(slot));
     return raw ? (JSON.parse(raw) as HistoryEntry[]) : [];
   } catch {
     return [];
@@ -43,18 +44,18 @@ export function recentFeed(horizon: number): string[] {
 export function recordResult(scoreUs: number, scoreThem: number, episodes: string[], flavor: string[] = [], feed: string[] = []) {
   const result: MatchResult = scoreUs > scoreThem ? 'W' : scoreUs < scoreThem ? 'L' : 'D';
   try {
-    localStorage.setItem(KEY, JSON.stringify([...readHistory(), { result, scoreUs, scoreThem, at: Date.now(), episodes, flavor, feed }]));
+    localStorage.setItem(key(), JSON.stringify([...readHistory(), { result, scoreUs, scoreThem, at: Date.now(), episodes, flavor, feed }]));
   } catch { /* приватный режим — тонус просто останется нейтральным */ }
 }
 
 // Прочитанные посты стрічки (engine/posts.ts) — отдельный ключ: стрічка собирается после того,
 // как матч уже записан, и живёт своим горизонтом.
-const POSTS_KEY = 'football-decision.posts.v1';
+const postsKey = () => slotKey(SLOT_BASES.posts);
 const POSTS_KEEP = 400;
 
 export function recentPosts(): string[] {
   try {
-    const raw = localStorage.getItem(POSTS_KEY);
+    const raw = localStorage.getItem(postsKey());
     return raw ? (JSON.parse(raw) as string[]) : [];
   } catch {
     return [];
@@ -63,6 +64,6 @@ export function recentPosts(): string[] {
 
 export function recordPosts(texts: string[]) {
   try {
-    localStorage.setItem(POSTS_KEY, JSON.stringify([...recentPosts(), ...texts].slice(-POSTS_KEEP)));
+    localStorage.setItem(postsKey(), JSON.stringify([...recentPosts(), ...texts].slice(-POSTS_KEEP)));
   } catch { /* приватный режим */ }
 }

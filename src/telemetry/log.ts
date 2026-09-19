@@ -2,6 +2,7 @@
 // выгружаем одним файлом. Главная метрика — распределение выборов по эпизодам.
 
 import type { Position, Tier } from '../engine/types';
+import { SLOT_BASES, slotKey } from './slots';
 
 export type DecisionLog = {
   matchId: string; seed: number; episodeId: string; optionId: string;
@@ -18,11 +19,12 @@ export type DecisionLog = {
   insights?: string[];
 };
 
-const KEY = 'fdp.decisions.v1';
+// Логи — тоже по слоту: слот = карьера = её решения; экспорт отдаёт активный слот.
+const key = () => slotKey(SLOT_BASES.decisions);
 
 function safeRead(): DecisionLog[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(key());
     return raw ? (JSON.parse(raw) as DecisionLog[]) : [];
   } catch {
     return [];
@@ -37,14 +39,14 @@ export function logDecision(entry: DecisionLog): void {
   try {
     const all = safeRead();
     all.push(entry);
-    localStorage.setItem(KEY, JSON.stringify(all));
+    localStorage.setItem(key(), JSON.stringify(all));
   } catch {
     // приватный режим браузера — прототип от этого падать не должен
   }
 }
 
 export function clearLogs(): void {
-  try { localStorage.removeItem(KEY); } catch { /* см. выше */ }
+  try { localStorage.removeItem(key()); } catch { /* см. выше */ }
 }
 
 export function exportLogs(): void {

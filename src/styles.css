@@ -693,7 +693,6 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 /* Тень под леттерингом: на тёмно-бирюзовой части картинки красный давал 2.8:1 — тень доводит до порога крупного текста. */
 .logo-text { fill: var(--bad); font-family: var(--font-caps); filter: drop-shadow(0 1px 0 rgba(0,0,0,.7)) drop-shadow(0 0 6px rgba(0,0,0,.5)); }
 .title-say { margin: 8px 0 0; padding: 0; text-indent: 0; }
-.title-say .check { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0; text-transform: none; font-weight: 400; }
 .title-intro { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
 .title-menu { margin-top: auto; padding-top: 24px; }
 .title-primary { display: block; width: 100%; padding: 13px 14px; font-size: 15px; }

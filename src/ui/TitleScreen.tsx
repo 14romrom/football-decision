@@ -72,7 +72,7 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
         <h1 className="title-logo"><Logo /></h1>
         {line && (
           <p className={`say title-say voice-${line.voice}`}>
-            <b>{VOICE_LABEL[line.voice]}</b>{line.check && <span className="check"> [{line.check}]</span>} — {line.text}
+            <b>{VOICE_LABEL[line.voice]}</b> — {line.text}
           </p>
         )}
         {slot.empty && (

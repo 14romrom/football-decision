@@ -1,11 +1,11 @@
 [
-  { "when": { "career": "none" }, "voice": "body", "check": "Легко: успіх", "lines": ["Красиво. Приземлишся на шию."] },
-  { "when": { "career": "none" }, "voice": "vision", "check": "Легко: успіх", "lines": ["Поле порожнє. Поки що."] },
-  { "when": { "career": "none" }, "voice": "ego", "check": "Тривіально: успіх", "lines": ["Це ти. Принаймні в уяві."] },
+  { "when": { "career": "none" }, "voice": "body", "lines": ["Красиво. Приземлишся на шию."] },
+  { "when": { "career": "none" }, "voice": "vision", "lines": ["Поле порожнє. Поки що."] },
+  { "when": { "career": "none" }, "voice": "ego", "lines": ["Це ти. Принаймні в уяві."] },
   { "when": { "career": "none" }, "voice": "composure", "lines": ["Ще нічого не сталося. Найкращий момент кар’єри."] },
   { "when": { "career": "none" }, "voice": "instinct", "lines": ["М’яча в кадрі нема. Це ще нікого не зупиняло."] },
 
-  { "when": {}, "voice": "ego", "check": "Легендарно: провал", "lines": ["Скромність. Ні, не чув."] },
+  { "when": {}, "voice": "ego", "lines": ["Скромність. Ні, не чув."] },
   { "when": {}, "voice": "ego", "lines": ["Знову ти. Добре."] },
   { "when": {}, "voice": "team", "lines": ["Вони вже на полі. Ти — майже."] },
   { "when": {}, "voice": "body", "lines": ["Розминка — це не те, що ти зараз робиш."] },
@@ -14,18 +14,18 @@
   { "when": {}, "voice": "instinct", "lines": ["Палець уже тягнеться до кнопки. Хай."] },
 
   { "when": { "last": "L" }, "voice": "ego", "lines": ["Вони ще пошкодують. Не сьогодні, але."] },
-  { "when": { "last": "L" }, "voice": "composure", "check": "Середньо: успіх", "lines": ["Рахунок уже нічого не змінить. Наступний — так."] },
+  { "when": { "last": "L" }, "voice": "composure", "lines": ["Рахунок уже нічого не змінить. Наступний — так."] },
   { "when": { "last": "L" }, "voice": "body", "lines": ["Синці ще є. Значить, було."] },
   { "when": { "last": "L" }, "voice": "team", "lines": ["Ніхто не винен. Так усі й сказали."] },
 
   { "when": { "last": "W" }, "voice": "team", "lines": ["Виграли всі. Ти — теж."] },
   { "when": { "last": "W" }, "voice": "instinct", "lines": ["Не звикай."] },
-  { "when": { "last": "W" }, "voice": "ego", "check": "Легко: успіх", "lines": ["Гарний був матч. Твій, звісно."] },
+  { "when": { "last": "W" }, "voice": "ego", "lines": ["Гарний був матч. Твій, звісно."] },
 
   { "when": { "last": "D" }, "voice": "composure", "lines": ["Нічия. Це коли обидва тренери незадоволені."] },
   { "when": { "last": "D" }, "voice": "vision", "lines": ["Очко є. Настрою — ні."] },
 
-  { "when": { "trust": "low" }, "voice": "team", "check": "Середньо: успіх", "lines": ["Тренер учора довго дивився на список."] },
+  { "when": { "trust": "low" }, "voice": "team", "lines": ["Тренер учора довго дивився на список."] },
   { "when": { "trust": "low" }, "voice": "body", "lines": ["Лава тепла. Це не комплімент."] },
   { "when": { "trust": "low" }, "voice": "ego", "lines": ["Він просто не бачить. Поки що."] },
 

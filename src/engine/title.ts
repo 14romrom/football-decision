@@ -1,6 +1,6 @@
 // Реплика голоса на титуле (19.09). Картинка титула героическая — так Реєса видит Его; строка под
-// ней — второй голос, который её осаживает. Формат пассивной проверки Disco Elysium:
-// «ТІЛО [Легко: успіх] — Красиво. Приземлишся на шию.» — скобка необязательна, чисел в ней нет.
+// ней — второй голос, который её осаживает: «ТІЛО — Красиво. Приземлишся на шию.» Скобка
+// пассивной проверки «[Легко: успіх]» убрана (19.09, пользователь): на титуле она ничего не сообщает.
 // Правила — content/title.json, условие как у flavor: все ключи `when` должны совпасть с контекстом,
 // вес 3^ключей, виденные строки уступают свежим (pickFresh, память — settings.ts, не по слоту:
 // титул один на устройство).
@@ -21,8 +21,8 @@ export type TitleContext = {
 };
 
 export type TitleWhen = Partial<{ career: 'none' | 'any'; last: MatchResult; trust: 'low' | 'ok'; idle: boolean; over: boolean }>;
-export type TitleRule = { when: TitleWhen; voice: VoiceKey; check?: string; lines: string[] };
-export type TitleLine = { voice: VoiceKey; check?: string; text: string; weight: number };
+export type TitleRule = { when: TitleWhen; voice: VoiceKey; lines: string[] };
+export type TitleLine = { voice: VoiceKey; text: string; weight: number };
 
 /** Столько дней без матча — голос это замечает. */
 export const IDLE_DAYS = 3;
@@ -49,7 +49,7 @@ export function matchesTitle(when: TitleWhen, ctx: TitleContext): boolean {
 export function titlePool(rules: TitleRule[], ctx: TitleContext): TitleLine[] {
   return rules.filter((r) => matchesTitle(r.when, ctx)).flatMap((r) => {
     const weight = Math.pow(3, Object.keys(r.when).length);
-    return r.lines.map((text) => ({ voice: r.voice, check: r.check, text, weight }));
+    return r.lines.map((text) => ({ voice: r.voice, text, weight }));
   });
 }
 

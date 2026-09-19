@@ -9,12 +9,12 @@ const RULES = titleJson as TitleRule[];
 const VOICES = ['ego', 'team', 'composure', 'vision', 'instinct', 'body'];
 
 describe('реплики титула', () => {
-  it('формат правил: голос из шести, строки без «!», проверка без цифр и процентов', () => {
+  it('формат правил: голос из шести, строки без «!», без скобки проверки', () => {
     for (const r of RULES) {
       expect(VOICES).toContain(r.voice);
       expect(r.lines.length).toBeGreaterThan(0);
       for (const l of r.lines) expect(l, l).not.toMatch(/!/);
-      if (r.check) expect(r.check).not.toMatch(/\d|%/);
+      expect(r, r.lines[0]).not.toHaveProperty('check');   // скобка «[Легко: успіх]» убрана с титула (19.09)
     }
   });
 

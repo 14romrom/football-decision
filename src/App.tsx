@@ -493,6 +493,7 @@ function Game() {
         scenes={fillNamesDeep(WEEK_SCENES, roster)}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
         locked={stage.locked}
+        seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[]) => {
           // Применяем по исходным (без имён) делам и сценам: эффекты те же, id те же.
           const { career: after, tags } = finishWeek(careerRef.current, ctx, stage.days, picks, WEEK_SCENES);

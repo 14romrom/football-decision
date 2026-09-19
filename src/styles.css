@@ -471,24 +471,67 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .stats-grid dd { margin: 0; font-family: var(--font-mono); font-size: 13px; }
 .stats-block .xp-track { display: block; margin-top: 8px; }
 
-/* Тиждень між матчами — тонкий экран под замену новым UI (ui/WeekScreen.tsx). */
-.week-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 14px; }
-@media (max-width: 520px) { .week-grid { grid-template-columns: 1fr; } }
-.week-card { display: grid; gap: 4px; text-align: left; padding: 10px 12px; border-left-width: 3px; }
-.week-card { --vc: var(--dim); border-left-color: var(--vc); }
-.week-card.voice-ego { --vc: var(--v-ego); } .week-card.voice-team { --vc: var(--v-team); }
-.week-card.voice-composure { --vc: var(--v-composure); } .week-card.voice-vision { --vc: var(--v-vision); }
-.week-card.voice-instinct { --vc: var(--v-instinct); } .week-card.voice-body { --vc: var(--v-body); }
-/* Выбор подсвечен цветом голоса карточки: универсальный зелёный читался как «Команда». */
-.week-card.picked { background: color-mix(in srgb, var(--vc) 10%, var(--panel)); box-shadow: 0 0 0 2px var(--vc) inset; }
-.week-card:active { background: color-mix(in srgb, var(--vc) 16%, var(--panel)); }
-.week-card:disabled { opacity: 0.7; cursor: default; }
-.week-voice { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
-.week-title { font-weight: 600; }
-.week-line { font-size: 13px; font-style: italic; color: var(--muted); line-height: 1.35; }
-.week-train { display: flex; gap: 6px; margin-top: 4px; }
-.week-train i { font-style: normal; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); }
-.week-train i.on { background: var(--accent); color: #10261a; }
+/* ——— тиждень = зошит Реєса (ui/WeekScreen.tsx, 19.09, макет «Тиждень у зошиті» А v2) ———
+   Зошит у лінійку з червоним полем і дірочками від кілець — єдиний особистий предмет серед екранів.
+   Усе від руки (Neucha): заголовки днів, стікери голосів, запис вечора чорнилом обраного голосу,
+   список «до матчу». Кнопка знизу — наша (Oswald), не частина зошита. Малюнки на полях — doodles.tsx. */
+.week { --pen: #2b3a6b; --paper: #f4f1e8; --rule: #c9d6e6; --margin: #e2a2a2; --font-hand: 'Neucha', 'Segoe Print', cursive;
+  --ink-body: #8a3a3a; --ink-vision: #5a3f8f; --ink-instinct: #7a5f0e; --ink-ego: #9a5a1c; --ink-composure: #2b4a8a; --ink-team: #1f6b45; }
+.nb-book { position: relative; margin: 0 -6px; padding: 14px 14px 18px 62px; min-height: 560px; color: #1f2333; border-radius: 2px;
+  background-color: var(--paper);
+  background-image: linear-gradient(90deg, transparent 53px, var(--margin) 53px, var(--margin) 54px, transparent 54px), repeating-linear-gradient(180deg, transparent 0 27px, var(--rule) 27px 28px);
+  background-position: 0 0, 0 12px; box-shadow: 0 12px 30px rgba(0,0,0,.6), inset 0 0 40px rgba(60,40,20,.06); overflow: hidden; }
+.nb-book::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 14px; background: radial-gradient(circle at 7px 24px, var(--bg) 3.5px, transparent 4px) 0 0/14px 48px; }
+.nb-day { position: relative; margin: 0 0 10px; }
+.nb-day h3 { margin: 0; font-family: var(--font-hand); font-weight: 400; font-size: 27px; line-height: 28px; color: var(--pen); letter-spacing: .02em; }
+.nb-day h3 small { font-size: 17px; margin-left: 8px; color: #5c6690; }
+.nb-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 8px; margin: 8px 6px 10px 0; }
+.nb-notes.compact { grid-template-columns: 1fr 1fr 1fr; align-items: start; gap: 8px; }
+.nb-note { position: relative; display: block; width: 100%; text-align: left; padding: 9px 10px 10px; min-height: 92px; color: #23252a; border: 0; border-radius: 0; font: inherit; box-shadow: 2px 3px 6px rgba(0,0,0,.22); transform: rotate(var(--r, -1.2deg)); }
+.nb-notes > :nth-child(2) { --r: 1.6deg; } .nb-notes > :nth-child(3) { --r: -0.6deg; }
+.nb-note::before { content: ''; position: absolute; left: 30%; right: 30%; top: -5px; height: 10px; background: rgba(255,255,255,.55); transform: rotate(-1deg); }   /* скотч */
+.nb-note b { display: block; font-family: var(--font-hand); font-weight: 400; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; opacity: .7; }
+.nb-note span { display: block; font-family: var(--font-hand); font-size: 19px; line-height: 1.1; margin: 1px 0 3px; }
+.nb-note i { display: block; font-family: var(--font-hand); font-style: normal; font-size: 14.5px; line-height: 1.2; color: #3d3f48; }
+.nb-body { background: #ffd1cf; } .nb-vision { background: #e5d6ff; } .nb-instinct { background: #fdf0a6; } .nb-ego { background: #ffd9b0; } .nb-composure { background: #cfe1ff; } .nb-team { background: #cdeed9; }
+button.nb-note:active { filter: brightness(.96); }
+button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
+.nb-note.on { --r: 0.6deg; box-shadow: 3px 5px 10px rgba(0,0,0,.3); }
+.nb-note.on::after { content: ''; position: absolute; inset: -6px -8px; border: 2.5px solid var(--pen); border-radius: 48% 52% 50% 50% / 55% 45% 55% 45%; opacity: .85; transform: rotate(-2deg); pointer-events: none; }   /* обвів ручкою */
+.compact .nb-note { min-height: 0; padding: 7px 9px 8px; } .compact .nb-note span { font-size: 16px; }
+.nb-note.torn { min-height: 0; padding: 0; height: 18px; opacity: .7; align-self: start; clip-path: polygon(0 0, 100% 0, 92% 100%, 60% 70%, 30% 100%, 0 60%); }
+.nb-note.torn::before { display: none; }
+.nb-train { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.nb-train em { font-style: normal; font-family: var(--font-hand); font-size: 14px; padding: 1px 9px; border: 1.5px solid var(--pen); border-radius: 999px; color: var(--pen); }
+.nb-train em.on { background: var(--pen); color: #fff; }
+/* Запис вечора — рукою обраного голосу: «ти» в тексті — це голос пише Реєсу. */
+.nb-entry { margin: 4px 6px 0 0; font-family: var(--font-hand); font-size: 18.5px; line-height: 28px; color: var(--pen); letter-spacing: .01em; }
+.nb-entry.ink-body { color: var(--ink-body); } .nb-entry.ink-vision { color: var(--ink-vision); } .nb-entry.ink-instinct { color: var(--ink-instinct); }
+.nb-entry.ink-ego { color: var(--ink-ego); } .nb-entry.ink-composure { color: var(--ink-composure); } .nb-entry.ink-team { color: var(--ink-team); }
+.nb-entry.muted-ink { color: #7a7f95; }
+.nb-day:nth-of-type(odd) .nb-entry { transform: rotate(-.3deg); }
+.nb-note-line { display: block; font-size: 15.5px; color: #5c6690; }
+.nb-scene { color: #1f2333; opacity: .85; font-size: 17px; }
+.nb-scene-block { margin-top: 4px; }
+.nb-options { display: grid; gap: 4px; margin: 4px 6px 0 0; }
+.nb-opt { display: grid; grid-template-columns: 22px 1fr; align-items: baseline; gap: 6px; background: none; border: 0; border-radius: 0; padding: 0; text-align: left; font-family: var(--font-hand); font-size: 18px; line-height: 28px; color: var(--pen); }
+.nb-opt::before { content: '☐'; font-size: 20px; }
+.nb-opt:active::before { content: '☑'; }
+.nb-opt i { display: block; font-style: normal; font-size: 15px; line-height: 22px; opacity: .8; }
+.nb-opt.ink-vision { color: var(--ink-vision); } .nb-opt.ink-instinct { color: var(--ink-instinct); } .nb-opt.ink-body { color: var(--ink-body); } .nb-opt.ink-composure { color: var(--ink-composure); } .nb-opt.ink-ego { color: var(--ink-ego); } .nb-opt.ink-team { color: var(--ink-team); }
+.nb-empty { height: 56px; }
+.nb-coach { position: relative; z-index: 1; width: 190px; margin: -4px 0 8px auto; padding: 8px 10px; background: #fff; color: #1f2333; font-family: var(--font-hand); font-size: 15px; line-height: 1.2; box-shadow: 2px 3px 8px rgba(0,0,0,.25); transform: rotate(2.5deg); clip-path: polygon(0 4%, 6% 0, 100% 2%, 98% 96%, 50% 100%, 2% 97%); }
+.nb-coach b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--bad); }
+.nb-list { margin: 6px 6px 0 0; }
+.nb-list h4 { margin: 0; font-family: var(--font-hand); font-weight: 400; font-size: 24px; line-height: 28px; color: var(--pen); }
+.nb-list div { display: flex; gap: 8px; align-items: baseline; font-family: var(--font-hand); font-size: 18px; line-height: 28px; color: var(--pen); }
+.nb-list div::before { content: '☑'; font-size: 20px; } .nb-list div.none::before { content: '—'; }
+/* Малюнки на полях: синя паста, тремтіння фільтром #pen. */
+.doodle { position: absolute; pointer-events: none; opacity: .5; }
+.doodle svg { display: block; overflow: visible; filter: url(#pen); }
+.doodle path, .doodle circle { fill: none; stroke: var(--pen); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.doodle text { font-family: var(--font-hand); fill: var(--pen); stroke: none; }
+html.reduce-motion .doodle svg { filter: none; }
 .attr-train { display: inline-flex; gap: 2px; margin-left: 5px; vertical-align: middle; }
 .attr-train b { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.18); }
 .attr-train b.on { background: var(--accent); }
@@ -496,8 +539,6 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 /* Откуда вариант: «відкрив Бачення» / «з тижня» — связь кнопки с голосом или неделей, не с удачей. */
 .origin { display: inline-block; margin-left: 8px; font-style: normal; font-weight: 600; font-size: 11px; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,0.08); vertical-align: middle; }
 .origin.origin-week { color: var(--accent); }
-.week-outcome { font-size: 16px; line-height: 1.5; margin: 10px 0; }
-.week-scene-chosen { line-height: 1.45; padding: 10px 12px; border-left: 3px solid var(--accent); background: rgba(110, 231, 160, 0.08); }
 .origin.voice-vision { color: #c9a5ff; } .origin.voice-instinct { color: #ffd166; } .origin.voice-body { color: #ff8a8a; }
 .origin.voice-composure { color: #8fb8ff; } .origin.voice-ego { color: #f0a35e; } .origin.voice-team { color: #6ee7a0; }
 .option-insight { border-left: 3px solid #444b5c; }

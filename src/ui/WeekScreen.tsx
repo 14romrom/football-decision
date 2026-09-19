@@ -3,11 +3,20 @@ import type { WeekOffer, WeekPick, WeekScene, WeekSceneOption } from '../engine/
 import { VOICE_ATTRS, sceneOptionsFor } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
 import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from '../engine/types';
+import { Doodles } from './doodles';
 
-// Тиждень v3: три дні, у кожному три справи — одна на день. Дело показывает исход (уже выпавший,
-// без кубика на экране), исход может вести в сцену-продолжение (одна на неделю), между днями —
-// один пост зі стрічки. Всё применяется разом в конце: onFinish возвращает бирки для подсумка.
-// Правила — engine/week.ts; экран только ведёт по дням и собирает picks.
+// Тиждень v3: три дні, у кожному три справи — одна на день; исход уже выпавший, может вести в сцену
+// (одна на неделю); всё применяется разом в конце (onFinish → бирки). Правила — engine/week.ts.
+//
+// Вид — зошит Реєса (19.09, макет «Тиждень у зошиті», вариант А v2, решение пользователя): один
+// розворот у лінійку з червоним полем замість чотирьох екранів. Дні — заголовки від руки; пропозиції
+// голосів — стікери на скотчі в кольорі голосу (тап — обвів ручкою, інші відриваються, лишаються
+// кутики); запис вечора — від руки чорнилом обраного голосу: «ти» в тексті — це голос пише Реєсу,
+// не Реєс собі (тексты недели во втором лице, переписывать не нужно); сцена-продовження — дописка
+// чорним, варіанти — рядки з клітинками; підсумок — список «до матчу» з галочками замість екрана
+// «Тиждень позаду». Усе Neucha (як маркер на дошці: там капс і чужа рука, тут строчні й паста);
+// кнопка знизу — наша, не частина зошита. На полях — малюнки ручкою (doodles.tsx). Відкат, якщо
+// тестери спіткнуться об читаність: записи в Lora, решта від руки.
 
 type Props = {
   /** Дни с предложениями и исходами, уже с именами ростера. */
@@ -18,6 +27,8 @@ type Props = {
   sees: (who: VoiceKey) => boolean;
   /** Тренер закрив місто — почему предложений меньше. */
   locked: boolean;
+  /** Сид для малюнків на полях — тур сезона. */
+  seed?: number;
   onFinish: (picks: WeekPick[]) => string[];
   onNext: () => void;
 };
@@ -28,7 +39,9 @@ type Phase =
   | { p: 'scene'; offer: WeekOffer; scene: WeekScene; chosen?: WeekSceneOption }
   | { p: 'summary'; tags: string[] };
 
-export function WeekScreen({ days, scenes, sees, locked, onFinish, onNext }: Props) {
+const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
+
+export function WeekScreen({ days, scenes, sees, locked, seed = 0, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
   const [phase, setPhase] = useState<Phase>({ p: 'pick' });
   const [picks, setPicks] = useState<WeekPick[]>([]);
@@ -36,7 +49,6 @@ export function WeekScreen({ days, scenes, sees, locked, onFinish, onNext }: Pro
   const [trainAttr, setTrainAttr] = useState<Attribute | null>(null);
   const sceneUsed = picks.some((p) => p.scene);
   const last = day >= days.length - 1;
-  const dayWord = ['Перший день', 'Другий день', 'Третій день', 'Четвертий день'][day] ?? `День ${day + 1}`;
 
   const finish = (all: WeekPick[]) => setPhase({ p: 'summary', tags: onFinish(all) });
 
@@ -73,106 +85,144 @@ export function WeekScreen({ days, scenes, sees, locked, onFinish, onNext }: Pro
     setPhase({ p: 'scene', offer: (phase as { offer: WeekOffer }).offer, scene, chosen: opt });
   };
 
-  const head = (
-    <>
-      <div className="card-minute">тиждень між матчами · {dayWord.toLowerCase()}</div>
-    </>
-  );
+  // ——— що вже записано в кожен день ———
+  const pickOf = (d: number) => picks.find((p) => p.day === d);
+  const offerOf = (d: number) => { const p = pickOf(d); return p ? days[d].find((o) => o.activity.id === p.activityId) : undefined; };
+  const sceneTextOf = (d: number) => {
+    const p = pickOf(d);
+    if (!p?.scene) return undefined;
+    const sc = scenes.find((s) => s.id === p.scene!.id);
+    return sc?.options.find((o) => o.id === p.scene!.option)?.text;
+  };
 
-  if (phase.p === 'summary') {
+  /** Стікер: обраний — обведений, решта після вибору — відірвані кутики. Функция, не компонент:
+   *  компонент внутри рендера пересоздавался бы каждый раз и терял фокус кнопки. */
+  const note = (offer: WeekOffer, state: 'open' | 'on' | 'torn', onPick?: () => void) => {
+    const a = offer.activity;
+    if (state === 'torn') return <span key={a.id} className={`nb-note nb-${a.voice} torn`} aria-hidden="true" />;
+    const effect = offer.outcome?.effect ?? a.effect;
+    const Tag = onPick ? 'button' : 'div';
     return (
-      <div className="result week">
-        <div className="card-minute">тиждень між матчами</div>
-        <h1>Тиждень позаду</h1>
-        <p className="muted">{picks.length === 0 ? 'Три дні — і жодної справи. Голоси це запам’ятають.' : 'Що береш із собою на матч:'}</p>
-        <ul className="badges">
-          {phase.tags.map((t) => <li key={t} className="badge badge-neutral">{t}</li>)}
-        </ul>
-        <button className="primary" onClick={onNext}>До матчу</button>
-      </div>
-    );
-  }
-
-
-  if (phase.p === 'outcome') {
-    const { offer } = phase;
-    const out = offer.outcome!;
-    return (
-      <div className="result week">
-        {head}
-        <h1>{offer.activity.title}</h1>
-        <p className="week-outcome">{out.text}</p>
-        <p className="muted">{out.effect.note}</p>
-        <button className="primary" onClick={() => afterOutcome(offer)}>{!sceneUsed && out.followUp ? 'Що далі' : last ? 'Підсумок тижня' : 'Далі'}</button>
-      </div>
-    );
-  }
-
-  if (phase.p === 'scene') {
-    const { scene, chosen } = phase;
-    return (
-      <div className="result week">
-        {head}
-        <h1>Продовження</h1>
-        <p className="week-outcome">{scene.setup}</p>
-        {chosen ? (
-          <>
-            <p className="week-scene-chosen"><b>{chosen.label}.</b> {chosen.text}</p>
-            <p className="muted">{chosen.effect.note}</p>
-            <button className="primary" onClick={() => advance(picks)}>{last ? 'Підсумок тижня' : 'Далі'}</button>
-          </>
-        ) : (
-          <div className="options">
-            {sceneOptionsFor(scene, sees).map((o) => (
-              <button key={o.id} className={`option ${o.insight ? 'option-insight' : ''}`} onClick={() => chooseScene(scene, o)}>
-                <span className="option-label">
-                  {o.label}
-                  {o.insight && <i className={`origin voice-${o.insight.who}`}>відкрив {VOICE_LABEL[o.insight.who]}</i>}
-                </span>
-                {o.insight && <span className={`voice voice-${o.insight.who}`}><b>{VOICE_LABEL[o.insight.who]}:</b> «{o.insight.line}»</span>}
-              </button>
+      <Tag key={a.id} className={`nb-note nb-${a.voice} ${state === 'on' ? 'on' : ''}`} onClick={onPick} type={onPick ? 'button' : undefined}>
+        <b>{VOICE_LABEL[a.voice]}</b>
+        <span>{a.title}</span>
+        {onPick && <i>{a.line}</i>}
+        {state === 'on' && onPick && effect.train === 'choice' && (
+          <span className="nb-train" onClick={(e) => e.stopPropagation()}>
+            {VOICE_ATTRS[a.voice].map((attr) => (
+              <em key={attr} className={(trainAttr ?? VOICE_ATTRS[a.voice][0]) === attr ? 'on' : ''} onClick={() => setTrainAttr(attr)}>{ATTRIBUTE_LABEL[attr]}</em>
             ))}
+          </span>
+        )}
+      </Tag>
+    );
+  };
+
+  /** Прожитий день (або поточний після вибору): обраний стікер, кутики інших, запис вечора. */
+  const doneDay = (d: number, withScene: boolean) => {
+    const offer = offerOf(d);
+    const offers = days[d] ?? [];
+    return (
+      <section key={d} className="nb-day">
+        <h3>{DAY[d] ?? `День ${d + 1}`}<small>{offer ? offer.activity.title.toLowerCase() : 'нічого'}</small></h3>
+        {offers.length > 0 && (
+          <div className="nb-notes compact">
+            {offers.map((o) => note(o, o === offer ? 'on' : 'torn'))}
+          </div>
+        )}
+        {offer?.outcome && (
+          <p className={`nb-entry ink-${offer.activity.voice}`}>
+            {offer.outcome.text}
+            {withScene && sceneTextOf(d) && <><br /><span className="nb-scene">{sceneTextOf(d)}</span></>}
+          </p>
+        )}
+        {!offer && <p className="nb-entry muted-ink">— день минув. Голоси запам’ятали.</p>}
+      </section>
+    );
+  };
+
+  const button = (() => {
+    if (phase.p === 'summary') return <button className="primary menu-primary" onClick={onNext}>До матчу</button>;
+    if (phase.p === 'outcome') {
+      const out = phase.offer.outcome!;
+      return <button className="primary menu-primary" onClick={() => afterOutcome(phase.offer)}>{!sceneUsed && out.followUp ? 'Що далі' : last ? 'Підсумок тижня' : 'Далі'}</button>;
+    }
+    if (phase.p === 'scene') return phase.chosen ? <button className="primary menu-primary" onClick={() => advance(picks)}>{last ? 'Підсумок тижня' : 'Далі'}</button> : null;
+    const offers = days[day] ?? [];
+    return <button className="primary menu-primary" onClick={confirmDay}>{selected ? 'Так і зробити' : offers.length ? 'Нічого не робити сьогодні' : 'Далі'}</button>;
+  })();
+
+  return (
+    <div className="result week">
+      <div className="card-minute">тиждень між матчами</div>
+      <div className="nb-book">
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+          <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
+        </svg>
+        <Doodles seed={seed} />
+        {locked && (
+          <div className="nb-coach"><b>Тренер</b>Місто закрите. База, відео, психолог. Місто почекає.</div>
+        )}
+
+        {days.map((offers, d) => {
+          if (phase.p === 'summary' || d < day) return doneDay(d, true);
+          if (d > day) return <section key={d} className="nb-day"><h3>{DAY[d] ?? `День ${d + 1}`}</h3><div className="nb-empty" /></section>;
+
+          // поточний день
+          if (phase.p === 'outcome' || phase.p === 'scene') {
+            const offer = phase.offer;
+            return (
+              <section key={d} className="nb-day">
+                <h3>{DAY[d]}<small>{offer.activity.title.toLowerCase()}</small></h3>
+                <div className="nb-notes compact">
+                  {offers.map((o) => note(o, o === offer ? 'on' : 'torn'))}
+                </div>
+                <p className={`nb-entry ink-${offer.activity.voice}`}>
+                  {offer.outcome!.text}
+                  <span className="nb-note-line">{offer.outcome!.effect.note}</span>
+                </p>
+                {phase.p === 'scene' && (
+                  <div className="nb-scene-block">
+                    <p className="nb-entry nb-scene">{phase.scene.setup}</p>
+                    {phase.chosen ? (
+                      <p className="nb-entry nb-scene"><b>{phase.chosen.label}.</b> {phase.chosen.text}<span className="nb-note-line">{phase.chosen.effect.note}</span></p>
+                    ) : (
+                      <div className="nb-options">
+                        {sceneOptionsFor(phase.scene, sees).map((o) => (
+                          <button key={o.id} type="button" className={`nb-opt ${o.insight ? `ink-${o.insight.who}` : ''}`} onClick={() => chooseScene(phase.scene, o)}>
+                            <span>{o.label}</span>
+                            {o.insight && <i>{VOICE_LABEL[o.insight.who]}: «{o.insight.line}»</i>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+            );
+          }
+
+          return (
+            <section key={d} className="nb-day">
+              <h3>{DAY[d]}{d === 0 && <small>{locked ? 'місто закрите' : 'одна справа на день'}</small>}</h3>
+              <div className="nb-notes">
+                {offers.map((o) => note(o, selected === o.activity.id ? 'on' : 'open',
+                  () => { setSelected(selected === o.activity.id ? null : o.activity.id); setTrainAttr(null); }))}
+              </div>
+              {offers.length === 0 && <div className="nb-empty" />}
+            </section>
+          );
+        })}
+
+        {phase.p === 'summary' && (
+          <div className="nb-list">
+            <h4>до матчу:</h4>
+            {phase.tags.length === 0 && <div className="none">три дні — і жодної справи. голоси це запам’ятають.</div>}
+            {phase.tags.map((t) => <div key={t} className="ok">{t}</div>)}
           </div>
         )}
       </div>
-    );
-  }
-
-  const offers = days[day] ?? [];
-  const selectedOffer = offers.find((o) => o.activity.id === selected);
-  const selectedEffect = selectedOffer ? (selectedOffer.outcome?.effect ?? selectedOffer.activity.effect) : null;
-  return (
-    <div className="result week">
-      {head}
-      <h1>{day === 0 && locked ? 'Тренер закрив місто' : dayWord}</h1>
-      <p className="muted">
-        {day === 0 && locked ? 'Після такого матчу вибір невеликий: база, відео, психолог. Місто почекає. ' : ''}
-        {day === 0 ? 'Одна справа на день. Чим закінчиться — дізнаєшся ввечері; голоси, які не кличеш, ображаються.' : 'Одна справа на день.'}
-      </p>
-      <div className="week-grid">
-        {offers.map(({ activity: a }) => {
-          const on = selected === a.id;
-          return (
-            <button key={a.id} className={`week-card voice-${a.voice} ${on ? 'picked' : ''}`} onClick={() => { setSelected(on ? null : a.id); setTrainAttr(null); }}>
-              <span className="week-voice"><b>{VOICE_LABEL[a.voice]}</b></span>
-              <span className="week-title">{a.title}</span>
-              <span className="week-line">{a.line}</span>
-              {on && selectedEffect?.train === 'choice' && (
-                <span className="week-train" onClick={(e) => e.stopPropagation()}>
-                  {VOICE_ATTRS[a.voice].map((attr) => (
-                    <i key={attr} className={(trainAttr ?? VOICE_ATTRS[a.voice][0]) === attr ? 'on' : ''} onClick={() => setTrainAttr(attr)}>
-                      {ATTRIBUTE_LABEL[attr]}
-                    </i>
-                  ))}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <button className="primary" onClick={confirmDay}>
-        {selected ? 'Так і зробити' : offers.length ? 'Нічого не робити сьогодні' : 'Далі'}
-      </button>
+      {button}
     </div>
   );
 }

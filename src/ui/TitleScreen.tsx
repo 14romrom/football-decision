@@ -53,7 +53,6 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
     if (l) rememberTitleLine(l.text);
     return l;
   }, [slot]);
-  const motto = slotMotto(slot);
 
   return (
     <div className="title">
@@ -85,9 +84,10 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
           ) : (
             <>
               <button className="primary title-primary" onClick={onContinue}>Продовжити</button>
+              {/* Девиз голоса картки в строке карьеры убран (19.09, пользователь): на титуле один голос —
+                  реплика над кнопкой; второй в корешке дублировал его. slotMotto остаётся для слотов. */}
               <p className="title-career">
                 <b>{PLAYER.name}</b>, {slotLine(slot)} — {slotTail(slot)}.
-                {motto && <i> <span className={`voice-name voice-${motto.key}`}>{motto.who}</span>: «{motto.motto}»</i>}
               </p>
             </>
           )}

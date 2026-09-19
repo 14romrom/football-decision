@@ -684,3 +684,20 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .about-voices .say { margin: 0 0 8px; } .about-voices i { color: var(--muted); }
 .about-rules li { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
 .about-refs { margin: 16px 0 0; color: var(--muted); font-size: 14px; font-style: italic; }
+.eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
+.sect { margin: 18px 0 6px; font-family: var(--font-caps); font-weight: 500; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.set { display: flex; justify-content: space-between; align-items: center; min-height: 52px; border-bottom: 1px solid var(--line); gap: 12px; }
+.set .l { font-size: 15.5px; color: var(--ink); } .set .l small { display: block; font-size: 12.5px; color: var(--muted); }
+.set .v { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+.set-btn { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 0; text-align: left; font: inherit; }
+.set-btn:active { background: #131316; }
+.set.danger .l { color: var(--bad-soft); } .set.danger .v { color: var(--bad-soft); }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 4px; overflow: hidden; font-family: var(--font-mono); font-size: 11.5px; }
+.seg button { padding: 7px 10px; min-height: 36px; color: var(--muted); background: none; border: 0; border-radius: 0; font: inherit; }
+.seg button.on { background: var(--cream); color: #141413; }
+.toggle { width: 44px; height: 26px; border-radius: 13px; background: var(--dim); border: 0; padding: 0; position: relative; flex: none; }
+.toggle.on { background: var(--accent); }
+.toggle::after { content: ''; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); transition: left .15s ease; }
+.toggle.on::after { left: 22px; }
+/* Налаштування возвращены к 42de5db по решению пользователя (19.09); хеш сборки там — mono, как было. */
+.settings .build { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }

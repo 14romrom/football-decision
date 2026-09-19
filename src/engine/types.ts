@@ -97,6 +97,8 @@ export type FlagRule = {
   options?: string[];
   /** Чья это поправка на экране броска; по умолчанию 'field' — флаги про других людей. */
   source?: 'player' | 'field';
+  /** Короткая подпись для чипа (одно-два слова); без неё чип покажет первые два слова label. */
+  short?: string;
 };
 
 /** Какие голоса слушали в этом матче: счётчик на recap и телеметрию,
@@ -257,7 +259,8 @@ export type Episode = {
  *  трибуны, партнёры, воротар. Экран броска красит их по-разному (плейтест 17.09:
  *  «показать роль кубика, игрока и ситуации на поле»). */
 export type ModSource = 'player' | 'field';
-export type ModLine = { label: string; value: number; source: ModSource };
+/** `short` — одно-два слова для чипа «на кубик» (19.09): полная подпись — по тапу, в списке. */
+export type ModLine = { label: string; value: number; source: ModSource; short?: string };
 
 export type Resolution = {
   rawRoll: number;          // что выпало на кубиках

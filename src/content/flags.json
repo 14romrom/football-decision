@@ -6,7 +6,8 @@
     "attributes": [
       "dribbling",
       "first_touch"
-    ]
+    ],
+    "short": "злий захисник"
   },
   {
     "id": "humiliated_defender",
@@ -20,7 +21,8 @@
     "phases": [
       "attack",
       "transition"
-    ]
+    ],
+    "short": "зона вільна"
   },
   {
     "id": "partner_trusts",
@@ -28,7 +30,8 @@
     "value": 1,
     "attributes": [
       "passing"
-    ]
+    ],
+    "short": "партнер"
   },
   {
     "id": "partner_annoyed",
@@ -37,7 +40,8 @@
     "attributes": [
       "passing",
       "vision"
-    ]
+    ],
+    "short": "образа"
   },
   {
     "id": "coach_flank",
@@ -51,7 +55,8 @@
       "pace",
       "dribbling",
       "passing"
-    ]
+    ],
+    "short": "твій фланг"
   },
   {
     "id": "keeper_owes",
@@ -59,7 +64,8 @@
     "value": 1,
     "phases": [
       "defense"
-    ]
+    ],
+    "short": "воротар винен"
   },
   {
     "id": "pattern_wide",
@@ -71,7 +77,8 @@
     ],
     "phases": [
       "attack"
-    ]
+    ],
+    "short": "читають"
   },
   {
     "id": "pattern_wide",
@@ -83,7 +90,8 @@
     ],
     "phases": [
       "attack"
-    ]
+    ],
+    "short": "центр вільний"
   },
   {
     "id": "ref_annoyed",
@@ -91,7 +99,8 @@
     "value": -1,
     "attributes": [
       "composure"
-    ]
+    ],
+    "short": "суддя"
   },
   {
     "id": "ref_sympathetic",
@@ -99,7 +108,8 @@
     "value": 1,
     "attributes": [
       "composure"
-    ]
+    ],
+    "short": "суддя"
   },
   {
     "id": "them_dribbler",
@@ -111,7 +121,8 @@
     ],
     "phases": [
       "defense"
-    ]
+    ],
+    "short": "дриблер"
   },
   {
     "id": "them_playmaker",
@@ -123,7 +134,8 @@
     ],
     "phases": [
       "defense"
-    ]
+    ],
+    "short": "плеймейкер"
   },
   {
     "id": "them_veteran",
@@ -134,7 +146,8 @@
     ],
     "phases": [
       "attack"
-    ]
+    ],
+    "short": "ветеран"
   },
   {
     "id": "them_youngster",
@@ -146,7 +159,8 @@
     ],
     "phases": [
       "attack"
-    ]
+    ],
+    "short": "молодий"
   },
   {
     "id": "them_hard",
@@ -158,7 +172,8 @@
     ],
     "phases": [
       "transition"
-    ]
+    ],
+    "short": "опорник"
   },
   {
     "id": "them_rookie",
@@ -170,7 +185,8 @@
     ],
     "phases": [
       "attack"
-    ]
+    ],
+    "short": "новачок"
   },
   {
     "id": "them_star",
@@ -181,7 +197,8 @@
     ],
     "phases": [
       "defense"
-    ]
+    ],
+    "short": "лідер"
   },
   {
     "id": "them_target",
@@ -192,7 +209,8 @@
     ],
     "phases": [
       "defense"
-    ]
+    ],
+    "short": "здоровань"
   },
   {
     "id": "them_captain",
@@ -203,7 +221,8 @@
     ],
     "phases": [
       "transition"
-    ]
+    ],
+    "short": "капітан"
   },
   {
     "id": "them_local",
@@ -214,7 +233,8 @@
     ],
     "phases": [
       "defense"
-    ]
+    ],
+    "short": "улюбленець"
   },
   {
     "id": "sub_threat",
@@ -222,7 +242,8 @@
     "value": -1,
     "attributes": [
       "composure"
-    ]
+    ],
+    "short": "дублер"
   },
   {
     "id": "keeper_divesEarly",
@@ -232,7 +253,8 @@
       "wait_keeper",
       "panenka",
       "nutmeg_low"
-    ]
+    ],
+    "short": "воротар"
   },
   {
     "id": "keeper_divesEarly",
@@ -240,7 +262,8 @@
     "value": -1,
     "options": [
       "power_shot"
-    ]
+    ],
+    "short": "воротар"
   },
   {
     "id": "keeper_staysBig",
@@ -251,7 +274,8 @@
       "top_corner",
       "curl_far",
       "curl_far_top"
-    ]
+    ],
+    "short": "воротар"
   },
   {
     "id": "keeper_staysBig",
@@ -262,7 +286,8 @@
       "panenka",
       "nutmeg_low",
       "chip_keeper"
-    ]
+    ],
+    "short": "воротар"
   },
   {
     "id": "keeper_nearPost",
@@ -272,7 +297,8 @@
       "curl_far",
       "curl_far_top",
       "outside_foot"
-    ]
+    ],
+    "short": "воротар"
   },
   {
     "id": "keeper_nearPost",
@@ -281,7 +307,8 @@
     "options": [
       "power_shot",
       "shoot_low"
-    ]
+    ],
+    "short": "воротар"
   },
   {
     "id": "keeper_comesOut",
@@ -291,7 +318,8 @@
       "chip_keeper",
       "nutmeg_low",
       "outside_foot"
-    ]
+    ],
+    "short": "воротар"
   },
   {
     "id": "keeper_comesOut",
@@ -299,7 +327,8 @@
     "value": -1,
     "options": [
       "curl_far"
-    ]
+    ],
+    "short": "воротар"
   },
   {
     "id": "knock",
@@ -310,7 +339,8 @@
       "strength",
       "dribbling"
     ],
-    "source": "player"
+    "source": "player",
+    "short": "мікротравма"
   },
   {
     "id": "week_set_pieces",
@@ -324,7 +354,8 @@
       "positioning",
       "finishing"
     ],
-    "source": "player"
+    "source": "player",
+    "short": "стандарти"
   },
   {
     "id": "week_tactics",
@@ -338,7 +369,8 @@
       "positioning",
       "vision"
     ],
-    "source": "player"
+    "source": "player",
+    "short": "розбір"
   },
   {
     "id": "week_promise",
@@ -347,7 +379,8 @@
     "attributes": [
       "finishing"
     ],
-    "source": "player"
+    "source": "player",
+    "short": "обіцянка"
   },
   {
     "id": "viral_story",

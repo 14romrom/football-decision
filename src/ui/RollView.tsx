@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { EpisodeOption, ModLine, Resolution, ResultBadge } from '../engine/types';
 import { VOICE_LABEL } from '../engine/voices';
 import { pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
-import { modIcon, Icon } from './icons';
+import { Icon } from './icons';
 import { motionReduced, readSettings, vibrate } from '../telemetry/settings';
 
 // Кидок і результат (правка 19.09 после первой версии Г: «дубли и сложно»). Карточка строится
@@ -115,7 +115,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
             <span className="chips">
               {mods.slice(0, shownChips).map((m, i) => (
                 <span key={m.label} className={`chip src-${m.source} ${m.value > 0 ? 'pos' : m.value < 0 ? 'neg' : 'zero'} chip-in`}>
-                  {i === 0 ? Icon.target() : modIcon(m.label, m.source)}<span>{fmt(m.value)}</span>
+                  {i === 0 && Icon.target()}<i className="chip-word">{m.short || m.label}</i><span>{fmt(m.value)}</span>
                 </span>
               ))}
             </span>

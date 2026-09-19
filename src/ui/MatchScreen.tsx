@@ -6,7 +6,7 @@ import { computeContext } from '../engine/context';
 import { availableOptions, sceneInsights } from '../engine/match';
 import { VOICE_LABEL } from '../engine/voices';
 import { Pitch } from './Pitch';
-import { Icon, modIcon } from './icons';
+import { Icon } from './icons';
 
 // Экран матча по макету А2 (19.09): поле целиком сверху, под ним стрічка подій як діалог —
 // старые строки гаснут и уходят под поле, — сцена (EpisodeCard) или бросок (RollView), внизу
@@ -65,7 +65,9 @@ export function MatchScreen({
   const hidden = shown.length - tape.length;
   const mods = episode ? stateMods(episode, state, player, conditions, flagRules) : [];
   const insights = episode ? sceneInsights(episode, state, player) : [];
-  const staminaSegs = Math.round(Math.max(0, Math.min(100, state.stamina)) / 20);
+  // Сили — полоса по нижней кромке поля (19.09): сжимается влево, цвет по уровню.
+  const stamina = Math.max(0, Math.min(100, state.stamina));
+  const staminaTone = stamina < 25 ? 'low' : stamina < 50 ? 'mid' : '';
 
   return (
     <div className="match de-match">
@@ -79,13 +81,16 @@ export function MatchScreen({
       </aside>
 
       <div className="pitch-wrap">
-        <Pitch episode={episode} selfName={roster.us.players.self.nom} />
+        <Pitch episode={episode} selfName={roster.us.players.self.nom} strength={conditions.strength} />
         <div className="score-overlay">
           <span className="score-line">{state.minute}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
           <span className="meters">
             <Meter label="тренер" value={state.coachTrust} tone={state.coachTrust < 30 ? 'low' : ''} />
             <Meter label="трибуни" value={state.fanHype} tone="hype" />
           </span>
+        </div>
+        <div className={`stamina-bar ${staminaTone}`} title={`сили ${Math.round(stamina)}`} aria-hidden="true">
+          <b>сили</b><i style={{ width: `${stamina}%` }} />
         </div>
       </div>
 
@@ -119,17 +124,13 @@ export function MatchScreen({
         <span className="chips">
           {mods.map((m) => (
             <span key={m.label} className={`chip src-${m.source} ${m.value < 0 ? 'neg' : 'pos'}`} title={m.label} aria-label={`${m.label} ${fmt(m.value)}`}>
-              {modIcon(m.label, m.source)}<span>{fmt(m.value)}</span>
+              <i className="chip-word">{m.short || m.label}</i><span>{fmt(m.value)}</span>
             </span>
           ))}
           {insights.map((v) => (
             <span key={v.who} className={`chip chip-insight voice-${v.who}`} title={`${VOICE_LABEL[v.who]} бачить`}>{Icon.eye()}<span>бачить</span></span>
           ))}
           {mods.length === 0 && insights.length === 0 && episode && <span className="chip chip-none">без поправок</span>}
-        </span>
-        <span className="stamina" title={`сили ${Math.round(state.stamina)}`}>
-          {Icon.energy()}
-          {[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < staminaSegs ? 'on' : ''} />)}
         </span>
       </footer>}
       </section>}

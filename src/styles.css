@@ -740,3 +740,24 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .menu-fixture { margin: 18px 0 6px; }
 .menu-primary { display: block; width: 100%; margin: 14px 0 0; padding: 13px; font-size: 15px; }
 .menu .rows a.row { text-decoration: none; display: flex; align-items: center; }
+
+/* ——— экран матча, правки 19.09 (макет «Екран матчу: було / стало») ——— */
+/* 1. Лента: отступ сверху и короче тень — первая строка больше не гаснет; гаснут третья и четвёртая. */
+.tape { padding-top: 16px; }
+.tape-shade { height: 22px; }
+.tape-line.age-1 { color: var(--ink); }
+.tape-line.age-2 { color: #9c9889; font-size: 14px; }
+.tape-line.age-3 { color: var(--muted); font-size: 13.5px; }
+/* 3. Сили — полоса по нижней кромке поля: сжимается влево, цвет по уровню. */
+.stamina-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: rgba(0,0,0,.45); }
+.stamina-bar i { display: block; height: 100%; background: var(--accent); transition: width .6s ease, background-color .6s ease; }
+.stamina-bar.mid i { background: var(--warn); }
+.stamina-bar.low i { background: var(--bad); }
+.stamina-bar b { position: absolute; right: 8px; bottom: 7px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; color: #b3ae9f; font-weight: 400; text-transform: uppercase; }
+/* 4. Поле: точки едут между эпизодами. */
+.pitch-dot { transition: transform .6s ease; }
+html.reduce-motion .pitch-dot { transition: none; }
+@media (prefers-reduced-motion: reduce) { .pitch-dot { transition: none; } }
+/* 5. Чипы «на кубик» — словом, без иконок. */
+.chip-word { font-style: normal; color: var(--ink); }
+.chip.pos { color: var(--muted); } .chip.neg { color: var(--muted); }

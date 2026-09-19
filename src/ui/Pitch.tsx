@@ -1,8 +1,12 @@
 import type { Episode } from '../engine/types';
+import type { Strength } from '../engine/conditions';
 
-// Поле над сценою (решение 19.09, макет А2): условное, целиком, ми атакуємо праворуч. Пока
-// статичное — точка гравця ставится по семье и фазе эпизода; когда появится Phaser, сюда же
-// ляжет анимация подводки/развязки, а `zone` у эпизодов заменит эту эвристику.
+// Поле над сценою (макет А2; шаги 1–2 плана 19.09): условное, целиком, ми атакуємо праворуч.
+// 11 на 11: наши — 4-3-3 (АПЗ — десятка), соперник по силе: слабый 4-4-2, равный 4-2-3-1,
+// сильный 4-3-3. Фаза сдвигает линии обеих команд: атака — все едут вправо (наши поднимаются,
+// их блок садится), оборона — влево. Реєс встаёт в точку сцены, ближайший соперник — рядом.
+// Точки не прыгают, а едут (CSS transition по transform; при «Менше руху» — без), чтобы за девять
+// эпизодов было видно, как матч перетекает. Шаг 3 (развязка после броска) — отдельно.
 
 type Spot = [number, number];
 /** Где на поле происходит сцена: доля ширины (0 — свои ворота, 1 — чужие) и высоты. */
@@ -14,20 +18,44 @@ const FAMILY_SPOT: Record<string, Spot> = {
 };
 const PHASE_SPOT: Record<NonNullable<Episode['phase']>, Spot> = { attack: [0.7, 0.5], defense: [0.3, 0.5], transition: [0.5, 0.5], setpiece: [0.8, 0.4] };
 
-/** Соперник: при нашей атаке сидит глубоко у своих ворот, при обороне — давит на наши. */
-const THEM_ATTACK: Spot[] = [[0.86, 0.3], [0.85, 0.45], [0.85, 0.57], [0.86, 0.72], [0.77, 0.36], [0.76, 0.5], [0.77, 0.66], [0.7, 0.42], [0.69, 0.58], [0.95, 0.5]];
-const THEM_DEFENSE: Spot[] = [[0.3, 0.3], [0.28, 0.5], [0.3, 0.7], [0.42, 0.4], [0.42, 0.62], [0.55, 0.5], [0.6, 0.25], [0.6, 0.75], [0.7, 0.5], [0.95, 0.5]];
-const US_ATTACK: Spot[] = [[0.43, 0.22], [0.34, 0.5], [0.43, 0.8], [0.57, 0.15], [0.58, 0.85], [0.23, 0.5], [0.05, 0.5]];
-const US_DEFENSE: Spot[] = [[0.12, 0.3], [0.1, 0.5], [0.12, 0.7], [0.22, 0.4], [0.22, 0.62], [0.36, 0.5], [0.05, 0.5]];
+/** Схема — линии от своих ворот: x каждой линии и y игроков в ней (доли поля, атака вправо). */
+type Formation = { x: number; ys: number[] }[];
+const F433: Formation = [{ x: 0.05, ys: [0.5] }, { x: 0.2, ys: [0.2, 0.4, 0.6, 0.8] }, { x: 0.38, ys: [0.3, 0.5, 0.7] }, { x: 0.6, ys: [0.15, 0.5, 0.85] }];
+const F442: Formation = [{ x: 0.05, ys: [0.5] }, { x: 0.2, ys: [0.2, 0.4, 0.6, 0.8] }, { x: 0.4, ys: [0.15, 0.4, 0.6, 0.85] }, { x: 0.6, ys: [0.4, 0.6] }];
+const F4231: Formation = [{ x: 0.05, ys: [0.5] }, { x: 0.2, ys: [0.2, 0.4, 0.6, 0.8] }, { x: 0.35, ys: [0.4, 0.6] }, { x: 0.5, ys: [0.15, 0.5, 0.85] }, { x: 0.64, ys: [0.5] }];
+const THEM_BY_STRENGTH: Record<Strength, Formation> = { weak: F442, even: F4231, strong: F433 };
+/** Сдвиг всех линий по фазе: атакуем — поле смещается к чужим воротам, обороняемся — к своим. */
+const PHASE_SHIFT: Record<NonNullable<Episode['phase']>, number> = { attack: 0.12, defense: -0.12, transition: 0, setpiece: 0.1 };
 
 const W = 350; const H = 180; const PAD = 10;
 const px = (s: Spot): [number, number] => [PAD + s[0] * (W - 2 * PAD), 12 + s[1] * (H - 24)];
+const clamp = (v: number) => Math.max(0.03, Math.min(0.97, v));
 
-export function Pitch({ episode, selfName }: { episode: Episode | null; selfName: string }) {
-  const phase = episode?.phase ?? 'attack';
+/** Позиции команды: наши считаются от своих ворот слева, соперник — зеркально от правых. */
+function positions(f: Formation, mirror: boolean, shift: number): Spot[] {
+  const out: Spot[] = [];
+  for (const line of f) for (const y of line.ys) {
+    const x = mirror ? 1 - line.x : line.x;
+    // Вратарь не уезжает с линией.
+    out.push([line.x < 0.1 ? x : clamp(x + shift), y]);
+  }
+  return out;
+}
+
+export function Pitch({ episode, selfName, strength = 'even' }: { episode: Episode | null; selfName: string; strength?: Strength }) {
+  const phase = episode?.phase ?? 'transition';
   const spot = (episode?.family && FAMILY_SPOT[episode.family]) || PHASE_SPOT[phase];
-  const [sx, sy] = px(spot);
-  const attacking = phase !== 'defense';
+  const shift = PHASE_SHIFT[phase];
+  const us = positions(F433, false, shift);
+  const them = positions(THEM_BY_STRENGTH[strength], true, shift);
+  // Реєс — десятка (последняя линия, центр) — встаёт в точку сцены; ближайший соперник (не вратарь) — рядом с ним.
+  const selfIdx = us.length - 2;
+  us[selfIdx] = spot;
+  let near = 1; let best = Infinity;
+  them.forEach((p, i) => { if (i === 0) return; const d = (p[0] - spot[0]) ** 2 + (p[1] - spot[1]) ** 2; if (d < best) { best = d; near = i; } });
+  them[near] = [clamp(spot[0] + 0.045), clamp(spot[1] + 0.06)];
+  const at = (s: Spot) => { const [x, y] = px(s); return { transform: `translate(${x}px, ${y}px)` }; };
+
   return (
     <svg className="pitch" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <rect x="0" y="0" width={W} height={H} className="pitch-grass" />
@@ -41,14 +69,16 @@ export function Pitch({ episode, selfName }: { episode: Episode | null; selfName
         <path d={`M ${W - PAD - 48} 72 A 22 22 0 0 0 ${W - PAD - 48} 108`} />
       </g>
       <g className="pitch-them">
-        {(attacking ? THEM_ATTACK : THEM_DEFENSE).map((s, i) => { const [x, y] = px(s); return <circle key={i} cx={x} cy={y} r="4" />; })}
+        {them.map((s, i) => <circle key={i} className="pitch-dot" style={at(s)} r="4" />)}
       </g>
       <g className="pitch-us">
-        {(attacking ? US_ATTACK : US_DEFENSE).map((s, i) => { const [x, y] = px(s); return <circle key={i} cx={x} cy={y} r="4" />; })}
+        {us.map((s, i) => (i === selfIdx ? null : <circle key={i} className="pitch-dot" style={at(s)} r="4" />))}
       </g>
-      <circle className="pitch-self" cx={sx} cy={sy} r="6" />
-      <circle className="pitch-ball" cx={sx + 7} cy={sy + 6} r="3" />
-      <text className="pitch-name" x={sx - 10} y={sy - 12}>{selfName}</text>
+      <g className="pitch-dot" style={at(spot)}>
+        <circle className="pitch-self" r="6" />
+        <circle className="pitch-ball" cx="7" cy="6" r="3" />
+        <text className="pitch-name" x="-10" y="-12">{selfName}</text>
+      </g>
       <text className="pitch-dir" x={PAD + 4} y={H - 4}>ми →</text>
     </svg>
   );

@@ -25,6 +25,12 @@ import {
 import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
 import { activeSlot } from './telemetry/slots';
+import { applySettings } from './telemetry/settings';
+import { TitleScreen } from './ui/TitleScreen';
+import { SlotsScreen } from './ui/SlotsScreen';
+import { SettingsScreen } from './ui/SettingsScreen';
+import { AboutScreen } from './ui/AboutScreen';
+import { readSlotSummary } from './telemetry/saves';
 import {
   createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, SEASON_ROUNDS, US, type Season,
 } from './engine/season';
@@ -346,6 +352,7 @@ function Game() {
           : <button className="primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>}
         <a className="link" href="#/player">Картка гравця</a>
         <a className="link" href="#/stats">Розподіл виборів</a>
+        <a className="link" href="#/">Титул</a>
       </div>
     );
   }
@@ -493,10 +500,27 @@ function Game() {
 export function App() {
   const [route, setRoute] = useState(() => location.hash);
   useEffect(() => {
-    const onHash = () => setRoute(location.hash);
+    applySettings();
+    const onHash = () => { setRoute(location.hash); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+  const go = (hash: string) => { location.hash = hash; };
+  // Титул — корень (#/); игра живёт на #/play, чтобы «Назад» с картки и статистики вёл в игру, а не на титул.
+  if (route === '' || route === '#' || route === '#/') {
+    return (
+      <TitleScreen
+        onContinue={() => go('#/play')}
+        // Первый запуск на пустом устройстве — сразу на поле; слоты показываем, когда есть что беречь.
+        onNewCareer={() => go(readSlotSummary(activeSlot()).empty ? '#/play' : '#/slots')}
+        onSettings={() => go('#/settings')}
+        onAbout={() => go('#/about')}
+      />
+    );
+  }
+  if (route.startsWith('#/slots')) return <SlotsScreen onStart={() => go('#/play')} onBack={() => go('#/')} />;
+  if (route.startsWith('#/settings')) return <SettingsScreen onBack={() => go('#/')} onWiped={() => go('#/')} />;
+  if (route.startsWith('#/about')) return <AboutScreen onBack={() => go('#/')} />;
   if (route.startsWith('#/stats')) return <StatsScreen />;
   // Карточка вне активного матча читает карьеру напрямую из хранилища — она не
   // синхронизирована «вживую» с сессией Game (там своя копия в рефе), но для
@@ -505,7 +529,7 @@ export function App() {
     return (
       <PlayerCard
         player={PLAYER} career={readCareer()} season={readSeason()} history={readHistory()} club={ROSTER.us.name.nom}
-        onBack={() => { location.hash = '#/'; }}
+        onBack={() => { location.hash = '#/play'; }}
       />
     );
   }

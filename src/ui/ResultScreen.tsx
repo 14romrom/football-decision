@@ -1,7 +1,6 @@
 import { BALANCE } from '../engine/balance';
 import type { MatchSummary } from '../engine/match';
 import type { Roster } from '../engine/names';
-import { exportLogs } from '../telemetry/log';
 
 /** Строка протокола вместо плиток (19.09): семь одинаковых карточек с нулями читались как дашборд,
  *  а героем экрана должен быть пересказ «Як це було». Цифры — моноширинным, как табло на поле. */
@@ -77,7 +76,7 @@ export function ResultScreen({ summary, roster, playerName, xpEarned, onRestart 
 
       <div className="actions">
         <button className="primary" onClick={onRestart}>Далі</button>
-        <button onClick={exportLogs}>Вивантажити логи</button>
+        {/* «Вивантажити логи» переехала в Налаштування (19.09): на итоге матча она мешала. */}
         <a className="link" href="#/stats">Розподіл виборів</a>
       </div>
     </div>

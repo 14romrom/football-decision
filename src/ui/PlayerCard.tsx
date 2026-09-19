@@ -20,7 +20,7 @@ const POSITION_LABEL: Record<Player['position'], string> = {
 /** Что стоит за каждым голосом и его девиз — строка внизу удостоверения, если голос
  *  доминирует в карьере («a piece of the grey sky»). Атрибутные голоса читают силу из
  *  атрибутов (voices.ts), Его и Команда — из того, кого игрок слушал. */
-const VOICES: { who: VoiceKey; attrs: Attribute[]; about: string; motto: string }[] = [
+export const VOICES: { who: VoiceKey; attrs: Attribute[]; about: string; motto: string }[] = [
   { who: 'ego', attrs: [], about: 'Хоче м’яч. Хоче гол. Хоче, щоб бачили.', motto: 'Ти для цього тут.' },
   { who: 'team', attrs: [], about: 'Знає, де партнер. Іноді — раніше за тебе.', motto: 'Крім тебе — нікого. І нікого, крім них.' },
   { who: 'vision', attrs: ['vision', 'positioning'], about: 'Поле згори. Партнер відкритий за секунду до того, як відкриється.', motto: 'Не вискакуй. Подивись.' },

@@ -3,6 +3,7 @@ import type { EpisodeOption, ModLine, Resolution, ResultBadge } from '../engine/
 import { VOICE_LABEL } from '../engine/voices';
 import { pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 import { modIcon, Icon } from './icons';
+import { motionReduced, readSettings, vibrate } from '../telemetry/settings';
 
 // Кидок і результат (правка 19.09 после первой версии Г: «дубли и сложно»). Карточка строится
 // вокруг кубиков — ключевой зоны азарта: цифры бегут барабаном, первый кубик останавливается
@@ -46,7 +47,8 @@ function reel(final: number, stopAt: number, set: (v: number) => void): () => vo
   tick();
   return () => clearTimeout(t);
 }
-const reducedMotion = () => typeof window !== 'undefined' && 'matchMedia' in window && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** Вибрация по вердикту (Налаштування → «Вібрація на штампі»). */
+const HAPTIC: Record<string, number | number[]> = { clean: 30, cost: [20, 40, 20], fail: 60, badFail: [80, 40, 80] };
 
 export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext }: Props) {
   const mods = useMemo<ModLine[]>(() => res.mods.filter((m, i) => i === 0 || m.value !== 0), [res]);
@@ -61,10 +63,13 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   }, [mods]);
   const LAST = schedule.length - 1;
   const S_VERDICT = LAST - 1;
-  const [stage, setStage] = useState(0);
+  // «Одразу» в налаштуваннях — кубики стоят с первого кадра, дальше та же драматургия.
+  const instant = readSettings().dice === 'instant';
+  const [stage, setStage] = useState(instant ? 2 : 0);
   const [spin, setSpin] = useState<[number, number]>([0, 0]);
 
-  useEffect(() => { setStage(0); }, [option.id, res.roll]);
+  useEffect(() => { setStage(instant ? 2 : 0); }, [option.id, res.roll, instant]);
+  useEffect(() => { if (stage === S_VERDICT) vibrate(HAPTIC[res.tier] ?? 30); }, [stage, S_VERDICT, res.tier]);
   useEffect(() => {
     if (stage >= LAST) return;
     const t = setTimeout(() => setStage((s) => s + 1), schedule[stage + 1] - schedule[stage]);
@@ -73,11 +78,11 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   // Барабан: у каждого кубика свой — первый встаёт на T_DIE1, второй на T_DIE2. Один запуск на
   // бросок, не на стадию: иначе замедление сбрасывалось бы при каждом шаге расписания.
   useEffect(() => {
-    if (reducedMotion()) { setSpin([0, 0]); return; }
+    if (motionReduced() || instant) { setSpin([0, 0]); return; }
     const stop1 = reel(res.dice[0], T_DIE1, (v) => setSpin((s) => [v, s[1]]));
     const stop2 = reel(res.dice[1], T_DIE2, (v) => setSpin((s) => [s[0], v]));
     return () => { stop1(); stop2(); };
-  }, [option.id, res.roll, res.dice]);
+  }, [option.id, res.roll, res.dice, instant]);
 
   // Один источник истины с applyChoice (resolve.ts:pickOutcome).
   const outcome = pickOutcome(option, res);

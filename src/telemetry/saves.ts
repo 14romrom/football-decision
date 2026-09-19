@@ -2,6 +2,7 @@
 // а не «save 1». Читает хранилища напрямую по номеру слота, активный не трогает.
 
 import type { VoiceKey } from '../engine/types';
+import type { MatchResult } from '../engine/conditions';
 import { ourRow, isSeasonOver, SEASON_ROUNDS } from '../engine/season';
 import { dominantCareerVoice } from '../engine/week';
 import { readCareer } from './career-storage';
@@ -22,8 +23,10 @@ export type SlotSummary = {
   position: number | null;
   points: number;
   dominant: VoiceKey | null;
-  /** Время последнего сыгранного матча — «давно не заходив» для реплики голоса на титуле. */
+  /** Время и результат последнего сыгранного матча — для реплики голоса на титуле. */
   lastAt: number | null;
+  last?: MatchResult;
+  coachTrust: number;
 };
 
 export function readSlotSummary(slot: number): SlotSummary {
@@ -45,6 +48,8 @@ export function readSlotSummary(slot: number): SlotSummary {
     points: row?.points ?? 0,
     dominant: dominantCareerVoice(career),
     lastAt: history.length ? history[history.length - 1].at : null,
+    last: history.length ? history[history.length - 1].result : undefined,
+    coachTrust: career.coachTrust,
   };
 }
 

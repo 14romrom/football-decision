@@ -614,3 +614,89 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
   .chip-in { animation: fadeIn .15s ease-out; }
   .die, .dice-sum, .bar-fill { transition: none; }
 }
+
+/* ——— титул Inside the Box (19.09, макет «титул») ——— */
+/* Настройки устройства (settings.ts): классы на <html>. Zoom — чтобы вырос весь px-набор, а не только body. */
+html.text-large { zoom: 1.12; }
+html.reduce-motion .die.spinning, html.reduce-motion .die.stopped { animation: none; }
+html.reduce-motion .verdict { animation: fadeIn .2s ease-out; }
+html.reduce-motion .chip-in { animation: fadeIn .15s ease-out; }
+html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-fill { transition: none; }
+
+.title { position: relative; min-height: calc(100dvh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); margin: -16px -16px -80px; display: flex; flex-direction: column; }
+/* Плёнка на титуле — всегда: экран не нагружен, это её место (в матче она уходит на узких экранах). */
+.title-film { display: flex; }
+@media (max-width: 660px) { .film.title-film { display: flex; } }
+.title-art { position: absolute; inset: 0 0 auto 0; height: 58vh; max-height: 520px; overflow: hidden; }
+.title-art img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.title-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,11,13,.15) 0%, rgba(11,11,13,0) 30%, rgba(11,11,13,0) 68%, var(--bg) 100%); }
+.title-screen { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; padding: 0 30px calc(22px + env(safe-area-inset-bottom)); }
+.title-logo { margin: min(36vh, 300px) 0 0; font-size: 0; }
+.logo { display: block; width: 100%; height: auto; overflow: visible; }
+.logo-lines { stroke: #3b4a3e; } .logo-spot { fill: #3b4a3e; }
+.logo-text { fill: var(--bad); font-family: var(--font-caps); }
+.title-say { margin: 8px 0 0; padding: 0; text-indent: 0; }
+.title-say .check { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0; text-transform: none; font-weight: 400; }
+.title-intro { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
+.title-menu { margin-top: auto; padding-top: 24px; }
+.title-primary { display: block; width: 100%; padding: 13px 14px; font-size: 15px; }
+.title-continue { display: grid; gap: 8px; text-align: left; }
+.title-continue > span:first-child { text-align: center; }
+/* Корешок удостоверения внутри кнопки: имя, сезон/тур, место, матчи, девиз голоса. */
+.stub { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 8px 12px; border-left: 2px solid var(--v-ego); background: rgba(11,11,13,.08); font-family: var(--font-text); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 13px; color: #4a463c; border-radius: 0 4px 4px 0; }
+.stub b { color: #141413; font-weight: 600; }
+.stub .mono { font-family: var(--font-mono); font-size: 12px; color: #141413; text-align: right; }
+.stub .motto, .stub .wide { grid-column: 1 / -1; } .stub .motto { font-style: italic; }
+.stub.voice-team { border-left-color: var(--v-team); } .stub.voice-vision { border-left-color: var(--v-vision); } .stub.voice-instinct { border-left-color: var(--v-instinct); }
+.stub.voice-body { border-left-color: var(--v-body); } .stub.voice-composure { border-left-color: var(--v-composure); } .stub.voice-none { border-left-color: #b8b2a4; }
+.rows { list-style: none; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.rows li { margin: 0; }
+.row { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 48px; padding: 0 2px; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink); font: inherit; font-size: 16px; text-align: left; }
+.row::after { content: '›'; color: var(--faint); font-size: 18px; }
+.row:hover, .row:active { background: #131316; border-color: var(--line); }
+.row:focus-visible { outline: none; box-shadow: inset 3px 0 0 var(--ink); }
+.row-back { margin-top: 18px; border-top: 1px solid var(--line); }
+.row-back::after { content: '‹'; }
+.build { margin: 10px 0 0; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--faint); text-transform: uppercase; }
+
+/* Экраны титула без картинки: слоты, налаштування, про гру. */
+.plain-screen { max-width: 560px; margin: 0 auto; padding-top: 24px; min-height: calc(100dvh - 120px); display: flex; flex-direction: column; }
+.plain-screen h1 { font-size: 22px; margin: 0 0 14px; }
+.eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
+.sect { margin: 18px 0 6px; font-family: var(--font-caps); font-weight: 500; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.slot-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.slot-list li { margin: 0; }
+.slot { --vc: var(--line-2); display: grid; gap: 2px; width: 100%; text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--vc); border-radius: 4px; background: var(--panel); font: inherit; font-size: 13.5px; color: var(--muted); }
+.slot b { color: var(--ink); font-weight: 600; font-size: 15px; }
+.slot .n { font-family: var(--font-mono); font-size: 11px; color: var(--faint); }
+.slot .motto { font-style: italic; }
+.slot.empty { background: transparent; color: var(--faint); }
+.slot.empty .slot-empty-title { color: var(--muted); font-weight: 400; }
+.slot.voice-ego { --vc: var(--v-ego); } .slot.voice-team { --vc: var(--v-team); } .slot.voice-vision { --vc: var(--v-vision); }
+.slot.voice-instinct { --vc: var(--v-instinct); } .slot.voice-body { --vc: var(--v-body); } .slot.voice-composure { --vc: var(--v-composure); }
+.slot.voice-none { --vc: var(--dim); }
+.slot.current { box-shadow: 0 0 0 2px var(--vc) inset; background: color-mix(in srgb, var(--vc) 10%, var(--panel)); }
+.slot:active { background: color-mix(in srgb, var(--vc) 16%, var(--panel)); }
+.sheet { margin-top: auto; padding: 14px 14px 12px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px; box-shadow: 0 14px 34px rgba(0,0,0,.55); display: grid; gap: 8px; }
+.sheet p { margin: 0 0 4px; font-size: 14.5px; }
+.danger-btn { display: block; width: 100%; background: var(--bad); color: #fff; border: 0; border-radius: 6px; padding: 12px; font-family: var(--font-caps); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 14px; }
+.danger-btn:active { background: #a3321a; }
+.ghost { display: block; width: 100%; background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 10px; font-family: var(--font-caps); letter-spacing: .1em; text-transform: uppercase; font-size: 13px; }
+.set { display: flex; justify-content: space-between; align-items: center; min-height: 52px; border-bottom: 1px solid var(--line); gap: 12px; }
+.set .l { font-size: 15.5px; color: var(--ink); } .set .l small { display: block; font-size: 12.5px; color: var(--muted); }
+.set .v { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+.set-btn { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 0; text-align: left; font: inherit; }
+.set-btn:active { background: #131316; }
+.set.danger .l { color: var(--bad-soft); } .set.danger .v { color: var(--bad-soft); }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 4px; overflow: hidden; font-family: var(--font-mono); font-size: 11.5px; }
+.seg button { padding: 7px 10px; min-height: 36px; color: var(--muted); background: none; border: 0; border-radius: 0; font: inherit; }
+.seg button.on { background: var(--cream); color: #141413; }
+.toggle { width: 44px; height: 26px; border-radius: 13px; background: var(--dim); border: 0; padding: 0; position: relative; flex: none; }
+.toggle.on { background: var(--accent); }
+.toggle::after { content: ''; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); transition: left .15s ease; }
+.toggle.on::after { left: 22px; }
+.about-lead { font-size: 16px; margin: 0; }
+.about-voices, .about-rules { list-style: none; margin: 4px 0 0; padding: 0; }
+.about-voices .say { margin: 0 0 8px; } .about-voices i { color: var(--muted); }
+.about-rules li { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.about-refs { margin: 16px 0 0; color: var(--muted); font-size: 14px; font-style: italic; }

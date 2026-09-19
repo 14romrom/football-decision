@@ -94,7 +94,7 @@ export function MatchScreen({
         </div>
       </div>
 
-      <div className="tape">
+      <div className={`tape ${episode ? 'dimmed' : ''}`}>
         <div className="tape-shade" />
         {hidden > 0 && !expanded && (
           <button className="tape-more" onClick={() => setExpanded(true)}>{Icon.list()} ще {hidden} {hidden === 1 ? 'подія' : hidden < 5 ? 'події' : 'подій'}</button>

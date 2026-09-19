@@ -44,16 +44,21 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
     return [o.voice];
   });
   return (
+    // Лист момента (макет «Екран матчу: було / стало», кадр «стало+ зі знаком», 19.09): три зоны —
+    // сетап под ярлыком минуты, голоса колонкой с линией (как в сценарии), варианты с номером в ячейке.
     <div className="scene">
-      <p className="tape-line current">
-        <span className="tape-minute">{minute}′</span>{link && <span className="link-mark"> · продовження</span>} — {episode.setup}
-      </p>
-      {insights.map((v) => (
-        <p key={'i' + v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b> — {v.line}</p>
-      ))}
-      {lines.map((v) => (
-        <p key={v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b> — {v.line}</p>
-      ))}
+      <span className="minute-tab">{minute}′{link && <i className="link-mark"> · продовження</i>}</span>
+      <p className="setup">{episode.setup}</p>
+      {(insights.length > 0 || lines.length > 0) && (
+        <div className="voices">
+          {insights.map((v) => (
+            <p key={'i' + v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b><span>{v.line}</span></p>
+          ))}
+          {lines.map((v) => (
+            <p key={v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b><span>{v.line}</span></p>
+          ))}
+        </div>
+      )}
       <ol className="choices">
         {options.map((o, i) => {
           // Форма риска уже со сдвигами от контекста: игрок должен видеть, что надёжный
@@ -66,7 +71,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
           return (
             <li key={o.id}>
               <button className={`choice ${o.insight ? `choice-insight voice-${o.insight.who}` : ''}`} onClick={() => onChoose(o)}>
-                <span className="choice-num">{i + 1}.</span>
+                <span className="choice-num">{i + 1}</span>
                 <span className="choice-text">
                   <span className={`bracket risk-${ctx.position}`}>
                     [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)}{chain ? ` → ${chain}` : ''}]

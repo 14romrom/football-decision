@@ -42,7 +42,7 @@ function Meter({ label, value, tone }: { label: string; value: number; tone?: st
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, tour, children,
+  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, tour, hideDiceZone, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -55,6 +55,8 @@ export function MatchScreen({
   conditions: MatchConditions;
   flagRules: FlagRule[];
   tour?: number;
+  /** На экране броска зона «на кубик» прячется: она про следующее решение. */
+  hideDiceZone?: boolean;
   children: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -111,7 +113,7 @@ export function MatchScreen({
       <section className="moment">
       {children}
 
-      <footer className="dice-zone">
+      {!hideDiceZone && <footer className="dice-zone">
         <span className="dice-zone-label">на кубик</span>
         <span className="chips">
           {mods.map((m) => (
@@ -128,7 +130,7 @@ export function MatchScreen({
           {Icon.energy()}
           {[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < staminaSegs ? 'on' : ''} />)}
         </span>
-      </footer>
+      </footer>}
       </section>
     </div>
   );

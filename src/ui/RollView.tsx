@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
-import type { EpisodeOption, Resolution, ResultBadge } from '../engine/types';
-import { ATTRIBUTE_LABEL } from '../engine/types';
+import { useEffect, useMemo, useState } from 'react';
+import type { EpisodeOption, ModLine, Resolution, ResultBadge } from '../engine/types';
 import { VOICE_LABEL } from '../engine/voices';
 import { pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 import { modIcon, Icon } from './icons';
 
-// Кидок і результат одним экраном (макет Г, 19.09): выбранная строка остаётся сверху красной
-// полосой, под ней карточка проверки — баннер атрибута цветом голоса, форма и ціль, два кубика,
-// строки факторов со знаками, итог и ярус, текст исхода, реплика второго голоса, теги, «Граємо
-// далі». Шкалы и проценты по-прежнему не показываются: числа только те, что складываются.
+// Кидок і результат (правка 19.09 после первой версии Г: «дубли и сложно»). Карточка строится
+// вокруг кубиков — ключевой зоны азарта: цифры бегут барабаном, первый кубик останавливается
+// раньше, второй — позже, чем ждёшь; потом сумма, поправки прилетают чипами и итог тикает,
+// вердикт впечатывается штампом, и только затем текст исхода. Баннера атрибута и заголовка
+// формы нет — они уже в полосе выбора; таблицы факторов нет — чипы, подписи по тапу.
+// Подсказка «потрібно N+» под вторым кубиком отвергнута пользователем — лишнее число.
 
 type Props = {
   option: EpisodeOption; res: Resolution; flavor?: string; flavorVoice?: string; badges?: ResultBadge[];
@@ -17,28 +18,48 @@ type Props = {
   onNext: () => void;
 };
 
-const STEP_DELAYS = [900, 700, 600];
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
+/** Шаги драматургии: время от старта, мс. Чипы — по одному после суммы. */
+const T_DIE1 = 900; const T_DIE2 = 1800; const T_SUM = 2100; const T_CHIP = 180; const T_VERDICT = 350; const T_OUTCOME = 400;
 
 export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext }: Props) {
-  const [step, setStep] = useState(0);
+  const mods = useMemo<ModLine[]>(() => res.mods.filter((m, i) => i === 0 || m.value !== 0), [res]);
+  // Расписание: 0 — крутятся оба, 1 — первый встал, 2 — второй встал, 3 — сумма,
+  // 4..4+n — чипы, потом вердикт, потом исход.
+  const schedule = useMemo(() => {
+    const t = [0, T_DIE1, T_DIE2, T_SUM];
+    for (let i = 0; i < mods.length; i++) t.push(T_SUM + T_CHIP * (i + 1));
+    t.push(T_SUM + T_CHIP * mods.length + T_VERDICT);
+    t.push(T_SUM + T_CHIP * mods.length + T_VERDICT + T_OUTCOME);
+    return t;
+  }, [mods]);
+  const LAST = schedule.length - 1;
+  const S_VERDICT = LAST - 1;
+  const [stage, setStage] = useState(0);
+  const [spin, setSpin] = useState<[number, number]>([0, 0]);
 
-  useEffect(() => { setStep(0); }, [option.id, res.roll]);
+  useEffect(() => { setStage(0); }, [option.id, res.roll]);
   useEffect(() => {
-    if (step >= STEP_DELAYS.length) return;
-    const t = setTimeout(() => setStep((s) => s + 1), STEP_DELAYS[step]);
+    if (stage >= LAST) return;
+    const t = setTimeout(() => setStage((s) => s + 1), schedule[stage + 1] - schedule[stage]);
     return () => clearTimeout(t);
-  }, [step]);
+  }, [stage, schedule, LAST]);
+  // Барабан: пока кубик не встал, на нём бегут случайные грани.
+  useEffect(() => {
+    if (stage >= 2) return;
+    const t = setInterval(() => setSpin([1 + Math.floor(Math.random() * 10), 1 + Math.floor(Math.random() * 10)]), 70);
+    return () => clearInterval(t);
+  }, [stage]);
 
   // Один источник истины с applyChoice (resolve.ts:pickOutcome).
   const outcome = pickOutcome(option, res);
-  const flat = res.totalScore - res.rawRoll;
-  const [attrLine, ...rest] = res.mods;
-  const mods = rest.filter((m) => m.value !== 0);
-  const voice = option.voice?.who;
+  const shownChips = Math.max(0, Math.min(mods.length, stage - 3));
+  const running = res.rawRoll + mods.slice(0, shownChips).reduce((s, m) => s + m.value, 0);
+  const critBad = res.critical === 'fail' && stage >= 2;
+  const [labels, setLabels] = useState(false);
 
   return (
-    <div className="scene roll" onClick={() => setStep(STEP_DELAYS.length)}>
+    <div className="scene roll" onClick={() => setStage(LAST)}>
       <div className={`choice chosen risk-${res.position}`}>
         <span className="choice-text">
           <span className="bracket">[{POSITION_LABEL[res.position]} {res.target}]</span> {option.label}
@@ -46,47 +67,43 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
       </div>
 
       <div className="check-card">
-        <div className={`check-banner ${voice ? `bg-voice-${voice}` : ''}`}>
-          <span>{ATTRIBUTE_LABEL[option.attribute]}</span>
-          <span className="check-attr">{fmt(res.attrMod)}</span>
+        <div className={`dice-stage ${critBad ? 'crit-bad' : ''}`}>
+          <i className={`die ${stage >= 1 ? 'stopped' : 'spinning'}`}>{stage >= 1 ? res.dice[0] : spin[0]}</i>
+          <span className={`dice-sum ${stage >= 3 ? 'shown' : ''}`}>{stage >= 3 ? res.rawRoll : ''}</span>
+          <i className={`die ${stage >= 2 ? 'stopped' : 'spinning'}`}>{stage >= 2 ? res.dice[1] : spin[1]}</i>
         </div>
+        {critBad && stage >= 3 && (
+          <p className="crit-note">{res.dice[0]} і {res.dice[1]} — на такому ризику це катастрофа, навичка тут не рятує.</p>
+        )}
+        {res.critical === 'success' && stage >= 3 && <p className="crit-note">Двадцять. Таке не пояснюють.</p>}
 
-        <div className="check-head">
-          <span className={`check-form risk-${res.position}`}>{POSITION_LABEL[res.position]} <b>{res.target}</b></span>
-          <span className="dice">
-            <i className={step >= 1 ? 'shown' : 'rolling'}>{step >= 1 ? res.dice[0] : '·'}</i>
-            <i className={step >= 1 ? 'shown' : 'rolling'}>{step >= 1 ? res.dice[1] : '·'}</i>
-          </span>
-        </div>
-
-        {step >= 1 && (
-          <ul className="mods">
-            {attrLine && (
-              <li className={`mod ${attrLine.value > 0 ? 'pos' : attrLine.value < 0 ? 'neg' : 'zero'}`}>
-                {Icon.target()}<span className="mod-label">{attrLine.label}</span><span className="mod-value">{fmt(attrLine.value)}</span>
-              </li>
-            )}
-            {mods.map((m) => (
-              <li key={m.label} className={`mod src-${m.source} ${m.value > 0 ? 'pos' : 'neg'}`}>
-                {modIcon(m.label, m.source)}<span className="mod-label">{m.label}</span><span className="mod-value">{fmt(m.value)}</span>
-              </li>
-            ))}
+        {stage >= 3 && (
+          <div className="formula" onClick={(e) => { e.stopPropagation(); setLabels((v) => !v); }}>
+            <span className="chips">
+              {mods.slice(0, shownChips).map((m, i) => (
+                <span key={m.label} className={`chip src-${m.source} ${m.value > 0 ? 'pos' : m.value < 0 ? 'neg' : 'zero'} chip-in`}>
+                  {i === 0 ? Icon.target() : modIcon(m.label, m.source)}<span>{fmt(m.value)}</span>
+                </span>
+              ))}
+            </span>
+            <span className="formula-total">
+              {res.rawRoll} <b>{fmt(running - res.rawRoll)}</b> = <b className="tick">{running}</b>
+              {stage >= S_VERDICT && <> проти {res.target}</>}
+            </span>
+          </div>
+        )}
+        {stage >= 3 && labels && (
+          <ul className="mod-labels">
+            {mods.map((m) => <li key={m.label}><span>{m.label}</span><b className={m.value > 0 ? 'pos' : m.value < 0 ? 'neg' : ''}>{fmt(m.value)}</b></li>)}
           </ul>
         )}
 
-        {step >= 2 && (
-          <div className="check-total">
-            <span>{res.rawRoll} <b>{fmt(flat)}</b> = <b>{res.totalScore}</b> проти {res.target}</span>
-            <span className={`tier tier-${res.tier}`}>{TIER_LABEL[res.tier]}</span>
-          </div>
+        {stage >= S_VERDICT && (
+          <div className={`verdict tier-${res.tier}`}>{TIER_LABEL[res.tier]}</div>
         )}
-        {step >= 2 && res.critical === 'fail' && (
-          <p className="crit-note">{res.dice[0]} і {res.dice[1]} — на такому ризику це катастрофа, навичка тут не рятує.</p>
-        )}
-        {step >= 2 && res.critical === 'success' && <p className="crit-note">Двадцять. Таке не пояснюють.</p>}
 
-        {step >= 3 && (
-          <>
+        {stage >= LAST && (
+          <div className="after">
             <p className="outcome">{outcome.text}</p>
             {flavor && <p className="say say-second"><b>{flavorVoice ?? 'ТРИБУНИ'}</b> — {flavor}</p>}
             {(option.insight || option.requires?.flags?.some((f) => f.startsWith('week_'))) && (
@@ -105,7 +122,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
             )}
             {continues && <p className="continues">Момент триває — наступне рішення на цій же хвилині.</p>}
             <button className="primary de-next" onClick={onNext}>{continues ? `Далі → ${continues}` : 'Граємо далі'}</button>
-          </>
+          </div>
         )}
       </div>
     </div>

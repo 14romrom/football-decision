@@ -458,6 +458,7 @@ function Game() {
         conditions={session.conditions}
         flagRules={session.flagRules}
         tour={seasonRef.current.round + 1}
+        hideDiceZone={stage.k === 'roll'}
       >
         {stage.k === 'episode' && (
           <EpisodeCard

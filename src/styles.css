@@ -149,12 +149,6 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 
 /* ——— итог ——— */
 .result { padding-top: 20px; }
-/* Протокол матча одной строкой (19.09): цифра mono + подпись, нули приглушены. */
-.stat-line { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 18px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
-.stat-line b { font-family: var(--font-mono); font-weight: 500; color: var(--ink); }
-.stat-name { color: var(--ink); font-weight: 600; }
-.stat-line .zero, .stat-line .zero b { color: var(--faint); }
-
 .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
 
 /* ——— дошка аналітика (19.09, кадр 1Б «магнітна дошка») ———
@@ -318,12 +312,60 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 
 /* ——— сезон ——— */
 .season-line { font-size: 16px; margin: -6px 0 14px; }
-.table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-variant-numeric: tabular-nums; font-size: 14px; }
-.table td:not(:nth-child(2)), .table th:not(:nth-child(2)) { font-family: var(--font-mono); font-size: 13px; }
-.table th { color: var(--muted); font-weight: 500; font-size: 11px; text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--line); }
-.table td { text-align: right; padding: 6px; border-bottom: 1px solid var(--line); }
-.table th:nth-child(2), .table td:nth-child(2) { text-align: left; }
-.table tr.us td { background: var(--panel); font-weight: 600; }
+
+/* ——— сторінка таблиці на сайті ESPM (SeasonScreen, 19.09) ———
+   Рамка браузера — предмет; страница — светлый экран с чужой типографикой: Roboto Condensed для заголовков,
+   кикеров и логотипа, системный sans для текста. Нарочно не Lora/Oswald игры — это и есть «чужой сайт».
+   Красный только в логотипе, кикерах, точке у нашего клуба и кнопке «ESPM+». */
+.season { --site-font: 'Roboto Condensed', 'Arial Narrow', sans-serif; --web-font: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; }
+.browser { position: relative; margin: 6px -6px 0; border-radius: 10px; overflow: hidden; background: #fff; color: #111; font-family: var(--web-font); font-size: 13.5px; line-height: 1.4; box-shadow: 0 14px 34px rgba(0,0,0,.65), inset 0 0 0 1px #3a3a40; }
+.chrome { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #1f1f23; color: #b8b4a8; font-size: 12px; }
+.chrome-url { flex: 1; background: #2c2c31; border-radius: 14px; padding: 5px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .chrome-url b { color: var(--ink); font-weight: 500; }
+.chrome-tabs { font-size: 11px; border: 1px solid #55555c; border-radius: 4px; padding: 0 5px; }
+.espm { position: relative; }
+.espm-mast { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #e3e3e3; }
+.espm-logo { display: inline-flex; align-items: center; gap: 10px; }
+.espm-logo b { display: inline-block; background: #d00; color: #fff; font-family: var(--site-font); font-weight: 800; font-style: italic; font-size: 24px; letter-spacing: .02em; line-height: 1; padding: 5px 9px 4px 7px; }
+.espm-logo i { font-style: normal; font-family: var(--site-font); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #333; }
+.espm-burger { width: 20px; height: 2px; background: #111; box-shadow: 0 -6px 0 #111, 0 6px 0 #111; }
+.espm-nav { display: flex; gap: 14px; padding: 6px 12px; background: #111; color: #fff; font-family: var(--site-font); font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; }
+.espm-nav .on { border-bottom: 2px solid currentColor; }
+.espm-art { padding: 10px 12px 6px; }
+.espm-kicker { font-family: var(--site-font); font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #d00; }
+.espm-hl { font-family: var(--site-font); font-weight: 700; font-size: 21px; line-height: 1.08; margin: 3px 0 6px; color: #111; text-wrap: balance; }
+.espm-by { font-size: 11.5px; color: #666; }
+.espm-tbl { width: 100%; border-collapse: collapse; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+.espm-tbl th { font-family: var(--site-font); font-weight: 700; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; text-align: right; padding: 5px 6px; color: #111; border-bottom: 2px solid #111; }
+.espm-tbl td { text-align: right; padding: 6px; border-top: 1px solid #e6e6e6; font-size: 13.5px; }
+.espm-tbl th:nth-child(2), .espm-tbl td:nth-child(2) { text-align: left; }
+.espm-tbl td:first-child { color: #777; width: 22px; } .espm-tbl td:last-child { font-weight: 700; }
+.espm-tbl tr.us td { font-weight: 700; background: #f6f6f6; }
+.espm-tbl tr.us td:nth-child(2)::after { content: '●'; color: #d00; font-size: 8px; margin-left: 6px; vertical-align: middle; }
+.espm-widget { margin: 10px 12px 0; padding: 8px 10px; border: 1px solid #e3e3e3; }
+.espm-widget h4 { margin: 0 0 4px; font-family: var(--site-font); font-weight: 700; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: #111; }
+.espm-widget p { margin: 0; font-size: 13px; }
+.espm-widget .num { font-family: var(--site-font); font-weight: 700; font-size: 28px; line-height: 1; margin-right: 4px; }
+.espm-pay { margin: 10px 12px 0; position: relative; }
+.espm-pay .blur { color: #444; filter: blur(3px); user-select: none; font-size: 13px; margin: 4px 0; }
+.espm-pay .gate { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(180deg, rgba(255,255,255,0) 30%, rgba(255,255,255,.92) 70%); }
+.espm-pay .gate span { font-family: var(--site-font); font-weight: 700; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; padding: 7px 12px; background: #d00; color: #fff; }
+.espm-pay .gate span::before { content: 'ESPM+ · '; }
+/* Реклама — абсурд в форматах настоящей: банер, «вам сподобається», оголошення (content/ads.json). */
+.espm-ad { margin: 14px 12px 0; }
+.espm-ad-tag { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: #999; margin-bottom: 4px; }
+.espm-banner { border: 1px solid #ddd; padding: 12px 12px 10px; background: #fafafa; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.espm-banner .t { font-family: var(--site-font); font-weight: 700; font-size: 19px; line-height: 1.05; color: #111; }
+.espm-banner .d { font-size: 12px; color: #444; margin-top: 3px; }
+.espm-banner .cta { font-family: var(--site-font); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 8px 10px; background: #111; color: #fff; white-space: nowrap; }
+.espm-banner.dark { background: #111; border-color: #111; } .espm-banner.dark .t { color: #fff; } .espm-banner.dark .d { color: #bbb; } .espm-banner.dark .cta { background: #d00; }
+.espm-reco { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.espm-reco > div { font-size: 11.5px; line-height: 1.3; }
+.espm-reco .pic { height: 54px; background: linear-gradient(135deg, #ddd, #bbb); margin-bottom: 4px; display: grid; place-items: center; font-family: var(--site-font); font-weight: 700; font-size: 18px; color: #fff; }
+.espm-reco small { display: block; color: #999; font-size: 10px; margin-top: 2px; }
+.espm-classified { border-top: 1px dashed #ccc; padding: 8px 0; font-size: 12.5px; font-family: Georgia, serif; }
+.espm-classified:last-child { border-bottom: 1px dashed #ccc; }
+.espm-cookie { position: sticky; bottom: 0; margin-top: 14px; background: #1f1f23; color: var(--ink); padding: 9px 12px; font-size: 12px; display: flex; gap: 10px; align-items: center; }
+.espm-cookie button { flex: none; background: #fff; color: #111; border: 0; border-radius: 0; padding: 4px 10px; font-size: 11.5px; font-weight: 600; font-family: var(--web-font); }
 .verdict { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin-top: 16px; }
 .verdict h2 { margin: 0 0 6px; }
 .protocol { color: var(--muted); font-size: 14px; margin: -6px 0 14px; }

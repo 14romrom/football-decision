@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES, rosterFor } from './content';
+import { ACTIVITIES, ADS, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES, rosterFor } from './content';
+import { adContext, pickAds } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
@@ -116,6 +117,7 @@ function Game() {
     };
   };
   const clubName = useCallback((key: string) => (key === US ? ROSTER.us.name.nom : OPPONENTS[key]?.name.nom ?? key), []);
+  const clubForms = useCallback((key: string) => (key === US ? ROSTER.us.name : OPPONENTS[key]?.name ?? { nom: key, gen: key }), []);
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   const [shown, setShown] = useState<TimelineEvent[]>([]);
@@ -449,9 +451,10 @@ function Game() {
     return (
       <SeasonScreen
         season={season}
-        clubName={clubName}
-        teamGen={ROSTER.us.name.gen}
+        club={clubForms}
         playerName={ROSTER.us.players.self.nom}
+        // Реклама по сиду сезона и туру: перезагрузка не меняет банеры; виденные тексты — общая память медиа со стрічкою.
+        ads={pickAds(ADS, adContext(season, career.coachTrust), new Set(recentPosts()), makeRng(season.seed + season.round * 6007 + 3))}
         verdict={over ? seasonVerdict(season, career.coachTrust) : undefined}
         onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
         onNewSeason={() => { newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}

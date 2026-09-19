@@ -1,68 +1,108 @@
-import { isSeasonOver, ourRow, SEASON_ROUNDS, standings, US, type Season, type Verdict } from '../engine/season';
+import { useState } from 'react';
+import { isSeasonOver, SEASON_ROUNDS, standings, US, type Season, type Verdict } from '../engine/season';
 import { plural } from './pluralize';
+import type { AdRule, AdSet, ClubName } from '../engine/espm';
+import { roundHeadline } from '../engine/espm';
 
-// Экран сезона после каждого матча: таблица, наша строка, бомбардиры своих.
-// В конце сезона — вердикт. Ставка между матчами — то, чего не хватало «игре на 15 минут».
+// Экран сезона = сторінка таблиці на сайті ESPM (19.09, макет «Таблиця: ESPM», решение пользователя):
+// рамка браузера с адресом делает страницу предметом; сама страница — светлый экран с чужой
+// типографикой (Roboto Condensed + системный sans, не Lora/Oswald игры). Оммаж на известное издание:
+// красный прямоугольный логотип латиницей. Заголовок тура — из данных (engine/espm.ts). Ирония над
+// сайтом — пейвол «ESPM+» над «Аналітикою» (там ничего нужного) и cookies «Як і всі»; ниже сгиба —
+// абсурдная реклама в форматах настоящей (content/ads.json). Вердикт сезона — блок под таблицей, как
+// был, не трогаем. Это единственный «экран в экране» в игре.
 
 type Props = {
   season: Season;
-  clubName: (key: string) => string;
-  /** Своя команда в родительном: «Бомбардири „Вальмари“». */
-  teamGen: string;
+  club: (key: string) => ClubName;
   playerName: string;
+  ads: AdSet;
   verdict?: Verdict;
   onNext: () => void;
   onNewSeason: () => void;
 };
 
-const ORDINAL = ['', '1-е', '2-е', '3-є', '4-е', '5-е', '6-е'];
+const fmt = (n: number) => n.toFixed(1).replace('.', ',');
 
-export function SeasonScreen({ season, clubName, teamGen, playerName, verdict, onNext, onNewSeason }: Props) {
+function Banner({ ad, dark }: { ad: AdRule; dark?: boolean }) {
+  return (
+    <div className="espm-ad">
+      <div className="espm-ad-tag">Реклама</div>
+      <div className={`espm-banner ${dark ? 'dark' : ''}`}><div><div className="t">{ad.title}</div><div className="d">{ad.text}</div></div><span className="cta">{ad.cta}</span></div>
+    </div>
+  );
+}
+
+export function SeasonScreen({ season, club, playerName, ads, verdict, onNext, onNewSeason }: Props) {
   const rows = standings(season);
-  const us = ourRow(season);
   const over = isSeasonOver(season);
-  const left = SEASON_ROUNDS - season.round;
   const p = season.player;
   const scorers = Object.entries(season.teamScorers).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const [cookies, setCookies] = useState(true);
+  const usGen = club(US).gen;
 
   return (
     <div className="result season">
-      <h1>Сезон {season.number} · тур {season.round} з {SEASON_ROUNDS}</h1>
-      <p className="season-line">
-        <b>{ORDINAL[us.position]} місце</b> · {us.points} {plural(us.points, 'очко', 'очки', 'очок')}
-        {over ? ' · сезон завершено' : ` · до кінця ${left} ${plural(left, 'тур', 'тури', 'турів')}`}
-      </p>
+      <div className="browser">
+        <div className="chrome"><span className="chrome-tabs">3</span><span className="chrome-url"><b>espm.com</b>/football/liga/table</span><span aria-hidden="true">⋮</span></div>
+        <div className="espm">
+          <div className="espm-mast"><span className="espm-logo"><b>ESPM</b><i>Футбол · Ліга</i></span><span className="espm-burger" aria-hidden="true" /></div>
+          <nav className="espm-nav"><span>Головна</span><span className="on">Таблиця</span><span>Результати</span><span>Трансфери</span><span>Відео</span></nav>
 
-      <table className="table">
-        <thead>
-          <tr><th>#</th><th>клуб</th><th>І</th><th>В</th><th>Н</th><th>П</th><th>М</th><th>О</th></tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.club} className={r.club === US ? 'us' : ''}>
-              <td>{r.position}</td>
-              <td>{clubName(r.club)}</td>
-              <td>{r.played}</td><td>{r.won}</td><td>{r.drawn}</td><td>{r.lost}</td>
-              <td>{r.goalsFor}:{r.goalsAgainst}</td>
-              <td><b>{r.points}</b></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <div className="espm-art">
+            <div className="espm-kicker">Тур {season.round} з {SEASON_ROUNDS} · підсумки</div>
+            <h1 className="espm-hl">{roundHeadline(season, club)}</h1>
+            <div className="espm-by">Редакція · 2 год тому</div>
+            <table className="espm-tbl">
+              <thead><tr><th>#</th><th>Клуб</th><th>І</th><th>В</th><th>Н</th><th>П</th><th>М</th><th>О</th></tr></thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.club} className={r.club === US ? 'us' : ''}>
+                    <td>{r.position}</td><td>{club(r.club).nom}</td>
+                    <td>{r.played}</td><td>{r.won}</td><td>{r.drawn}</td><td>{r.lost}</td>
+                    <td>{r.goalsFor}:{r.goalsAgainst}</td><td>{r.points}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Строка сезона персонажа — протоколом, как когда-то итог матча (теперь его заменила дошка, BoardScreen). */}
-      <p className="stat-line">
-        <span className="stat-name">{playerName}</span>
-        <span><b>{p.matches}</b> матчів</span>
-        <span className={p.goals === 0 ? 'zero' : ''}><b>{p.goals}</b> голи</span>
-        <span className={p.assists === 0 ? 'zero' : ''}><b>{p.assists}</b> передачі</span>
-        <span><b>{p.matches ? (p.coachSum / p.matches).toFixed(1) : '—'}</b> сер. оцінка тренера</span>
-      </p>
-      {scorers.length > 0 && (
-        <p className="muted small">
-          Бомбардири «{teamGen}»: {scorers.map(([name, g]) => `${name} — ${g}`).join(', ')}
-        </p>
-      )}
+          {scorers.length > 0 && (
+            <div className="espm-widget"><h4>Бомбардири «{usGen}»</h4><p>{scorers.map(([name, g]) => `${name} — ${g}`).join(' · ')}</p></div>
+          )}
+          <div className="espm-widget">
+            <h4>{playerName} за сезон</h4>
+            <p><span className="num">{p.matches}</span>{plural(p.matches, 'матч', 'матчі', 'матчів')} · <span className="num">{p.goals}</span>{plural(p.goals, 'гол', 'голи', 'голів')} · <span className="num">{p.assists}</span>{plural(p.assists, 'передача', 'передачі', 'передач')} · оцінка {p.matches ? fmt(p.coachSum / p.matches) : '—'}</p>
+          </div>
+
+          {ads.banners[0] && <Banner ad={ads.banners[0]} dark />}
+
+          <div className="espm-pay">
+            <div className="espm-kicker">Аналітика</div>
+            <p className="blur">Чому «{club(US).nom}» грає саме так і до чого тут десятка. Наш оглядач порахував усе і не повірив.</p>
+            <p className="blur">Три графіки, які пояснюють усе. Або нічого.</p>
+            <div className="gate"><span>Читати з передплатою</span></div>
+          </div>
+
+          {ads.reco.length > 0 && (
+            <div className="espm-ad"><div className="espm-ad-tag">Вам сподобається</div>
+              <div className="espm-reco">
+                {ads.reco.map((ad) => <div key={ad.id}><div className="pic">{ad.mark}</div>{ad.text}<small>{ad.tag}</small></div>)}
+              </div>
+            </div>
+          )}
+          {ads.banners[1] && <Banner ad={ads.banners[1]} />}
+          {ads.classified.length > 0 && (
+            <div className="espm-ad"><div className="espm-ad-tag">Оголошення</div>
+              {ads.classified.map((ad) => <div key={ad.id} className="espm-classified">{ad.text} — <i>{ad.sign}</i></div>)}
+            </div>
+          )}
+
+          {cookies && (
+            <div className="espm-cookie">Цей сайт використовує cookies. Як і всі.<button type="button" onClick={() => setCookies(false)}>Добре</button></div>
+          )}
+        </div>
+      </div>
 
       {verdict && (
         <section className="verdict">

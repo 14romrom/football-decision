@@ -5,12 +5,14 @@ import flavorJson from './flavor.json';
 import flagsJson from './flags.json';
 import activitiesJson from './activities.json';
 import weekscenesJson from './weekscenes.json';
+import adsJson from './ads.json';
 import { fillNamesDeep, type Roster, type TeamRoster } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
 import type { Episode, FlagRule, Player } from '../engine/types';
 import type { Rng } from '../engine/rng';
 import type { Activity, WeekScene } from '../engine/week';
+import type { AdRule } from '../engine/espm';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
@@ -48,3 +50,5 @@ export const FLAG_RULES = flagsJson as FlagRule[];
 export const ACTIVITIES = activitiesJson as Activity[];
 /** Сцены-продолжения дела недели (outcome.followUp → id сцены); одна на тиждень. */
 export const WEEK_SCENES = weekscenesJson as WeekScene[];
+/** Реклама на сторінці ESPM (engine/espm.ts): абсурд у форматах справжньої, без брендів і букмекерів. */
+export const ADS = adsJson as AdRule[];

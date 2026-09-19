@@ -3,26 +3,22 @@ import { readSettings, writeSettings, type Settings } from '../telemetry/setting
 import { readSlotSummary, resetSlot } from '../telemetry/saves';
 import { activeSlot } from '../telemetry/slots';
 import { exportLogs } from '../telemetry/log';
-import { slotLine } from './TitleScreen';
+import { buildLabel, slotLine } from './TitleScreen';
 
-// Налаштування (19.09): три группы — кидок, екран, тестерам. Звука в игре нет — строки нет.
-// «Вивантажити логи» переехала сюда с итога матча (там мешала) и отдаёт активный слот.
-// «Стерти кар’єру» — красным, внизу, с подтверждением; после — на титул, там уже «Нова кар’єра».
+// Налаштування (19.09): те же строки, что условия на брифинге — подпись слева, текущее значение
+// справа словами, тап по строке переключает. Без тумблеров и сегмент-контролов: они из UI-кита,
+// а не из игры (замечание пользователя). Звука в игре нет — строки нет. «Вивантажити логи» переехала
+// сюда с итога матча и отдаёт активный слот. «Стерти кар’єру» — внизу, красным, с подтверждением.
 
 type Props = { onBack: () => void; onWiped: () => void };
 
-function Seg<T extends string>({ value, options, onChange, name }: { value: T; options: [T, string][]; onChange: (v: T) => void; name: string }) {
+function Row({ label, value, note, onClick, tone, pressed }: { label: string; value: string; note?: string; onClick: () => void; tone?: 'danger'; pressed?: boolean }) {
   return (
-    <span className="seg" role="radiogroup" aria-label={name}>
-      {options.map(([v, label]) => (
-        <button key={v} type="button" role="radio" aria-checked={value === v} className={value === v ? 'on' : ''} onClick={() => onChange(v)}>{label}</button>
-      ))}
-    </span>
+    <button className={`set-row ${tone ?? ''}`} onClick={onClick} aria-pressed={pressed}>
+      <span className="slot-dt">{label}</span>
+      <span className="slot-dd"><b>{value}.</b>{note && <> {note}</>}</span>
+    </button>
   );
-}
-
-function Toggle({ on, onChange, name }: { on: boolean; onChange: (v: boolean) => void; name: string }) {
-  return <button type="button" role="switch" aria-checked={on} aria-label={name} className={`toggle ${on ? 'on' : ''}`} onClick={() => onChange(!on)} />;
 }
 
 export function SettingsScreen({ onBack, onWiped }: Props) {
@@ -30,44 +26,38 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
   const [confirmWipe, setConfirmWipe] = useState(false);
   const slot = readSlotSummary(activeSlot());
   const set = (patch: Partial<Settings>) => { const next = { ...s, ...patch }; setS(next); writeSettings(next); };
-  const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
 
   return (
     <div className="settings plain-screen">
-      <p className="eyebrow">Inside the Box</p>
       <h1>Налаштування</h1>
+      <p className="muted">Тап по рядку змінює.</p>
 
-      <h2 className="sect">Кидок</h2>
-      <div className="set">
-        <div className="l">Барабан<small>Кубики крутяться перед зупинкою</small></div>
-        <Seg name="Барабан" value={s.dice} options={[['reel', 'барабан'], ['instant', 'одразу']]} onChange={(v) => set({ dice: v })} />
-      </div>
-      <div className="set">
-        <div className="l">Вібрація на штампі<small>Катастрофу відчуєш долонею</small></div>
-        <Toggle name="Вібрація на штампі" on={s.haptics} onChange={(v) => set({ haptics: v })} />
-      </div>
-
-      <h2 className="sect">Екран</h2>
-      <div className="set">
-        <div className="l">Менше руху<small>Без тряски й спалахів; паузи лишаються</small></div>
-        <Toggle name="Менше руху" on={s.reduceMotion} onChange={(v) => set({ reduceMotion: v })} />
-      </div>
-      <div className="set">
-        <div className="l">Розмір тексту</div>
-        <Seg name="Розмір тексту" value={s.textSize} options={[['normal', 'звичайний'], ['large', 'більший']]} onChange={(v) => set({ textSize: v })} />
+      <h2>Кидок</h2>
+      <div className="conditions">
+        <Row label="Кубики" value={s.dice === 'reel' ? 'Барабан' : 'Одразу'}
+          note={s.dice === 'reel' ? 'Крутяться й сповільнюються перед зупинкою.' : 'Стоять з першого кадру, паузи лишаються.'}
+          onClick={() => set({ dice: s.dice === 'reel' ? 'instant' : 'reel' })} pressed={s.dice === 'reel'} />
+        <Row label="Вібрація" value={s.haptics ? 'Увімкнена' : 'Вимкнена'}
+          note={s.haptics ? 'Штамп вердикту відчуєш долонею.' : undefined}
+          onClick={() => set({ haptics: !s.haptics })} pressed={s.haptics} />
       </div>
 
-      <h2 className="sect">Тестерам</h2>
-      <button className="set set-btn" onClick={exportLogs}>
-        <span className="l">Вивантажити логи<small>Рішення цієї кар’єри, JSON</small></span>
-        <span className="v">слот {slot.slot + 1}</span>
-      </button>
-      {!slot.empty && !confirmWipe && (
-        <button className="set set-btn danger" onClick={() => setConfirmWipe(true)}>
-          <span className="l">Стерти кар’єру<small>Слот {slot.slot + 1} · {slotLine(slot)}</small></span>
-          <span className="v">›</span>
-        </button>
-      )}
+      <h2>Екран</h2>
+      <div className="conditions">
+        <Row label="Рух" value={s.reduceMotion ? 'Менше' : 'Як зазвичай'}
+          note={s.reduceMotion ? 'Без тряски й спалахів; паузи лишаються.' : undefined}
+          onClick={() => set({ reduceMotion: !s.reduceMotion })} pressed={s.reduceMotion} />
+        <Row label="Текст" value={s.textSize === 'large' ? 'Більший' : 'Звичайний'}
+          onClick={() => set({ textSize: s.textSize === 'large' ? 'normal' : 'large' })} pressed={s.textSize === 'large'} />
+      </div>
+
+      <h2>Тестерам</h2>
+      <div className="conditions">
+        <Row label="Логи" value="Вивантажити" note={`Рішення цієї кар’єри (слот ${slot.slot + 1}), JSON.`} onClick={exportLogs} />
+        {!slot.empty && !confirmWipe && (
+          <Row label="Кар’єра" value="Стерти" note={`Слот ${slot.slot + 1}, ${slotLine(slot)}.`} tone="danger" onClick={() => setConfirmWipe(true)} />
+        )}
+      </div>
       {confirmWipe && (
         <div className="sheet" role="dialog" aria-labelledby="wipe-title">
           <p id="wipe-title">Слот {slot.slot + 1}, {slotLine(slot)}. Після цього — з нуля: нове ім’я в таблиці, старі голоси.</p>
@@ -77,7 +67,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
       )}
 
       <button className="row row-back" onClick={onBack}>На титул</button>
-      <p className="build">тестова збірка · {build} · ukr</p>
+      <p className="build">{buildLabel()}</p>
     </div>
   );
 }

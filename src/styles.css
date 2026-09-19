@@ -157,14 +157,13 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .stat-name { color: var(--ink); font-weight: 600; }
 .stat-line .zero, .stat-line .zero b { color: var(--faint); }
 
-.recap h2 { font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-size: 13px; }
 .recap p { font-size: 16px; }
 .recap .recap-last { color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
 
 .ratings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 6px; }
 .rating { text-align: center; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
 .rating-value { display: block; font-family: var(--font-mono); font-size: 30px; font-weight: 500; }
-.rating-label { font-family: var(--font-caps); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.rating-label { font-size: 12px; color: var(--muted); }
 .rating.coach .rating-value { color: var(--accent); }
 .rating.fan .rating-value { color: var(--hype); }
 .gap-note { text-align: center; color: var(--muted); font-size: 14px; }
@@ -634,67 +633,52 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .title-logo { margin: min(36vh, 300px) 0 0; font-size: 0; }
 .logo { display: block; width: 100%; height: auto; overflow: visible; }
 .logo-lines { stroke: #3b4a3e; } .logo-spot { fill: #3b4a3e; }
-.logo-text { fill: var(--bad); font-family: var(--font-caps); }
+/* Тень под леттерингом: на тёмно-бирюзовой части картинки красный давал 2.8:1 — тень доводит до порога крупного текста. */
+.logo-text { fill: var(--bad); font-family: var(--font-caps); filter: drop-shadow(0 1px 0 rgba(0,0,0,.7)) drop-shadow(0 0 6px rgba(0,0,0,.5)); }
 .title-say { margin: 8px 0 0; padding: 0; text-indent: 0; }
 .title-say .check { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0; text-transform: none; font-weight: 400; }
 .title-intro { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
 .title-menu { margin-top: auto; padding-top: 24px; }
 .title-primary { display: block; width: 100%; padding: 13px 14px; font-size: 15px; }
-.title-continue { display: grid; gap: 8px; text-align: left; }
-.title-continue > span:first-child { text-align: center; }
-/* Корешок удостоверения внутри кнопки: имя, сезон/тур, место, матчи, девиз голоса. */
-.stub { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 8px 12px; border-left: 2px solid var(--v-ego); background: rgba(11,11,13,.08); font-family: var(--font-text); font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 13px; color: #4a463c; border-radius: 0 4px 4px 0; }
-.stub b { color: #141413; font-weight: 600; }
-.stub .mono { font-family: var(--font-mono); font-size: 12px; color: #141413; text-align: right; }
-.stub .motto, .stub .wide { grid-column: 1 / -1; } .stub .motto { font-style: italic; }
-.stub.voice-team { border-left-color: var(--v-team); } .stub.voice-vision { border-left-color: var(--v-vision); } .stub.voice-instinct { border-left-color: var(--v-instinct); }
-.stub.voice-body { border-left-color: var(--v-body); } .stub.voice-composure { border-left-color: var(--v-composure); } .stub.voice-none { border-left-color: #b8b2a4; }
+/* Кто ты и где — строкой под кнопкой, не карточкой (карточка с полосой читалась как шаблон — 19.09). */
+.title-career { margin: 10px 0 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+.title-career b { color: var(--ink); font-weight: 600; }
+.title-career i, .slot-dd i { color: var(--muted); }
+.voice-name { font-style: normal; font-family: var(--font-caps); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; font-size: .9em; }
+.voice-name.voice-ego { color: var(--v-ego); } .voice-name.voice-team { color: var(--v-team); } .voice-name.voice-vision { color: var(--v-vision); }
+.voice-name.voice-instinct { color: var(--v-instinct); } .voice-name.voice-body { color: var(--v-body); } .voice-name.voice-composure { color: var(--v-composure); }
 .rows { list-style: none; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--line); }
 .rows li { margin: 0; }
-.row { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 48px; padding: 0 2px; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink); font: inherit; font-size: 16px; text-align: left; }
-.row::after { content: '›'; color: var(--faint); font-size: 18px; }
+.row { display: block; width: 100%; min-height: 48px; padding: 0 2px; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink); font: inherit; font-size: 16px; text-align: left; }
 .row:hover, .row:active { background: #131316; border-color: var(--line); }
 .row:focus-visible { outline: none; box-shadow: inset 3px 0 0 var(--ink); }
-.row-back { margin-top: 18px; border-top: 1px solid var(--line); }
-.row-back::after { content: '‹'; }
-.build { margin: 10px 0 0; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--faint); text-transform: uppercase; }
+.row-back { margin-top: 18px; border-top: 1px solid var(--line); color: var(--muted); }
+.build { margin: 12px 0 0; font-size: 12.5px; color: var(--muted); }
 
-/* Экраны титула без картинки: слоты, налаштування, про гру. */
+/* Экраны титула без картинки: слоты, налаштування, про гру — в структуре брифинга (.conditions). */
 .plain-screen { max-width: 560px; margin: 0 auto; padding-top: 24px; min-height: calc(100dvh - 120px); display: flex; flex-direction: column; }
-.plain-screen h1 { font-size: 22px; margin: 0 0 14px; }
-.eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
-.sect { margin: 18px 0 6px; font-family: var(--font-caps); font-weight: 500; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.slot-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.slot-list li { margin: 0; }
-.slot { --vc: var(--line-2); display: grid; gap: 2px; width: 100%; text-align: left; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--vc); border-radius: 4px; background: var(--panel); font: inherit; font-size: 13.5px; color: var(--muted); }
-.slot b { color: var(--ink); font-weight: 600; font-size: 15px; }
-.slot .n { font-family: var(--font-mono); font-size: 11px; color: var(--faint); }
-.slot .motto { font-style: italic; }
-.slot.empty { background: transparent; color: var(--faint); }
-.slot.empty .slot-empty-title { color: var(--muted); font-weight: 400; }
-.slot.voice-ego { --vc: var(--v-ego); } .slot.voice-team { --vc: var(--v-team); } .slot.voice-vision { --vc: var(--v-vision); }
-.slot.voice-instinct { --vc: var(--v-instinct); } .slot.voice-body { --vc: var(--v-body); } .slot.voice-composure { --vc: var(--v-composure); }
-.slot.voice-none { --vc: var(--dim); }
-.slot.current { box-shadow: 0 0 0 2px var(--vc) inset; background: color-mix(in srgb, var(--vc) 10%, var(--panel)); }
-.slot:active { background: color-mix(in srgb, var(--vc) 16%, var(--panel)); }
-.sheet { margin-top: auto; padding: 14px 14px 12px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px; box-shadow: 0 14px 34px rgba(0,0,0,.55); display: grid; gap: 8px; }
+.plain-screen h1 { font-size: 22px; margin: 0 0 6px; }
+.plain-screen > .muted { margin-bottom: 14px; }
+.plain-screen .conditions { margin: 0 0 6px; }
+.slot-row, .set-row {
+  display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.6rem; width: 100%; min-height: 52px; padding: 0.6rem 2px; text-align: left;
+  background: none; border: 0; border-top: 1px solid rgba(255,255,255,0.08); border-radius: 0; color: var(--ink); font: inherit; line-height: 1.45;
+}
+.slot-row:last-child, .set-row:last-child { border-bottom: 1px solid rgba(255,255,255,0.08); }
+.slot-row:hover, .set-row:hover, .slot-row:active, .set-row:active { background: #131316; border-color: rgba(255,255,255,0.08); }
+.slot-row:focus-visible, .set-row:focus-visible { outline: none; box-shadow: inset 3px 0 0 var(--ink); }
+.slot-dt { opacity: 0.55; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; padding-top: 0.15rem; }
+.slot-dd b { font-weight: 600; }
+/* Текущий слот — как своя строка в таблице сезона. */
+.slot-row.current { background: var(--panel); }
+.slot-row.current .slot-dt { opacity: .8; }
+.slot-row.empty .slot-dd { color: var(--muted); }
+.set-row.danger .slot-dd b { color: var(--bad-soft); }
+.sheet { margin-top: auto; padding: 14px 14px 12px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px; display: grid; gap: 8px; }
 .sheet p { margin: 0 0 4px; font-size: 14.5px; }
 .danger-btn { display: block; width: 100%; background: var(--bad); color: #fff; border: 0; border-radius: 6px; padding: 12px; font-family: var(--font-caps); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 14px; }
 .danger-btn:active { background: #a3321a; }
 .ghost { display: block; width: 100%; background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 10px; font-family: var(--font-caps); letter-spacing: .1em; text-transform: uppercase; font-size: 13px; }
-.set { display: flex; justify-content: space-between; align-items: center; min-height: 52px; border-bottom: 1px solid var(--line); gap: 12px; }
-.set .l { font-size: 15.5px; color: var(--ink); } .set .l small { display: block; font-size: 12.5px; color: var(--muted); }
-.set .v { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
-.set-btn { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 0; text-align: left; font: inherit; }
-.set-btn:active { background: #131316; }
-.set.danger .l { color: var(--bad-soft); } .set.danger .v { color: var(--bad-soft); }
-.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 4px; overflow: hidden; font-family: var(--font-mono); font-size: 11.5px; }
-.seg button { padding: 7px 10px; min-height: 36px; color: var(--muted); background: none; border: 0; border-radius: 0; font: inherit; }
-.seg button.on { background: var(--cream); color: #141413; }
-.toggle { width: 44px; height: 26px; border-radius: 13px; background: var(--dim); border: 0; padding: 0; position: relative; flex: none; }
-.toggle.on { background: var(--accent); }
-.toggle::after { content: ''; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); transition: left .15s ease; }
-.toggle.on::after { left: 22px; }
 .about-lead { font-size: 16px; margin: 0; }
 .about-voices, .about-rules { list-style: none; margin: 4px 0 0; padding: 0; }
 .about-voices .say { margin: 0 0 8px; } .about-voices i { color: var(--muted); }

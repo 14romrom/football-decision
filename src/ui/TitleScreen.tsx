@@ -11,23 +11,35 @@ import { Logo } from './Logo';
 import { VOICES } from './PlayerCard';
 
 // Титульный экран (19.09, макет «Inside the Box — титул»). Картинка — бисиклета в пустоту, так
-// Реєса видит Его; реплика голоса под названием её осаживает. Один primary: «Продовжити» с корешком
-// удостоверения активного слота, или «Нова кар’єра», если слот пустой. Остальное — строки 48px.
+// Реєса видит Его; реплика голоса под названием её осаживает. Один primary: «Продовжити» — под ним
+// строкой, кто ты и где (не карточка: карточка с полосой слева читалась как шаблон, замечание
+// пользователя 19.09), или «Нова кар’єра», если слот пустой. Остальное — строки 48px без шевронов.
 // Двигаться тут нечему: между запусками меняется только реплика.
 
 export const TITLE_RULES = titleJson as TitleRule[];
 
-const posShort = (p: string) => (p.includes('атакувальний') ? 'десятка' : p);
+const plural = (n: number, one: string, few: string, many: string) => (n === 1 ? one : n < 5 ? few : many);
 
+/** «Сезон 1, тур 4 з 10» / «сезон 1 завершено». */
 export function slotLine(s: SlotSummary): string {
-  const where = s.over ? 'сезон завершено' : `тур ${s.round} з ${s.rounds}`;
-  return `сезон ${s.seasonNumber} · ${where}`;
+  return s.over ? `сезон ${s.seasonNumber} завершено` : `сезон ${s.seasonNumber}, тур ${s.round} з ${s.rounds}`;
 }
 
-export function slotMotto(s: SlotSummary): string | null {
+/** Хвост строки карьеры: место, очки, матчи — или клуб, пока таблицы нет. */
+export function slotTail(s: SlotSummary): string {
+  const matches = `${s.matches} ${plural(s.matches, 'матч', 'матчі', 'матчів')}`;
+  return s.position ? `${s.position}-е місце, ${s.points} ${plural(s.points, 'очко', 'очки', 'очок')}, ${matches}` : `«${ROSTER.us.name.nom}», ${matches}`;
+}
+
+export function slotMotto(s: SlotSummary): { who: string; motto: string; key: string } | null {
   if (!s.dominant) return null;
   const v = VOICES.find((x) => x.who === s.dominant);
-  return v ? `${VOICE_LABEL[s.dominant]}: «${v.motto}»` : null;
+  return v ? { who: VOICE_LABEL[s.dominant], motto: v.motto, key: s.dominant } : null;
+}
+
+export function buildLabel(): string {
+  const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
+  return `Тестова збірка ${build}`;
 }
 
 type Props = { onContinue: () => void; onNewCareer: () => void; onSettings: () => void; onAbout: () => void };
@@ -41,7 +53,7 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
     if (l) rememberTitleLine(l.text);
     return l;
   }, [slot]);
-  const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
+  const motto = slotMotto(slot);
 
   return (
     <div className="title">
@@ -64,32 +76,27 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
           </p>
         )}
         {slot.empty && (
-          <p className="title-intro">{PLAYER.name.split(' ').pop()}, {posShort(PLAYER.position)}. Шість голосів радять, один кубик вирішує, а винен потім чомусь ти.</p>
+          <p className="title-intro">{PLAYER.name.split(' ').pop()}, десятка. Шість голосів радять, один кубик вирішує, а винен потім чомусь ти.</p>
         )}
 
         <div className="title-menu">
           {slot.empty ? (
             <button className="primary title-primary" onClick={onNewCareer}>Нова кар’єра</button>
           ) : (
-            // Корешок — часть кнопки: одна цель для тапа, читается как «продовжити цю карьеру».
-            <button className="primary title-primary title-continue" onClick={onContinue}>
-              <span>Продовжити</span>
-              <span className={`stub voice-${slot.dominant ?? 'none'}`}>
-                <b>{PLAYER.name}</b><span className="mono">{slotLine(slot)}</span>
-                <span className="wide">
-                  {slot.position ? `${slot.position}-е місце, ${slot.points} ${slot.points === 1 ? 'очко' : slot.points < 5 ? 'очки' : 'очок'}` : `«${ROSTER.us.name.nom}»`}
-                  {' · '}{slot.matches} {slot.matches === 1 ? 'матч' : slot.matches < 5 ? 'матчі' : 'матчів'}
-                </span>
-                {slotMotto(slot) && <span className="motto">{slotMotto(slot)}</span>}
-              </span>
-            </button>
+            <>
+              <button className="primary title-primary" onClick={onContinue}>Продовжити</button>
+              <p className="title-career">
+                <b>{PLAYER.name}</b>, {slotLine(slot)} — {slotTail(slot)}.
+                {motto && <i> <span className={`voice-name voice-${motto.key}`}>{motto.who}</span>: «{motto.motto}»</i>}
+              </p>
+            </>
           )}
           <ul className="rows">
             {!slot.empty && <li><button className="row" onClick={onNewCareer}>Нова кар’єра</button></li>}
             <li><button className="row" onClick={onSettings}>Налаштування</button></li>
             <li><button className="row" onClick={onAbout}>Про гру</button></li>
           </ul>
-          <p className="build">тестова збірка · {build}</p>
+          <p className="build">{buildLabel()}</p>
         </div>
       </div>
     </div>

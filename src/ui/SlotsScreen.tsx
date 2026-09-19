@@ -2,15 +2,14 @@ import { useState } from 'react';
 import { PLAYER } from '../content';
 import { readAllSlots, resetSlot, type SlotSummary } from '../telemetry/saves';
 import { activeSlot, setActiveSlot } from '../telemetry/slots';
-import { slotLine, slotMotto } from './TitleScreen';
+import { buildLabel, slotLine, slotMotto, slotTail } from './TitleScreen';
 
-// Три слота карьеры как корешки удостоверения (19.09): полоса — цвет доминантного голоса,
-// пустой слот — «ніхто ще не виходив на поле». Пустой стартует сразу; занятый открывает лист:
-// продолжить эту карьеру или стереть и начать заново — стирание красным и отдельно.
+// Три слота карьеры (19.09) — список строк, как условия на брифинге и таблица сезона: подпись слева,
+// текст справа, разделители; текущий слот выделен как своя строка в таблице. Не карточки с полосой —
+// это читалось как шаблон (замечание пользователя). Пустой слот стартует сразу; занятый открывает
+// подтверждение: продолжить эту карьеру или стереть и начать заново — стирание красным и отдельно.
 
 type Props = { onStart: (slot: number) => void; onBack: () => void };
-
-const plural = (n: number, one: string, few: string, many: string) => (n === 1 ? one : n < 5 ? few : many);
 
 export function SlotsScreen({ onStart, onBack }: Props) {
   const [slots, setSlots] = useState<SlotSummary[]>(() => readAllSlots());
@@ -27,33 +26,34 @@ export function SlotsScreen({ onStart, onBack }: Props) {
 
   return (
     <div className="slots plain-screen">
-      <p className="eyebrow">нова кар’єра</p>
-      <h1>Куди записати</h1>
-      <ul className="slot-list">
-        {slots.map((s) => (
-          <li key={s.slot}>
+      <h1>Нова кар’єра</h1>
+      <p className="muted">Три слоти. Порожній починає одразу, зайнятий спершу спитає.</p>
+      <div className="conditions slot-list" role="list">
+        {slots.map((s) => {
+          const motto = slotMotto(s);
+          return (
             <button
-              className={`slot ${s.empty ? 'empty' : `voice-${s.dominant ?? 'none'}`} ${s.slot === current && !s.empty ? 'current' : ''}`}
+              key={s.slot}
+              role="listitem"
+              className={`slot-row ${s.slot === current && !s.empty ? 'current' : ''} ${s.empty ? 'empty' : ''}`}
               onClick={() => (s.empty ? start(s.slot, false) : setAsked(s.slot))}
-              aria-pressed={s.slot === current}
+              aria-current={s.slot === current && !s.empty ? 'true' : undefined}
             >
-              <span className="n">слот {s.slot + 1}{s.slot === current && !s.empty ? ' · зараз' : ''}</span>
-              {s.empty ? (
-                <>
-                  <b className="slot-empty-title">Порожньо</b>
-                  <span>Ніхто ще не виходив на поле.</span>
-                </>
-              ) : (
-                <>
-                  <b>{PLAYER.name}</b>
-                  <span>{slotLine(s)}{s.position ? ` · ${s.position}-е місце` : ''} · {s.matches} {plural(s.matches, 'матч', 'матчі', 'матчів')}</span>
-                  {slotMotto(s) && <span className="motto">{slotMotto(s)}</span>}
-                </>
-              )}
+              <span className="slot-dt">Слот {s.slot + 1}</span>
+              <span className="slot-dd">
+                {s.empty ? (
+                  <>Порожньо. Ніхто ще не виходив на поле.</>
+                ) : (
+                  <>
+                    <b>{PLAYER.name}.</b> {slotLine(s)[0].toUpperCase() + slotLine(s).slice(1)} — {slotTail(s)}.
+                    {motto && <i> <span className={`voice-name voice-${motto.key}`}>{motto.who}</span>: «{motto.motto}»</i>}
+                  </>
+                )}
+              </span>
             </button>
-          </li>
-        ))}
-      </ul>
+          );
+        })}
+      </div>
       {!askedSlot && <button className="row row-back" onClick={onBack}>На титул</button>}
 
       {askedSlot && (
@@ -66,6 +66,7 @@ export function SlotsScreen({ onStart, onBack }: Props) {
           <button className="ghost" onClick={() => { setAsked(null); setSlots(readAllSlots()); }}>Залишити</button>
         </div>
       )}
+      <p className="build">{buildLabel()}</p>
     </div>
   );
 }

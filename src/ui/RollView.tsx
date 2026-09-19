@@ -103,7 +103,8 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
     <div className="scene roll" onClick={() => setStage(LAST)}>
       <div className={`choice chosen risk-${res.position}`}>
         <span className="choice-text">
-          <span className="bracket">[{POSITION_LABEL[res.position]} {res.target}]</span> {option.label}
+          {option.label}
+          <span className="bracket">[{POSITION_LABEL[res.position]} {res.target}]</span>
         </span>
       </div>
 

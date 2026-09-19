@@ -11,6 +11,13 @@ import { cleanTarget } from '../engine/balance';
 // «[форма ціль]» (дефис после номера убран 19.09 — шум). Атрибут, бонус и факторы — не на кнопке: они на экране броска и в зоне
 // «на кубик» (MatchScreen). Цена сил на кнопке тоже нет — она в разборе после броска; это
 // сознательный обмен читаемости на полноту (плейтест: 25 с на решение).
+//
+// Аффордансы (макет «Лист моменту: де кнопки», вариант А, 19.09) — тестер не нашёл, куда тапать:
+// всё было одним потоком текста, а самым «кнопочным» выглядели голоса в коробке и чипы с рамками.
+// Поэтому: голоса без коробки, курсивом (комментарий, не предложение); заголовок «Твій хід» на
+// линии — единственное место, где сказано, что надо решать; варианты — тёмная полоса с рамкой,
+// действие первым, скобка вторым рядом приглушённо, номер залит кремом (грань кубика), стрелка
+// справа; чипы «на кубик» без рамок. Карточек с радиусами не добавляем — шаблонный вид.
 
 type Props = {
   episode: Episode;
@@ -59,6 +66,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
           ))}
         </div>
       )}
+      <div className="hand"><span>Твій хід</span></div>
       <ol className="choices">
         {options.map((o, i) => {
           // Форма риска уже со сдвигами от контекста: игрок должен видеть, что надёжный
@@ -73,12 +81,13 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
               <button className={`choice ${o.insight ? `choice-insight voice-${o.insight.who}` : ''}`} onClick={() => onChoose(o)}>
                 <span className="choice-num">{i + 1}</span>
                 <span className="choice-text">
+                  {o.label}
                   <span className={`bracket risk-${ctx.position}`}>
                     [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)}{chain ? ` → ${chain}` : ''}]
-                  </span>{' '}
-                  {o.label}
-                  {origin && <i className="origin">{origin}</i>}
+                    {origin && <i className="origin">{origin}</i>}
+                  </span>
                 </span>
+                <span className="choice-go" aria-hidden="true">›</span>
               </button>
             </li>
           );

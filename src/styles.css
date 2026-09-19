@@ -563,9 +563,15 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .minute-tab { position: absolute; top: -1px; left: 12px; z-index: 2; font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.08em; font-size: 13px; color: var(--ink); background: #16161a; border: 1px solid #4a463c; border-top: 0; border-radius: 0 0 3px 3px; padding: 2px 9px; }
 .minute-tab .link-mark { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0; text-transform: none; color: var(--muted); font-style: normal; }
 .setup { margin: 0; padding: 30px 0 14px; font-size: 16.5px; line-height: 1.5; color: #f0ebe0; position: relative; }
-.voices { position: relative; margin: 0 -14px; padding: 10px 14px 4px; border-top: 1px solid #2c2c33; border-bottom: 1px solid #2c2c33; background: rgba(17,17,20,0.85); }
-.voices .say { display: grid; grid-template-columns: 6rem 1fr; gap: 10px; padding-left: 0; text-indent: 0; font-size: 14.5px; margin-bottom: 8px; }
-.voices .say b { text-align: right; padding-top: 2px; padding-right: 10px; border-right: 1px solid #2c2c33; }
+/* Голоса без коробки и курсивом (19.09, «Лист моменту: де кнопки»): обведённый блок с фоном читался как
+   «тут интерактив», а наказовий спосіб реплик («Прийми», «Кинь стійку») — как варианты. */
+.voices { position: relative; margin: 0 -14px; padding: 4px 14px 2px; }
+.voices .say { display: grid; grid-template-columns: 6rem 1fr; gap: 10px; padding-left: 0; text-indent: 0; font-size: 14.5px; margin-bottom: 8px; font-style: italic; color: #b3ae9f; }
+.voices .say b { text-align: right; padding-top: 2px; padding-right: 10px; font-style: normal; }
+/* «Твій хід» — единственное место на листе, где сказано, что надо решать. */
+.hand { display: flex; align-items: center; gap: 10px; margin: 6px -14px 0; padding: 6px 14px 4px; }
+.hand::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
+.hand span { font-family: var(--font-caps); font-weight: 500; font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream); }
 .say { margin: 0 0 9px; padding-left: 16px; text-indent: -16px; font-size: 15px; line-height: 1.5; color: var(--ink); }
 .say b { font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 13px; }
 .say.voice-ego b { color: var(--v-ego); } .say.voice-team b { color: var(--v-team); } .say.voice-composure b { color: var(--v-composure); }
@@ -574,20 +580,25 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .say.say-coach { color: var(--warn); } .say.say-coach b { color: var(--warn); }
 .link-mark { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
 
-.choices { position: relative; list-style: none; margin: 0 -14px; padding: 0; }
+/* Варианты — единственная «нажимаемая» полоса листа: темнее фона, рамка сверху и снизу, номер — грань кубика кремом,
+   действие первым, скобка вторым рядом, стрелка справа. */
+.choices { position: relative; list-style: none; margin: 0 -14px; padding: 0; background: #0f0f12; border-top: 1px solid #33333a; border-bottom: 1px solid #33333a; }
 .choices li { margin: 0; }
 .choice {
-  display: flex; gap: 8px; align-items: baseline; width: 100%; text-align: left; min-height: 48px; box-sizing: border-box;
-  padding: 10px 14px; gap: 12px; align-items: flex-start; background: none; border: 0; border-radius: 0; color: var(--ink); font: inherit; font-size: 15px; line-height: 1.4;
+  display: flex; width: 100%; text-align: left; min-height: 48px; box-sizing: border-box;
+  padding: 12px 14px; gap: 12px; align-items: flex-start; background: none; border: 0; border-radius: 0; color: var(--ink); font: inherit; font-size: 15px; line-height: 1.4;
 }
-.choices li + li .choice { border-top: 1px solid #222226; }   /* граница между вариантами: промах на тапе — необратимое решение */
+.choice-text { flex: 1; }
+.choice-text .bracket { display: block; margin-top: 2px; }
+.choice-go { flex: none; align-self: center; color: var(--faint); font-size: 18px; line-height: 1; }
+.choices li + li .choice { border-top: 1px solid #26262b; }   /* граница между вариантами: промах на тапе — необратимое решение */
 .choice:hover { background: #131316; }
 /* Фокус с клавиатуры — полоса слева, как у голосов; фон #131316 на #141417 был невидим. */
 .choice:focus-visible { background: #131316; outline: none; box-shadow: inset 3px 0 0 currentColor; }
 .choice:active { background: var(--bad); color: #fff; }
-.choice:active .bracket { color: #fff; }
+.choice:active .bracket, .choice:active .choice-go { color: #fff; }
 /* Номер варианта — в квадратной ячейке, как грань кубика. */
-.choice-num { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; margin-top: 1px; border: 1px solid #3a3a40; font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+.choice-num { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; margin-top: 1px; background: var(--cream); border: 1px solid var(--cream); font-family: var(--font-mono); font-weight: 500; font-size: 12px; color: #141413; }
 .choice:active .choice-num { border-color: #fff; }
 .choice-insight.voice-vision { color: var(--v-vision); } .choice-insight.voice-instinct { color: var(--v-instinct); }
 .choice-insight.voice-body { color: var(--v-body); } .choice-insight.voice-composure { color: var(--v-composure); }
@@ -596,7 +607,7 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .bracket.risk-controlled { color: #9a9688; } .bracket.risk-risky { color: var(--warn); } .bracket.risk-desperate { color: var(--bad-soft); }
 .origin { font-style: normal; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-left: 8px; letter-spacing: 0.04em; }
 .choice.chosen { background: var(--bad); color: #fff; width: calc(100% + 28px); margin: 0 -14px 12px; padding: 9px 14px; cursor: default; border-radius: 0; }
-.choice.chosen .bracket { color: #fff; }
+.choice.chosen .bracket { color: #fff; opacity: 0.8; }
 
 .dice-zone {
   position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; padding: 8px 14px 10px;
@@ -815,9 +826,12 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .pitch-dot { transition: transform .6s ease; }
 html.reduce-motion .pitch-dot { transition: none; }
 @media (prefers-reduced-motion: reduce) { .pitch-dot { transition: none; } }
-/* 5. Чипы «на кубик» — словом, без иконок. */
+/* 5. Чипы «на кубик» — словом, без иконок; в зоне под вариантами — без рамок, через « · »: с рамками они
+   выглядели самым «кнопочным» на листе, а не делают ничего (19.09). */
 .chip-word { font-style: normal; color: var(--ink); }
 .chip.pos { color: var(--muted); } .chip.neg { color: var(--muted); }
+.dice-zone .chip { border: 0; padding: 0; }
+.dice-zone .chip + .chip::before { content: '·'; color: var(--faint); margin-right: 6px; }
 
 /* ——— поле: три слоя движения (Pitch.tsx, 19.09) ——— */
 .pitch-dot { transition-property: transform; transition-timing-function: cubic-bezier(.2,.7,.2,1); }

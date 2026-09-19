@@ -49,7 +49,7 @@ export function StatsScreen() {
       ))}
 
       <div className="actions">
-        <a className="link" href="#/">⟵ до матчу</a>
+        <a className="link" href="#/settings">⟵ до налаштувань</a>
         <button onClick={exportLogs}>Вивантажити логи</button>
         <button onClick={() => { clearLogs(); setVersion((v) => v + 1); }}>Очистити</button>
       </div>

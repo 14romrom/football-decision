@@ -804,3 +804,4 @@ html.reduce-motion .pitch-flash.on { opacity: .2; }
 /* Критический успех — две десятки: золотые кубики и свой штамп. */
 .dice-stage.crit-good .die.stopped { border-color: var(--v-instinct); color: var(--v-instinct); }
 .verdict.crit { color: var(--v-instinct); font-size: 26px; letter-spacing: .12em; }
+a.set-btn { display: flex; text-decoration: none; color: var(--ink); }

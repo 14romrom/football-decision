@@ -76,8 +76,7 @@ export function ResultScreen({ summary, roster, playerName, xpEarned, onRestart 
 
       <div className="actions">
         <button className="primary" onClick={onRestart}>Далі</button>
-        {/* «Вивантажити логи» переехала в Налаштування (19.09): на итоге матча она мешала. */}
-        <a className="link" href="#/stats">Розподіл виборів</a>
+        {/* «Вивантажити логи» и «Розподіл виборів» — в Налаштування → Тестерам (19.09). */}
       </div>
     </div>
   );

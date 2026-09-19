@@ -62,6 +62,10 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         <span className="l">Вивантажити логи<small>Рішення цієї кар’єри, JSON</small></span>
         <span className="v">слот {slot.slot + 1}</span>
       </button>
+      <a className="set set-btn" href="#/stats">
+        <span className="l">Розподіл виборів<small>Які варіанти обирають у кожній сцені</small></span>
+        <span className="v">›</span>
+      </a>
       {!slot.empty && !confirmWipe && (
         <button className="set set-btn danger" onClick={() => setConfirmWipe(true)}>
           <span className="l">Стерти кар’єру<small>Слот {slot.slot + 1} · {slotLine(slot)}</small></span>
@@ -76,7 +80,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         </div>
       )}
 
-      <button className="row row-back" onClick={onBack}>На титул</button>
+      <button className="row row-back" onClick={onBack}>На головну</button>
       <p className="build">тестова збірка · {build} · ukr</p>
     </div>
   );

@@ -353,9 +353,9 @@ function Game() {
         {fixture
           ? <button className="primary menu-primary" onClick={start}>До матчу</button>
           : <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>}
+        {/* «Розподіл виборів» — инструмент тестеров, живёт в Налаштування → Тестерам (19.09). */}
         <ul className="rows">
-          <li><a className="row" href="#/stats">Розподіл виборів</a></li>
-          <li><a className="row" href="#/">Титул</a></li>
+          <li><a className="row" href="#/">Головна</a></li>
         </ul>
       </div>
     );

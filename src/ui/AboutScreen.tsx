@@ -29,7 +29,7 @@ export function AboutScreen({ onBack }: Props) {
 
       <p className="about-refs">Натхнення: Disco Elysium, Football Manager і кожен матч, де ти знав, як треба, і зробив інакше.</p>
 
-      <button className="row row-back" onClick={onBack}>На титул</button>
+      <button className="row row-back" onClick={onBack}>На головну</button>
       <p className="build">{buildLabel()}. Тексти й код — прототип.</p>
     </div>
   );

@@ -13,6 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Цвет за системными полосами при edge-to-edge = --bg игры (styles.css). -->
+        <item name="android:windowBackground">#12141a</item>
     </style>
 
 

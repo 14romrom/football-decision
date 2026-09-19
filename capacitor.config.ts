@@ -7,6 +7,11 @@ const config: CapacitorConfig = {
   appName: 'Football Decision',
   webDir: 'dist',
   android: { allowMixedContent: false },
+  plugins: {
+    // Системные полосы: WebView отступает от них нативно (insetsHandling), фон полос — из темы
+    // Android (windowBackground), иконки светлые под тёмный фон игры.
+    SystemBars: { insetsHandling: 'native', style: 'DARK' },
+  },
 };
 
 export default config;

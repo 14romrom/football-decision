@@ -5,6 +5,7 @@ import { effectivePlayer, POINT_VALUE, xpToNextLevel, type Career } from '../eng
 import { VOICE_LABEL, voiceSees } from '../engine/voices';
 import { BALANCE } from '../engine/balance';
 import type { Season } from '../engine/season';
+import { dominantCareerVoice } from '../engine/week';
 import type { HistoryEntry } from '../telemetry/history';
 import { matchWord, plural } from './pluralize';
 import { Sticker } from './Sticker';
@@ -40,14 +41,6 @@ function wantsState(who: 'ego' | 'team', counts?: Record<VoiceKey, number>): { s
   return { state: 'heard', note: who === 'ego' ? 'сперечається з Командою' : 'сперечається з Его' };
 }
 
-function dominantCareerVoice(counts?: Record<VoiceKey, number>): VoiceKey | null {
-  if (!counts) return null;
-  const entries = Object.entries(counts) as [VoiceKey, number][];
-  const total = entries.reduce((s, [, n]) => s + n, 0);
-  if (total < BALANCE.voiceDominantMin) return null;
-  const [who, n] = entries.reduce((a, b) => (b[1] > a[1] ? b : a));
-  return n / total >= 0.3 ? who : null;
-}
 
 type Props = {
   player: Player;
@@ -69,7 +62,9 @@ export function PlayerCard({ player, career, season, history, club, onBack }: Pr
   const weakest = [...(Object.keys(effective.attrs) as Attribute[])]
     .sort((a, b) => effective.attrs[a] - effective.attrs[b]).slice(0, 2);
   const progress = career ? xpToNextLevel(career.xp) : null;
-  const dominant = dominantCareerVoice(career?.voiceCounts);
+  // Голос картки — тот же критерий, что у меню кар’єри, недели и дельты после матча (week.ts):
+  // своя доля ≥ 0.3 здесь расходилась с ними, и дельта говорила «Тіло тепер говорить з картки», а картка молчала.
+  const dominant = career ? dominantCareerVoice(career) : null;
 
   const sp = season?.player;
   const wdl = (history ?? []).reduce((acc, h) => { acc[h.result] += 1; return acc; }, { W: 0, D: 0, L: 0 });

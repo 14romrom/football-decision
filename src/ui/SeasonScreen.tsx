@@ -50,7 +50,7 @@ export function SeasonScreen({ season, clubName, teamGen, playerName, verdict, o
         </tbody>
       </table>
 
-      {/* Строка сезона персонажа — тем же протоколом, что итог матча (ResultScreen). */}
+      {/* Строка сезона персонажа — протоколом, как когда-то итог матча (теперь его заменила дошка, BoardScreen). */}
       <p className="stat-line">
         <span className="stat-name">{playerName}</span>
         <span><b>{p.matches}</b> матчів</span>

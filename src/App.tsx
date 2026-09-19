@@ -45,7 +45,9 @@ import { logDecision } from './telemetry/log';
 import { MatchScreen } from './ui/MatchScreen';
 import { EpisodeCard } from './ui/EpisodeCard';
 import { RollView } from './ui/RollView';
-import { ResultScreen } from './ui/ResultScreen';
+import { BoardScreen } from './ui/BoardScreen';
+import { DeltaScreen } from './ui/DeltaScreen';
+import { boardMoments, cardDelta } from './engine/board';
 import { StatsScreen } from './ui/StatsScreen';
 import { DebugPanel } from './ui/DebugPanel';
 
@@ -55,7 +57,9 @@ type Stage =
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number; link: boolean }
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
-  | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number }
+  // Після матчу (19.09): дошка аналітика → картка з дельтою → таблиця → стрічка → тиждень.
+  | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
+  | { k: 'delta'; summary: MatchSummary; before: Career; after: Career; leveledFrom: number; leveledTo: number; card: boolean }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
   | { k: 'posts'; posts: Post[]; leveledFrom: number; leveledTo: number }
   | { k: 'week'; days: WeekOffer[][]; news: Post[]; locked: boolean; leveledFrom: number; leveledTo: number }
@@ -63,7 +67,7 @@ type Stage =
 
 type Pending =
   | { kind: 'episode'; episode: Episode; minute: number; link: boolean }
-  | { kind: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number };
+  | { kind: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career };
 
 /** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
 const CHAIN_NEXT: Record<string, string> = {
@@ -152,7 +156,7 @@ function Game() {
       }
 
       pendingRef.current = {
-        kind: 'result', summary, xpEarned, leveledFrom: before.level, leveledTo: after.level,
+        kind: 'result', summary, xpEarned, leveledFrom: before.level, leveledTo: after.level, before, after,
       };
       setQueue([...lead, ...events]);
     }
@@ -278,7 +282,7 @@ function Game() {
         shownAtRef.current = performance.now();
         setStage({ k: 'episode', episode: p.episode, minute: p.minute, link: p.link });
       } else {
-        setStage({ k: 'result', summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo });
+        setStage({ k: 'result', summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo, before: p.before, after: p.after });
       }
       return;
     }
@@ -397,17 +401,45 @@ function Game() {
   }
 
   if (stage.k === 'result') {
+    const session = sessionRef.current!;
+    // Прошлый матч — стёртая надпись на доске; история уже содержит этот матч (recordResult в proceed).
+    const prev = readHistory().slice(-2, -1)[0];
     return (
       <>
-        <ResultScreen
+        <BoardScreen
           summary={stage.summary}
-          roster={sessionRef.current!.roster}
-          playerName={PLAYER.name}
-          xpEarned={stage.xpEarned}
-          onRestart={() => setStage({ k: 'season', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo })}
+          roster={session.roster}
+          moments={boardMoments(session.state, session.episodes)}
+          round={season.round}
+          prev={prev ? { us: prev.scoreUs, them: prev.scoreThem } : null}
+          onNext={() => setStage({ k: 'delta', summary: stage.summary, before: stage.before, after: stage.after, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo, card: false })}
         />
-        <DebugPanel session={sessionRef.current} />
+        <DebugPanel session={session} />
       </>
+    );
+  }
+
+  if (stage.k === 'delta') {
+    const session = sessionRef.current!;
+    // Полная картка — тут же, не через #/player: роут перемонтирует Game и терял бы этап.
+    if (stage.card) {
+      return (
+        <PlayerCard
+          player={PLAYER} career={stage.after} season={season} history={readHistory()} club={ROSTER.us.name.nom}
+          onBack={() => setStage({ ...stage, card: false })}
+        />
+      );
+    }
+    return (
+      <DeltaScreen
+        player={effectivePlayer(PLAYER, stage.after)}
+        career={stage.after}
+        season={season}
+        dominant={dominantCareerVoice(stage.after)}
+        delta={cardDelta(stage.before, stage.after, session.state, stage.summary, PLAYER, session.episodes, session.roster.them.name.nom)}
+        onOpenCard={() => setStage({ ...stage, card: true })}
+        onNext={() => setStage({ k: 'season', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo })}
+      />
     );
   }
 

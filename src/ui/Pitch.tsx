@@ -14,17 +14,18 @@ import { motionReduced } from '../telemetry/settings';
 // Всё через CSS transition по transform; при «Менше руху» — сразу конечные положения, дыхания нет.
 // Когда появится Phaser, сюда ляжет его сцена, а `zone` эпизода заменит FAMILY_SPOT.
 
-type Spot = [number, number];
+export type Spot = [number, number];
 type Pos = Record<string, Spot>;
 
-/** Где на поле происходит сцена: доля ширины (0 — свои ворота, 1 — чужие) и высоты. */
-const FAMILY_SPOT: Record<string, Spot> = {
+/** Где на поле происходит сцена: доля ширины (0 — свои ворота, 1 — чужие) и высоты.
+ *  Экспорт — для дошки аналітика (BoardScreen): магниты моментов стоят там же, где шла сцена. */
+export const FAMILY_SPOT: Record<string, Spot> = {
   edge_shot: [0.74, 0.5], one_on_one: [0.86, 0.5], finishing: [0.9, 0.48], penalty: [0.88, 0.5],
   free_kick: [0.72, 0.42], corner_attack: [0.96, 0.92], through: [0.62, 0.5], wing: [0.7, 0.14],
   counter: [0.5, 0.5], partner: [0.55, 0.5], press: [0.42, 0.5], duel: [0.34, 0.5], last_man: [0.2, 0.5],
   corner_defense: [0.04, 0.94], coach: [0.5, 0.97], referee: [0.5, 0.5], body: [0.5, 0.5],
 };
-const PHASE_SPOT: Record<NonNullable<Episode['phase']>, Spot> = { attack: [0.7, 0.5], defense: [0.3, 0.5], transition: [0.5, 0.5], setpiece: [0.8, 0.4] };
+export const PHASE_SPOT: Record<NonNullable<Episode['phase']>, Spot> = { attack: [0.7, 0.5], defense: [0.3, 0.5], transition: [0.5, 0.5], setpiece: [0.8, 0.4] };
 
 type Formation = { x: number; ys: number[] }[];
 const F433: Formation = [{ x: 0.05, ys: [0.5] }, { x: 0.2, ys: [0.2, 0.4, 0.6, 0.8] }, { x: 0.38, ys: [0.3, 0.5, 0.7] }, { x: 0.6, ys: [0.15, 0.5, 0.85] }];

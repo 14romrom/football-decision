@@ -155,17 +155,55 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .stat-name { color: var(--ink); font-weight: 600; }
 .stat-line .zero, .stat-line .zero b { color: var(--faint); }
 
-.recap p { font-size: 16px; }
-.recap .recap-last { color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
-
-.ratings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 6px; }
-.rating { text-align: center; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
-.rating-value { display: block; font-family: var(--font-mono); font-size: 30px; font-weight: 500; }
-.rating-label { font-size: 12px; color: var(--muted); }
-.rating.coach .rating-value { color: var(--accent); }
-.rating.fan .rating-value { color: var(--hype); }
-.gap-note { text-align: center; color: var(--muted); font-size: 14px; }
 .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+
+/* ——— дошка аналітика (19.09, кадр 1Б «магнітна дошка») ———
+   Серо-белая поверхность с бликом и алюминиевой рамкой — холодная против тёплой програмки.
+   Маркер — Neucha: синий разбор, красный — их, чёрный — поле и числа. Магниты: синие наши,
+   зелёный — гол, красные — момент к пропущенному и их голы у наших ворот. Стёртый прошлый счёт —
+   едва угадывается. Маркер и губка на полке, записка «з трибун» приклеена. */
+.board-screen { padding-top: 8px; }
+.wb { position: relative; display: flex; flex-direction: column; padding: 16px 16px 34px; color: #1b1a17; border-radius: 3px;
+  background: linear-gradient(135deg, #eef0f0 0%, #e2e5e6 55%, #eaecec 100%);
+  box-shadow: inset 0 0 0 6px #b9bcbd, inset 0 0 0 7px #8f9394, 0 10px 28px rgba(0,0,0,.6); }
+.wb::before { content: ''; position: absolute; left: 60px; top: 90px; width: 190px; height: 70px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(43,74,138,.07), transparent 70%); filter: blur(4px); pointer-events: none; }
+.wb-ghost { position: absolute; left: 118px; top: 96px; font-family: 'Neucha', var(--font-caps); font-size: 40px; color: rgba(43,74,138,.055); filter: blur(1.2px); transform: rotate(-4deg); letter-spacing: .06em; pointer-events: none; }
+.mk { font-family: 'Neucha', var(--font-caps); font-weight: 400; text-transform: uppercase; letter-spacing: .03em; color: #2b4a8a; }
+.mk .red, .mk.red { color: #b23a2a; } .mk.black, .mk .black { color: #23252a; }
+.wb-top { display: flex; justify-content: space-between; font-size: 15px; margin: 4px 4px 0; }
+.wb h1 { margin: 2px 84px 8px 4px; font-size: 30px; line-height: 1.02; font-weight: 400; }
+.wb-pitch { display: block; width: 100%; height: auto; margin-top: 4px; }
+.wb-lines { fill: none; stroke: #23252a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mag { stroke: rgba(0,0,0,.25); stroke-width: 1; }
+.mag.us { fill: #2b4a8a; } .mag.them { fill: #b23a2a; } .mag.goal { fill: #1f7a4a; }
+.mag-n { font-family: 'Neucha', var(--font-caps); font-size: 10px; fill: #fff; text-anchor: middle; }
+.wb-dir { font-family: 'Neucha', var(--font-caps); font-size: 10px; fill: #23252a; letter-spacing: 1px; }
+.wb-notes { margin: 12px 4px 0; padding: 0; list-style: none; font-size: 19px; line-height: 1.3; }
+.wb-notes li { display: grid; grid-template-columns: 3rem 1fr; gap: 8px; padding: 4px 0; }
+.wb-rating { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 22px 4px 0; }
+.wb-rating .big { font-size: 64px; line-height: .95; } .wb-rating .big small { display: block; font-size: 14px; letter-spacing: .06em; margin-top: 4px; }
+.wb-rating .nums { text-align: right; font-size: 17px; line-height: 1.35; display: grid; }
+.wb-sticky { position: absolute; top: 14px; right: 14px; transform: rotate(-3deg); background: #f2d98a; color: #3a2f10; padding: 6px 9px; font-family: 'Neucha', var(--font-caps); font-size: 14px; letter-spacing: .04em; box-shadow: 0 3px 8px rgba(0,0,0,.25); }
+.wb-sticky b { display: block; font-size: 26px; font-weight: 400; line-height: 1; }
+.wb-tray { position: absolute; left: 6px; right: 6px; bottom: 6px; height: 14px; background: #b9bcbd; border-radius: 0 0 3px 3px; }
+.wb-pen { position: absolute; left: 48px; bottom: 9px; width: 70px; height: 7px; background: #23252a; border-radius: 3px; }
+.wb-pen::after { content: ''; position: absolute; right: -8px; top: 1px; width: 8px; height: 5px; background: #2b4a8a; border-radius: 0 2px 2px 0; }
+.wb-sponge { position: absolute; right: 44px; bottom: 8px; width: 40px; height: 12px; background: #d8b45a; border-radius: 2px; box-shadow: inset 0 -4px 0 #8f9394; }
+
+/* ——— картка з дельтою (19.09, кадр 2) — рубрики в структуре програмки (.conditions) ——— */
+.delta-screen { padding-top: 8px; }
+.delta-screen h2 { margin: 20px 0 8px; }
+.delta { margin: 0; padding: 0; }
+.delta > div { display: grid; grid-template-columns: 5.4rem 1fr; gap: 0.6rem; padding: 0.6rem 0; border-top: 1px solid rgba(255,255,255,0.08); }
+.delta dt { opacity: 0.55; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; padding-top: 0.15rem; }
+.delta dd { margin: 0; line-height: 1.45; }
+.delta-voice, .delta-trace, .delta dd > .muted { display: block; }
+.delta .vc { font-family: var(--font-caps); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; }
+.delta .voice-ego { color: var(--v-ego); } .delta .voice-team { color: var(--v-team); } .delta .voice-vision { color: var(--v-vision); }
+.delta .voice-instinct { color: var(--v-instinct); } .delta .voice-body { color: var(--v-body); } .delta .voice-composure { color: var(--v-composure); }
+.delta .up { color: var(--accent); } .delta .down { color: var(--bad-soft); }
+.delta-bar { display: inline-flex; gap: 2px; vertical-align: middle; margin-left: 6px; } .delta-bar i { width: 6px; height: 9px; background: currentColor; opacity: .85; }
+.delta-hint { margin-top: 16px; font-size: 13px; }
 
 /* ——— /stats ——— */
 .stats-screen { padding-top: 20px; }

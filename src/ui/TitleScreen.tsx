@@ -8,7 +8,7 @@ import { readSlotSummary, type SlotSummary } from '../telemetry/saves';
 import { activeSlot } from '../telemetry/slots';
 import { rememberTitleLine, titleSeen } from '../telemetry/settings';
 import { Logo } from './Logo';
-import { VOICES } from './PlayerCard';
+import { VOICES } from './voices-text';
 
 // Титульный экран (19.09, макет «Inside the Box — титул»). Картинка — бисиклета в пустоту, так
 // Реєса видит Его; реплика голоса под названием её осаживает. Один primary: «Продовжити» — под ним

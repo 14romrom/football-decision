@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES, rosterFor } from './content';
 import { fillNamesDeep } from './engine/names';
-import { applyWeek, coachLocksCity, finishWeek, planWeek, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
+import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
 import { generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
@@ -27,6 +27,8 @@ import { readSeason, writeSeason } from './telemetry/season-storage';
 import { activeSlot } from './telemetry/slots';
 import { applySettings } from './telemetry/settings';
 import { TitleScreen } from './ui/TitleScreen';
+import { Sticker } from './ui/Sticker';
+import { plural } from './ui/pluralize';
 import { SlotsScreen } from './ui/SlotsScreen';
 import { SettingsScreen } from './ui/SettingsScreen';
 import { AboutScreen } from './ui/AboutScreen';
@@ -330,29 +332,28 @@ function Game() {
     const fixture = ourFixture(season);
     const row = ourRow(season);
     return (
+      // Меню кар’єри (19.09, макет «Картка гравця»): компактный стикер сверху — тап открывает картку;
+      // абзац-объяснение ушёл, остались тур, соперник и «До матчу».
       <div className="menu">
-        <h1>Сезон {season.number}</h1>
-        <p>
-          Ти — {PLAYER.name}, {PLAYER.position} «{ROSTER.us.name.gen}».
-          Дев’ять моментів за матч, і в кожному треба обирати. Переграти не можна.
-        </p>
+        <Sticker compact player={effectivePlayer(PLAYER, career)} career={career} season={season} dominant={dominantCareerVoice(career)} onOpen={() => { location.hash = '#/player'; }} />
         {fixture ? (
-          <p className="season-note">
-            Тур {fixture.round + 1} з {SEASON_ROUNDS}: «{clubName(fixture.opponentKey)}», {fixture.venue === 'home' ? 'вдома' : 'на виїзді'}.
-            {season.round > 0 && ` Зараз ${row.position}-е місце, ${row.points} оч.`}
+          <p className="season-line menu-fixture">
+            <b>Тур {fixture.round + 1} з {SEASON_ROUNDS}.</b> «{clubName(fixture.opponentKey)}», {fixture.venue === 'home' ? 'вдома' : 'на виїзді'}.
+            {season.round > 0 && ` ${row.position}-е місце, ${row.points} ${plural(row.points, 'очко', 'очки', 'очок')}.`}
           </p>
         ) : (
-          <p className="season-note">Сезон завершено.</p>
+          <p className="season-line menu-fixture"><b>Сезон {season.number} завершено.</b></p>
         )}
         <p className="muted">
           Тренер і трибуни хочуть від тебе різного. Сили майже не відновлюються — хіба що в перерві.
         </p>
         {fixture
-          ? <button className="primary" onClick={start}>До матчу</button>
-          : <button className="primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>}
-        <a className="link" href="#/player">Картка гравця</a>
-        <a className="link" href="#/stats">Розподіл виборів</a>
-        <a className="link" href="#/">Титул</a>
+          ? <button className="primary menu-primary" onClick={start}>До матчу</button>
+          : <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>}
+        <ul className="rows">
+          <li><a className="row" href="#/stats">Розподіл виборів</a></li>
+          <li><a className="row" href="#/">Титул</a></li>
+        </ul>
       </div>
     );
   }

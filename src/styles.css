@@ -64,8 +64,6 @@ button.primary { background: var(--cream); color: #141413; border-color: var(--c
 button.link { background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
 
 /* ——— меню ——— */
-.menu { padding-top: 60px; }
-.menu button { margin: 12px 12px 12px 0; }
 
 /* ——— шапка матча ——— */
 .scoreboard {
@@ -705,3 +703,40 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .idf dt { color: var(--muted); } .idf dd { margin: 0; font-family: var(--font-mono); font-size: 12.5px; }
 .idm { display: block; margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--line-2); font-style: italic; color: var(--muted); font-size: 13.5px; line-height: 1.45; }
 .idc.empty .idm { border-top-style: dashed; }
+
+/* ——— стикер персонажа (ui/Sticker.tsx, макет «Картка гравця: було / стало», 19.09) ——— */
+.stk { border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel); padding: 12px 12px 14px; margin-bottom: 1rem; }
+.stk-frame { position: relative; display: block; margin: 0 auto; width: 210px; aspect-ratio: 3 / 4; border: 1px solid #4a463c; box-shadow: 0 0 0 4px var(--panel-2), 0 0 0 5px var(--line-2); overflow: hidden; }
+.stk-frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.stk-frame::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,11,13,0) 60%, rgba(11,11,13,.55) 100%); }
+/* Чёрная плашка с именем — как плашка архетипа в DE; наезжает на рамку. */
+.stk-band { display: block; margin: -18px auto 0; position: relative; width: 240px; max-width: 100%; background: var(--bg); color: var(--cream); font-family: var(--font-caps); font-weight: 600; font-size: 22px; letter-spacing: .08em; text-transform: uppercase; text-align: center; padding: 6px 12px 5px; border: 1px solid var(--line-2); }
+.stk-role { margin: 8px 0 0; text-align: center; color: var(--muted); font-size: 13.5px; }
+.stk-motto { margin: 8px 0 0; text-align: center; font-size: 14px; }
+.stk-motto b { font-family: var(--font-caps); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; font-size: 12.5px; }
+.stk-motto.voice-ego b { color: var(--v-ego); } .stk-motto.voice-team b { color: var(--v-team); } .stk-motto.voice-vision b { color: var(--v-vision); }
+.stk-motto.voice-instinct b { color: var(--v-instinct); } .stk-motto.voice-body b { color: var(--v-body); } .stk-motto.voice-composure b { color: var(--v-composure); }
+/* Четыре бокса — четыре атрибутных голоса; заливка у тех, что «бачать» (voiceSees). */
+.stk-boxes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 8px 0; }
+.stk-box { text-align: center; display: grid; gap: 4px; }
+.stk-box b { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 30px; line-height: 1.15; color: var(--ink); padding: 4px 0; border: 1px solid transparent; }
+.stk-box.on b { background: var(--cream); color: #141413; }
+.stk-box i { display: block; font-style: normal; font-family: var(--font-caps); font-weight: 500; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.stk-box.voice-vision i { color: var(--v-vision); } .stk-box.voice-instinct i { color: var(--v-instinct); } .stk-box.voice-body i { color: var(--v-body); } .stk-box.voice-composure i { color: var(--v-composure); }
+.stk-sig { margin: 12px 0 0; text-align: center; font-family: var(--font-caps); font-weight: 500; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; }
+.stk-sig.voice-ego { color: var(--v-ego); } .stk-sig.voice-team { color: var(--v-team); }
+.stk-sig small { display: block; font-family: var(--font-text); font-size: 12.5px; letter-spacing: 0; text-transform: none; color: var(--muted); font-weight: 400; margin-top: 2px; }
+.stk-fields { margin: 12px 0 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; text-align: center; border-top: 1px solid var(--line-2); padding-top: 10px; }
+.stk-fields dt { font-size: 12px; color: var(--muted); } .stk-fields dd { margin: 0; font-family: var(--font-mono); font-size: 14px; color: var(--ink); }
+/* Компактный — в меню кар’єри, кнопка целиком. */
+.stk-compact { display: grid; grid-template-columns: 78px 1fr; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 10px 12px; margin: 0; color: var(--ink); font: inherit; }
+.stk-compact:active { background: var(--panel-2); }
+.stk-compact:focus-visible { outline: none; box-shadow: inset 3px 0 0 var(--ink); }
+.stk-compact .stk-frame { width: 78px; margin: 0; box-shadow: none; }
+.stk-compact .stk-band { margin: 0; width: auto; text-align: left; font-size: 17px; padding: 3px 8px 2px; }
+.stk-compact .stk-boxes { grid-template-columns: repeat(4, 34px); gap: 6px; margin: 8px 0 0; }
+.stk-compact .stk-box b { font-size: 18px; padding: 2px 0; } .stk-compact .stk-box i { font-size: 9.5px; }
+.menu { padding-top: 24px; }
+.menu-fixture { margin: 18px 0 6px; }
+.menu-primary { display: block; width: 100%; margin: 14px 0 0; padding: 13px; font-size: 15px; }
+.menu .rows a.row { text-decoration: none; display: flex; align-items: center; }

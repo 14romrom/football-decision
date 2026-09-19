@@ -4,30 +4,21 @@ import { signatureAttrs } from '../engine/conditions';
 import { effectivePlayer, POINT_VALUE, xpToNextLevel, type Career } from '../engine/career';
 import { VOICE_LABEL, voiceSees } from '../engine/voices';
 import { BALANCE } from '../engine/balance';
-import { ourRow, SEASON_ROUNDS, type Season } from '../engine/season';
+import type { Season } from '../engine/season';
 import type { HistoryEntry } from '../telemetry/history';
 import { matchWord, plural } from './pluralize';
+import { Sticker } from './Sticker';
 
-// Лист персонажа — удостоверение по Disco Elysium: шапка с данными, потом голоси
+// Лист персонажа — по Disco Elysium: сверху стикер (ui/Sticker.tsx: портрет, плашка, боксы голосов), потом голоси
 // (кто в голове говорит, кто бачить, кто мовчить — это и есть характер), и уже потом
 // футбольные метрики по разделам: сезон, кар’єра, атрибуты в трёх группах.
 // career/season/history — необязательны: без них карточка показывает старт.
 
-const POSITION_LABEL: Record<Player['position'], string> = {
-  AM: 'атакувальний півзахисник', CM: 'центральний півзахисник', ST: 'нападник', LW: 'лівий вінгер',
-};
-
 /** Что стоит за каждым голосом и его девиз — строка внизу удостоверения, если голос
  *  доминирует в карьере («a piece of the grey sky»). Атрибутные голоса читают силу из
  *  атрибутов (voices.ts), Его и Команда — из того, кого игрок слушал. */
-export const VOICES: { who: VoiceKey; attrs: Attribute[]; about: string; motto: string }[] = [
-  { who: 'ego', attrs: [], about: 'Хоче м’яч. Хоче гол. Хоче, щоб бачили.', motto: 'Ти для цього тут.' },
-  { who: 'team', attrs: [], about: 'Знає, де партнер. Іноді — раніше за тебе.', motto: 'Крім тебе — нікого. І нікого, крім них.' },
-  { who: 'vision', attrs: ['vision', 'positioning'], about: 'Поле згори. Партнер відкритий за секунду до того, як відкриється.', motto: 'Не вискакуй. Подивись.' },
-  { who: 'instinct', attrs: ['dribbling', 'first_touch'], about: 'Стопи, плечі, п’яти суперника. Знає, куди він піде, раніше за нього.', motto: 'Не думай. Він уже впав.' },
-  { who: 'body', attrs: ['pace', 'strength'], about: 'Вага, ноги, дихання. Своє і чуже.', motto: 'Наступний стик — твій.' },
-  { who: 'composure', attrs: ['composure'], about: 'Півсекунди, яких у інших немає.', motto: 'Є час. Завжди є час.' },
-];
+export { VOICES } from './voices-text';
+import { VOICES } from './voices-text';
 
 type VoiceState = 'sees' | 'heard' | 'silent';
 const STATE_LABEL: Record<VoiceState, string> = { sees: 'бачить', heard: 'чутно', silent: 'мовчить' };
@@ -79,27 +70,13 @@ export function PlayerCard({ player, career, season, history, club, onBack }: Pr
     .sort((a, b) => effective.attrs[a] - effective.attrs[b]).slice(0, 2);
   const progress = career ? xpToNextLevel(career.xp) : null;
   const dominant = dominantCareerVoice(career?.voiceCounts);
-  const motto = dominant ? VOICES.find((v) => v.who === dominant)!.motto : null;
 
-  const row = season && season.round > 0 ? ourRow(season) : null;
   const sp = season?.player;
   const wdl = (history ?? []).reduce((acc, h) => { acc[h.result] += 1; return acc; }, { W: 0, D: 0, L: 0 });
 
   return (
     <div className="player-card">
-      <header className="id-card">
-        <div className="id-name">
-          <h1>{player.name}</h1>
-          <p className="muted">{POSITION_LABEL[player.position]}{club ? ` · «${club}»` : ''}</p>
-        </div>
-        <dl className="id-fields">
-          {levels && <><dt>Рівень</dt><dd>{career?.level ?? 1}</dd></>}
-          <dt>Матчів</dt><dd>{career?.matchesPlayed ?? 0}</dd>
-          <dt>Сезон</dt><dd>{season ? `${season.number}, тур ${season.round} з ${SEASON_ROUNDS}` : '—'}</dd>
-          <dt>Місце</dt><dd>{row ? `${row.position}-е, ${row.points} ${plural(row.points, 'очко', 'очки', 'очок')}` : '—'}</dd>
-        </dl>
-        {motto && <p className="id-motto">{VOICE_LABEL[dominant!]}: «{motto}»</p>}
-      </header>
+      <Sticker player={effective} career={career} season={season} club={club} dominant={dominant} />
 
       <section className="voices-block">
         <h2>Голоси</h2>

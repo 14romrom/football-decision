@@ -1,5 +1,5 @@
 import { VOICE_LABEL } from '../engine/voices';
-import { VOICES } from './PlayerCard';
+import { VOICES } from './voices-text';
 import { buildLabel } from './TitleScreen';
 
 // Про гру (19.09): версия, одна фраза о том, что это за игра, и голоса представляются сами —

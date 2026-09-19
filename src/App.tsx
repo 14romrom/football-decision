@@ -63,7 +63,7 @@ type Stage =
   | { k: 'delta'; summary: MatchSummary; before: Career; after: Career; leveledFrom: number; leveledTo: number; card: boolean }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
   | { k: 'posts'; posts: Post[]; leveledFrom: number; leveledTo: number }
-  | { k: 'week'; days: WeekOffer[][]; news: Post[]; locked: boolean; leveledFrom: number; leveledTo: number }
+  | { k: 'week'; days: WeekOffer[][]; locked: boolean; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
@@ -207,7 +207,7 @@ function Game() {
   }, [setSeasonBoth]);
 
   /** Стрічка по текущему состоянию сезона: посты с именами следующего соперника. quota — сколько
-   *  и каких групп; seedSalt — чтобы стрічка після таблиці и пости між днями не совпадали. */
+   *  и каких групп; seedSalt — соль сида на случай второго вызова за тур. */
   const buildPosts = useCallback((quota: Record<PostGroup, number>, seedSalt: number): Post[] => {
     const sn = seasonRef.current;
     const fixture = isSeasonOver(sn) ? null : ourFixture(sn);
@@ -249,8 +249,7 @@ function Game() {
 
   const afterPosts = useCallback((leveledFrom: number, leveledTo: number) => {
     const w = pendingWeek();
-    // Пости між днями — тільки світові: свій тур уже обговорили у стрічці.
-    if (w) setStage({ k: 'week', days: w.days, news: buildPosts({ self: 0, league: 0, world: BALANCE.week.days - 1, cross: 0, meta: 0 }, 11), locked: w.locked, leveledFrom, leveledTo });
+    if (w) setStage({ k: 'week', days: w.days, locked: w.locked, leveledFrom, leveledTo });
     else setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
   }, [pendingWeek, buildPosts]);
 
@@ -345,7 +344,7 @@ function Game() {
   useEffect(() => {
     if (stage.k !== 'menu') return;
     const w = pendingWeek();
-    if (w) setStage({ k: 'week', days: w.days, news: buildPosts({ self: 0, league: 0, world: BALANCE.week.days - 1, cross: 0, meta: 0 }, 11), locked: w.locked, leveledFrom: career.level, leveledTo: career.level });
+    if (w) setStage({ k: 'week', days: w.days, locked: w.locked, leveledFrom: career.level, leveledTo: career.level });
   }, [stage.k, career.level, pendingWeek, buildPosts]);
 
   if (stage.k === 'menu' && pendingWeek()) return null;
@@ -493,7 +492,6 @@ function Game() {
         days={fillNamesDeep(stage.days, roster)}
         scenes={fillNamesDeep(WEEK_SCENES, roster)}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
-        news={stage.news}
         locked={stage.locked}
         onFinish={(picks: WeekPick[]) => {
           // Применяем по исходным (без имён) делам и сценам: эффекты те же, id те же.

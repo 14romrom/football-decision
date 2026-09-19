@@ -3,7 +3,6 @@ import type { WeekOffer, WeekPick, WeekScene, WeekSceneOption } from '../engine/
 import { VOICE_ATTRS, sceneOptionsFor } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
 import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from '../engine/types';
-import { agoLabel, countLabel, type Post } from '../engine/posts';
 
 // Тиждень v3: три дні, у кожному три справи — одна на день. Дело показывает исход (уже выпавший,
 // без кубика на экране), исход может вести в сцену-продолжение (одна на неделю), между днями —
@@ -17,8 +16,6 @@ type Props = {
   scenes: WeekScene[];
   /** Голос бачить между матчами — открывает варианты сцены с подсказкой. */
   sees: (who: VoiceKey) => boolean;
-  /** Пости між днями: news[d] — после дня d. */
-  news: Post[];
   /** Тренер закрив місто — почему предложений меньше. */
   locked: boolean;
   onFinish: (picks: WeekPick[]) => string[];
@@ -29,10 +26,9 @@ type Phase =
   | { p: 'pick' }
   | { p: 'outcome'; offer: WeekOffer }
   | { p: 'scene'; offer: WeekOffer; scene: WeekScene; chosen?: WeekSceneOption }
-  | { p: 'news' }
   | { p: 'summary'; tags: string[] };
 
-export function WeekScreen({ days, scenes, sees, news, locked, onFinish, onNext }: Props) {
+export function WeekScreen({ days, scenes, sees, locked, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
   const [phase, setPhase] = useState<Phase>({ p: 'pick' });
   const [picks, setPicks] = useState<WeekPick[]>([]);
@@ -44,10 +40,10 @@ export function WeekScreen({ days, scenes, sees, news, locked, onFinish, onNext 
 
   const finish = (all: WeekPick[]) => setPhase({ p: 'summary', tags: onFinish(all) });
 
-  /** Дальше после дела (или после сцены): пост між днями, следующий день или подсумок. */
+  /** Дальше после дела (или после сцены): следующий день или подсумок. Пост «тим часом у стрічці»
+   *  між днями убран (19.09, пользователь): экран с одной новостью — лишний шаг. */
   const advance = (all: WeekPick[]) => {
     if (last) { finish(all); return; }
-    if (news[day]) { setPhase({ p: 'news' }); return; }
     nextDay();
   };
   const nextDay = () => { setDay(day + 1); setSelected(null); setTrainAttr(null); setPhase({ p: 'pick' }); };
@@ -97,28 +93,6 @@ export function WeekScreen({ days, scenes, sees, news, locked, onFinish, onNext 
     );
   }
 
-  if (phase.p === 'news') {
-    const p = news[day];
-    return (
-      <div className="result week">
-        {head}
-        <h1>Тим часом у стрічці</h1>
-        <div className="posts-list">
-          <article className={`post post-${p.account.kind} kind-${p.kind}`}>
-            <div className="post-head">
-              <span className={`avatar avatar-${p.account.kind}`}>{p.account.name.charAt(0)}</span>
-              <b className="post-name">{p.account.name}</b>
-              {p.account.kind !== 'fan' && <span className="verified">✓</span>}
-              <span className="post-handle">{p.account.handle} · {agoLabel(p.hoursAgo)}</span>
-            </div>
-            <p className="post-text">{p.text}</p>
-            <div className="post-foot"><span>♡ {countLabel(p.likes)}</span><span>⇄ {countLabel(p.reposts)}</span></div>
-          </article>
-        </div>
-        <button className="primary" onClick={nextDay}>Наступний день</button>
-      </div>
-    );
-  }
 
   if (phase.p === 'outcome') {
     const { offer } = phase;

@@ -33,7 +33,12 @@ jobs:
           sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/" android/app/build.gradle
           sed -i "s/versionName \"1.0\"/versionName \"0.${{ github.run_number }}+$(git rev-parse --short HEAD)\"/" android/app/build.gradle
           grep -n "version" android/app/build.gradle
-      - run: chmod +x android/gradlew && cd android && ./gradlew assembleDebug --no-daemon
+      # Логи прогона без входа в GitHub не видны — ошибка Gradle дублируется в Summary прогона.
+      - name: gradle assembleDebug
+        run: |
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleDebug --no-daemon 2>&1 | tee ../build.log; status=${PIPESTATUS[0]}; cd ..
+          if [ "$status" -ne 0 ]; then { echo '### Gradle failed'; echo '```'; grep -n -i "error\|what went wrong\|FAILURE" -A6 build.log | tail -120; echo '```'; } >> "$GITHUB_STEP_SUMMARY"; exit "$status"; fi
       - run: cp android/app/build/outputs/apk/debug/app-debug.apk football-decision-debug.apk
       - uses: actions/upload-artifact@v4
         with: { name: football-decision-debug, path: football-decision-debug.apk }

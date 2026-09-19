@@ -23,6 +23,8 @@ type Props = {
   /** Цепочка сработала: куда ведёт сцена — подпись на кнопке. */
   continues?: string;
   onNext: () => void;
+  /** Штамп вердикта появился — поле разыгрывает розв’язку (App → Pitch). */
+  onVerdict?: () => void;
 };
 
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
@@ -50,7 +52,7 @@ function reel(final: number, stopAt: number, set: (v: number) => void): () => vo
 /** Вибрация по вердикту (Налаштування → «Вібрація на штампі»). */
 const HAPTIC: Record<string, number | number[]> = { clean: 30, cost: [20, 40, 20], fail: 60, badFail: [80, 40, 80] };
 
-export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext }: Props) {
+export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext, onVerdict }: Props) {
   const mods = useMemo<ModLine[]>(() => res.mods.filter((m, i) => i === 0 || m.value !== 0), [res]);
   // Расписание: 0 — крутятся оба, 1 — первый встал, 2 — второй встал, 3 — сумма,
   // 4..4+n — чипы, потом вердикт, потом исход.
@@ -69,7 +71,13 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   const [spin, setSpin] = useState<[number, number]>([0, 0]);
 
   useEffect(() => { setStage(instant ? 2 : 0); }, [option.id, res.roll, instant]);
-  useEffect(() => { if (stage === S_VERDICT) vibrate(HAPTIC[res.tier] ?? 30); }, [stage, S_VERDICT, res.tier]);
+  // Критический успех (две десятки) — свой штамп, своя вибрация; движок уже даёт ему крит-исход (pickOutcome).
+  const critGood = res.critical === 'success';
+  useEffect(() => {
+    if (stage < S_VERDICT) return;
+    if (stage === S_VERDICT || stage === LAST) { vibrate(critGood ? [30, 40, 30, 40, 70] : (HAPTIC[res.tier] ?? 30)); onVerdict?.(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage >= S_VERDICT]);
   useEffect(() => {
     if (stage >= LAST) return;
     const t = setTimeout(() => setStage((s) => s + 1), schedule[stage + 1] - schedule[stage]);
@@ -100,7 +108,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
       </div>
 
       <div className="check-card">
-        <div className={`dice-stage ${critBad ? 'crit-bad' : ''}`}>
+        <div className={`dice-stage ${critBad ? 'crit-bad' : ''} ${critGood && stage >= 2 ? 'crit-good' : ''}`}>
           <i className={`die ${stage >= 1 ? 'stopped' : 'spinning'}`}>{stage >= 1 ? res.dice[0] : spin[0] || '·'}</i>
           <span className={`dice-sum ${stage >= 3 ? 'shown' : ''}`}>{stage >= 3 ? res.rawRoll : ''}</span>
           <i className={`die ${stage >= 2 ? 'stopped' : 'spinning'}`}>{stage >= 2 ? res.dice[1] : spin[1] || '·'}</i>
@@ -132,7 +140,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         )}
 
         {stage >= S_VERDICT && (
-          <div className={`verdict tier-${res.tier}`}>{TIER_LABEL[res.tier]}</div>
+          <div className={`verdict tier-${res.tier} ${critGood ? 'crit' : ''}`}>{critGood ? 'Критичний успіх' : TIER_LABEL[res.tier]}</div>
         )}
 
         {stage >= LAST && (

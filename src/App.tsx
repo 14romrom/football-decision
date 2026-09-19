@@ -25,6 +25,7 @@ import {
 import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
 import { activeSlot } from './telemetry/slots';
+import { finaleFor, type FinaleKind } from './engine/finale';
 import { applySettings } from './telemetry/settings';
 import { TitleScreen } from './ui/TitleScreen';
 import { Sticker } from './ui/Sticker';
@@ -96,6 +97,8 @@ function Game() {
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   const [shown, setShown] = useState<TimelineEvent[]>([]);
+  // Розв’язка на поле: вид по исходу, id — номер броска; ставится со штампом вердикта.
+  const [finale, setFinale] = useState<{ kind: FinaleKind; id: number } | null>(null);
   const [queue, setQueue] = useState<TimelineEvent[]>([]);
 
   const proceed = useCallback((lead: TimelineEvent[] = []) => {
@@ -468,6 +471,7 @@ function Game() {
         flagRules={session.flagRules}
         tour={seasonRef.current.round + 1}
         hideDiceZone={stage.k === 'roll'}
+        finale={finale}
       >
         {stage.k === 'episode' && (
           <EpisodeCard
@@ -490,6 +494,7 @@ function Game() {
             badges={stage.events.find((e) => e.kind === 'episode')?.badges}
             continues={stage.continues}
             onNext={afterRoll}
+            onVerdict={() => setFinale((f) => ({ kind: finaleFor(stage.episode, stage.option, stage.res, stage.events), id: (f?.id ?? 0) + 1 }))}
           />
         )}
       </MatchScreen>

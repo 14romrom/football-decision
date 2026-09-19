@@ -783,3 +783,24 @@ html.reduce-motion .pitch-dot { transition: none; }
 /* 5. Чипы «на кубик» — словом, без иконок. */
 .chip-word { font-style: normal; color: var(--ink); }
 .chip.pos { color: var(--muted); } .chip.neg { color: var(--muted); }
+
+/* ——— поле: три слоя движения (Pitch.tsx, 19.09) ——— */
+.pitch-dot { transition-property: transform; transition-timing-function: cubic-bezier(.2,.7,.2,1); }
+.pitch-ball { transition-timing-function: cubic-bezier(.3,.1,.3,1); }
+.pitch-them .pitch-dot.lit { fill: #7fcf9a; } .pitch-us .pitch-dot.lit { fill: var(--ink); }
+.pitch-them .pitch-dot, .pitch-us .pitch-dot { transition-property: transform, fill; }
+.pitch-self.pulse { animation: pitchPulse .5s ease-out; transform-box: fill-box; transform-origin: center; }
+@keyframes pitchPulse { 0% { transform: scale(1); } 40% { transform: scale(1.45); } 100% { transform: scale(1); } }
+.pitch-net { fill: none; stroke: #2a3a2c; stroke-width: 1.2; transition: stroke .25s ease, stroke-width .25s ease; }
+.pitch-net.hit { stroke: var(--ink); stroke-width: 2; }
+.pitch-flash { opacity: 0; } .pitch-flash.us { fill: var(--accent); } .pitch-flash.them { fill: var(--bad-soft); }
+.pitch-flash.on { animation: pitchFlash .9s ease-out; }
+@keyframes pitchFlash { 0% { opacity: .35; } 100% { opacity: 0; } }
+.pitch-card { fill: var(--v-instinct); animation: cardUp .5s ease-out; } .pitch-card.red { fill: var(--bad); }
+@keyframes cardUp { from { opacity: 0; transform: translate(0, 12px); } to { opacity: 1; transform: none; } }
+html.reduce-motion .pitch-self.pulse, html.reduce-motion .pitch-flash.on, html.reduce-motion .pitch-card { animation: none; }
+html.reduce-motion .pitch-flash.on { opacity: .2; }
+@media (prefers-reduced-motion: reduce) { .pitch-self.pulse, .pitch-flash.on, .pitch-card { animation: none; } .pitch-flash.on { opacity: .2; } }
+/* Критический успех — две десятки: золотые кубики и свой штамп. */
+.dice-stage.crit-good .die.stopped { border-color: var(--v-instinct); color: var(--v-instinct); }
+.verdict.crit { color: var(--v-instinct); font-size: 26px; letter-spacing: .12em; }

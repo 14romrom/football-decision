@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { Episode, FlagRule, MatchState, ModLine, Player, TimelineEvent } from '../engine/types';
 import type { Roster } from '../engine/names';
 import type { MatchConditions } from '../engine/conditions';
+import type { FinaleKind } from '../engine/finale';
 import { computeContext } from '../engine/context';
 import { availableOptions, sceneInsights } from '../engine/match';
 import { VOICE_LABEL } from '../engine/voices';
@@ -42,7 +43,7 @@ function Meter({ label, value, tone }: { label: string; value: number; tone?: st
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, tour, hideDiceZone, children,
+  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, tour, hideDiceZone, finale, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -57,6 +58,8 @@ export function MatchScreen({
   tour?: number;
   /** На экране броска зона «на кубик» прячется: она про следующее решение. */
   hideDiceZone?: boolean;
+  /** Розв’язка на поле — приходит со штампом вердикта (App → RollView.onVerdict). */
+  finale?: { kind: FinaleKind; id: number } | null;
   children: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -81,7 +84,7 @@ export function MatchScreen({
       </aside>
 
       <div className="pitch-wrap">
-        <Pitch episode={episode} selfName={roster.us.players.self.nom} strength={conditions.strength} />
+        <Pitch episode={episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} />
         <div className="score-overlay">
           <span className="score-line">{state.minute}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
           <span className="meters">

@@ -8,7 +8,7 @@ import { cleanTarget } from '../engine/balance';
 
 // Сцена как диалог (макет А2, 19.09): сетап — строка ленты, голоса говорят до вариантов
 // («ЕГО — …», как в Disco Elysium), варианты — нумерованный список с одной скобкой
-// «[форма ціль]». Атрибут, бонус и факторы — не на кнопке: они на экране броска и в зоне
+// «[форма ціль]» (дефис после номера убран 19.09 — шум). Атрибут, бонус и факторы — не на кнопке: они на экране броска и в зоне
 // «на кубик» (MatchScreen). Цена сил на кнопке тоже нет — она в разборе после броска; это
 // сознательный обмен читаемости на полноту (плейтест: 25 с на решение).
 
@@ -66,7 +66,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
           return (
             <li key={o.id}>
               <button className={`choice ${o.insight ? `choice-insight voice-${o.insight.who}` : ''}`} onClick={() => onChoose(o)}>
-                <span className="choice-num">{i + 1}. -</span>
+                <span className="choice-num">{i + 1}.</span>
                 <span className="choice-text">
                   <span className={`bracket risk-${ctx.position}`}>
                     [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)}{chain ? ` → ${chain}` : ''}]

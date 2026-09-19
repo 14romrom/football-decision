@@ -54,8 +54,11 @@ button {
   border-radius: 6px;
   padding: 10px 14px;
   cursor: pointer;
+  touch-action: manipulation;   /* Android WebView: без 300 мс задержки на тапе */
 }
-button:hover { border-color: #444b5c; }
+button:hover { border-color: var(--dim); }
+button:active { background: var(--panel-2); }
+button.primary:active { background: #cfc9bc; }
 button.primary { background: var(--cream); color: #141413; border-color: var(--cream); font-family: var(--font-caps); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
 .link { color: var(--hype); font-size: 14px; text-decoration: none; }
 button.link { background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
@@ -77,14 +80,14 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .resources { display: grid; gap: 5px; margin-bottom: 10px; }
 .bar { display: grid; grid-template-columns: 62px 1fr; align-items: center; gap: 8px; }
 .bar-label { font-size: 12px; color: var(--muted); }
-.bar-track { height: 6px; background: #22262f; border-radius: 3px; overflow: hidden; }
+.bar-track { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
 .bar-fill { display: block; height: 100%; background: var(--accent); transition: width .4s ease; }
 .bar-fill.low { background: var(--bad); }
 .bar-fill.hype { background: var(--hype); }
 
 .momentum-dots { display: flex; gap: 4px; }
-.dot { width: 9px; height: 9px; border-radius: 50%; background: #22262f; }
-.dot.zero { background: #333a48; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.dot.zero { background: var(--dim); }
 .dot.on.plus { background: var(--accent); }
 .dot.on.minus { background: var(--bad); }
 
@@ -96,9 +99,9 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 /* ——— лента ——— */
 .feed { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
 .event { display: grid; grid-template-columns: 38px 1fr; gap: 8px; font-size: 14px; color: var(--muted); }
-.ev-minute { color: #5c6373; font-variant-numeric: tabular-nums; }
+.ev-minute { color: var(--muted); font-variant-numeric: tabular-nums; }
 .event.goalUs .ev-text { color: var(--accent); font-weight: 600; }
-.event.goalThem .ev-text { color: var(--bad); font-weight: 600; }
+.event.goalThem .ev-text { color: var(--bad-soft); font-weight: 600; }
 .event.episode .ev-text { color: var(--ink); }
 .event.halftime .ev-text, .event.fulltime .ev-text { color: var(--ink); font-weight: 600; }
 .skip { display: block; width: 100%; color: var(--muted); font-size: 13px; }
@@ -117,12 +120,12 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .tag { font-size: 12px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); }
 .risk-controlled { color: var(--accent); border-color: #2c4636; }
 .risk-risky { color: var(--warn); border-color: #4a3c22; }
-.risk-desperate { color: var(--bad); border-color: #4d2a29; }
+.risk-desperate { color: var(--bad-soft); border-color: #4d2a29; }
 .tag.scale { color: var(--muted); }
 .shift-mark { font-style: normal; margin-left: 4px; opacity: .8; cursor: help; }
 .cost { display: inline-flex; gap: 2px; margin-left: auto; }
-.cost .seg { width: 7px; height: 7px; border-radius: 1px; background: #262b35; }
-.cost .seg.on { background: #6c7488; }
+.cost .seg { width: 7px; height: 7px; border-radius: 1px; background: var(--line); }
+.cost .seg.on { background: var(--muted); }
 
 /* ——— экран броска ——— */
 .roll { text-align: center; }
@@ -137,7 +140,7 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .mods { list-style: none; padding: 0; margin: 0 auto 14px; max-width: 280px; }
 .mod { display: flex; justify-content: space-between; font-size: 14px; padding: 2px 0; color: var(--muted); }
 .mod.plus b { color: var(--accent); }
-.mod.minus b { color: var(--bad); }
+.mod.minus b { color: var(--bad-soft); }
 
 .tier { font-size: 26px; font-weight: 700; margin: 6px 0 10px; }
 .tier-clean { color: var(--accent); }
@@ -148,18 +151,20 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 
 /* ——— итог ——— */
 .result { padding-top: 20px; }
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-.stat { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px; text-align: center; }
-.stat-value { display: block; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.stat-label { display: block; font-size: 11px; color: var(--muted); }
+/* Протокол матча одной строкой (19.09): цифра mono + подпись, нули приглушены. */
+.stat-line { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 18px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.stat-line b { font-family: var(--font-mono); font-weight: 500; color: var(--ink); }
+.stat-name { color: var(--ink); font-weight: 600; }
+.stat-line .zero, .stat-line .zero b { color: var(--faint); }
 
+.recap h2 { font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-size: 13px; }
 .recap p { font-size: 16px; }
 .recap .recap-last { color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
 
 .ratings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 6px; }
 .rating { text-align: center; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
-.rating-value { display: block; font-size: 30px; font-weight: 700; }
-.rating-label { font-size: 12px; color: var(--muted); }
+.rating-value { display: block; font-family: var(--font-mono); font-size: 30px; font-weight: 500; }
+.rating-label { font-family: var(--font-caps); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .rating.coach .rating-value { color: var(--accent); }
 .rating.fan .rating-value { color: var(--hype); }
 .gap-note { text-align: center; color: var(--muted); font-size: 14px; }
@@ -173,7 +178,7 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .broken-badge { margin-left: 8px; font-size: 11px; color: var(--bad); border: 1px solid #4d2a29; border-radius: 10px; padding: 1px 7px; }
 .setup-quote { font-style: italic; }
 .share-row { display: grid; grid-template-columns: 150px 1fr 44px 48px; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; }
-.share-track { height: 8px; background: #22262f; border-radius: 4px; overflow: hidden; }
+.share-track { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
 .share-fill { display: block; height: 100%; background: var(--hype); }
 .share-fill.over { background: var(--bad); }
 .share-num, .share-time { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -225,8 +230,8 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .attr-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
 .attr-fill { display: block; height: 100%; background: rgba(255,255,255,0.55); }
 .attr-row.signature .attr-fill { background: #6ee7a0; }
-.attr-value { text-align: right; opacity: 0.7; font-variant-numeric: tabular-nums; }
-.attr-mod { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.attr-value { text-align: right; opacity: 0.7; font-family: var(--font-mono); font-size: 13px; }
+.attr-mod { text-align: right; font-weight: 500; font-family: var(--font-mono); font-size: 13px; }
 .attr-mod.zero { opacity: 0.4; }
 .card-summary { margin: 1.4rem 0; line-height: 1.5; }
 
@@ -281,6 +286,7 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 /* ——— сезон ——— */
 .season-line { font-size: 16px; margin: -6px 0 14px; }
 .table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-variant-numeric: tabular-nums; font-size: 14px; }
+.table td:not(:nth-child(2)), .table th:not(:nth-child(2)) { font-family: var(--font-mono); font-size: 13px; }
 .table th { color: var(--muted); font-weight: 500; font-size: 11px; text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--line); }
 .table td { text-align: right; padding: 6px; border-bottom: 1px solid var(--line); }
 .table th:nth-child(2), .table td:nth-child(2) { text-align: left; }
@@ -309,7 +315,7 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 
 /* ——— источники поправок: кубик / ти / поле ——— */
 .chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 13px; margin: 0 3px; color: var(--ink); }
-.chip-dice { background: #3a3f4c; }
+.chip-dice { background: var(--dim); }
 .chip-you { background: rgba(111, 208, 140, 0.22); }
 .chip-field { background: rgba(122, 167, 255, 0.22); }
 .chip.neg { background: rgba(217, 83, 79, 0.22); }
@@ -355,47 +361,52 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .tag.target { color: var(--ink); border-color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* Голос бачить — строка над вариантами: то, что заметил сильный атрибут (EpisodeOption.insight). */
-.insight { font-size: 15px; font-style: italic; margin: -4px 0 10px; padding-left: 10px; border-left: 2px solid #444b5c; line-height: 1.4; }
+.insight { font-size: 15px; font-style: italic; margin: -4px 0 10px; padding-left: 10px; border-left: 2px solid var(--dim); line-height: 1.4; }
 .insight b { font-style: normal; letter-spacing: .04em; text-transform: uppercase; font-size: 0.85em; }
 
 /* Экран уровня: очко будит голос — подпись на кнопке цветом голоса. */
 .train-attr em { display: block; font-style: normal; font-size: 0.78em; font-weight: 600; margin-top: 2px; }
-.train-attr.wakes { border-color: #444b5c; }
-.train-attr em.voice-vision { color: #c9a5ff; } .train-attr em.voice-instinct { color: #ffd166; }
-.train-attr em.voice-body { color: #ff8a8a; } .train-attr em.voice-composure { color: #8fb8ff; }
+.train-attr.wakes { border-color: var(--dim); }
+.train-attr em.voice-vision { color: var(--v-vision); } .train-attr em.voice-instinct { color: var(--v-instinct); }
+.train-attr em.voice-body { color: var(--v-body); } .train-attr em.voice-composure { color: var(--v-composure); }
 
 /* Карточка игрока — удостоверение (Disco Elysium): шапка с полями, девиз голоса, голоси, метрики. */
-.id-card { display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: start; padding: 14px 16px; border: 1px solid #2a2f3a; border-radius: 12px; background: #161a22; margin-bottom: 1rem; }
-.id-card h1 { margin: 0; font-size: 24px; }
+.id-card { display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: start; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel); margin-bottom: 1rem; }
+.id-card h1 { margin: 0; font-size: 24px; line-height: 1.15; }
+/* На 375px имя из двух слов ломалось на две строки рядом с полями — имя на всю ширину, поля ниже. */
+@media (max-width: 420px) { .id-card { grid-template-columns: 1fr; gap: 6px; } .id-fields { align-self: start; } }
 .id-fields { margin: 0; display: grid; grid-template-columns: auto auto; gap: 2px 12px; font-size: 13px; align-self: center; }
 .id-fields dt { color: var(--muted); }
-.id-fields dd { margin: 0; font-variant-numeric: tabular-nums; }
-.id-motto { grid-column: 1 / -1; margin: 6px 0 0; padding-top: 8px; border-top: 1px solid #2a2f3a; font-style: italic; color: var(--muted); }
+.id-fields dd { margin: 0; font-family: var(--font-mono); font-size: 12.5px; }
+.id-motto { grid-column: 1 / -1; margin: 6px 0 0; padding-top: 8px; border-top: 1px solid var(--line-2); font-style: italic; color: var(--muted); }
 .voices-block h2, .stats-block h2 { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55; margin: 1.1rem 0 0.5rem; }
-.voice-row { padding: 6px 0 6px 12px; border-left: 2px solid #444b5c; margin-bottom: 8px; }
-.voice-row.voice-ego { border-color: #f0a35e; } .voice-row.voice-team { border-color: #6ee7a0; }
-.voice-row.voice-composure { border-color: #8fb8ff; } .voice-row.voice-vision { border-color: #c9a5ff; }
-.voice-row.voice-instinct { border-color: #ffd166; } .voice-row.voice-body { border-color: #ff8a8a; }
+.voice-row { padding: 6px 0 6px 12px; border-left: 2px solid var(--dim); margin-bottom: 8px; }
+.voice-row.voice-ego { border-color: var(--v-ego); } .voice-row.voice-team { border-color: var(--v-team); }
+.voice-row.voice-composure { border-color: var(--v-composure); } .voice-row.voice-vision { border-color: var(--v-vision); }
+.voice-row.voice-instinct { border-color: var(--v-instinct); } .voice-row.voice-body { border-color: var(--v-body); }
 .voice-row.state-silent { opacity: 0.6; }
 .voice-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .voice-state { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--muted); }
-.voice-state.state-sees { background: rgba(110, 231, 160, 0.15); color: #6ee7a0; }
+.voice-state.state-sees { background: rgba(127, 207, 154, 0.15); color: var(--accent); }
 .voice-state.state-heard { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
 .voice-about { margin: 2px 0 0; font-size: 14px; }
 .voice-meta { margin: 2px 0 0; font-size: 12px; }
 .stats-grid { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; font-size: 14px; }
 .stats-grid dt { color: var(--muted); }
-.stats-grid dd { margin: 0; font-variant-numeric: tabular-nums; }
+.stats-grid dd { margin: 0; font-family: var(--font-mono); font-size: 13px; }
 .stats-block .xp-track { display: block; margin-top: 8px; }
 
 /* Тиждень між матчами — тонкий экран под замену новым UI (ui/WeekScreen.tsx). */
 .week-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 14px; }
 @media (max-width: 520px) { .week-grid { grid-template-columns: 1fr; } }
 .week-card { display: grid; gap: 4px; text-align: left; padding: 10px 12px; border-left-width: 3px; }
-.week-card.voice-ego { border-left-color: #f0a35e; } .week-card.voice-team { border-left-color: #6ee7a0; }
-.week-card.voice-composure { border-left-color: #8fb8ff; } .week-card.voice-vision { border-left-color: #c9a5ff; }
-.week-card.voice-instinct { border-left-color: #ffd166; } .week-card.voice-body { border-left-color: #ff8a8a; }
-.week-card.picked { background: rgba(110, 231, 160, 0.12); box-shadow: 0 0 0 2px var(--accent) inset; }
+.week-card { --vc: var(--dim); border-left-color: var(--vc); }
+.week-card.voice-ego { --vc: var(--v-ego); } .week-card.voice-team { --vc: var(--v-team); }
+.week-card.voice-composure { --vc: var(--v-composure); } .week-card.voice-vision { --vc: var(--v-vision); }
+.week-card.voice-instinct { --vc: var(--v-instinct); } .week-card.voice-body { --vc: var(--v-body); }
+/* Выбор подсвечен цветом голоса карточки: универсальный зелёный читался как «Команда». */
+.week-card.picked { background: color-mix(in srgb, var(--vc) 10%, var(--panel)); box-shadow: 0 0 0 2px var(--vc) inset; }
+.week-card:active { background: color-mix(in srgb, var(--vc) 16%, var(--panel)); }
 .week-card:disabled { opacity: 0.7; cursor: default; }
 .week-voice { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
 .week-title { font-weight: 600; }
@@ -424,7 +435,7 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .post-head { display: flex; align-items: center; gap: 6px; font-size: 14px; flex-wrap: wrap; }
 .post-name { color: var(--ink); }
 .post-handle { color: var(--muted); font-size: 13px; }
-.verified { color: #6fb0ff; font-size: 12px; }
+.verified { color: var(--hype); font-size: 12px; }
 .avatar { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #10261a; background: var(--accent); margin-right: 2px; }
 .avatar.small { width: 20px; height: 20px; font-size: 11px; }
 .avatar-news { background: #8fb8ff; } .avatar-club { background: var(--accent); } .avatar-fan { background: #f0a35e; } .avatar-parody { background: #c9a5ff; }
@@ -436,13 +447,13 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 /* Виды постов и ответ игрока (19.09). */
 .post-promo { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: auto; }
 .post-text.deleted { color: var(--muted); font-style: italic; }
-.post.kind-live { background: #171a22; }
+.post.kind-live { background: #19181c; }
 .poll { display: grid; gap: 4px; margin: 4px 0 8px; }
 .poll-row { position: relative; display: flex; justify-content: space-between; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; font-size: 13px; overflow: hidden; }
-.poll-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(111, 176, 255, 0.18); }
+.poll-bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(143, 184, 255, 0.18); }
 .poll-text, .poll-pct { position: relative; }
 .reply-options { display: grid; gap: 6px; margin-top: 10px; }
-.reply-option { text-align: left; font-size: 14px; padding: 8px 10px; }
+.reply-option { text-align: left; font-size: 14px; padding: 11px 12px; min-height: 44px; }
 .reply-option.muted { color: var(--muted); }
 .self-reply { border-left-color: var(--accent); }
 
@@ -471,14 +482,14 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .pitch-dir { font-family: var(--font-mono); font-size: 9px; fill: #4a5a4c; letter-spacing: 1px; }
 .score-overlay {
   position: absolute; right: 8px; top: 8px; display: grid; gap: 4px; justify-items: end;
-  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: #b3ae9f; text-transform: uppercase;
+  font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; color: #b3ae9f; text-transform: uppercase;
   background: rgba(11,11,13,0.65); padding: 3px 7px;
 }
 .score-line b { color: #fff; font-weight: 500; }
 .meters { display: flex; gap: 10px; }
-.meter { display: inline-flex; align-items: center; gap: 2px; font-size: 9px; letter-spacing: 0.06em; color: var(--muted); }
-.meter-label { margin-right: 3px; }
-.meter i { width: 6px; height: 6px; background: #26262b; }
+.meter { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; letter-spacing: 0.06em; color: #b3ae9f; }
+.meter-label { margin-right: 4px; }
+.meter i { width: 7px; height: 7px; background: var(--line); }
 .meter i.on { background: var(--accent); }
 .meter.hype i.on { background: var(--hype); }
 .meter.low i.on { background: var(--bad); }
@@ -486,20 +497,22 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .tape { position: relative; padding: 6px 12px 0; }
 .tape-shade { position: absolute; left: 0; right: 0; top: 0; height: 40px; pointer-events: none;
   background: linear-gradient(180deg, var(--bg) 0%, rgba(11,11,13,0.85) 40%, rgba(11,11,13,0) 100%); }
-.tape-line { margin: 0 0 9px; padding-left: 16px; text-indent: -16px; font-size: 14px; line-height: 1.5; color: var(--ink); }
-.tape-line.age-1 { color: #9c9889; } .tape-line.age-2 { color: #5a574f; font-size: 13.5px; } .tape-line.age-3 { color: var(--dim); font-size: 13.5px; }
+.tape-line { margin: 0 0 9px; padding-left: 16px; text-indent: -16px; font-size: 14.5px; line-height: 1.5; color: var(--ink); }
+.tape-line.age-1 { color: #9c9889; } .tape-line.age-2 { color: var(--muted); font-size: 13.5px; } .tape-line.age-3 { color: var(--faint); font-size: 13.5px; }
 .tape-line.kind-goalUs.age-0 { color: var(--accent); } .tape-line.kind-goalThem.age-0 { color: var(--bad-soft); }
 .tape-line.current { color: var(--ink); font-size: 15px; }
 .tape-minute { font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.06em; font-size: 12px; color: inherit; }
-.tape-more { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 0 0 8px; color: var(--faint); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; }
-.skip { display: block; width: 100%; background: none; border: 1px dashed var(--line); color: var(--muted); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; margin: 2px 0 10px; }
+/* Кнопка раскрытия ленты: была --faint (3.7:1) высотой 19px под тенью — не читалась и не попадалась под палец. */
+.tape-more { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; background: none; border: 0; padding: 0 8px 0 0; margin: -10px 0 0; color: var(--muted); font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; }
+.tape-more:active { color: var(--ink); background: none; }
+.skip { display: block; width: 100%; min-height: 44px; background: none; border: 1px dashed var(--line); color: var(--muted); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; margin: 2px 0 10px; }
 
 .moment {
   margin: 8px 0 0; padding: 14px 0 0; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px;
   box-shadow: 0 14px 34px rgba(0,0,0,0.55);
 }
 .scene { padding: 0 12px; }
-.say { margin: 0 0 9px; padding-left: 16px; text-indent: -16px; font-size: 14px; line-height: 1.5; color: var(--ink); }
+.say { margin: 0 0 9px; padding-left: 16px; text-indent: -16px; font-size: 15px; line-height: 1.5; color: var(--ink); }
 .say b { font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 13px; }
 .say.voice-ego b { color: var(--v-ego); } .say.voice-team b { color: var(--v-team); } .say.voice-composure b { color: var(--v-composure); }
 .say.voice-vision b { color: var(--v-vision); } .say.voice-instinct b { color: var(--v-instinct); } .say.voice-body b { color: var(--v-body); }
@@ -510,10 +523,13 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .choices { list-style: none; margin: 8px -12px 0; padding: 0; border-top: 1px solid #1c1c20; }
 .choices li { margin: 0; }
 .choice {
-  display: flex; gap: 8px; align-items: baseline; width: 100%; text-align: left; min-height: 44px; box-sizing: border-box;
-  padding: 9px 20px; background: none; border: 0; border-radius: 0; color: var(--ink); font: inherit; font-size: 14.5px; line-height: 1.4;
+  display: flex; gap: 8px; align-items: baseline; width: 100%; text-align: left; min-height: 48px; box-sizing: border-box;
+  padding: 11px 20px; background: none; border: 0; border-radius: 0; color: var(--ink); font: inherit; font-size: 15px; line-height: 1.4;
 }
-.choice:hover, .choice:focus-visible { background: #131316; border: 0; outline: none; }
+.choices li + li .choice { border-top: 1px solid #1c1c20; }   /* граница между вариантами: промах на тапе — необратимое решение */
+.choice:hover { background: #131316; }
+/* Фокус с клавиатуры — полоса слева, как у голосов; фон #131316 на #141417 был невидим. */
+.choice:focus-visible { background: #131316; outline: none; box-shadow: inset 3px 0 0 currentColor; }
 .choice:active { background: var(--bad); color: #fff; }
 .choice:active .bracket { color: #fff; }
 .choice-num { font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; }
@@ -521,7 +537,7 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .choice-insight.voice-body { color: var(--v-body); } .choice-insight.voice-composure { color: var(--v-composure); }
 .choice-insight.voice-ego { color: var(--v-ego); } .choice-insight.voice-team { color: var(--v-team); }
 .bracket { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
-.bracket.risk-controlled { color: #9a9688; } .bracket.risk-risky { color: var(--warn); } .bracket.risk-desperate { color: var(--bad); }
+.bracket.risk-controlled { color: #9a9688; } .bracket.risk-risky { color: var(--warn); } .bracket.risk-desperate { color: var(--bad-soft); }
 .origin { font-style: normal; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-left: 8px; letter-spacing: 0.04em; }
 .choice.chosen { background: var(--bad); color: #fff; width: calc(100% + 24px); margin: -14px -12px 12px; padding: 9px 20px; cursor: default; border-radius: 4px 4px 0 0; }
 .choice.chosen .bracket { color: #fff; }
@@ -535,15 +551,15 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); }
 .chip.pos { color: var(--v-ego); } .chip.pos span { color: var(--accent); }
 .chip.neg { color: var(--bad-soft); } .chip.neg span { color: var(--bad-soft); }
-.chip.src-field { border-color: #2a3446; }
+.chip.src-field { border-color: rgba(143, 184, 255, 0.35); }
 .chip-insight.voice-vision { color: var(--v-vision); } .chip-insight.voice-instinct { color: var(--v-instinct); }
 .chip-insight.voice-body { color: var(--v-body); } .chip-insight.voice-composure { color: var(--v-composure); }
 .chip-insight.voice-ego { color: var(--v-ego); } .chip-insight.voice-team { color: var(--v-team); }
 .chip-none { color: var(--faint); }
 .stamina { display: inline-flex; align-items: center; gap: 2px; color: var(--muted); }
 .stamina svg { margin-right: 4px; }
-.stamina i { width: 7px; height: 8px; background: #26262b; }
-.stamina i.on { background: #6c7488; }
+.stamina i { width: 7px; height: 8px; background: var(--line); }
+.stamina i.on { background: var(--muted); }
 
 /* экран броска (Г): кубики — центр, барабан цифр, штамп вердикта */
 .scene.roll { cursor: pointer; text-align: left; }
@@ -581,11 +597,20 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .verdict.tier-clean { color: var(--accent); } .verdict.tier-cost { color: var(--warn); } .verdict.tier-fail { color: var(--muted); } .verdict.tier-badFail { color: var(--bad); }
 .after { animation: fadeIn .35s ease-out; border-top: 1px solid var(--line-2); }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.outcome { margin: 0; padding: 12px 16px 6px; font-size: 14.5px; line-height: 1.5; }
+.outcome { margin: 0; padding: 12px 16px 6px; font-size: 15px; line-height: 1.5; }
 .check-card .say { padding: 0 16px; text-indent: 0; }
 .origin-note { margin: 0; padding: 0 16px 8px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
 .check-card .badges { margin: 0 16px 10px; }
 .continues { margin: 0; padding: 0 16px 8px; font-size: 13px; color: var(--muted); }
 .de-next { display: block; width: calc(100% - 32px); margin: 4px 16px 16px; padding: 12px; font-size: 15px; }
 
-@media (max-width: 480px) { .choice { padding: 9px 14px; } .choice.chosen { padding: 9px 14px; } }
+@media (max-width: 480px) { .choice { padding: 11px 14px; } .choice.chosen { padding: 9px 14px; } }
+
+/* Reduce Motion (системная настройка): без тряски барабана и масштабных вспышек; драматургия
+   броска (паузы, раздельная остановка, штамп) остаётся — см. RollView.tsx. */
+@media (prefers-reduced-motion: reduce) {
+  .die.spinning, .die.stopped { animation: none; }
+  .verdict { animation: fadeIn .2s ease-out; }
+  .chip-in { animation: fadeIn .15s ease-out; }
+  .die, .dice-sum, .bar-fill { transition: none; }
+}

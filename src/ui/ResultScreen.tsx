@@ -3,12 +3,16 @@ import type { MatchSummary } from '../engine/match';
 import type { Roster } from '../engine/names';
 import { exportLogs } from '../telemetry/log';
 
-function Stat({ label, value }: { label: string; value: number | string }) {
+/** Строка протокола вместо плиток (19.09): семь одинаковых карточек с нулями читались как дашборд,
+ *  а героем экрана должен быть пересказ «Як це було». Цифры — моноширинным, как табло на поле. */
+function StatLine({ name, items }: { name: string; items: [string, number][] }) {
   return (
-    <div className="stat">
-      <span className="stat-value">{value}</span>
-      <span className="stat-label">{label}</span>
-    </div>
+    <p className="stat-line">
+      <span className="stat-name">{name}</span>
+      {items.map(([label, value]) => (
+        <span key={label} className={value === 0 ? 'zero' : ''}><b>{value}</b> {label}</span>
+      ))}
+    </p>
   );
 }
 
@@ -33,17 +37,12 @@ export function ResultScreen({ summary, roster, playerName, xpEarned, onRestart 
     <div className="result">
       <h1>{roster.us.name.nom} {summary.scoreUs}:{summary.scoreThem} {roster.them.name.nom}</h1>
       {goals && <p className="protocol">{goals}</p>}
-      <p className="season-line"><b>{playerName}</b> · тренер {summary.coachRating.toFixed(1)} · трибуни {summary.fanRating.toFixed(1)}</p>
-
-      <section className="stats">
-        <Stat label="голи" value={summary.stats.goals} />
-        <Stat label="передачі" value={summary.stats.assists} />
-        <Stat label="ключові паси" value={summary.stats.keyPasses} />
-        <Stat label="втрати" value={summary.stats.losses} />
-        <Stat label="єдиноборства" value={summary.stats.duelsWon} />
-        <Stat label="фоли" value={summary.stats.fouls} />
-        <Stat label="сили наприкінці" value={summary.staminaLeft} />
-      </section>
+      {/* Оценки — только в плитках ниже и в вердикте пересказа: три повтора одной цифры на экране — перебор. */}
+      <StatLine name={playerName} items={[
+        ['голи', summary.stats.goals], ['передачі', summary.stats.assists], ['ключові', summary.stats.keyPasses],
+        ['втрати', summary.stats.losses], ['єдиноборства', summary.stats.duelsWon], ['фоли', summary.stats.fouls],
+        ['сил наприкінці', summary.staminaLeft],
+      ]} />
 
       <section className="recap">
         <h2>Як це було</h2>
@@ -55,11 +54,11 @@ export function ResultScreen({ summary, roster, playerName, xpEarned, onRestart 
       <section className="ratings">
         <div className="rating coach">
           <span className="rating-value">{summary.coachRating.toFixed(1)}</span>
-          <span className="rating-label">оцінка тренера</span>
+          <span className="rating-label">тренер</span>
         </div>
         <div className="rating fan">
           <span className="rating-value">{summary.fanRating.toFixed(1)}</span>
-          <span className="rating-label">оцінка трибун</span>
+          <span className="rating-label">трибуни</span>
         </div>
       </section>
       {gap >= 1.5 && low < 6 && (

@@ -50,12 +50,14 @@ export function SeasonScreen({ season, clubName, teamGen, playerName, verdict, o
         </tbody>
       </table>
 
-      <section className="stats">
-        <Stat label="матчів" value={p.matches} />
-        <Stat label={`голи · ${playerName}`} value={p.goals} />
-        <Stat label="передачі" value={p.assists} />
-        <Stat label="сер. оцінка тренера" value={p.matches ? (p.coachSum / p.matches).toFixed(1) : '—'} />
-      </section>
+      {/* Строка сезона персонажа — тем же протоколом, что итог матча (ResultScreen). */}
+      <p className="stat-line">
+        <span className="stat-name">{playerName}</span>
+        <span><b>{p.matches}</b> матчів</span>
+        <span className={p.goals === 0 ? 'zero' : ''}><b>{p.goals}</b> голи</span>
+        <span className={p.assists === 0 ? 'zero' : ''}><b>{p.assists}</b> передачі</span>
+        <span><b>{p.matches ? (p.coachSum / p.matches).toFixed(1) : '—'}</b> сер. оцінка тренера</span>
+      </p>
       {scorers.length > 0 && (
         <p className="muted small">
           Бомбардири «{teamGen}»: {scorers.map(([name, g]) => `${name} — ${g}`).join(', ')}
@@ -74,15 +76,6 @@ export function SeasonScreen({ season, clubName, teamGen, playerName, verdict, o
           ? <button className="primary" onClick={onNewSeason}>Новий сезон</button>
           : <button className="primary" onClick={onNext}>Далі</button>}
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="stat">
-      <span className="stat-value">{value}</span>
-      <span className="stat-label">{label}</span>
     </div>
   );
 }

@@ -109,15 +109,16 @@ export function MatchScreen({
         {waiting && <button className="skip" onClick={onSkip}>далі ⟶</button>}
       </div>
 
-      {/* Карточка момента отделена от таймлайна панелью: сцена, варианты и зона «на кубик» — одно целое. */}
-      <section className="moment">
+      {/* Карточка момента отделена от таймлайна панелью: сцена, варианты и зона «на кубик» — одно целое.
+          Пока эпизода нет (идёт лента), панели нет — пустая рамка с одной шкалой сил читалась как сбой. */}
+      {episode && <section className="moment">
       {children}
 
       {!hideDiceZone && <footer className="dice-zone">
         <span className="dice-zone-label">на кубик</span>
         <span className="chips">
           {mods.map((m) => (
-            <span key={m.label} className={`chip src-${m.source} ${m.value < 0 ? 'neg' : 'pos'}`} title={m.label}>
+            <span key={m.label} className={`chip src-${m.source} ${m.value < 0 ? 'neg' : 'pos'}`} title={m.label} aria-label={`${m.label} ${fmt(m.value)}`}>
               {modIcon(m.label, m.source)}<span>{fmt(m.value)}</span>
             </span>
           ))}
@@ -131,7 +132,7 @@ export function MatchScreen({
           {[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < staminaSegs ? 'on' : ''} />)}
         </span>
       </footer>}
-      </section>
+      </section>}
     </div>
   );
 }

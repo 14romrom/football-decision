@@ -1,7 +1,7 @@
 // Машина состояний матча: расписание эпизодов, лента между ними, применение
 // исходов и сборка итога. React сюда не заглядывает — UI только вызывает функции.
 
-import { BALANCE, MOMENTUM_BY_TIER, MOMENTUM_COST_RECOVERY } from './balance';
+import { BALANCE, MOMENTUM_BY_BOLDNESS, MOMENTUM_BY_TIER, MOMENTUM_COST_RECOVERY } from './balance';
 import { attrMod } from './context';
 import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
 import { pickFeedLine, type FeedKind } from './feed';
@@ -663,7 +663,9 @@ export function applyChoice(
   state.minute = minute;
   state.stamina = clamp(state.stamina - optionCost(option), 0, 100);
   const recovery = res.tier === 'cost' && state.momentum < 0 ? MOMENTUM_COST_RECOVERY : 0;
-  state.momentum = clamp(state.momentum + MOMENTUM_BY_TIER[res.tier] + recovery, -3, 3);
+  // Кураж за ризик: чистий ісход на ризику заводить сильніше, ніж чистий на «упевнено» (MOMENTUM_BY_BOLDNESS).
+  const boldness = res.tier === 'clean' ? MOMENTUM_BY_BOLDNESS[res.position] : 0;
+  state.momentum = clamp(state.momentum + MOMENTUM_BY_TIER[res.tier] + recovery + boldness, -3, 3);
 
   // Трибуны реагируют на смелость сами по себе, до того как ясен результат.
   addHype(session, BALANCE.systemic.boldnessHype[res.position]);

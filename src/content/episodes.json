@@ -39,7 +39,7 @@
             "apply": {
               "corner": true,
               "fanHype": 4,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "fail": {
@@ -148,7 +148,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 12,
+        "staminaCost": 9,
         "goals": {
           "team": 1,
           "personal": 2
@@ -158,12 +158,17 @@
             "text": "Ти прибираєш м’яч під себе, захисник провалюється, і штрафний розкривається. Тепер можна бити спокійно.",
             "recap": "і розкрив штрафний на рівному місці.",
             "apply": {
-              "keyPass": true,
               "fanHype": 10,
               "composure": 4,
               "addFlags": [
                 "humiliated_defender"
-              ]
+              ],
+              "followUp": "fin_shot",
+              "followUpElse": {
+                "corner": true,
+                "fanHype": 3
+              },
+              "duelWon": true
             }
           },
           "cost": {
@@ -171,7 +176,8 @@
             "recap": "і заробив штрафний, отримавши по ребрах.",
             "apply": {
               "fanHype": 8,
-              "stamina": -4
+              "stamina": -2,
+              "duelWon": true
             }
           },
           "fail": {
@@ -380,7 +386,7 @@
             "apply": {
               "duelWon": true,
               "foul": true,
-              "stamina": -4,
+              "stamina": -2,
               "coachTrust": 2
             }
           },
@@ -388,7 +394,7 @@
             "text": "Опорник розвертається на п’ятці й іде від тебе. Доводиться наздоганяти всю дорогу назад.",
             "recap": "і лишився в нього за спиною.",
             "apply": {
-              "stamina": -3,
+              "stamina": -2,
               "coachTrust": -3
             }
           },
@@ -398,7 +404,7 @@
             "apply": {
               "counterAttack": true,
               "coachTrust": -8,
-              "stamina": -3
+              "stamina": -2
             }
           }
         },
@@ -700,7 +706,7 @@
             "recap": "і {striker} добив після твого удару.",
             "apply": {
               "teamGoal": true,
-              "stamina": -5,
+              "stamina": -2,
               "fanHype": 8,
               "coachTrust": 2,
               "scorer": "striker"
@@ -764,7 +770,7 @@
             "recap": "і прострелив під удар {partner.dat}.",
             "apply": {
               "keyPass": true,
-              "fanHype": 8,
+              "fanHype": 12,
               "coachTrust": 4,
               "addFlags": [
                 "coach_flank"
@@ -776,7 +782,8 @@
             "recap": "і створив момент, лишившись без дихання.",
             "apply": {
               "keyPass": true,
-              "stamina": -6
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -784,7 +791,7 @@
             "recap": "і програв забіг до лицьової.",
             "apply": {
               "losses": 1,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -1191,14 +1198,14 @@
               "duelWon": true,
               "corner": true,
               "coachTrust": 8,
-              "stamina": -6
+              "stamina": -2
             }
           },
           "fail": {
             "text": "Він віддає раніше, ніж ти добігаєш. Удар повз, але твоєї заслуги тут немає.",
             "recap": "і не встиг до моменту.",
             "apply": {
-              "stamina": -4,
+              "stamina": -2,
               "coachTrust": 1
             }
           },
@@ -1210,7 +1217,7 @@
                 "injured"
               ],
               "coachTrust": -2,
-              "stamina": -8,
+              "stamina": -2,
               "fanHype": 3
             }
           }
@@ -1475,7 +1482,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 11,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -1504,7 +1511,7 @@
             "recap": "і влетів просто під підкат.",
             "apply": {
               "duelWon": true,
-              "stamina": -5
+              "stamina": -2
             }
           },
           "fail": {
@@ -1536,7 +1543,7 @@
         "attribute": "vision",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 3,
+        "difficulty": 2,
         "staminaCost": 6,
         "goals": {
           "team": 1,
@@ -1832,7 +1839,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -2285,7 +2292,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 12,
+        "staminaCost": 9,
         "goals": {
           "team": 1,
           "personal": 3
@@ -2306,8 +2313,8 @@
             "recap": "і виграв верх, але пробив вище.",
             "apply": {
               "duelWon": true,
-              "stamina": -5,
-              "fanHype": 4
+              "stamina": -2,
+              "fanHype": 7
             }
           },
           "fail": {
@@ -2315,7 +2322,7 @@
             "recap": "і попросту не дострибнув.",
             "apply": {
               "coachTrust": -2,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -2325,7 +2332,7 @@
               "addFlags": [
                 "injured"
               ],
-              "stamina": -8,
+              "stamina": -2,
               "coachTrust": -3
             }
           }
@@ -2460,7 +2467,7 @@
             "apply": {
               "teamGoal": true,
               "fanHype": 12,
-              "stamina": -6,
+              "stamina": -2,
               "scorer": "striker"
             }
           },
@@ -2736,7 +2743,12 @@
               "coachTrust": 3,
               "addFlags": [
                 "humiliated_defender"
-              ]
+              ],
+              "followUp": "ep_between_lines",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -3007,7 +3019,11 @@
               "keyPass": true,
               "coachTrust": 5,
               "fanHype": 8,
-              "composure": 4
+              "composure": 4,
+              "momentum": 1,
+              "addFlags": [
+                "partner_trusts"
+              ]
             }
           },
           "cost": {
@@ -3054,7 +3070,7 @@
         "basePosition": "desperate",
         "effect": "great",
         "difficulty": 3,
-        "staminaCost": 12,
+        "staminaCost": 10,
         "goals": {
           "team": 0,
           "personal": 3
@@ -3074,7 +3090,7 @@
             "recap": "і зі свого кутового добіг до чужого штрафного.",
             "apply": {
               "fanHype": 10,
-              "stamina": -5
+              "stamina": -2
             }
           },
           "fail": {
@@ -3221,8 +3237,8 @@
         "attribute": "dribbling",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 2,
-        "staminaCost": 10,
+        "difficulty": 1,
+        "staminaCost": 8,
         "goals": {
           "team": 1,
           "personal": 3
@@ -3307,7 +3323,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -3682,13 +3698,17 @@
             "recap": "і залишив {them.mid.gen} позаду.",
             "apply": {
               "duelWon": true,
-              "keyPass": true,
               "fanHype": 10,
               "coachTrust": 3,
               "composure": 5,
               "addFlags": [
                 "humiliated_defender"
-              ]
+              ],
+              "followUp": "ep_counter_run",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -3696,7 +3716,8 @@
             "recap": "і викрутився, нікуди не діставшись.",
             "apply": {
               "duelWon": true,
-              "stamina": -3
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -3832,7 +3853,7 @@
             "text": "Ти кажеш судді два слова, і він, здається, чує. Наступний спірний момент — свисток у наш бік. Трибуни це помітили.",
             "recap": "і наступний спірний свисток був на нашу користь.",
             "apply": {
-              "fanHype": 6,
+              "fanHype": 10,
               "composure": 4,
               "addFlags": [
                 "ref_sympathetic"
@@ -3843,7 +3864,7 @@
             "text": "Суддя вислуховує і показує рукою: досить. Але наступний стик у центрі свистить на твою користь — і дивиться на тебе при цьому.",
             "recap": "і виторгував у судді наступний свисток.",
             "apply": {
-              "fanHype": 5,
+              "fanHype": 8,
               "composure": 3,
               "coachTrust": -1
             }
@@ -3886,7 +3907,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 9,
+        "staminaCost": 7,
         "goals": {
           "team": 1,
           "personal": 2
@@ -3899,7 +3920,8 @@
               "duelWon": true,
               "fanHype": 10,
               "composure": 6,
-              "coachTrust": 2
+              "coachTrust": 2,
+              "momentum": 1
             }
           },
           "cost": {
@@ -3917,7 +3939,7 @@
             "text": "Ти летиш у стик, а він просто перекладає м’яч. Ти на газоні, він біжить далі, і виглядає це так собі.",
             "recap": "і пролетів повз кривдника у підкаті.",
             "apply": {
-              "stamina": -3,
+              "stamina": -2,
               "coachTrust": -4,
               "fanHype": -2
             }
@@ -4060,7 +4082,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 4,
+        "difficulty": 3,
         "staminaCost": 6,
         "goals": {
           "team": 1,
@@ -4132,7 +4154,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -4143,11 +4165,12 @@
             "recap": "і витягнув їхню лінію та розкрив штрафний.",
             "apply": {
               "keyPass": true,
-              "fanHype": 6,
+              "fanHype": 10,
               "coachTrust": 5,
               "addFlags": [
                 "humiliated_defender"
-              ]
+              ],
+              "corner": true
             }
           },
           "cost": {
@@ -4155,8 +4178,9 @@
             "recap": "і витягнув їх на себе ціною щиколотки.",
             "apply": {
               "keyPass": true,
-              "fanHype": 5,
-              "stamina": -4
+              "fanHype": 8,
+              "stamina": -2,
+              "duelWon": true
             }
           },
           "fail": {
@@ -4365,7 +4389,7 @@
             "recap": "і його збили на третьому обведенні.",
             "apply": {
               "fanHype": 8,
-              "stamina": -4
+              "stamina": -2
             }
           },
           "fail": {
@@ -4483,11 +4507,12 @@
             "apply": {
               "keyPass": true,
               "coachTrust": 8,
-              "fanHype": 6,
+              "fanHype": 10,
               "composure": 6,
               "removeFlags": [
                 "sub_threat"
-              ]
+              ],
+              "momentum": 1
             }
           },
           "cost": {
@@ -4495,7 +4520,8 @@
             "recap": "і повів гру за собою, вигорівши.",
             "apply": {
               "coachTrust": 4,
-              "stamina": -5
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -4640,7 +4666,7 @@
         "basePosition": "risky",
         "effect": "limited",
         "difficulty": 0,
-        "staminaCost": 8,
+        "staminaCost": 6,
         "goals": {
           "team": 2,
           "personal": 1
@@ -4652,7 +4678,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 4,
-              "fanHype": 3
+              "fanHype": 7,
+              "keyPass": true
             }
           },
           "cost": {
@@ -4661,7 +4688,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 2,
-              "stamina": -3
+              "stamina": -3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -4750,7 +4778,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 3,
           "personal": 1
@@ -4761,9 +4789,13 @@
             "recap": "і відібрав м’яч у момент прийому.",
             "apply": {
               "duelWon": true,
-              "keyPass": true,
               "coachTrust": 6,
-              "fanHype": 5
+              "fanHype": 9,
+              "followUp": "ep_progressive_pass",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -4772,14 +4804,15 @@
             "apply": {
               "duelWon": true,
               "foul": true,
-              "coachTrust": 2
+              "coachTrust": 2,
+              "fanHype": 3
             }
           },
           "fail": {
             "text": "Він приймає м’яч раніше, ніж ти встигаєш. Ти на газоні, він біжить, {dm} лається.",
             "recap": "і пролетів у підкаті повз м’яч.",
             "apply": {
-              "stamina": -4,
+              "stamina": -2,
               "coachTrust": -3
             }
           },
@@ -5040,7 +5073,7 @@
             "recap": "і суддя все-таки свиснув.",
             "apply": {
               "coachTrust": 5,
-              "fanHype": 4,
+              "fanHype": 8,
               "composure": 4
             }
           },
@@ -5049,7 +5082,8 @@
             "recap": "і докричався до судді, віддавши аут.",
             "apply": {
               "coachTrust": 3,
-              "composure": 2
+              "composure": 2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -5164,7 +5198,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 11,
+        "staminaCost": 8,
         "goals": {
           "team": 3,
           "personal": 1
@@ -5177,7 +5211,8 @@
               "duelWon": true,
               "keyPass": true,
               "coachTrust": 7,
-              "fanHype": 5
+              "fanHype": 12,
+              "momentum": 1
             }
           },
           "cost": {
@@ -5186,7 +5221,9 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "stamina": -3
+              "stamina": -2,
+              "corner": true,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -5445,7 +5482,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -5655,7 +5692,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -5670,15 +5707,17 @@
               "coachTrust": 3,
               "addFlags": [
                 "humiliated_defender"
-              ]
+              ],
+              "corner": true
             }
           },
           "cost": {
             "text": "Розвертаєшся — і тебе збивають. Штрафний із хорошої точки, а ти шкутильгаєш.",
             "recap": "і заробив штрафний біля їхнього штрафного.",
             "apply": {
-              "fanHype": 5,
-              "stamina": -4
+              "fanHype": 8,
+              "stamina": -2,
+              "duelWon": true
             }
           },
           "fail": {
@@ -5712,7 +5751,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 3,
+        "difficulty": 2,
         "staminaCost": 5,
         "goals": {
           "team": 1,
@@ -5880,7 +5919,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 8,
+        "staminaCost": 6,
         "goals": {
           "team": 3,
           "personal": 1
@@ -5892,7 +5931,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 9,
-              "fanHype": 8
+              "fanHype": 12,
+              "momentum": 1
             }
           },
           "cost": {
@@ -5902,7 +5942,8 @@
               "duelWon": true,
               "foul": true,
               "coachTrust": 4,
-              "stamina": -4
+              "stamina": -4,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -6107,8 +6148,10 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 6,
-              "fanHype": 6,
-              "stamina": -2
+              "fanHype": 10,
+              "stamina": -2,
+              "momentum": 1,
+              "composure": 3
             }
           },
           "cost": {
@@ -6117,7 +6160,9 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "stamina": -4
+              "stamina": -4,
+              "corner": true,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -6220,7 +6265,8 @@
               "duelWon": true,
               "keyPass": true,
               "coachTrust": 5,
-              "fanHype": 5
+              "fanHype": 5,
+              "momentum": 1
             }
           },
           "cost": {
@@ -6228,7 +6274,7 @@
             "recap": "і забрав відскок, отримавши по стегну.",
             "apply": {
               "duelWon": true,
-              "stamina": -4,
+              "stamina": -2,
               "coachTrust": 2
             }
           },
@@ -6372,7 +6418,7 @@
             "recap": "і тримав десятого, залишивши центр порожнім.",
             "apply": {
               "coachTrust": 3,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "fail": {
@@ -6460,7 +6506,7 @@
         "basePosition": "desperate",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 1,
           "personal": 3
@@ -6474,7 +6520,7 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 4,
-              "fanHype": 8,
+              "fanHype": 12,
               "momentum": 1
             }
           },
@@ -6484,7 +6530,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": -2,
-              "stamina": -3
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -6492,7 +6539,7 @@
             "recap": "і побіг у пресинг, залишивши десятого одного.",
             "apply": {
               "coachTrust": -6,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -6618,7 +6665,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 7,
+        "staminaCost": 6,
         "goals": {
           "team": 3,
           "personal": 1
@@ -6630,7 +6677,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 6,
-              "fanHype": 4
+              "fanHype": 4,
+              "momentum": 1
             }
           },
           "cost": {
@@ -6827,7 +6875,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 9,
+        "staminaCost": 7,
         "goals": {
           "team": 1,
           "personal": 3
@@ -6855,10 +6903,11 @@
             "recap": "і обіграв його вдруге, отримавши по ногах.",
             "apply": {
               "fanHype": 8,
-              "stamina": -5,
+              "stamina": -2,
               "removeFlags": [
                 "humiliated_defender"
-              ]
+              ],
+              "duelWon": true
             }
           },
           "fail": {
@@ -6879,7 +6928,7 @@
               "addFlags": [
                 "injured"
               ],
-              "stamina": -6,
+              "stamina": -2,
               "coachTrust": -5,
               "removeFlags": [
                 "humiliated_defender"
@@ -6977,7 +7026,8 @@
               "composure": 6,
               "removeFlags": [
                 "humiliated_defender"
-              ]
+              ],
+              "momentum": 1
             }
           },
           "cost": {
@@ -6985,8 +7035,9 @@
             "recap": "і вистояв у стику ціною ребер.",
             "apply": {
               "duelWon": true,
-              "stamina": -5,
-              "composure": 2
+              "stamina": -2,
+              "composure": 2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -6995,7 +7046,7 @@
             "apply": {
               "losses": 1,
               "coachTrust": -3,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -7113,8 +7164,8 @@
         "past": "обробив подарунок партнера і пробив",
         "attribute": "first_touch",
         "basePosition": "risky",
-        "effect": "standard",
-        "difficulty": 1,
+        "effect": "great",
+        "difficulty": 0,
         "staminaCost": 5,
         "goals": {
           "team": 2,
@@ -7146,7 +7197,8 @@
               "coachTrust": 4,
               "removeFlags": [
                 "partner_trusts"
-              ]
+              ],
+              "fanHype": 3
             }
           },
           "fail": {
@@ -7184,7 +7236,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -7481,7 +7533,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 2,
-        "staminaCost": 11,
+        "staminaCost": 9,
         "goals": {
           "team": 2,
           "personal": 3
@@ -7501,7 +7553,10 @@
               "removeFlags": [
                 "coach_flank"
               ],
-              "scorer": "striker"
+              "scorer": "striker",
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -7509,8 +7564,10 @@
             "recap": "і витягнув на себе фол і жовту на фланзі.",
             "apply": {
               "fanHype": 8,
-              "stamina": -5,
-              "coachTrust": 3
+              "stamina": -2,
+              "coachTrust": 3,
+              "corner": true,
+              "duelWon": true
             }
           },
           "fail": {
@@ -7518,7 +7575,7 @@
             "recap": "і вперся у двох на фланзі.",
             "apply": {
               "losses": 1,
-              "stamina": -3,
+              "stamina": -2,
               "coachTrust": -3
             }
           },
@@ -7541,9 +7598,9 @@
         "label": "Перевести на дальній — раз вони тут",
         "past": "перевів гру з перевантаженого флангу",
         "attribute": "vision",
-        "basePosition": "controlled",
+        "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -7622,7 +7679,8 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "coachTrust": 7
+              "coachTrust": 7,
+              "composure": 3
             }
           },
           "cost": {
@@ -7732,7 +7790,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 8,
+        "staminaCost": 6,
         "goals": {
           "team": 3,
           "personal": 1
@@ -7747,9 +7805,13 @@
             "recap": "і відібрав чисто, попри жовту.",
             "apply": {
               "duelWon": true,
-              "keyPass": true,
               "coachTrust": 7,
-              "fanHype": 6
+              "fanHype": 10,
+              "followUp": "ep_progressive_pass",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -7759,7 +7821,8 @@
               "duelWon": true,
               "foul": true,
               "coachTrust": 3,
-              "composure": -4
+              "composure": -4,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -7894,7 +7957,7 @@
             "recap": "і заробив штрафний на розвороті.",
             "apply": {
               "fanHype": 4,
-              "stamina": -3,
+              "stamina": -2,
               "followUp": "ep_free_kick_close",
               "followUpElse": {
                 "fanHype": 1
@@ -7984,7 +8047,7 @@
         "basePosition": "controlled",
         "effect": "limited",
         "difficulty": -2,
-        "staminaCost": 5,
+        "staminaCost": 3,
         "goals": {
           "team": 2,
           "personal": 0
@@ -7999,7 +8062,7 @@
             "recap": "і втримав м’яч, дочекавшись {dm.gen}.",
             "apply": {
               "coachTrust": 5,
-              "composure": 3
+              "composure": 5
             }
           },
           "cost": {
@@ -8151,7 +8214,7 @@
             "recap": "і виграв гонитву за власним відскоком.",
             "apply": {
               "duelWon": true,
-              "stamina": -4
+              "stamina": -2
             }
           },
           "fail": {
@@ -8245,7 +8308,7 @@
             "recap": "і силою забрав власний невдалий дотик.",
             "apply": {
               "duelWon": true,
-              "fanHype": 8,
+              "fanHype": 12,
               "coachTrust": 3,
               "momentum": 1,
               "addFlags": [
@@ -8258,7 +8321,8 @@
             "recap": "і виграв боротьбу за власний дотик, впавши разом із суперником.",
             "apply": {
               "duelWon": true,
-              "stamina": -4
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -8267,7 +8331,7 @@
             "apply": {
               "losses": 1,
               "coachTrust": -2,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -8277,7 +8341,7 @@
               "foul": true,
               "losses": 1,
               "coachTrust": -5,
-              "stamina": -3
+              "stamina": -2
             }
           }
         }
@@ -8317,7 +8381,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 9,
+        "staminaCost": 7,
         "goals": {
           "team": 1,
           "personal": 3
@@ -8342,7 +8406,7 @@
             "apply": {
               "corner": true,
               "fanHype": 6,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "fail": {
@@ -8548,7 +8612,7 @@
             "recap": "і розіграв стінку, але не забив.",
             "apply": {
               "fanHype": 8,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "fail": {
@@ -8592,10 +8656,17 @@
             "text": "Ти прибираєш м’яч під себе й проходиш захисника соло. {partner} тільки розводить руками — міг би отримати передачу, але вийшло й так.",
             "recap": "і пройшов захисника сам, не розігравши стінку.",
             "apply": {
-              "keyPass": true,
               "fanHype": 10,
               "coachTrust": 2,
-              "composure": 3
+              "composure": 3,
+              "followUp": "fin_shot",
+              "followUpElse": {
+                "corner": true,
+                "fanHype": 3
+              },
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -8603,7 +8674,7 @@
             "recap": "і заробив штрафний, граючи сам.",
             "apply": {
               "fanHype": 4,
-              "stamina": -4
+              "stamina": -2
             }
           },
           "fail": {
@@ -8901,7 +8972,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
         "staminaCost": 6,
         "goals": {
           "team": 0,
@@ -8958,7 +9029,7 @@
         "attribute": "passing",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
         "staminaCost": 6,
         "goals": {
           "team": 3,
@@ -9088,7 +9159,7 @@
             "recap": "і заробив штрафний фінтом на фланзі.",
             "apply": {
               "fanHype": 6,
-              "stamina": -4,
+              "stamina": -2,
               "followUp": "ep_free_kick_close",
               "followUpElse": {
                 "fanHype": 2
@@ -9140,7 +9211,8 @@
               "coachTrust": 4,
               "addFlags": [
                 "pattern_wide"
-              ]
+              ],
+              "momentum": 1
             }
           },
           "cost": {
@@ -9148,10 +9220,11 @@
             "recap": "і виграв швидкість ціною кутового.",
             "apply": {
               "corner": true,
-              "stamina": -4,
+              "stamina": -2,
               "addFlags": [
                 "pattern_wide"
-              ]
+              ],
+              "fanHype": 3
             }
           },
           "fail": {
@@ -9168,7 +9241,7 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -5,
-              "stamina": -3
+              "stamina": -2
             }
           }
         }
@@ -9370,14 +9443,14 @@
             "text": "Ти встигаєш у зону, але пас приходить під незручну ногу. Момент є, сил уже помітно менше.",
             "recap": "і добіг до зони на межі сил.",
             "apply": {
-              "stamina": -3
+              "stamina": -2
             }
           },
           "fail": {
             "text": "Ривок виходить запізнілим — м’яч приходить туди, де тебе вже немає. Сили витрачено даремно.",
             "recap": "і витратив сили на ривок, що не спрацював.",
             "apply": {
-              "stamina": -3,
+              "stamina": -2,
               "coachTrust": -2
             }
           },
@@ -9388,7 +9461,7 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -4,
-              "stamina": -4
+              "stamina": -2
             }
           }
         }
@@ -9532,7 +9605,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 0,
-        "staminaCost": 8,
+        "staminaCost": 7,
         "goals": {
           "team": 1,
           "personal": 3
@@ -9546,9 +9619,14 @@
             "text": "Ти йдеш прямо на нього, і він навіть не намагається зустріти корпусом — жовта важча за м’яч. Обведення чисте, штрафний майже поруч.",
             "recap": "і скористався його страхом перед другою жовтою.",
             "apply": {
-              "keyPass": true,
               "fanHype": 12,
-              "coachTrust": 5
+              "coachTrust": 5,
+              "followUp": "fin_shot",
+              "followUpElse": {
+                "corner": true,
+                "fanHype": 3
+              },
+              "duelWon": true
             }
           },
           "cost": {
@@ -9818,7 +9896,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -10028,7 +10106,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -10127,7 +10205,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 0,
         "staminaCost": 7,
         "goals": {
           "team": 1,
@@ -10153,7 +10231,7 @@
             "apply": {
               "corner": true,
               "fanHype": 6,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "fail": {
@@ -10182,7 +10260,7 @@
         "past": "зупинив відскок, перш ніж бити",
         "attribute": "first_touch",
         "basePosition": "risky",
-        "effect": "standard",
+        "effect": "great",
         "difficulty": 0,
         "staminaCost": 5,
         "goals": {
@@ -10447,7 +10525,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -10500,7 +10578,7 @@
         "past": "розчистив м’яч для {partner.gen} замість удару самому",
         "attribute": "vision",
         "basePosition": "risky",
-        "effect": "standard",
+        "effect": "great",
         "difficulty": -1,
         "staminaCost": 4,
         "goals": {
@@ -10689,7 +10767,7 @@
             "recap": "і зірвав атаку пресингом без відбору.",
             "apply": {
               "coachTrust": 3,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "fail": {
@@ -10929,7 +11007,8 @@
               "addFlags": [
                 "booked"
               ],
-              "coachTrust": 4
+              "coachTrust": 4,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -10986,7 +11065,7 @@
             "recap": "і майже наздогнав, не порушивши правил.",
             "apply": {
               "coachTrust": 2,
-              "stamina": -4
+              "stamina": -2
             }
           },
           "fail": {
@@ -10994,7 +11073,7 @@
             "recap": "і не скоротив дистанцію навздогін.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -11003,7 +11082,7 @@
             "apply": {
               "concede": true,
               "coachTrust": -8,
-              "stamina": -6
+              "stamina": -2
             }
           }
         }
@@ -11110,7 +11189,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 7,
+        "staminaCost": 6,
         "goals": {
           "team": 3,
           "personal": 1
@@ -11126,7 +11205,9 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 6,
-              "composure": 3
+              "composure": 3,
+              "momentum": 1,
+              "fanHype": 4
             }
           },
           "cost": {
@@ -11134,7 +11215,8 @@
             "recap": "і зупинив прохід фолом, підстраховуючи.",
             "apply": {
               "foul": true,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -11422,7 +11504,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 7,
+        "staminaCost": 6,
         "goals": {
           "team": 3,
           "personal": 1
@@ -11438,7 +11520,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 6,
-              "fanHype": 4
+              "fanHype": 8,
+              "momentum": 1
             }
           },
           "cost": {
@@ -11447,7 +11530,8 @@
             "apply": {
               "duelWon": true,
               "foul": true,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -11854,7 +11938,7 @@
         "basePosition": "desperate",
         "effect": "great",
         "difficulty": 2,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 1,
           "personal": 3
@@ -11868,10 +11952,14 @@
             "text": "Ти проходиш центр поля на самому дриблінгу — ніхто не встигає накрити, і атака летить уперед разом із тобою.",
             "recap": "і сам поніс м’яч через увесь центр поля.",
             "apply": {
-              "keyPass": true,
               "fanHype": 16,
               "coachTrust": 5,
-              "composure": 4
+              "composure": 4,
+              "followUp": "ep_between_lines",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -11879,7 +11967,7 @@
             "recap": "і поніс м’яч центром ціною фолу на собі.",
             "apply": {
               "fanHype": 8,
-              "stamina": -5
+              "stamina": -2
             }
           },
           "fail": {
@@ -11963,7 +12051,7 @@
             "text": "Ти проходиш, але м’яч виходить за лінію на останньому метрі. Аут, зате фланг тепер точно твій.",
             "recap": "і майже пройшов уздовж бровки.",
             "apply": {
-              "stamina": -3,
+              "stamina": -2,
               "coachTrust": 1,
               "addFlags": [
                 "pattern_wide"
@@ -12025,7 +12113,7 @@
             "recap": "і заробив штрафний, змістившись у центр.",
             "apply": {
               "fanHype": 4,
-              "stamina": -4,
+              "stamina": -2,
               "followUp": "ep_free_kick_close",
               "followUpElse": {
                 "fanHype": 2
@@ -12152,7 +12240,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 0,
-        "staminaCost": 9,
+        "staminaCost": 7,
         "goals": {
           "team": 1,
           "personal": 3
@@ -12167,7 +12255,7 @@
             "recap": "і прискорився рівно тоді, коли захисник цього не чекав.",
             "apply": {
               "duelWon": true,
-              "fanHype": 8,
+              "fanHype": 12,
               "coachTrust": 2,
               "followUp": "fin_shot",
               "followUpElse": {
@@ -12182,7 +12270,7 @@
             "recap": "і виграв темп ціною фолу на собі.",
             "apply": {
               "fanHype": 6,
-              "stamina": -4
+              "stamina": -2
             }
           },
           "fail": {
@@ -12190,7 +12278,7 @@
             "recap": "і не встиг скористатися програною позицією.",
             "apply": {
               "coachTrust": -2,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -12263,7 +12351,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 3,
+        "difficulty": 2,
         "staminaCost": 5,
         "goals": {
           "team": 0,
@@ -12649,7 +12737,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 8,
+        "staminaCost": 6,
         "goals": {
           "team": 2,
           "personal": 2
@@ -12665,7 +12753,8 @@
             "apply": {
               "keyPass": true,
               "fanHype": 6,
-              "coachTrust": 6
+              "coachTrust": 6,
+              "momentum": 1
             }
           },
           "cost": {
@@ -13091,7 +13180,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -13148,7 +13237,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 1,
           "personal": 3
@@ -13163,7 +13252,7 @@
             "recap": "і отримав двадцять метрів свободи перед воротами.",
             "apply": {
               "duelWon": true,
-              "fanHype": 6,
+              "fanHype": 10,
               "followUp": "fin_shot",
               "followUpElse": {
                 "corner": true,
@@ -13177,7 +13266,7 @@
             "recap": "і розвернувся, але опорник закрив удар.",
             "apply": {
               "corner": true,
-              "fanHype": 3,
+              "fanHype": 6,
               "stamina": -2
             }
           },
@@ -13225,8 +13314,11 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "fanHype": 6,
-              "coachTrust": 4
+              "fanHype": 10,
+              "coachTrust": 4,
+              "addFlags": [
+                "partner_trusts"
+              ]
             }
           },
           "cost": {
@@ -13234,7 +13326,8 @@
             "recap": "і віддав прямо, але пас прочитали.",
             "apply": {
               "keyPass": true,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -13376,7 +13469,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 9,
+        "staminaCost": 7,
         "goals": {
           "team": 1,
           "personal": 3
@@ -13594,7 +13687,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 1,
           "personal": 3
@@ -13824,7 +13917,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 11,
+        "staminaCost": 9,
         "goals": {
           "team": 1,
           "personal": 3
@@ -13840,8 +13933,11 @@
             "apply": {
               "corner": true,
               "duelWon": true,
-              "fanHype": 8,
-              "coachTrust": 3
+              "fanHype": 12,
+              "coachTrust": 3,
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -13849,8 +13945,8 @@
             "recap": "і доніс м’яч до штрафного на останніх силах.",
             "apply": {
               "corner": true,
-              "stamina": -3,
-              "fanHype": 3
+              "stamina": -2,
+              "fanHype": 6
             }
           },
           "fail": {
@@ -14022,7 +14118,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -14077,7 +14173,7 @@
         "past": "прострелив сильно вздовж воріт",
         "attribute": "passing",
         "basePosition": "risky",
-        "effect": "standard",
+        "effect": "great",
         "difficulty": 0,
         "staminaCost": 8,
         "goals": {
@@ -14105,7 +14201,7 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "fanHype": 5
+              "fanHype": 8
             }
           },
           "fail": {
@@ -14216,7 +14312,7 @@
             "recap": "і воротар відбив, а троє у штрафному чекали пасу.",
             "apply": {
               "corner": true,
-              "fanHype": 4,
+              "fanHype": 7,
               "coachTrust": -1
             }
           },
@@ -14272,7 +14368,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 1,
           "personal": 3
@@ -14299,7 +14395,7 @@
             "recap": "і обійшов одного, але другий накрив удар.",
             "apply": {
               "corner": true,
-              "fanHype": 5,
+              "fanHype": 8,
               "stamina": -2
             }
           },
@@ -14572,7 +14668,8 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -14763,7 +14860,9 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 7,
-              "composure": 3
+              "composure": 3,
+              "momentum": 1,
+              "fanHype": 4
             }
           },
           "cost": {
@@ -14772,7 +14871,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 4,
-              "composure": -2
+              "composure": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -14803,7 +14903,7 @@
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 10,
+        "staminaCost": 7,
         "goals": {
           "team": 2,
           "personal": 1
@@ -14990,7 +15090,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 11,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -15006,7 +15106,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 5,
-              "fanHype": 4
+              "fanHype": 4,
+              "momentum": 1
             }
           },
           "cost": {
@@ -15200,7 +15301,8 @@
               "duelWon": true,
               "coachTrust": 9,
               "fanHype": 8,
-              "composure": 3
+              "composure": 3,
+              "momentum": 1
             }
           },
           "cost": {
@@ -15312,7 +15414,7 @@
             "recap": "і суддя показав на кутовий, не помітивши.",
             "apply": {
               "coachTrust": 5,
-              "fanHype": 6,
+              "fanHype": 10,
               "composure": -3
             }
           },
@@ -15486,7 +15588,7 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "fanHype": 4
+              "fanHype": 7
             }
           },
           "fail": {
@@ -15512,7 +15614,7 @@
         "past": "подав кутовий на дальню",
         "attribute": "passing",
         "basePosition": "risky",
-        "effect": "standard",
+        "effect": "great",
         "difficulty": 0,
         "staminaCost": 5,
         "goals": {
@@ -15540,7 +15642,7 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "fanHype": 3
+              "fanHype": 6
             }
           },
           "fail": {
@@ -15567,7 +15669,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 4,
+        "difficulty": 3,
         "staminaCost": 6,
         "goals": {
           "team": 1,
@@ -15630,7 +15732,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -15800,7 +15902,8 @@
               "scorer": "striker",
               "duelWon": true,
               "fanHype": 10,
-              "coachTrust": 6
+              "coachTrust": 6,
+              "momentum": 1
             }
           },
           "cost": {
@@ -15809,7 +15912,7 @@
             "apply": {
               "duelWon": true,
               "corner": true,
-              "fanHype": 4
+              "fanHype": 7
             }
           },
           "fail": {
@@ -15841,7 +15944,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -15896,7 +15999,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 1,
           "personal": 3
@@ -15920,7 +16023,7 @@
             "recap": "і пробив головою з ближньої — воротар відбив.",
             "apply": {
               "corner": true,
-              "fanHype": 5
+              "fanHype": 8
             }
           },
           "fail": {
@@ -15936,7 +16039,7 @@
             "apply": {
               "counterAttack": true,
               "coachTrust": -5,
-              "stamina": -3
+              "stamina": -2
             }
           }
         }
@@ -16077,11 +16180,12 @@
             "recap": "і м’яч опустився в дальню дев’ятку.",
             "apply": {
               "goal": true,
-              "fanHype": 16,
+              "fanHype": 20,
               "coachTrust": 6,
               "addFlags": [
                 "keeper_read"
-              ]
+              ],
+              "momentum": 1
             }
           },
           "cost": {
@@ -16202,7 +16306,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -16467,7 +16571,7 @@
         "basePosition": "risky",
         "effect": "limited",
         "difficulty": -1,
-        "staminaCost": 10,
+        "staminaCost": 7,
         "goals": {
           "team": 3,
           "personal": 1
@@ -16483,7 +16587,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 6,
-              "fanHype": 3
+              "fanHype": 7
             }
           },
           "cost": {
@@ -16492,7 +16596,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "stamina": -3
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -16608,7 +16713,7 @@
         "basePosition": "desperate",
         "effect": "great",
         "difficulty": 2,
-        "staminaCost": 11,
+        "staminaCost": 9,
         "goals": {
           "team": 1,
           "personal": 3
@@ -16624,7 +16729,10 @@
             "apply": {
               "goal": true,
               "fanHype": 18,
-              "coachTrust": 5
+              "coachTrust": 5,
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -16632,8 +16740,8 @@
             "recap": "і пройшов двох до фолу на жовту.",
             "apply": {
               "duelWon": true,
-              "fanHype": 5,
-              "stamina": -3,
+              "fanHype": 8,
+              "stamina": -2,
               "followUp": "ep_free_kick_close",
               "followUpElse": {
                 "fanHype": 1
@@ -16646,7 +16754,7 @@
             "apply": {
               "losses": 1,
               "coachTrust": -4,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -16656,7 +16764,7 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -7,
-              "stamina": -5
+              "stamina": -2
             }
           }
         }
@@ -16750,7 +16858,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 11,
+        "staminaCost": 9,
         "goals": {
           "team": 2,
           "personal": 2
@@ -16775,7 +16883,7 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "fanHype": 5
+              "fanHype": 8
             }
           },
           "fail": {
@@ -17297,7 +17405,7 @@
             "recap": "і відповів так, що він відступив.",
             "apply": {
               "duelWon": true,
-              "fanHype": 5,
+              "fanHype": 9,
               "composure": 5
             }
           },
@@ -17306,7 +17414,7 @@
             "recap": "і відповів — суддя розвів обох.",
             "apply": {
               "composure": 3,
-              "fanHype": 3
+              "fanHype": 6
             }
           },
           "fail": {
@@ -17355,7 +17463,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 4,
-              "fanHype": 6,
+              "fanHype": 10,
               "composure": 4
             }
           },
@@ -17364,7 +17472,8 @@
             "recap": "і спровокував його на фол, а суддю — на палець.",
             "apply": {
               "coachTrust": 3,
-              "composure": 2
+              "composure": 2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -17478,7 +17587,7 @@
         "basePosition": "desperate",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 11,
+        "staminaCost": 9,
         "goals": {
           "team": 1,
           "personal": 3
@@ -17509,10 +17618,11 @@
             "recap": "і пройшов по бровці втретє до фолу.",
             "apply": {
               "duelWon": true,
-              "fanHype": 4,
+              "fanHype": 7,
               "removeFlags": [
                 "pattern_wide"
-              ]
+              ],
+              "corner": true
             }
           },
           "fail": {
@@ -17785,7 +17895,8 @@
               "fanHype": -2,
               "removeFlags": [
                 "ref_annoyed"
-              ]
+              ],
+              "stamina": 3
             }
           },
           "cost": {
@@ -17852,7 +17963,7 @@
             "apply": {
               "coachTrust": 3,
               "composure": 3,
-              "fanHype": 4,
+              "fanHype": 8,
               "removeFlags": [
                 "ref_annoyed"
               ]
@@ -17866,7 +17977,7 @@
                 "booked"
               ],
               "coachTrust": 3,
-              "fanHype": 5,
+              "fanHype": 8,
               "removeFlags": [
                 "ref_annoyed"
               ]
@@ -18048,7 +18159,7 @@
         "attribute": "first_touch",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 0,
         "staminaCost": 5,
         "goals": {
           "team": 1,
@@ -18130,18 +18241,19 @@
             "recap": "і пробив на силу — воротар не встиг підняти руки.",
             "apply": {
               "goal": true,
-              "fanHype": 15,
+              "fanHype": 18,
               "coachTrust": 5,
               "addFlags": [
                 "keeper_read"
-              ]
+              ],
+              "momentum": 1
             }
           },
           "cost": {
             "text": "На силу — у воротаря, він відбиває перед собою. М’яч ще живий.",
             "recap": "і пробив у воротаря — м’яч відскочив у штрафний.",
             "apply": {
-              "fanHype": 5,
+              "fanHype": 8,
               "followUp": "ep_rebound_follow_up",
               "followUpElse": {
                 "corner": true
@@ -18977,7 +19089,8 @@
               "followUpElse": {
                 "goal": true,
                 "fanHype": 10
-              }
+              },
+              "fanHype": 4
             }
           },
           "cost": {
@@ -18989,7 +19102,8 @@
               "followUpElse": {
                 "goal": true,
                 "fanHype": 8
-              }
+              },
+              "fanHype": 3
             }
           },
           "fail": {
@@ -19114,7 +19228,7 @@
             "recap": "і воротар отримав жовту за затягування.",
             "apply": {
               "composure": 3,
-              "fanHype": 3,
+              "fanHype": 7,
               "followUp": "fin_penalty",
               "followUpElse": {
                 "goal": true,
@@ -19131,7 +19245,8 @@
               "followUpElse": {
                 "goal": true,
                 "fanHype": 8
-              }
+              },
+              "fanHype": 3
             }
           },
           "fail": {
@@ -19229,7 +19344,8 @@
               ],
               "composure": 3,
               "coachTrust": 3,
-              "duelWon": true
+              "duelWon": true,
+              "fanHype": 4
             }
           },
           "cost": {
@@ -19237,7 +19353,8 @@
             "recap": "і дограв на зубах.",
             "apply": {
               "coachTrust": 3,
-              "stamina": -3
+              "stamina": -3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -19422,7 +19539,7 @@
             "recap": "і заробив штрафний і жовту супернику.",
             "apply": {
               "duelWon": true,
-              "fanHype": 6,
+              "fanHype": 10,
               "coachTrust": 3,
               "removeFlags": [
                 "ref_sympathetic"
@@ -19433,7 +19550,7 @@
             "text": "Свисток є. Штрафний є. Але суддя підходить і каже тихо: «останній раз». Кредит вичерпано.",
             "recap": "і заробив штрафний — останній у кредит.",
             "apply": {
-              "fanHype": 3,
+              "fanHype": 6,
               "removeFlags": [
                 "ref_sympathetic"
               ]
@@ -19871,8 +19988,9 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 8,
-              "fanHype": 5,
-              "stamina": -2
+              "fanHype": 9,
+              "stamina": -2,
+              "momentum": 1
             }
           },
           "cost": {
@@ -19882,7 +20000,8 @@
               "duelWon": true,
               "corner": true,
               "coachTrust": 5,
-              "composure": 2
+              "composure": 2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -19914,7 +20033,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 8,
+        "staminaCost": 7,
         "goals": {
           "team": 3,
           "personal": 1
@@ -19929,9 +20048,13 @@
             "recap": "і забрав підбір у суперника з-під удару.",
             "apply": {
               "duelWon": true,
-              "keyPass": true,
               "coachTrust": 8,
-              "fanHype": 6
+              "fanHype": 10,
+              "followUp": "ep_counter_run",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -19941,7 +20064,8 @@
               "duelWon": true,
               "foul": true,
               "coachTrust": 4,
-              "stamina": -2
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -19949,7 +20073,7 @@
             "recap": "і не встиг на підбір — удар вище.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -20100,7 +20224,7 @@
             "recap": "і пробіг повз розіграш.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -20294,7 +20418,8 @@
               "duelWon": true,
               "keyPass": true,
               "coachTrust": 7,
-              "fanHype": 4
+              "fanHype": 8,
+              "momentum": 1
             }
           },
           "cost": {
@@ -20303,7 +20428,8 @@
             "apply": {
               "duelWon": true,
               "foul": true,
-              "coachTrust": 3
+              "coachTrust": 3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -20352,7 +20478,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 7,
-              "composure": 3
+              "composure": 3,
+              "momentum": 1
             }
           },
           "cost": {
@@ -20701,7 +20828,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 9,
+        "staminaCost": 7,
         "goals": {
           "team": 3,
           "personal": 1
@@ -20717,8 +20844,9 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 9,
-              "fanHype": 5,
-              "stamina": -2
+              "fanHype": 9,
+              "stamina": -2,
+              "momentum": 1
             }
           },
           "cost": {
@@ -20731,7 +20859,8 @@
                 "booked"
               ],
               "coachTrust": 4,
-              "composure": -2
+              "composure": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -20739,7 +20868,7 @@
             "recap": "і не встиг на розігруючого — кутовий проти нас.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -3,
+              "stamina": -2,
               "composure": -3
             }
           },
@@ -21050,10 +21179,14 @@
             "recap": "і забрав розіграш штрафного, вибігши зі стінки.",
             "apply": {
               "duelWon": true,
-              "keyPass": true,
               "coachTrust": 8,
-              "fanHype": 7,
-              "stamina": -2
+              "fanHype": 11,
+              "stamina": -2,
+              "followUp": "ep_counter_run",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -21066,7 +21199,8 @@
                 "booked"
               ],
               "coachTrust": 2,
-              "composure": -3
+              "composure": -3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -21163,7 +21297,7 @@
               "duelWon": true,
               "corner": true,
               "coachTrust": 5,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "fail": {
@@ -21171,7 +21305,7 @@
             "recap": "і не наздогнав нападника — удар, {keeper} врятував.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -4,
+              "stamina": -2,
               "composure": -3
             }
           },
@@ -21410,7 +21544,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 8,
+        "staminaCost": 6,
         "goals": {
           "team": 3,
           "personal": 1
@@ -21426,8 +21560,9 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 8,
-              "fanHype": 4,
-              "stamina": -2
+              "fanHype": 8,
+              "stamina": -2,
+              "momentum": 1
             }
           },
           "cost": {
@@ -21436,7 +21571,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 4,
-              "stamina": -3
+              "stamina": -3,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -21639,8 +21775,9 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 9,
-              "fanHype": 9,
-              "stamina": -3
+              "fanHype": 13,
+              "stamina": -2,
+              "momentum": 1
             }
           },
           "cost": {
@@ -21649,8 +21786,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 5,
-              "fanHype": 3,
-              "stamina": -3
+              "fanHype": 6,
+              "stamina": -2
             }
           },
           "fail": {
@@ -21658,7 +21795,7 @@
             "recap": "і пролетів повз, а він пробив у бічну сітку.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -3,
+              "stamina": -2,
               "composure": -4
             }
           },
@@ -21700,7 +21837,8 @@
               "duelWon": true,
               "coachTrust": 8,
               "fanHype": 10,
-              "stamina": -2
+              "stamina": -2,
+              "momentum": 1
             }
           },
           "cost": {
@@ -21713,7 +21851,7 @@
                 "booked"
               ],
               "coachTrust": 5,
-              "fanHype": 4
+              "fanHype": 7
             }
           },
           "fail": {
@@ -21799,7 +21937,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 4,
-              "composure": 2
+              "composure": 2,
+              "fanHype": 4
             }
           },
           "cost": {
@@ -21808,7 +21947,8 @@
             "apply": {
               "foul": true,
               "coachTrust": 3,
-              "composure": -1
+              "composure": -1,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -21844,7 +21984,7 @@
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 7,
+        "staminaCost": 5,
         "goals": {
           "team": 3,
           "personal": 1
@@ -21860,7 +22000,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 7,
-              "fanHype": 3
+              "fanHype": 3,
+              "keyPass": true
             }
           },
           "cost": {
@@ -22009,9 +22150,13 @@
             "recap": "і забрав другий м’яч і почав атаку.",
             "apply": {
               "duelWon": true,
-              "keyPass": true,
               "coachTrust": 7,
-              "fanHype": 3
+              "fanHype": 7,
+              "followUp": "ep_counter_run",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -22020,7 +22165,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "stamina": -3
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -22269,7 +22415,7 @@
         "attribute": "vision",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -22650,7 +22796,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 8,
-              "fanHype": 8
+              "fanHype": 12,
+              "momentum": 1
             }
           },
           "cost": {
@@ -22659,7 +22806,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 5,
+              "fanHype": 8,
               "composure": -3
             }
           },
@@ -22769,7 +22916,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 5,
-              "fanHype": 9,
+              "fanHype": 13,
               "composure": 3
             }
           },
@@ -23189,7 +23336,7 @@
         "attribute": "vision",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 3,
+        "difficulty": 2,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -23217,7 +23364,7 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 4,
-              "fanHype": 5
+              "fanHype": 8
             }
           },
           "fail": {
@@ -23353,7 +23500,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -23441,7 +23588,7 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 2,
-              "fanHype": 5
+              "fanHype": 8
             }
           },
           "fail": {
@@ -23592,7 +23739,11 @@
               "assist": true,
               "scorer": "striker",
               "coachTrust": 7,
-              "fanHype": 9
+              "fanHype": 13,
+              "momentum": 1,
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -23601,7 +23752,7 @@
             "apply": {
               "keyPass": true,
               "coachTrust": 4,
-              "fanHype": 3
+              "fanHype": 6
             }
           },
           "fail": {
@@ -23633,7 +23784,7 @@
         "basePosition": "desperate",
         "effect": "great",
         "difficulty": 2,
-        "staminaCost": 8,
+        "staminaCost": 7,
         "goals": {
           "team": 1,
           "personal": 3
@@ -23649,7 +23800,10 @@
             "apply": {
               "goal": true,
               "coachTrust": 5,
-              "fanHype": 11
+              "fanHype": 11,
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -23658,7 +23812,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 5,
+              "fanHype": 8,
               "stamina": -2
             }
           },
@@ -23803,8 +23957,11 @@
             "apply": {
               "goal": true,
               "coachTrust": 7,
-              "fanHype": 9,
-              "composure": 3
+              "fanHype": 13,
+              "composure": 3,
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -23813,7 +23970,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 4,
+              "fanHype": 7,
               "stamina": -2
             }
           },
@@ -23961,7 +24118,7 @@
             "apply": {
               "goal": true,
               "coachTrust": 6,
-              "fanHype": 12,
+              "fanHype": 16,
               "momentum": 1
             }
           },
@@ -23971,7 +24128,7 @@
             "apply": {
               "corner": true,
               "coachTrust": 2,
-              "fanHype": 5
+              "fanHype": 8
             }
           },
           "fail": {
@@ -24003,7 +24160,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -24297,7 +24454,10 @@
             "apply": {
               "keyPass": true,
               "coachTrust": 6,
-              "composure": 4
+              "composure": 4,
+              "addFlags": [
+                "partner_trusts"
+              ]
             }
           },
           "cost": {
@@ -24381,7 +24541,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 8,
+        "staminaCost": 7,
         "goals": {
           "team": 2,
           "personal": 2
@@ -24398,7 +24558,7 @@
               "keyPass": true,
               "duelWon": true,
               "coachTrust": 8,
-              "fanHype": 4,
+              "fanHype": 8,
               "momentum": 1,
               "followUp": "ep_progressive_pass",
               "followUpElse": {
@@ -24412,7 +24572,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 4,
-              "composure": 1
+              "composure": 1,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -24659,7 +24820,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 9,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -24676,11 +24837,14 @@
               "keyPass": true,
               "duelWon": true,
               "coachTrust": 5,
-              "fanHype": 6,
+              "fanHype": 10,
               "followUp": "ep_between_lines",
               "followUpElse": {
                 "momentum": 1
-              }
+              },
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -24689,7 +24853,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 2
+              "fanHype": 5
             }
           },
           "fail": {
@@ -24818,7 +24982,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 9,
+        "staminaCost": 7,
         "goals": {
           "team": 2,
           "personal": 3
@@ -24834,7 +24998,7 @@
             "apply": {
               "goal": true,
               "coachTrust": 6,
-              "fanHype": 9
+              "fanHype": 13
             }
           },
           "cost": {
@@ -24844,7 +25008,7 @@
               "foul": true,
               "duelWon": true,
               "coachTrust": 2,
-              "fanHype": 3
+              "fanHype": 6
             }
           },
           "fail": {
@@ -25146,7 +25310,7 @@
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": -1,
-        "staminaCost": 7,
+        "staminaCost": 5,
         "goals": {
           "team": 2,
           "personal": 1
@@ -25337,7 +25501,7 @@
             "recap": "і побіг за спину, куди ніхто не дивився.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -4
+              "stamina": -2
             }
           },
           "badFail": {
@@ -25348,7 +25512,7 @@
               "coachTrust": -5,
               "fanHype": -3,
               "composure": -4,
-              "stamina": -3
+              "stamina": -2
             }
           }
         }
@@ -25468,9 +25632,13 @@
             "text": "Ти стаєш на два метри перед {striker.ins} — і скидка приходить тобі в ноги, наче він дивився. Ти розвертаєшся обличчям до поля, {partner} уже біжить. Довгий м’яч перетворився на атаку.",
             "recap": "і забрав скидку після довгого вибивання.",
             "apply": {
-              "keyPass": true,
               "coachTrust": 6,
-              "composure": 2
+              "composure": 2,
+              "followUp": "ep_counter_run",
+              "followUpElse": {
+                "keyPass": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -25545,7 +25713,7 @@
             "recap": "і побіг за спину, а верх програли.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -4
+              "stamina": -2
             }
           },
           "badFail": {
@@ -25557,7 +25725,7 @@
               "coachTrust": -8,
               "fanHype": -4,
               "composure": -7,
-              "stamina": -3
+              "stamina": -2
             }
           }
         }
@@ -25666,7 +25834,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 9,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 3
@@ -25682,7 +25850,7 @@
             "apply": {
               "keyPass": true,
               "coachTrust": 5,
-              "fanHype": 5,
+              "fanHype": 9,
               "followUp": "fin_shot",
               "followUpElse": {
                 "corner": true,
@@ -25696,7 +25864,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 4,
-              "fanHype": 4,
+              "fanHype": 7,
               "stamina": -2
             }
           },
@@ -26129,7 +26297,11 @@
               "keyPass": true,
               "coachTrust": 7,
               "composure": 3,
-              "momentum": 1
+              "momentum": 1,
+              "addFlags": [
+                "partner_trusts"
+              ],
+              "fanHype": 4
             }
           },
           "cost": {
@@ -26138,7 +26310,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 4,
-              "composure": 1
+              "composure": 1,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -26246,11 +26419,14 @@
             "apply": {
               "keyPass": true,
               "coachTrust": 6,
-              "fanHype": 5,
+              "fanHype": 9,
               "followUp": "ep_progressive_pass",
               "followUpElse": {
                 "momentum": 1
-              }
+              },
+              "addFlags": [
+                "partner_trusts"
+              ]
             }
           },
           "cost": {
@@ -26259,7 +26435,8 @@
             "apply": {
               "keyPass": true,
               "coachTrust": 3,
-              "composure": 1
+              "composure": 1,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -26344,11 +26521,14 @@
               "keyPass": true,
               "duelWon": true,
               "coachTrust": 5,
-              "fanHype": 7,
+              "fanHype": 11,
               "followUp": "ep_between_lines",
               "followUpElse": {
                 "momentum": 1
-              }
+              },
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -26357,7 +26537,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 2
+              "fanHype": 5
             }
           },
           "fail": {
@@ -26468,11 +26648,12 @@
               "keyPass": true,
               "duelWon": true,
               "coachTrust": 6,
-              "fanHype": 4,
+              "fanHype": 8,
               "followUp": "ep_between_lines",
               "followUpElse": {
                 "momentum": 1
-              }
+              },
+              "momentum": 1
             }
           },
           "cost": {
@@ -26481,7 +26662,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "composure": 1
+              "composure": 1,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -26489,7 +26671,7 @@
             "recap": "і побіг у стінку, яку не повернули.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -3
+              "stamina": -2
             }
           },
           "badFail": {
@@ -26551,7 +26733,7 @@
         "attribute": "pace",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 9,
         "goals": {
           "team": 3,
@@ -26788,7 +26970,7 @@
               "duelWon": true,
               "coachTrust": 6,
               "fanHype": 3,
-              "composure": 3
+              "composure": 5
             }
           },
           "cost": {
@@ -26848,8 +27030,11 @@
               "keyPass": true,
               "duelWon": true,
               "coachTrust": 4,
-              "fanHype": 7,
-              "momentum": 1
+              "fanHype": 11,
+              "momentum": 1,
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -26858,8 +27043,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 3,
-              "stamina": -3
+              "fanHype": 6,
+              "stamina": -2
             }
           },
           "fail": {
@@ -26996,7 +27181,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 3,
           "personal": 2
@@ -27013,7 +27198,7 @@
               "duelWon": true,
               "keyPass": true,
               "coachTrust": 8,
-              "fanHype": 6,
+              "fanHype": 10,
               "followUp": "ep_edge_of_box",
               "followUpElse": {
                 "corner": true,
@@ -27027,7 +27212,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 5,
-              "stamina": -2
+              "stamina": -2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -27035,7 +27221,7 @@
             "recap": "і не встиг у контрпресинг.",
             "apply": {
               "coachTrust": -3,
-              "stamina": -4,
+              "stamina": -2,
               "composure": -2
             }
           },
@@ -27048,7 +27234,7 @@
               "coachTrust": -8,
               "fanHype": -4,
               "composure": -7,
-              "stamina": -3
+              "stamina": -2
             }
           }
         }
@@ -27274,7 +27460,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
-        "staminaCost": 9,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -27291,7 +27477,7 @@
               "duelWon": true,
               "keyPass": true,
               "coachTrust": 5,
-              "fanHype": 7,
+              "fanHype": 11,
               "followUp": "ep_counter_run",
               "followUpElse": {
                 "momentum": 1
@@ -27305,7 +27491,7 @@
               "duelWon": true,
               "foul": true,
               "coachTrust": 1,
-              "fanHype": 3
+              "fanHype": 6
             }
           },
           "fail": {
@@ -27429,7 +27615,7 @@
         "attribute": "passing",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -27447,7 +27633,8 @@
               "assist": true,
               "scorer": "keeper",
               "coachTrust": 7,
-              "fanHype": 14
+              "fanHype": 14,
+              "momentum": 1
             }
           },
           "cost": {
@@ -27655,7 +27842,7 @@
             "recap": "і поговорив із суддею під VAR — рішення наше.",
             "apply": {
               "coachTrust": 5,
-              "fanHype": 5,
+              "fanHype": 9,
               "composure": 3,
               "addFlags": [
                 "ref_sympathetic"
@@ -27667,7 +27854,7 @@
             "recap": "і ходив до судді — його відігнали, рішення наше.",
             "apply": {
               "coachTrust": 3,
-              "fanHype": 3,
+              "fanHype": 6,
               "composure": -1
             }
           },
@@ -28165,7 +28352,7 @@
                 "viral_story"
               ],
               "duelWon": true,
-              "fanHype": 5,
+              "fanHype": 9,
               "composure": 4,
               "momentum": 1
             }
@@ -28181,7 +28368,7 @@
                 "booked"
               ],
               "duelWon": true,
-              "fanHype": 4,
+              "fanHype": 7,
               "composure": -2
             }
           },
@@ -28328,7 +28515,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 8,
+        "staminaCost": 6,
         "goals": {
           "team": 3,
           "personal": 2
@@ -28348,8 +28535,9 @@
               "duelWon": true,
               "keyPass": true,
               "coachTrust": 7,
-              "fanHype": 6,
-              "composure": 4
+              "fanHype": 10,
+              "composure": 4,
+              "momentum": 1
             }
           },
           "cost": {
@@ -28362,7 +28550,8 @@
               "duelWon": true,
               "foul": true,
               "coachTrust": 3,
-              "composure": 2
+              "composure": 2,
+              "fanHype": 3
             }
           },
           "fail": {
@@ -28670,7 +28859,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 8,
+        "staminaCost": 6,
         "goals": {
           "team": 2,
           "personal": 2
@@ -28689,8 +28878,9 @@
               ],
               "duelWon": true,
               "coachTrust": 5,
-              "fanHype": 7,
-              "composure": 3
+              "fanHype": 11,
+              "composure": 3,
+              "momentum": 1
             }
           },
           "cost": {
@@ -28706,7 +28896,7 @@
               "duelWon": true,
               "foul": true,
               "coachTrust": -1,
-              "fanHype": 4
+              "fanHype": 7
             }
           },
           "fail": {
@@ -28766,7 +28956,7 @@
               ],
               "duelWon": true,
               "keyPass": true,
-              "fanHype": 9,
+              "fanHype": 13,
               "composure": 4,
               "momentum": 1
             }
@@ -28780,7 +28970,7 @@
               ],
               "duelWon": true,
               "foul": true,
-              "fanHype": 3,
+              "fanHype": 6,
               "coachTrust": -1
             }
           },
@@ -29081,7 +29271,7 @@
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
-        "staminaCost": 11,
+        "staminaCost": 9,
         "goals": {
           "team": 2,
           "personal": 3
@@ -29107,7 +29297,7 @@
               "corner": true,
               "keyPass": true,
               "coachTrust": 4,
-              "fanHype": 4,
+              "fanHype": 7,
               "stamina": -2
             }
           },
@@ -29116,7 +29306,7 @@
             "recap": "і забіг у коридор, куди не віддали.",
             "apply": {
               "coachTrust": -2,
-              "stamina": -4
+              "stamina": -2
             }
           },
           "badFail": {
@@ -29128,7 +29318,7 @@
               "coachTrust": -7,
               "fanHype": -4,
               "composure": -6,
-              "stamina": -3
+              "stamina": -2
             }
           }
         }
@@ -29352,7 +29542,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -29431,7 +29621,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 5,
-              "fanHype": 7,
+              "fanHype": 11,
               "followUp": "fin_penalty",
               "followUpElse": {
                 "teamGoal": true,
@@ -29446,7 +29636,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 3
+              "fanHype": 6
             }
           },
           "fail": {
@@ -29525,7 +29715,7 @@
         "attribute": "composure",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -29646,7 +29836,7 @@
         "attribute": "dribbling",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
         "staminaCost": 10,
         "goals": {
           "team": 0,
@@ -29664,7 +29854,10 @@
               "goal": true,
               "coachTrust": 4,
               "fanHype": 11,
-              "momentum": 1
+              "momentum": 1,
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -29802,7 +29995,7 @@
         "attribute": "first_touch",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 0,
         "staminaCost": 7,
         "goals": {
           "team": 1,
@@ -29829,7 +30022,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 4
+              "fanHype": 7
             }
           },
           "fail": {
@@ -30016,8 +30209,8 @@
         "attribute": "composure",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 1,
-        "staminaCost": 8,
+        "difficulty": 0,
+        "staminaCost": 6,
         "goals": {
           "team": 1,
           "personal": 3
@@ -30043,7 +30236,7 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 3,
-              "fanHype": 5
+              "fanHype": 8
             }
           },
           "fail": {
@@ -30406,7 +30599,7 @@
             "apply": {
               "goal": true,
               "coachTrust": 6,
-              "fanHype": 13,
+              "fanHype": 18,
               "momentum": 1
             }
           },

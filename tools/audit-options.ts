@@ -10,7 +10,7 @@
 // за два матча, и второй вариант станет мёртвой кнопкой. Аудит 20.09 нашёл 134 таких из 398.
 
 import { EPISODES_RAW, PLAYER } from '../src/content';
-import { CATASTROPHE_BAND, THRESHOLDS, BALANCE } from '../src/engine/balance';
+import { CATASTROPHE_BAND, THRESHOLDS, BALANCE, MOMENTUM_BY_BOLDNESS } from '../src/engine/balance';
 import { attrMod } from '../src/engine/attr';
 import type { ApplyEffect, Episode, EpisodeOption, Position, Tier } from '../src/engine/types';
 
@@ -55,6 +55,8 @@ function value(a: ApplyEffect | undefined): { team: number; self: number } {
   self += (a.momentum ?? 0) * 0.4;
   // Спокій — ресурс концовки и слышимости голоса Спокою; без него 55 из 69 опций composure выглядели пустыми.
   self += (a.composure ?? 0) * 0.05;
+  // Сили в ісході — та сама валюта, що й ціна варіанта (STAMINA_WEIGHT): «берегти сили» повертає їх.
+  self += (a.stamina ?? 0) * 0.25;
   for (const f of a.addFlags ?? []) {
     if (f === 'booked') self -= 1.5;
     if (f === 'injured') self -= 4;
@@ -74,18 +76,50 @@ const STAMINA_WEIGHT = 0.25;
 /** Отрыв EV, с которого эпизод считается «с правильным ответом». */
 const SINGLE_ANSWER_GAP = 1.5;
 /** Пороги аудита — храповик: опускать после каждой партии правок 9.6, поднимать нельзя.
- *  20.09: 35% и 36 после первой партии (в модель ценности добавлен спокій, база пересчитана). */
-export const AUDIT_LIMITS = { dominatedShare: 0.36, singleAnswer: 38 };
+ *  20.09: 34% / 36 на старте → 26% / 23 после пяти партий (кураж за ризик, цепочки и спокій в модели, призы
+ *  проигравшим, «пас під удар» на складності ≥ 1, без двойной цены сил). */
+export const AUDIT_LIMITS = { dominatedShare: 0.27, singleAnswer: 24 };
 
-export function scoreOption(ep: Episode, o: EpisodeOption, bonus = 0): Row {
+const unconditional = (o: EpisodeOption) => !o.requires && !o.insight;
+
+/** Цепочка (apply.followUp) — тоже приз: звено с ударом или пенальті стоит столько, сколько лучшая его опция,
+ *  с поправкой на лимиты цепочек (BALANCE.match.chain) — берём долю CHAIN_SHARE. Глубина — одно звено. */
+const CHAIN_SHARE = 0.8;
+const chainCache = new Map<string, { team: number; self: number; pGoal: number }>();
+function chainValue(id: string, bonus: number): { team: number; self: number; pGoal: number } {
+  const key = id + ':' + bonus;
+  const hit = chainCache.get(key);
+  if (hit) return hit;
+  chainCache.set(key, { team: 0, self: 0, pGoal: 0 });   // защита от циклов
+  const target = (EPISODES_RAW as Episode[]).find((e) => e.id === id);
+  if (!target) throw new Error('followUp «' + id + '» не найден');
+  const rows = target.options.filter(unconditional).map((o) => scoreOption(target, o, bonus, false));
+  const best = rows.reduce((a, b) => (b.ev > a.ev ? b : a));
+  const v = { team: best.evTeam * CHAIN_SHARE, self: (best.evSelf - best.o.staminaCost * STAMINA_WEIGHT) * CHAIN_SHARE, pGoal: best.pGoal * CHAIN_SHARE };
+  chainCache.set(key, v);
+  return v;
+}
+
+export function scoreOption(ep: Episode, o: EpisodeOption, bonus = 0, chains = true): Row {
   const mod = Math.min(12, attrMod(PLAYER.attrs[o.attribute]) + bonus);
   const p = tierProbs(o.basePosition, mod, o.difficulty ?? 0);
   let evTeam = 0, evSelf = 0, pGoal = 0;
   for (const t of TIERS) {
-    const v = value(o.outcomes[t].apply);
-    evTeam += p[t] * v.team;
-    evSelf += p[t] * v.self;
-    if (o.outcomes[t].apply?.goal) pGoal += p[t];
+    const a = o.outcomes[t].apply;
+    const v = value(a);
+    let team = v.team, self = v.self, goal = a?.goal ? 1 : 0;
+    if (chains && a?.followUp) {
+      const c = chainValue(a.followUp, bonus);
+      // Если цепочка не сработала — followUpElse; считаем половину на половину с самой цепочкой.
+      const e = value(a.followUpElse);
+      team += (c.team + e.team) / 2; self += (c.self + e.self) / 2; goal += (c.pGoal + (a.followUpElse?.goal ? 1 : 0)) / 2;
+    }
+    evTeam += p[t] * team;
+    // Системний кураж за ризик (match.ts:applyChoice) — приз, якого нема в тексті ісходу.
+    evSelf += p[t] * (self + (t === 'clean' ? MOMENTUM_BY_BOLDNESS[o.basePosition] * 0.4 : 0));
+    // Трибуни реагують на сміливість до результату (BALANCE.systemic.boldnessHype) — теж системно.
+    evSelf += p[t] * BALANCE.systemic.boldnessHype[o.basePosition] * 0.08;
+    pGoal += p[t] * goal;
   }
   return { ep, o, mod, p, evTeam, evSelf, ev: evTeam * 5 + evSelf - o.staminaCost * STAMINA_WEIGHT, pGoal };
 }
@@ -96,7 +130,6 @@ export function dominates(a: Row, b: Row): boolean {
     && (a.evSelf > b.evSelf + 0.3 || a.p.badFail < b.p.badFail - 0.01);
 }
 
-const unconditional = (o: EpisodeOption) => !o.requires && !o.insight;
 const f2 = (x: number) => x.toFixed(2);
 const pc = (x: number) => (x * 100).toFixed(0) + '%';
 const brief = (r: Row) => `«${r.o.label}» ${r.o.basePosition}/${r.o.effect} d${r.o.difficulty ?? 0} ${r.o.attribute}+${r.mod} сил${r.o.staminaCost} EV ${f2(r.ev)} (t ${f2(r.evTeam)} s ${f2(r.evSelf)}) bf ${pc(r.p.badFail)}`;

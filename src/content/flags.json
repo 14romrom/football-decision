@@ -454,5 +454,18 @@
     "phases": ["attack", "transition"],
     "source": "field",
     "short": "холод"
+  },
+  {
+    "id": "scout_watching",
+    "label": "скаут на трибуні",
+    "value": 0
+  },
+  {
+    "id": "ultras_backing",
+    "label": "ультрас за тебе — сектор тягне",
+    "value": 1,
+    "attributes": ["composure"],
+    "source": "field",
+    "short": "сектор"
   }
 ]

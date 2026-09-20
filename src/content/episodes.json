@@ -327,6 +327,14 @@
     "setups": [
       {
         "when": {
+          "flags": [
+            "scout_watching"
+          ]
+        },
+        "text": "М’яч приходить до тебе на межі штрафного. {them.cb} закриває кут, праворуч вривається {partner}. Скаут на трибуні дивиться не на м’яч — на тебе. Агент казав: «покажи, що вмієш вирішувати». Він не казав, що саме."
+      },
+      {
+        "when": {
           "score": "trailing",
           "minMinute": 80
         },
@@ -3517,6 +3525,14 @@
     "setups": [
       {
         "when": {
+          "flags": [
+            "scout_watching"
+          ]
+        },
+        "text": "Їхній захисник послизнувся, і ти виходиш сам на сам. Воротар сідає, звужуючи кут, праворуч біжить {striker}. На трибуні сидить скаут, і саме такі моменти він записує в блокнот — і рішення, і те, як ти його прийняв."
+      },
+      {
+        "when": {
           "weather": "rain"
         },
         "text": "Їхній захисник послизнувся на мокрому — і ти виходиш сам на сам. Воротар вийшов і сідає, звужуючи кут; м’яч на цьому газоні ковзає. Праворуч біжить {striker}."
@@ -4328,6 +4344,14 @@
       }
     ],
     "setups": [
+      {
+        "when": {
+          "flags": [
+            "scout_watching"
+          ]
+        },
+        "text": "Вони сіли глибоко, всі за лінією м’яча, і тобі дають метрів двадцять п’ять вільного простору. Десь на трибуні сидить скаут, про якого знає лише агент. Здалеку йому видно все — і удар, і пас назад."
+      },
       {
         "when": {
           "score": "leading"
@@ -17342,6 +17366,14 @@
     "setups": [
       {
         "when": {
+          "flags": [
+            "ultras_backing"
+          ]
+        },
+        "text": "Після стику {them.mid} не відпускає — іде поруч, шипить у вухо, зачіпає плечем. Сектор за спиною реве твоє ім’я: після розмови біля бази вони твої. Суддя дивиться в інший бік. Тридцять людей — ні."
+      },
+      {
+        "when": {
           "booked": true
         },
         "text": "Після стику {them.mid} не відпускає — йде поруч, шипить у вухо, зачіпає плечем. Він знає, що в тебе жовта. Суддя дивиться в інший бік — поки що."
@@ -18784,6 +18816,14 @@
     },
     "setup": "Суддя показує на позначку — фол на {striker.dat}. {striker} — штатний виконавець, він уже йде до м’яча. Але потім зупиняється і дивиться на тебе. Це не запитання — це пропозиція.",
     "setups": [
+      {
+        "when": {
+          "flags": [
+            "ultras_backing"
+          ]
+        },
+        "text": "Суддя показує на позначку — фол на {striker.dat}. {striker} іде до м’яча, зупиняється і дивиться на тебе. Сектор уже скандує твоє прізвище — вони за тебе ще з тижня. Це не запитання — це пропозиція, і в неї є глядачі."
+      },
       {
         "when": {
           "momentumMin": 2
@@ -30821,6 +30861,809 @@
               "coachTrust": -5,
               "fanHype": -3,
               "composure": -5
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "rx_car_coach",
+    "family": "coach",
+    "phase": "transition",
+    "weight": 1.5,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 85,
+      "flags": [
+        "new_car_photos"
+      ]
+    },
+    "setup": "Втрата в центрі, і {coach} кричить із брівки одне слово — твоє прізвище. Він бачив паркінг бази вранці, і тепер кожен твій крок назад він міряє окремо. {them.mid} уже йде з м’ячем у твою зону, {dm} один.",
+    "setups": [
+      {
+        "when": {
+          "score": "trailing"
+        },
+        "text": "Ми програємо, втрата в центрі, і {coach} кричить із брівки твоє прізвище — не {dm.gen}, твоє. Він бачив паркінг вранці. {them.mid} іде з м’ячем у твою зону, і брівка дивиться, чи побіжиш."
+      },
+      {
+        "when": {
+          "tired": true
+        },
+        "text": "Втрата в центрі. Ноги вже не твої, а {coach} із брівки кричить твоє прізвище — він бачив паркінг вранці і сьогодні не вірить у втому. {them.mid} іде з м’ячем у твою зону."
+      },
+      {
+        "when": {
+          "venue": "away"
+        },
+        "text": "Втрата в центрі, і з брівки — твоє прізвище. Чужий стадіон теж бачив фото з паркінгу: сектор за спиною вже сигналить клаксоном із трибуни. {them.mid} іде з м’ячем у твою зону, {dm} один."
+      }
+    ],
+    "options": [
+      {
+        "id": "run_back_for_coach",
+        "label": "Бігти назад — щоб він бачив",
+        "past": "біг назад через півполя, поки тренер дивився",
+        "attribute": "stamina",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": 0,
+        "staminaCost": 9,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "team",
+          "line": "Він кричить тобі — біжи. Не для гри, для нього. Сьогодні це одне й те саме."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти біжиш назад через півполя і встигаєш накрити {them.mid.gen} разом із {dm.ins}: м’яч в аут, атака мертва. {coach} на брівці мовчить — це найкраще, що він умів сьогодні сказати.",
+            "recap": "і накрив їхню атаку, бігши через півполя.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 8,
+              "composure": 3,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти біжиш назад — і встигаєш тільки в останній момент, стик, фол на тобі, штрафний їм у безпечній зоні. {coach} бачив біг. Це важливіше, ніж стик.",
+            "recap": "і добіг назад ціною фолу.",
+            "apply": {
+              "foul": true,
+              "coachTrust": 5,
+              "stamina": -2,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти біжиш назад — і не встигаєш. {them.mid} віддає в розріз раніше, ніж ти дотягуєшся, {keeper} рятує. {coach} бачив, що ти біг. І що не добіг.",
+            "recap": "і біг назад, але не добіг.",
+            "apply": {
+              "coachTrust": -2,
+              "stamina": -2,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти біжиш назад, ноги плутаються, і ти падаєш за спиною у {them.mid.gen} — він виходить один і забиває. {coach} відвертається до лави. Паркінг сьогодні згадають ще раз.",
+            "recap": "і впав за спиною в суперника — гол.",
+            "apply": {
+              "concede": true,
+              "scorer": "mid",
+              "coachTrust": -10,
+              "fanHype": -5,
+              "composure": -6,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "play_as_usual",
+        "label": "Грати як завжди — машина не грає",
+        "past": "не змінив гри через крик із брівки",
+        "attribute": "composure",
+        "basePosition": "controlled",
+        "effect": "limited",
+        "difficulty": -2,
+        "staminaCost": 3,
+        "goals": {
+          "team": 2,
+          "personal": 1
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Він кричить не на тебе — на фото. Фото не грає. Роби те, що робив би без нього."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти закриваєш лінію пасу, як робив би й без крику, — {them.mid} віддає назад, темп загублено. {coach} ще раз дивиться на тебе і повертається до гри. Крик скінчився.",
+            "recap": "і закрив лінію пасу, не зважаючи на брівку.",
+            "apply": {
+              "coachTrust": 3,
+              "composure": 5,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти граєш як завжди — {them.mid} проходить повз, {dm} зупиняє його фолом. Штрафний їм, картки нема. {coach} кричить ще раз, тепер довше.",
+            "recap": "і зіграв як завжди, а фол зробив партнер.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": -1,
+              "composure": 3,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти граєш як завжди — і сьогодні цього мало: {them.mid} віддає в розріз, {keeper} виходить і виносить в аут. Брівка мовчить так, що чути.",
+            "recap": "і зіграв як завжди — і цього не вистачило.",
+            "apply": {
+              "coachTrust": -4,
+              "composure": -2,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти граєш як завжди, і {them.mid} іде повз тебе, як повз стовп. Удар — гол. {coach} не кричить: він уже дивиться на {sub.gen}.",
+            "recap": "і пропустив суперника повз себе — гол.",
+            "apply": {
+              "concede": true,
+              "scorer": "mid",
+              "coachTrust": -8,
+              "composure": -6,
+              "addFlags": [
+                "sub_threat"
+              ],
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "show_speed",
+        "label": "Показати, що швидша не машина",
+        "past": "рвонув на перехоплення на очах у тренера",
+        "attribute": "pace",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 8,
+        "goals": {
+          "team": 2,
+          "personal": 2
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Він хоче бачити швидкість? Покажи йому таку, щоб машину забули."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти зриваєшся на перехоплення раніше за пас — м’яч твій, і перед тобою півполя. {coach} на брівці підіймає руки. Паркінг закрито.",
+            "recap": "і перехопив пас на швидкості — контратака.",
+            "apply": {
+              "duelWon": true,
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 8,
+              "momentum": 1,
+              "followUp": "ep_counter_run",
+              "followUpElse": {
+                "corner": true,
+                "coachTrust": 2
+              },
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти зриваєшся — і встигаєш тільки збити його. Фол у центрі, штрафний їм, але атаки нема, і {coach} бачив ривок. Ривок він любить.",
+            "recap": "і зупинив атаку фолом на швидкості.",
+            "apply": {
+              "foul": true,
+              "duelWon": true,
+              "coachTrust": 3,
+              "fanHype": 3,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти зриваєшся на перехоплення — {them.mid} прибирає м’яч, і ти пролітаєш повз. Ривок був. Сенсу не було.",
+            "recap": "і пролетів повз на ривку.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "stamina": -2,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти зриваєшся — і залишаєш за собою дірку, у яку {them.mid} віддає одразу. {them.striker} виходить один і забиває. {coach} показує на паркінг. Усі зрозуміли.",
+            "recap": "і залишив дірку на ривку — гол.",
+            "apply": {
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -9,
+              "fanHype": -4,
+              "composure": -5,
+              "removeFlags": [
+                "new_car_photos",
+                "flashy_week"
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "rx_tattoo_contact",
+    "family": "duel",
+    "phase": "defense",
+    "weight": 1.5,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 88,
+      "flags": [
+        "tattoo_fresh"
+      ]
+    },
+    "setup": "Їхня атака флангом, і {them.winger} іде на тебе з м’ячем. Під рукавом на передпліччі — свіже тату, три дні як зроблене, і кожен стик сьогодні відчувається окремо. Він бачив фото. Він іде саме в ту руку.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "them_hard"
+          ]
+        },
+        "text": "Їхня атака флангом, і {them.winger} — той, що весь матч іде в тіло, — іде на тебе. Під рукавом свіже тату, три дні як зроблене. Він бачив фото і йде саме в ту руку, не в м’яч."
+      },
+      {
+        "when": {
+          "weather": "rain"
+        },
+        "text": "Їхня атака флангом під дощем, і {them.winger} іде на тебе з м’ячем. Рукав мокрий, під ним свіже тату, і пов’язка вже сповзла. Він бачив фото. Він іде в ту руку."
+      },
+      {
+        "when": {
+          "minMinute": 75
+        },
+        "text": "Кінцівка, їхня атака флангом, {them.winger} іде на тебе. Тату під рукавом за дев’яносто хвилин пекло вже тричі, і зараз буде вчетверте. Він бачив фото і знає, куди йти."
+      }
+    ],
+    "options": [
+      {
+        "id": "take_the_hit",
+        "label": "Іти в стик як завжди — болітиме потім",
+        "past": "пішов у стик свіжим тату вперед",
+        "attribute": "strength",
+        "basePosition": "risky",
+        "effect": "standard",
+        "difficulty": 0,
+        "staminaCost": 7,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "body",
+          "line": "Це шкіра. Вона заживе. Прохід по флангу — ні."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти йдеш у стик як завжди — плече, корпус, м’яч твій, і він на газоні. Рукав тепер темніший, ніж був. Тобі байдуже, а трибуни бачили.",
+            "recap": "і виграв стик, забувши про тату.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 5,
+              "fanHype": 6,
+              "composure": 3,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти йдеш у стик — м’яч в аут, і його лікоть точно в передпліччя. Свисток на твою користь, штрафний, а рукав прилипає до руки. Два тижні відкладаються.",
+            "recap": "і виграв стик ціною свіжого тату.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 3,
+              "composure": -3,
+              "addFlags": [
+                "knock"
+              ],
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти йдеш у стик — і в останню мить прибираєш руку. Він це бачить і проходить. Простріл, {cb} виносить. Тату ціле, фланг — ні.",
+            "recap": "і прибрав руку в стику — його прохід.",
+            "apply": {
+              "coachTrust": -4,
+              "composure": -3,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти йдеш у стик — і він проходить, а ти лишаєшся з рукою на передпліччі. Простріл, {them.striker} замикає. Гол. Рукав ти закочуєш уже після свистка.",
+            "recap": "і програв стик, тримаючись за руку — гол.",
+            "apply": {
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -8,
+              "fanHype": -4,
+              "composure": -6,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "other_shoulder",
+        "label": "Прийняти на інший бік — не показати",
+        "past": "розвернувся в стику іншим плечем, ховаючи тату",
+        "attribute": "positioning",
+        "basePosition": "controlled",
+        "effect": "limited",
+        "difficulty": -1,
+        "staminaCost": 4,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "vision",
+          "line": "Він іде в руку — то не дай йому руки. Стань так, щоб між вами було інше плече."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти стаєш іншим плечем, і він влітає не в руку, а в корпус. М’яч твій, він розводить руками. Він так і не побачив, чи боляче.",
+            "recap": "і прийняв стик іншим плечем — м’яч мій.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 5,
+              "composure": 4,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти стаєш іншим плечем — він читає це і йде далі по бровці. Ти доганяєш і видавлюєш в аут. Вкидання їхнє, тату ціле, {coach} киває.",
+            "recap": "і видавив його в аут, ховаючи руку.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 3,
+              "stamina": -2,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти стаєш іншим плечем — і відкриваєш йому центр. Він зрізає всередину, удар, {keeper} тягне. Тату ціле.",
+            "recap": "і відкрив йому центр, ховаючи руку.",
+            "apply": {
+              "coachTrust": -4,
+              "composure": -2,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти розвертаєшся іншим плечем — і на розвороті він проходить під рукою, як під мостом. Простріл на дальню, {them.striker} замикає. Гол. Ти дивишся на рукав. Він чистий.",
+            "recap": "і пропустив під рукою на розвороті — гол.",
+            "apply": {
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -8,
+              "fanHype": -3,
+              "composure": -5,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "leave_it_to_cb",
+        "label": "Відступити — хай стик бере {cb}",
+        "past": "відступив від стику, лишивши його партнеру",
+        "attribute": "composure",
+        "basePosition": "controlled",
+        "effect": "limited",
+        "difficulty": -2,
+        "staminaCost": 3,
+        "goals": {
+          "team": 2,
+          "personal": 0
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Тобі не обов’язково бути героєм у кожному стику. {cb} для цього і стоїть."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти відступаєш на крок і показуєш {cb.dat}: твій. Він забирає м’яч чисто, а ти закриваєш зону за ним. Ніхто не помітив, що це був вибір.",
+            "recap": "і відступив, а стик виграв партнер.",
+            "apply": {
+              "coachTrust": 3,
+              "composure": 5,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти відступаєш — {cb} зупиняє його фолом. Штрафний їм на фланзі, картки нема. {cb} дивиться на тебе трохи довше, ніж треба.",
+            "recap": "і відступив, а партнер зупинив фолом.",
+            "apply": {
+              "coachTrust": 1,
+              "composure": 3,
+              "addFlags": [
+                "partner_annoyed"
+              ],
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти відступаєш — і {cb} не встигає: він іде між вами, простріл, {keeper} забирає. {coach} бачив, хто відступив.",
+            "recap": "і відступив, а дірка лишилася.",
+            "apply": {
+              "coachTrust": -5,
+              "composure": -2,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти відступаєш — і в ту саму мить {cb} теж. Двоє дивляться один на одного, а {them.winger} уже б’є. Гол. Тату не при чому, і всі це знають.",
+            "recap": "і відступив разом із партнером — гол.",
+            "apply": {
+              "concede": true,
+              "scorer": "winger",
+              "coachTrust": -9,
+              "fanHype": -4,
+              "composure": -6,
+              "removeFlags": [
+                "tattoo_fresh",
+                "flashy_week"
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "rx_poster_show",
+    "family": "dribble",
+    "phase": "attack",
+    "weight": 1.5,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 85,
+      "flags": [
+        "poster_boy"
+      ]
+    },
+    "setup": "М’яч у тебе на фланзі, перед тобою один {them.cb}, а за трибуною — афіша з твоїм обличчям два метри заввишки. Сектор скандує не назву клубу, а те, що написано під обличчям. {partner} відкривається в центрі, як завжди, і чекає, чи ти сьогодні граєш чи позуєш.",
+    "setups": [
+      {
+        "when": {
+          "venue": "away"
+        },
+        "text": "М’яч у тебе на фланзі, перед тобою {them.cb}, а їхній сектор розгорнув твою афішу догори ногами. {partner} відкривається в центрі. Вони чекають шоу, щоб освистати; він чекає пасу."
+      },
+      {
+        "when": {
+          "score": "trailing"
+        },
+        "text": "Ми програємо, м’яч у тебе на фланзі, перед тобою {them.cb}. Афіша за трибуною ще висить, і сектор дивиться на неї частіше, ніж на табло. {partner} відкривається в центрі — йому потрібен м’яч, не афіша."
+      },
+      {
+        "when": {
+          "flags": [
+            "partner_cold"
+          ]
+        },
+        "text": "М’яч у тебе на фланзі, перед тобою {them.cb}, а за трибуною — афіша з твоїм обличчям. {partner} у центрі не відкривається: він давно вирішив, що ти граєш для афіші. Сьогодні можна довести протилежне. Або підтвердити."
+      }
+    ],
+    "options": [
+      {
+        "id": "poster_trick",
+        "label": "Показати їм — фінт для афіші",
+        "past": "зробив фінт для трибун під власною афішею",
+        "attribute": "dribbling",
+        "basePosition": "desperate",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 8,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Вони прийшли на тебе. Дай їм те, за що платили."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти робиш фінт, який тренував для афіші, — і він працює: {them.cb} сідає на газон, ти виходиш на удар і кладеш у дальній. Сектор реве твоє ім’я. Афіша тепер правдива.",
+            "recap": "і забив після фінту з афіші.",
+            "apply": {
+              "goal": true,
+              "fanHype": 20,
+              "coachTrust": 3,
+              "momentum": 1,
+              "addFlags": [
+                "humiliated_defender"
+              ],
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Фінт проходить, {them.cb} на газоні, удар — воротар відбиває на кутовий. Сектор усе одно реве. {coach} — ні.",
+            "recap": "і зробив фінт, але воротар потягнув.",
+            "apply": {
+              "corner": true,
+              "fanHype": 10,
+              "coachTrust": -1,
+              "addFlags": [
+                "humiliated_defender"
+              ],
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти робиш фінт — {them.cb} не купується і забирає м’яч, як у тренуванні. {partner} у центрі опускає руки. Сектор мовчить. Афіша висить.",
+            "recap": "і не пройшов фінтом під власною афішею.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -5,
+              "fanHype": -4,
+              "addFlags": [
+                "partner_annoyed"
+              ],
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти робиш фінт, м’яч застрягає між ніг, {them.cb} забирає його і віддає вперед одразу — контратака три на два. Сектор дивиться на афішу, потім на тебе, потім знову на афішу.",
+            "recap": "і втратив м’яч на фінті для афіші — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -8,
+              "fanHype": -6,
+              "addFlags": [
+                "partner_annoyed"
+              ],
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "play_simple_poster",
+        "label": "Грати просто — афіша почекає",
+        "past": "віддав простий пас під власною афішею",
+        "attribute": "passing",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": 0,
+        "staminaCost": 4,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "team",
+          "line": "Афіша не грає в футбол. {partner} грає. Він відкритий."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти віддаєш {partner.dat} у центр в один дотик — він розвертається і б’є, воротар відбиває на кутовий. Сектор не зрозумів, за що аплодувати. {coach} зрозумів.",
+            "recap": "і віддав просто, а партнер вивів на удар.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 7,
+              "composure": 3,
+              "addFlags": [
+                "partner_trusts"
+              ],
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти віддаєш {partner.dat} — пас трохи в ноги, він обробляє, момент повільнішає, але м’яч наш, і атака жива. Афіша дивиться на це без інтересу.",
+            "recap": "і віддав просто, зберігши м’яч.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 3,
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти віддаєш — {them.mid} читає пас і перехоплює. Простий пас, простий перехват. Сектор свистить: вони хотіли не цього.",
+            "recap": "і віддав просто — і просто втратив.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -2,
+              "fanHype": -3,
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти віддаєш у центр — перехоплення, і вони летять у контратаку через зону, де ти щойно стояв. Сектор дивиться на афішу. Там ти виглядаєш краще.",
+            "recap": "і подарував перехоплення під афішею — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -5,
+              "fanHype": -3,
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "cross_and_run",
+        "label": "Навісити на {partner.gen} — і бігти на добивання",
+        "past": "навісив і побіг у штрафний на добивання",
+        "attribute": "vision",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 7,
+        "goals": {
+          "team": 2,
+          "personal": 2
+        },
+        "voice": {
+          "who": "vision",
+          "line": "Він на дальній, ти на ближній через три секунди. Камера сама вирішить, кого знімати."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти навішуєш на дальню — {partner} б’є головою, воротар відбиває, і ти вже там: добивання в порожні. Афіша з твоїм обличчям і гол під нею. Сектор не вірить.",
+            "recap": "і добив після навісу на партнера.",
+            "apply": {
+              "goal": true,
+              "fanHype": 14,
+              "coachTrust": 6,
+              "addFlags": [
+                "partner_trusts"
+              ],
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти навішуєш — {partner} виграє верх, б’є, воротар тягне на кутовий. Ти прибіг на добивання на секунду пізніше. Секунда — це кутовий.",
+            "recap": "і навісив на партнера, який виграв верх.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "fanHype": 5,
+              "coachTrust": 3,
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Навіс виходить надто високим — воротар забирає в повітрі, поки ти біжиш у штрафний. Сектор видихає. Афіша мовчить.",
+            "recap": "і навісив у руки воротарю.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -2,
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Навіс на першого захисника — і поки ти біжиш на добивання, вони вже біжать у другий бік. Троє на двох. Ти найдалі від своїх воріт, найближче до афіші.",
+            "recap": "і навісив у захисника — контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -3,
+              "removeFlags": [
+                "poster_boy",
+                "flashy_week"
+              ]
             }
           }
         }

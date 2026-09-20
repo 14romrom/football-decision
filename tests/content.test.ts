@@ -174,10 +174,12 @@ describe('вариации сетапа и флаги (сезон)', () => {
     }
     for (const f of used) expect(known.has(f), `флаг ${f}`).toBe(true);
     // и наоборот: правило без эпизода (или дела недели), которые ставят флаг, — мёртвое
-    const { ACTIVITIES } = await import('../src/content');
+    const { ACTIVITIES, WEEK_SCENES } = await import('../src/content');
     const set = new Set([
       ...EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))),
       ...ACTIVITIES.flatMap((a) => (a.effect.flags ?? []).map((f) => f.flag)),
+      // Сцени тижня теж ставлять флаги (M11: скаут на трибуні, ультрас за тебе).
+      ...WEEK_SCENES.flatMap((s) => s.options.flatMap((o) => (o.effect.flags ?? []).map((f) => f.flag))),
     ]);
     for (const r of FLAG_RULES) {
       if (r.id.startsWith('them_') || r.id.startsWith('keeper_') || SYSTEM.includes(r.id)) continue;

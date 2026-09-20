@@ -43,7 +43,7 @@ function Meter({ label, value, tone }: { label: string; value: number; tone?: st
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, tour, hideDiceZone, finale, children,
+  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, tour, hideDiceZone, finale, sheet, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -58,6 +58,8 @@ export function MatchScreen({
   tour?: number;
   /** На экране броска зона «на кубик» прячется: она про следующее решение. */
   hideDiceZone?: boolean;
+  /** Лист без епізоду — фінальний свисток (WhistleCard): та сама панель, без зони «на кубик». */
+  sheet?: boolean;
   /** Розв’язка на поле — приходит со штампом вердикта (App → RollView.onVerdict). */
   finale?: { kind: FinaleKind; id: number } | null;
   children: ReactNode;
@@ -97,7 +99,7 @@ export function MatchScreen({
         </div>
       </div>
 
-      <div className={`tape ${episode ? 'dimmed' : ''}`}>
+      <div className={`tape ${episode || sheet ? 'dimmed' : ''}`}>
         <div className="tape-shade" />
         {hidden > 0 && !expanded && (
           <button className="tape-more" onClick={() => setExpanded(true)}>{Icon.list()} ще {hidden} {hidden === 1 ? 'подія' : hidden < 5 ? 'події' : 'подій'}</button>
@@ -119,10 +121,10 @@ export function MatchScreen({
 
       {/* Карточка момента отделена от таймлайна панелью: сцена, варианты и зона «на кубик» — одно целое.
           Пока эпизода нет (идёт лента), панели нет — пустая рамка с одной шкалой сил читалась как сбой. */}
-      {episode && <section className="moment">
+      {(episode || sheet) && <section className="moment">
       {children}
 
-      {!hideDiceZone && <footer className="dice-zone">
+      {!hideDiceZone && !sheet && <footer className="dice-zone">
         <span className="dice-zone-label">на кубик</span>
         <span className="chips">
           {mods.map((m) => (

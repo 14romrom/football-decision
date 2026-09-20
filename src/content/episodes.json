@@ -10630,7 +10630,7 @@
       {
         "id": "the_promised_one",
         "label": "Той гол, який обіцяв",
-        "past": "добив у порожні той гол, який обіцяв у лікарні",
+        "past": "добив у порожні, згадавши про обіцянку",
         "attribute": "finishing",
         "basePosition": "risky",
         "effect": "great",

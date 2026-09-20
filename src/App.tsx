@@ -45,6 +45,8 @@ import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent, Voic
 import { logDecision } from './telemetry/log';
 import { MatchScreen } from './ui/MatchScreen';
 import { EpisodeCard } from './ui/EpisodeCard';
+import { WhistleCard } from './ui/WhistleCard';
+import { buildWhistle, promiseState, whistleContext, type Whistle } from './engine/whistle';
 import { RollView } from './ui/RollView';
 import { BoardScreen } from './ui/BoardScreen';
 import { DeltaScreen } from './ui/DeltaScreen';
@@ -58,6 +60,8 @@ type Stage =
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number; link: boolean }
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
+  // Фінальний свисток (M10, 20.09): лист оповідача на полі, потім кнопка «Перейти в роздягальню» → дошка.
+  | { k: 'whistle'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
   // Після матчу (19.09): дошка аналітика → картка з дельтою → таблиця → стрічка → тиждень.
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
   | { k: 'delta'; summary: MatchSummary; before: Career; after: Career; leveledFrom: number; leveledTo: number; card: boolean }
@@ -68,7 +72,7 @@ type Stage =
 
 type Pending =
   | { kind: 'episode'; episode: Episode; minute: number; link: boolean }
-  | { kind: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career };
+  | { kind: 'result'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career };
 
 /** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
 const CHAIN_NEXT: Record<string, string> = {
@@ -135,6 +139,11 @@ function Game() {
       setQueue([...lead, ...next.events]);
     } else {
       const { events, summary } = finishMatch(session, rng);
+      // Лист фінального свистка — з того ж rng і тієї ж пам’яті рядків, що репліки: сезон не повторює його.
+      const whistle = buildWhistle(
+        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow),
+        rng, session.flavorSeen,
+      );
       // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
       recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds, [...session.flavorSeen], [...session.feedSeen]);
 
@@ -158,7 +167,7 @@ function Game() {
       }
 
       pendingRef.current = {
-        kind: 'result', summary, xpEarned, leveledFrom: before.level, leveledTo: after.level, before, after,
+        kind: 'result', whistle, summary, xpEarned, leveledFrom: before.level, leveledTo: after.level, before, after,
       };
       setQueue([...lead, ...events]);
     }
@@ -285,7 +294,7 @@ function Game() {
         shownAtRef.current = performance.now();
         setStage({ k: 'episode', episode: p.episode, minute: p.minute, link: p.link });
       } else {
-        setStage({ k: 'result', summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo, before: p.before, after: p.after });
+        setStage({ k: 'whistle', whistle: p.whistle, summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo, before: p.before, after: p.after });
       }
       return;
     }
@@ -527,8 +536,15 @@ function Game() {
         flagRules={session.flagRules}
         tour={seasonRef.current.round + 1}
         hideDiceZone={stage.k === 'roll'}
+        sheet={stage.k === 'whistle'}
         finale={finale}
       >
+        {stage.k === 'whistle' && (
+          <WhistleCard
+            whistle={stage.whistle}
+            onNext={() => setStage({ k: 'result', summary: stage.summary, xpEarned: stage.xpEarned, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo, before: stage.before, after: stage.after })}
+          />
+        )}
         {stage.k === 'episode' && (
           <EpisodeCard
             episode={stage.episode}

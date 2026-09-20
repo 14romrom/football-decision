@@ -53,6 +53,8 @@ function value(a: ApplyEffect | undefined): { team: number; self: number } {
   self += (a.coachTrust ?? 0) * 0.12 * BALANCE.systemic.trustDeltaScale;
   self += (a.fanHype ?? 0) * 0.08;
   self += (a.momentum ?? 0) * 0.4;
+  // Спокій — ресурс концовки и слышимости голоса Спокою; без него 55 из 69 опций composure выглядели пустыми.
+  self += (a.composure ?? 0) * 0.05;
   for (const f of a.addFlags ?? []) {
     if (f === 'booked') self -= 1.5;
     if (f === 'injured') self -= 4;
@@ -71,8 +73,9 @@ type Row = {
 const STAMINA_WEIGHT = 0.25;
 /** Отрыв EV, с которого эпизод считается «с правильным ответом». */
 const SINGLE_ANSWER_GAP = 1.5;
-/** Пороги аудита (20.09: 34% и 36 на старте). Опускать после каждой партии правок 9.6, поднимать нельзя. */
-export const AUDIT_LIMITS = { dominatedShare: 0.34, singleAnswer: 36 };
+/** Пороги аудита — храповик: опускать после каждой партии правок 9.6, поднимать нельзя.
+ *  20.09: 35% и 36 после первой партии (в модель ценности добавлен спокій, база пересчитана). */
+export const AUDIT_LIMITS = { dominatedShare: 0.36, singleAnswer: 38 };
 
 export function scoreOption(ep: Episode, o: EpisodeOption, bonus = 0): Row {
   const mod = Math.min(12, attrMod(PLAYER.attrs[o.attribute]) + bonus);

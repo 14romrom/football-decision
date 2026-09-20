@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { Film } from './Film';
 import type { Episode, FlagRule, MatchState, ModLine, Player, TimelineEvent } from '../engine/types';
 import type { Roster } from '../engine/names';
 import type { MatchConditions } from '../engine/conditions';
@@ -43,7 +44,7 @@ function Meter({ label, value, tone }: { label: string; value: number; tone?: st
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, tour, hideDiceZone, finale, sheet, children,
+  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, hideDiceZone, finale, sheet, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -55,7 +56,6 @@ export function MatchScreen({
   player: Player;
   conditions: MatchConditions;
   flagRules: FlagRule[];
-  tour?: number;
   /** На экране броска зона «на кубик» прячется: она про следующее решение. */
   hideDiceZone?: boolean;
   /** Лист без епізоду — фінальний свисток (WhistleCard): та сама панель, без зони «на кубик». */
@@ -76,14 +76,7 @@ export function MatchScreen({
 
   return (
     <div className="match de-match">
-      <aside className="film film-left" aria-hidden="true">
-        {[-1, 0, 1].map((d) => <span key={d}>{`01A${String(Math.max(0, state.minute + d)).padStart(2, '0')}`}</span>)}
-      </aside>
-      <aside className="film film-right" aria-hidden="true">
-        <span>{tour ? `тур ${tour}` : 'матч'}</span>
-        <span>{roster.us.name.nom.slice(0, 3)} — {roster.them.name.nom.slice(0, 3)}</span>
-        <span>{state.minute}′</span>
-      </aside>
+      <Film />
 
       <div className="pitch-wrap">
         <Pitch episode={episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} />

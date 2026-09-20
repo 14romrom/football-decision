@@ -32,6 +32,7 @@ import { finaleFor, type FinaleKind } from './engine/finale';
 import { programmeNote, traitNote, type ProgrammeInput } from './engine/programme';
 import { applySettings, readSettings } from './telemetry/settings';
 import type { Hint } from './ui/Spotlight';
+import { Film } from './ui/Film';
 import { TitleScreen } from './ui/TitleScreen';
 import { Sticker } from './ui/Sticker';
 import { plural } from './ui/pluralize';
@@ -129,6 +130,8 @@ function Game() {
   const clubForms = useCallback((key: string) => (key === US ? ROSTER.us.name : OPPONENTS[key]?.name ?? { nom: key, gen: key }), []);
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
+  // Краї плівки (ui/Film.tsx): на екранах гри; матч малює свої. Дошка, ESPM і стрічка — без рамки, це «чужі» екрани.
+  const film = ['result', 'season', 'posts', 'feed', 'episode', 'roll', 'whistle'].includes(stage.k) ? null : <Film />;
   const [shown, setShown] = useState<TimelineEvent[]>([]);
   // Розв’язка на поле: вид по исходу, id — номер броска; ставится со штампом вердикта.
   const [finale, setFinale] = useState<{ kind: FinaleKind; id: number } | null>(null);
@@ -371,7 +374,7 @@ function Game() {
   if (stage.k === 'menu' && (prologuePending(career) || pendingWeek())) return null;
 
   if (stage.k === 'prologue') {
-    return (
+    return (<>{film}
       <PrologueScreen
         spreads={fillNamesDeep(PROLOGUE, ROSTER)}
         onFinish={(picks: ProloguePick[]) => {
@@ -383,7 +386,7 @@ function Game() {
         }}
         onNext={() => setStage({ k: 'menu' })}
       />
-    );
+    </>);
   }
 
   if (stage.k === 'menu' && career.unspentPoints > 0) {
@@ -398,6 +401,7 @@ function Game() {
       // Меню кар’єри (19.09, макет «Картка гравця»): компактный стикер сверху — тап открывает картку;
       // абзац-объяснение ушёл, остались тур, соперник и «До матчу».
       <div className="menu">
+        {film}
         <Sticker compact player={effectivePlayer(PLAYER, career)} career={career} season={season} dominant={dominantCareerVoice(career)} onOpen={() => { location.hash = '#/player'; }} />
         {fixture ? (
           <p className="season-line menu-fixture">
@@ -422,6 +426,7 @@ function Game() {
     const session = sessionRef.current!;
     return (
       <>
+        {film}
         <BriefingScreen
           conditions={session.conditions}
           opponent={OPPONENTS[session.conditions.opponentKey]}
@@ -523,7 +528,7 @@ function Game() {
     const { leveledFrom, leveledTo } = stage;
     const ctx = weekContext(sn, careerRef.current, ourRow(sn).position)!;
     const player = effectivePlayer(PLAYER, careerRef.current);
-    return (
+    return (<>{film}
       <WeekScreen
         key={sn.number + ':' + sn.round}
         days={fillNamesDeep(stage.days, roster)}
@@ -541,11 +546,11 @@ function Game() {
         }}
         onNext={() => setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}
       />
-    );
+    </>);
   }
 
   if (stage.k === 'levelup') {
-    return <LevelUpScreen player={PLAYER} career={career} fromLevel={stage.fromLevel} toLevel={stage.toLevel} onConfirm={confirmLevelUp} />;
+    return <><Film /><LevelUpScreen player={PLAYER} career={career} fromLevel={stage.fromLevel} toLevel={stage.toLevel} onConfirm={confirmLevelUp} /></>;
   }
 
   const session = sessionRef.current!;
@@ -568,7 +573,6 @@ function Game() {
         player={session.player}
         conditions={session.conditions}
         flagRules={session.flagRules}
-        tour={seasonRef.current.round + 1}
         hideDiceZone={stage.k === 'roll'}
         sheet={stage.k === 'whistle'}
         finale={finale}
@@ -632,20 +636,21 @@ export function App() {
       />
     );
   }
-  if (route.startsWith('#/slots')) return <SlotsScreen onStart={() => go('#/play')} onBack={() => go('#/')} />;
-  if (route.startsWith('#/settings')) return <SettingsScreen onBack={() => go('#/')} onWiped={() => go('#/')} />;
-  if (route.startsWith('#/about')) return <AboutScreen onBack={() => go('#/')} />;
+  if (route.startsWith('#/slots')) return <><Film /><SlotsScreen onStart={() => go('#/play')} onBack={() => go('#/')} /></>;
+  if (route.startsWith('#/settings')) return <><Film /><SettingsScreen onBack={() => go('#/')} onWiped={() => go('#/')} /></>;
+  if (route.startsWith('#/about')) return <><Film /><AboutScreen onBack={() => go('#/')} /></>;
   if (route.startsWith('#/stats')) return <StatsScreen />;
   // Карточка вне активного матча читает карьеру напрямую из хранилища — она не
   // синхронизирована «вживую» с сессией Game (там своя копия в рефе), но для
   // самостоятельного экрана свежего чтения при заходе достаточно.
   if (route.startsWith('#/player')) {
-    return (
+    return (<>
+      <Film />
       <PlayerCard
         player={PLAYER} career={readCareer()} season={readSeason()} history={readHistory()} club={ROSTER.us.name.nom}
         onBack={() => { location.hash = '#/play'; }}
       />
-    );
+    </>);
   }
   // Слот карьеры (telemetry/slots.ts): Game держит карьеру и сезон в refs, прочитанных при монтировании,
   // поэтому смена слота на титуле — это смена key, а не setState внутри.

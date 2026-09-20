@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Film } from './Film';
 import { PLAYER, ROSTER } from '../content';
 import titleJson from '../content/title.json';
 import { makeRng } from '../engine/rng';
@@ -56,12 +57,7 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
 
   return (
     <div className="title">
-      <aside className="film title-film film-left" aria-hidden="true">
-        {[0, 1, 2].map((d) => <span key={d}>{`01A0${d}`}</span>)}
-      </aside>
-      <aside className="film title-film film-right" aria-hidden="true">
-        <span>Inside the Box</span><span>тестова</span><span>слот {activeSlot() + 1}</span>
-      </aside>
+      <Film labels={{ left: [0, 1, 2].map((d) => `01A0${d}`), right: ['Inside the Box', 'тестова', `слот ${activeSlot() + 1}`] }} />
 
       <div className="title-art" aria-hidden="true">
         <img src="./img/title.webp" width="800" height="960" alt="" decoding="async" />

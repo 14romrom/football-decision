@@ -2,6 +2,7 @@
 // Гонять после каждого изменения balance.ts:  npm run sim -- 2000
 // Повторы на дистанции сезона:              npm run sim -- --season 12
 // Тиждень між матчами, политики недели:     npm run sim -- --weeks 200
+// Вердикты сезона по политикам матча:        npm run sim -- --verdicts 300
 
 import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
@@ -13,7 +14,7 @@ import { BALANCE, POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeMemory, EpisodeOption, Tier } from '../src/engine/types';
 import { ACTIVITIES, WEEK_SCENES } from '../src/content';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, type Career } from '../src/engine/career';
-import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, type Season } from '../src/engine/season';
+import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, type Season, type Verdict } from '../src/engine/season';
 import { finishWeek, planWeek, sceneFor, sceneOptionsFor, seenScenes, weekContext, weekVoiceSees, type Activity, type WeekPick } from '../src/engine/week';
 import { dominantVoice } from '../src/engine/voices';
 
@@ -223,14 +224,21 @@ const WEEK_POLICIES: Record<WeekPolicy, (day: Activity[], pick: (n: number) => n
   rest_and_video: (d) => d.find((a) => ['recovery', 'sleep', 'video_analyst', 'watch_opponent'].includes(a.id)) ?? null,
 };
 
-export type CareerRun = { avgResult: number; avgCoach: number; avgFan: number; points: number; level: number; distinctOffered: number; modsGained: number };
+export type CareerRun = {
+  avgResult: number; avgCoach: number; avgFan: number; points: number; level: number; distinctOffered: number; modsGained: number;
+  /** Итог сезона — что решает петля карьеры, а не средние за матч. */
+  verdict: Verdict['kind']; position: number; goals: number; assists: number; coachTrust: number;
+  /** Матчів з лави за сезон — чи працює лава як петля, а не як вирок. */
+  benchedMatches: number;
+};
 
-/** Сезон одним игроком: неделя → матч → карьера, как в App. Сила соперника — из расписания. */
-export function runCareer(seed: number, policy: WeekPolicy): CareerRun {
+/** Сезон одним игроком: неделя → матч → карьера, как в App. Сила соперника — из расписания.
+ *  matchPolicy — чем бот играет матчи: по умолчанию случайно, для распределения вердиктов — каждой политикой. */
+export function runCareer(seed: number, policy: WeekPolicy, matchPolicy: PolicyName = 'random'): CareerRun {
   let career: Career = defaultCareer();
   let season: Season = createSeason(seed, Object.keys(OPPONENTS));
   const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
-  let sumResult = 0; let sumCoach = 0; let sumFan = 0; let n = 0;
+  let sumResult = 0; let sumCoach = 0; let sumFan = 0; let n = 0; let benchedMatches = 0;
   const offeredAll = new Set<string>();
   while (!isSeasonOver(season)) {
     const fixture = ourFixture(season)!;
@@ -238,13 +246,14 @@ export function runCareer(seed: number, policy: WeekPolicy): CareerRun {
     const conditions = generateConditions(rng, OPPONENTS, { confidence: 0, fatigue: 0 }, fixture);
     const { career: consumed, penalty } = consumeStartPenalty(career);
     career = consumed;
+    if (penalty.fromBench) benchedMatches += 1;
     const player = effectivePlayer(PLAYER, career, penalty.attrBonus);
     const session = createMatch(`career-${seed}-${season.round}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, [], FLAG_RULES,
-      { coachTrust: career.coachTrust, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags, startDelta: penalty.startDelta, voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: career.injuriesSeason });
+      { coachTrust: career.coachTrust, fanHype: career.fanHype, fromBench: penalty.fromBench, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags, startDelta: penalty.startDelta, voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: career.injuriesSeason });
     for (;;) {
       const next = nextEpisode(session, rng);
       if (!next) break;
-      const option = POLICIES.random(availableOptions(next.episode, session.state, session.player), (k) => rng.int(0, k - 1));
+      const option = POLICIES[matchPolicy](availableOptions(next.episode, session.state, session.player), (k) => rng.int(0, k - 1));
       const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
       applyChoice(session, next.episode, option, res, rng);
     }
@@ -280,7 +289,49 @@ export function runCareer(seed: number, policy: WeekPolicy): CareerRun {
     career = finishWeek(career, ctx, days, picks, WEEK_SCENES).career;
   }
   const modsGained = Object.values(career.attrPoints).reduce((s, v) => s + (v ?? 0), 0);
-  return { avgResult: sumResult / n, avgCoach: sumCoach / n, avgFan: sumFan / n, points: ourRow(season).points, level: career.level, distinctOffered: offeredAll.size, modsGained };
+  const row = ourRow(season);
+  return {
+    avgResult: sumResult / n, avgCoach: sumCoach / n, avgFan: sumFan / n, points: row.points, level: career.level, distinctOffered: offeredAll.size, modsGained,
+    verdict: seasonVerdict(season, career.coachTrust).kind, position: row.position, goals: season.player.goals, assists: season.player.assists, coachTrust: career.coachTrust,
+    benchedMatches,
+  };
+}
+
+/** Распределение вердиктов сезона по политикам матча (неделя — случайно). Это проверка второй
+ *  валюты: если одна политика получает продление почти всегда, а другая почти никогда, стратегия одна. */
+export function verdictsReport(seasons: number) {
+  const policies: PolicyName[] = ['always_safe', 'always_risky', 'greedy_personal', 'random'];
+  return policies.map((policy) => {
+    const runs = Array.from({ length: seasons }, (_, i) => runCareer(90000 + i, 'random', policy));
+    const share = (k: Verdict['kind']) => runs.filter((r) => r.verdict === k).length / runs.length;
+    const avg = (f: (r: CareerRun) => number) => runs.reduce((s, r) => s + f(r), 0) / runs.length;
+    return {
+      policy, transfer: share('transfer'), extend: share('extend'), bench: share('bench'),
+      position: avg((r) => r.position), points: avg((r) => r.points), goals: avg((r) => r.goals), assists: avg((r) => r.assists),
+      coach: avg((r) => r.avgCoach), fan: avg((r) => r.avgFan), trust: avg((r) => r.coachTrust), benched: avg((r) => r.benchedMatches),
+    };
+  });
+}
+
+function printVerdicts(seasons: number) {
+  const rows = verdictsReport(seasons);
+  console.log(`
+Вердикты сезона: ${seasons} сезонов на политику матча, тиждень — случайно
+`);
+  const head = [pad('політика', 16), pad('трансфер', 9, true), pad('продовж.', 9, true), pad('лава', 6, true), pad('місце', 6, true), pad('очки', 6, true), pad('голи', 6, true), pad('асист', 6, true), pad('тренер', 7, true), pad('трибуни', 8, true), pad('довіра', 7, true), pad('з лави', 7, true)].join(' ');
+  console.log(head); console.log('-'.repeat(head.length));
+  const pct = (x: number) => (x * 100).toFixed(0) + '%';
+  for (const r of rows) {
+    console.log([pad(r.policy, 16), pad(pct(r.transfer), 9, true), pad(pct(r.extend), 9, true), pad(pct(r.bench), 6, true), pad(r.position.toFixed(1), 6, true), pad(r.points.toFixed(1), 6, true), pad(r.goals.toFixed(1), 6, true), pad(r.assists.toFixed(1), 6, true), pad(r.coach.toFixed(2), 7, true), pad(r.fan.toFixed(2), 8, true), pad(r.trust.toFixed(0), 7, true), pad(r.benched.toFixed(1), 7, true)].join(' '));
+  }
+  // Проверка: у каждой чистой политики есть путь к хорошему исходу и есть чем рискнуть. Случайная —
+  // опора: смешанный игрок должен сохранять место в большинстве сезонов, его напряжение — лава по ходу сезона.
+  const good = rows.filter((r) => r.policy !== 'random').map((r) => ({ policy: r.policy, good: r.transfer + r.extend }));
+  const worst = good.reduce((a, b) => (b.good < a.good ? b : a));
+  const best = good.reduce((a, b) => (b.good > a.good ? b : a));
+  const ok = worst.good >= 0.2 && best.good <= 0.8;
+  console.log(`
+Проверка: хороший исход (трансфер + продовження) у каждой чистой политики в 20–80% сезонов — ${ok ? 'ок' : 'НЕТ'} (${best.policy} ${pct(best.good)}, ${worst.policy} ${pct(worst.good)})`);
 }
 
 export function weeksReport(seasons: number) {
@@ -317,6 +368,8 @@ function main() {
   if (seasonAt >= 0) { printSeason(Number(process.argv[seasonAt + 1] ?? 12)); return; }
   const weeksAt = process.argv.indexOf('--weeks');
   if (weeksAt >= 0) { printWeeks(Number(process.argv[weeksAt + 1] ?? 200)); return; }
+  const verdictsAt = process.argv.indexOf('--verdicts');
+  if (verdictsAt >= 0) { printVerdicts(Number(process.argv[verdictsAt + 1] ?? 300)); return; }
   const n = Number(process.argv[2] ?? 1000);
   const mode: ConditionsMode = process.argv.includes('--random-conditions') ? 'random' : 'neutral';
   const reports = runSuite(n, mode);

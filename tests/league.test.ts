@@ -74,7 +74,24 @@ describe('сезон: расписание и таблица', () => {
     expect(ourFixture(season)).toBeNull();
     expect(ourRow(season).position).toBe(1);
     expect(seasonVerdict(season, 70).kind).toBe('transfer');
-    expect(seasonVerdict(season, 45).kind).toBe('extend');   // первое место, но тренер не в восторге
+    // Первое место, тренер не в восторге — но 20 голов и трибуны 8: агент дзвонить за протокол (M9).
+    expect(seasonVerdict(season, 45).kind).toBe('transfer');
+    expect(seasonVerdict(season, 30).kind).toBe('extend');  // тренер выгоняет, но 20 голов и трибуны защищают контракт
+
+    // Тот же чемпион без голов и с холодными трибунами: тренер доволен — трибуны нет, лава за свист (M9).
+    let dull = createSeason(7, keys);
+    for (let i = 0; i < SEASON_ROUNDS; i++) {
+      dull = recordRound(dull, { scoreUs: 3, scoreThem: 0, goals: 0, assists: 0, coachRating: 8, fanRating: 6, scorers: ['Мораес'] }, strengths, makeRng(100 + i));
+    }
+    expect(ourRow(dull).position).toBe(1);
+    expect(seasonVerdict(dull, 70).kind).toBe('bench');
+    // …а с тёплыми трибунами — обычный трансфер за таблицу / продовження при прохладном тренере.
+    let plain = createSeason(7, keys);
+    for (let i = 0; i < SEASON_ROUNDS; i++) {
+      plain = recordRound(plain, { scoreUs: 3, scoreThem: 0, goals: 0, assists: 0, coachRating: 8, fanRating: 7.5, scorers: ['Мораес'] }, strengths, makeRng(100 + i));
+    }
+    expect(seasonVerdict(plain, 70).kind).toBe('transfer');
+    expect(seasonVerdict(plain, 45).kind).toBe('extend');
 
     let bad = createSeason(8, keys);
     for (let i = 0; i < SEASON_ROUNDS; i++) {

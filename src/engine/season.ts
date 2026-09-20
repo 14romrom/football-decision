@@ -5,6 +5,7 @@
 // Чистая логика без React; хранилище — telemetry/season-storage.ts.
 
 import { makeRng, type Rng } from './rng';
+import { BALANCE } from './balance';
 import type { Strength } from './conditions';
 
 export const US = 'us';
@@ -176,32 +177,65 @@ export function ourRow(season: Season): TableRow {
 
 export type Verdict = { kind: 'transfer' | 'extend' | 'bench'; title: string; text: string };
 
-/** Итог сезона: место + доверие тренера на конец сезона. Без чисел вероятностей —
- *  три исхода, и каждый объясняется тем, что игрок видел весь сезон (таблица и тренер). */
+/** Итог сезона — две силы (M9, 20.09). Тренер: место, довіра, средняя оценка. Трибуни и протокол:
+ *  средняя оценка трибун и голы+асисты. Тренер садит — трибуни защищают или свистят; агент звонит
+ *  за таблицу или за протокол. Текст называет причину: игрок должен понять, что именно решило,
+ *  иначе агентность невидима. Числа — balance.ts:season. */
 export function seasonVerdict(season: Season, coachTrust: number): Verdict {
+  const k = BALANCE.season;
   const row = ourRow(season);
   const p = season.player;
   const avgCoach = p.matches ? p.coachSum / p.matches : 0;
-  if (row.position <= 2 && coachTrust >= 60) {
+  const avgFan = p.matches ? p.fanSum / p.matches : 0;
+  const actions = p.goals + p.assists;
+  const stats = `${p.goals} голів і ${p.assists} передач`;
+
+  // Свист трибун — раніше за трансфер від таблиці: клуб, що виграв лігу з тобою, все одно чує
+  // стадіон, а агент за освистаного не дзвонить. Зірка протоколу (нижче) свисту не збирає за визначенням.
+  if (avgFan < k.crowdBoo) {
+    return {
+      kind: 'bench',
+      title: 'Розмова в кабінеті',
+      text: `${row.position}-е місце, ${stats}. Тренер задоволений, трибуни — ні: свист після кожного пасу назад дійшов до президента. Наступний сезон починаєш з лави, «щоб зняти напругу».`,
+    };
+  }
+  if (row.position <= k.transferPosition && coachTrust >= k.transferTrust) {
     return {
       kind: 'transfer',
       title: 'Дзвонить агент',
-      text: `${row.position}-е місце, ${p.goals} голів і ${p.assists} передач за сезон. Клуб із сильнішої ліги хоче тебе вже цієї зими. Тренер не радий — але це найкраща з його проблем.`,
+      text: `${row.position}-е місце, ${stats} за сезон. Клуб із сильнішої ліги хоче тебе вже цієї зими. Тренер не радий — але це найкраща з його проблем.`,
     };
   }
-  // Лава: низ таблицы, или тренер не верит, или сезон без оценок — одного достаточно.
-  // Было «extend, если хоть что-то одно хорошо» — лава выпадала в 6% сезонов, угроза не читалась.
+  if (actions >= k.starActions && avgFan >= k.starFan && coachTrust >= k.starMinTrust) {
+    return {
+      kind: 'transfer',
+      title: 'Дзвонить агент',
+      text: `${stats} за сезон, і трибуни знають твоє прізвище краще за тренера. Клуб із сильнішої ліги дзвонить попри ${row.position}-е місце. Тренер каже «скатертиною» — і, здається, це щиро.`,
+    };
+  }
+
   const clubs = season.clubs.length;
-  if (row.position <= clubs - 2 && coachTrust >= 45 && avgCoach >= 5.2) {
+  const coachBenches = row.position > clubs - k.benchBottom || coachTrust < k.benchTrust || avgCoach < k.benchCoach;
+  const crowdShields = avgFan >= k.crowdShieldFan && actions >= k.crowdShieldActions;
+  if (coachBenches && crowdShields) {
     return {
       kind: 'extend',
       title: 'Продовження контракту',
-      text: `${row.position}-е місце, ${p.goals} голів і ${p.assists} передач. Тренер підписує ще на рік: «Місце в основі — твоє. Поки що».`,
+      text: `${row.position}-е місце, ${stats}. Тренер хотів би посадити — але трибуни скандують твоє прізвище, і президент це чує. Контракт підписаний. Тренер — ні.`,
+    };
+  }
+  if (coachBenches) {
+    const why = coachTrust < k.benchTrust ? 'тренер не дивиться в очі' : row.position > clubs - k.benchBottom ? 'таблиця не пробачає' : 'тренер має свої оцінки';
+    return {
+      kind: 'bench',
+      title: 'Розмова в кабінеті',
+      text: `${row.position}-е місце, ${stats}, і ${why}: наступний сезон починаєш з лави. Дублер уже знає.`,
     };
   }
   return {
-    kind: 'bench',
-    title: 'Розмова в кабінеті',
-    text: `${row.position}-е місце, і тренер не дивиться в очі: наступний сезон починаєш з лави. Дублер уже знає.`,
+    kind: 'extend',
+    title: 'Продовження контракту',
+    text: `${row.position}-е місце, ${stats}. Тренер підписує ще на рік: «Місце в основі — твоє. Поки що».`,
   };
 }
+

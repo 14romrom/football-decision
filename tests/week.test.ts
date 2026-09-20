@@ -20,7 +20,7 @@ import type { MatchSummary } from '../src/engine/match';
 
 const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
 
-function seasonWith(results: [number, number, number?][], fan = 6): Season {
+function seasonWith(results: [number, number, number?][], fan = 7.5): Season {
   let sn = createSeason(7, Object.keys(OPPONENTS));
   results.forEach(([us, them, goals = 0], i) => {
     sn = recordRound(sn, { scoreUs: us, scoreThem: them, goals, assists: 0, coachRating: 6, fanRating: fan, scorers: [] }, strengths, makeRng(100 + i));
@@ -320,9 +320,13 @@ describe('QA 17.09, вторая волна', () => {
     const { seasonVerdict } = await import('../src/engine/season');
     const sn = seasonWith(Array.from({ length: 10 }, (_, i) => [i % 2 ? 1 : 0, 2] as [number, number]));   // много поражений — низ
     expect(seasonVerdict(sn, 60).kind).toBe('bench');
-    const ok = seasonWith(Array.from({ length: 10 }, () => [1, 1] as [number, number]), 6);
+    const ok = seasonWith(Array.from({ length: 10 }, () => [1, 1] as [number, number]), 7.5);
     expect(['extend', 'transfer']).toContain(seasonVerdict(ok, 60).kind);
     expect(seasonVerdict(ok, 30).kind).toBe('bench');
+    // M9: трибуни защищают — низ таблицы и тренер против, но 6 результативных дий и оценка 8 → продовження.
+    const loved = seasonWith(Array.from({ length: 10 }, (_, i) => [i % 2 ? 1 : 0, 2, i < 6 ? 1 : 0] as [number, number, number]), 8);
+    expect(seasonVerdict(loved, 30).kind).toBe('extend');
+    expect(seasonVerdict(loved, 30).text).toMatch(/трибуни скандують/);
   });
 
   it('уровни выключены: опыт копится, очков нет, миграция не возвращает фантомные очки', async () => {

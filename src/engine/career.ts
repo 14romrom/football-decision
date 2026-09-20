@@ -16,6 +16,13 @@ export type Career = {
   /** Доверие тренера на конец последнего матча — стартовая точка для следующего
    *  (с регрессией к среднему, см. nextMatchCoachTrust), не сбрасывается на 55 каждый раз. */
   coachTrust: number;
+  /** Настрій трибун на кінець останнього матчу — стартова точка наступного (з регресією, як довіра).
+   *  Без поля (старі збереження) — старт 45. Трибуни пам'ятають (M9): ресурс сезону, не ефект матчу. */
+  fanHype?: number;
+  /** Лава запасних (M9): наступний матч починаєш на лаві — виходиш у другому таймі (match.ts:benchWarmup).
+   *  Садить вердикт сезону або тренер по ходу сезону (довіра < bench.demoteTrust без захисту трибун);
+   *  виходиш — довірою, голом/асистом або оцінкою трибун (benchAfterMatch). */
+  benched?: boolean;
   /** Несгоревшие жёлтые за карьеру; на третьей — тренер начинает следующий матч настороже. */
   careerYellows: number;
   /** Сколько ближайших матчей ещё аукается травма (сниженный старт сил). */
@@ -187,8 +194,28 @@ export function nextMatchCoachTrust(endingTrust: number): number {
   return Math.round(endingTrust * (1 - reversion) + BALANCE.coachTrustStart * reversion);
 }
 
+/** Трибуни між матчами — та сама регресія, що й довіра: пам'ятають, але не навіки. */
+export function nextMatchFanHype(endingHype: number): number {
+  const reversion = BALANCE.fanHypeReversion;
+  return Math.round(endingHype * (1 - reversion) + BALANCE.fanHypeStart * reversion);
+}
+
+/** Чи сидить Реєс на лаві наступного матчу. З лави виходять довірою, результативною дією або трибунами;
+ *  в основі сідають, коли довіра на свисток впала нижче demoteTrust і в матчі не було гола чи асиста.
+ *  Довіра — до регресії: тренер вирішує по гарячих слідах, а поки сидиш, вона відходить до середнього —
+ *  тренер остигає, і лава не стає вироком. */
+export function benchAfterMatch(benched: boolean, endingTrust: number, summary: MatchSummary): boolean {
+  const b = BALANCE.bench;
+  // Тести передають порожній підсумок — без статистики дій немає, трибуни мовчать.
+  const actions = (summary.stats?.goals ?? 0) + (summary.stats?.assists ?? 0);
+  if (benched) return !(endingTrust >= b.exitTrust || actions >= 1 || (summary.fanRating ?? 0) >= b.exitFan);
+  return endingTrust < b.demoteTrust && actions === 0;
+}
+
 export type StartPenalty = {
   staminaPenalty: number; coachTrustPenalty: number; note?: string;
+  /** Матч з лави: епізоди лише після bench.entryMinute, ноги свіжі. */
+  fromBench?: boolean;
   flags: CarriedFlag[];
   /** От недели: временные модификаторы и сдвиг старта (career.nextMatch), уже потреблённые. */
   attrBonus?: Partial<Record<Attribute, number>>;
@@ -229,12 +256,13 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   next.carriedFlags = (career.carriedFlags ?? [])
     .filter((f) => f.after && f.after > 0)
     .map((f) => ({ ...f, after: f.after! - 1 }));
+  if (career.benched) note = [note, 'Починаєш на лаві: тренер випустить у другому таймі. Вийти з неї — довірою, голом або трибунами.'].filter(Boolean).join(' ');
   if (prep?.notes?.length) note = [note, ...prep.notes].filter(Boolean).join(' ');
   next.nextMatch = undefined;
   return {
     career: next,
     penalty: {
-      staminaPenalty, coachTrustPenalty, note, flags,
+      staminaPenalty, coachTrustPenalty, note, flags, fromBench: !!career.benched,
       attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,
     },
   };
@@ -257,6 +285,8 @@ export function applyMatchToCareer(
     unspentPoints: (career.unspentPoints ?? 0) + (BALANCE.growth.levels ? level - career.level : 0),
     injuriesSeason: (career.injuriesSeason ?? 0) + (state.flags.includes('injured') ? 1 : 0),
     coachTrust: nextMatchCoachTrust(state.coachTrust),
+    fanHype: nextMatchFanHype(state.fanHype),
+    benched: benchAfterMatch(!!career.benched, state.coachTrust, summary),
     matchesPlayed: career.matchesPlayed + 1,
     voiceCounts: { ...career.voiceCounts },
   };

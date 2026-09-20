@@ -186,6 +186,10 @@ export type Carryover = {
   voiceMute?: Partial<Record<VoiceKey, number>>;
   /** Травм уже было в этом сезоне: при лимите «пошкодження» в исходе становится мікротравмою. */
   injuriesSeason?: number;
+  /** Настрій трибун з минулого матчу (career.fanHype) — замість старту 45; поле додає своє. */
+  fanHype?: number;
+  /** Матч з лави (career.benched): перший тайм команда грає без тебе, епізоди — після bench.entryMinute. */
+  fromBench?: boolean;
 };
 
 export function createMatch(
@@ -211,7 +215,8 @@ export function createMatch(
     const minute = m + rng.int(-j, j);
     // последний эпизод обязан быть после 85-й — это требование ТЗ, а не случайность
     return i === last ? Math.max(86, minute) : minute;
-  });
+    // З лави — лише слоти після виходу: чотири рішення замість дев'яти, і кожне на вагу золота.
+  }).filter((minute) => !carryover.fromBench || minute >= BALANCE.bench.entryMinute);
 
   const state: MatchState = {
     minute: 0,
@@ -220,7 +225,8 @@ export function createMatch(
     stamina: clamp(start.stamina - (carryover.staminaPenalty ?? 0) + (carryover.startDelta?.stamina ?? 0), 0, 100),
     composureNow: clamp(start.composure + (carryover.startDelta?.composure ?? 0), 0, 100),
     coachTrust: clamp((carryover.coachTrust ?? BALANCE.coachTrustStart) - (carryover.coachTrustPenalty ?? 0), 0, 100),
-    fanHype: clamp(start.fanHype + (carryover.startDelta?.fanHype ?? 0), 0, 100),
+    // Трибуни пам'ятають: база — настрій з минулого матчу, поле (дім/виїзд) додає своє поверх.
+    fanHype: clamp(start.fanHype - BALANCE.fanHypeStart + (carryover.fanHype ?? BALANCE.fanHypeStart) + (carryover.startDelta?.fanHype ?? 0), 0, 100),
     momentum: clamp(start.momentum + (carryover.startDelta?.momentum ?? 0), -3, 3),
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 },
     // Характеристики соперника — флаги на матч: правила в flags.json (them_dribbler и т.п.),
@@ -258,7 +264,27 @@ export function createMatch(
     kind: 'kickoff',
     text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». ' + feedLine(session, 'kickoff', rng),
   });
+  if (carryover.fromBench) benchWarmup(session, rng);
   return session;
+}
+
+/** Перший тайм з лави: команда грає без тебе — лента й голи ленти по чвертях, як у звичайних
+ *  проміжках, але без витрати сил і без мікротравм (ти сидиш). На виході — свіжі ноги і рядок
+ *  «виходиш». Далі матч іде як завжди, з першого слота після entryMinute. */
+function benchWarmup(session: MatchSession, rng: Rng) {
+  const state = session.state;
+  const entry = BALANCE.bench.entryMinute;
+  for (const until of [15, 30, 45, entry]) {
+    const from = state.minute;
+    const goal = rollFillerGoal(session, rng);
+    const minute = rng.int(from + 2, until - 2);
+    if (goal) pushGoal(session, goal, minute, rng);
+    else state.log.push({ minute, kind: 'filler', text: feedLine(session, 'filler', rng) });
+    if (until === 45) state.log.push({ minute: 45, kind: 'halftime', text: feedLine(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
+    state.minute = until;
+  }
+  state.stamina = clamp(state.stamina + BALANCE.bench.staminaBonus, 0, 100);
+  state.log.push({ minute: entry, kind: 'filler', text: feedLine(session, 'benchIn', rng) });
 }
 
 // ——— лента между эпизодами ———————————————————————————————————————————

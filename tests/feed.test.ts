@@ -11,7 +11,7 @@ import { EPISODES_RAW, FEED, FLAG_RULES, FLAVOR, PLAYER, ROSTER, rosterFor } fro
 import rosterJson from '../src/content/roster.json';
 import type { MatchState } from '../src/engine/types';
 
-const KINDS: FeedKind[] = ['kickoff', 'filler', 'goalUs', 'goalThem', 'goalUsEcho', 'goalThemEcho', 'halftime', 'knock'];
+const KINDS: FeedKind[] = ['kickoff', 'filler', 'goalUs', 'goalThem', 'goalUsEcho', 'goalThemEcho', 'halftime', 'knock', 'benchIn'];
 
 const state = (over: Partial<MatchState> = {}): MatchState => ({
   minute: 30, scoreUs: 0, scoreThem: 0, stamina: 55, composureNow: 60, coachTrust: 55, fanHype: 45, momentum: 0,

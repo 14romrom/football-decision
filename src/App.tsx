@@ -113,7 +113,7 @@ function Game() {
       round: sn.round + 1,
       last: lastRes && lastKey ? { scoreUs: lastRes.scoreUs, scoreThem: lastRes.scoreThem, opponentGen: OPPONENTS[lastKey]?.name.gen ?? lastKey } : null,
       confidence: cond.tone.confidence, scoringStreak: scoring, dryStreak: dry, weekActivities: titles,
-      coachTrust: c.coachTrust, matchesPlayed: c.matchesPlayed,
+      coachTrust: c.coachTrust, matchesPlayed: c.matchesPlayed, benched: c.benched,
     };
   };
   const clubName = useCallback((key: string) => (key === US ? ROSTER.us.name.nom : OPPONENTS[key]?.name.nom ?? key), []);
@@ -187,8 +187,8 @@ function Game() {
       `${Date.now().toString(36)}-${seed}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions,
       episodeMemory(BALANCE.match.memory.horizon), FLAG_RULES,
       {
-        coachTrust: consumedCareer.coachTrust, staminaPenalty: penalty.staminaPenalty,
-        coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
+        coachTrust: consumedCareer.coachTrust, fanHype: consumedCareer.fanHype, fromBench: penalty.fromBench,
+        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon),
         startDelta: penalty.startDelta,
         voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: consumedCareer.injuriesSeason,
@@ -202,8 +202,10 @@ function Game() {
 
   const newSeason = useCallback(() => {
     const prev = seasonRef.current;
+    // Вердикт «лава» — не текст: новий сезон починаєш із лави (career.benched), поки не вийдеш із неї.
+    const benched = seasonVerdict(prev, careerRef.current.coachTrust).kind === 'bench';
     setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS), prev.number + 1));
-    setCareerBoth({ ...careerRef.current, injuriesSeason: 0 });   // лимит травм — на сезон
+    setCareerBoth({ ...careerRef.current, injuriesSeason: 0, benched });   // лимит травм — на сезон
   }, [setSeasonBoth]);
 
   /** Стрічка по текущему состоянию сезона: посты с именами следующего соперника. quota — сколько

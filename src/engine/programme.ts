@@ -17,6 +17,8 @@ export type ProgrammeInput = {
   coachTrust: number;
   /** Матчей за клуб до этого; веха — если этот матч круглый. */
   matchesPlayed: number;
+  /** На лаві (M9): у заявці, але не в основі — виходить у другому таймі. */
+  benched?: boolean;
 };
 
 const ORD = ['', 'перший', 'другий', 'третій', 'четвертий', 'п’ятий', 'шостий', 'сьомий', 'восьмий', 'дев’ятий', 'десятий'];
@@ -46,6 +48,7 @@ function weekLine(i: ProgrammeInput): string {
 }
 
 function coachLine(i: ProgrammeInput): string {
+  if (i.benched) return 'У заявці, але починає на лаві.';
   if (i.coachTrust >= 70) return 'Місце в основі беззаперечне.';
   if (i.coachTrust >= 45) return 'В основі, але тренер дивиться уважно.';
   return 'Виходить з останнім попередженням.';

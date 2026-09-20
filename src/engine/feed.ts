@@ -16,8 +16,9 @@ import type { MatchState, SituationWhen } from './types';
 
 /** filler — между эпизодами; goalUs/goalThem — гол ленты (с манерой); goalUsEcho/goalThemEcho —
  *  гол из исхода эпизода (только кто и счёт: манеру уже описал текст исхода, спорить с ним нельзя);
- *  halftime — перерва по счёту; knock — мікротравма в стыке; kickoff — первая строка по полю. */
-export type FeedKind = 'kickoff' | 'filler' | 'goalUs' | 'goalThem' | 'goalUsEcho' | 'goalThemEcho' | 'halftime' | 'knock';
+ *  halftime — перерва по счёту; knock — мікротравма в стыке; kickoff — первая строка по полю;
+ *  benchIn — вихід з лави (M9): команда грала без тебе, тепер твоя черга. */
+export type FeedKind = 'kickoff' | 'filler' | 'goalUs' | 'goalThem' | 'goalUsEcho' | 'goalThemEcho' | 'halftime' | 'knock' | 'benchIn';
 export type FeedRule = { kind: FeedKind; when?: SituationWhen; lines: string[] };
 
 export const FEED_RULES = feedJson as FeedRule[];

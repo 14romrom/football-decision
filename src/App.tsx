@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, EPISODES_RAW, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor } from './content';
+import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor } from './content';
 import { adContext, pickAds } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
@@ -33,6 +33,8 @@ import { programmeNote, traitNote, type ProgrammeInput } from './engine/programm
 import { applySettings, readSettings } from './telemetry/settings';
 import type { Hint } from './ui/Spotlight';
 import { Film } from './ui/Film';
+import { AgentScene } from './ui/AgentScene';
+import { agentPending, resolveAgent, type AgentChoice } from './engine/agent';
 import { TitleScreen } from './ui/TitleScreen';
 import { Sticker } from './ui/Sticker';
 import { plural } from './ui/pluralize';
@@ -74,6 +76,8 @@ type Stage =
   | { k: 'week'; days: WeekOffer[][]; locked: boolean; leveledFrom: number; leveledTo: number }
   // Пролог (M12, 20.09): тиждень нуль у зошиті перед першим матчем нової кар’єри.
   | { k: 'prologue' }
+  // Сцена агента (M12): після вердикту «трансфер», перед новим сезоном.
+  | { k: 'agent'; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
@@ -498,9 +502,29 @@ function Game() {
         ads={pickAds(ADS, adContext(season, career.coachTrust), new Set(recentPosts()), makeRng(season.seed + season.round * 6007 + 3))}
         verdict={over ? seasonVerdict(season, career.coachTrust) : undefined}
         onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
-        onNewSeason={() => { newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
+        onNewSeason={() => {
+          // «Дзвонить агент» — не нагорода, а розвилка: спершу сцена, новий сезон — з неї.
+          if (agentPending(careerRef.current, season, over ? seasonVerdict(season, career.coachTrust) : undefined)) { setStage({ k: 'agent', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
+          newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' });
+        }}
       />
     );
+  }
+
+  if (stage.k === 'agent') {
+    const leveled = stage.leveledTo > stage.leveledFrom;
+    return (<>{film}
+      <AgentScene
+        content={fillNamesDeep(AGENT, ROSTER)}
+        onChoose={(choice: AgentChoice) => {
+          // Обставини зриву — за кар’єрою до нового сезону (травми цього сезону ще не обнулені).
+          const { career: after, loot, text } = resolveAgent(careerRef.current, seasonRef.current, AGENT, choice);
+          setCareerBoth(after);
+          return { text: fillNames(text, ROSTER), loot };
+        }}
+        onNext={() => { newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
+      />
+    </>);
   }
 
   if (stage.k === 'posts') {

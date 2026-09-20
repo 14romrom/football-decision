@@ -6,6 +6,7 @@ import { ATTR_MOD, BALANCE } from './balance';
 import { attrMod } from './attr';
 import type { Attribute, Mark, MatchState, Player, VoiceKey } from './types';
 import type { MatchSummary } from './match';
+import type { AgentLogEntry } from './agent';
 import { voiceSees, VOICE_LABEL } from './voices';
 
 export type Career = {
@@ -57,6 +58,8 @@ export type Career = {
   /** Пролог (M12, 20.09): які стікери обрано на трьох розворотах тижня нуль (engine/prologue.ts) — характер
    *  на старт. Є в збереженні — пролог пройдено; base читають репліки Тібо про мафію. */
   prologue?: Partial<Record<'scout' | 'call' | 'base', string>>;
+  /** Сцена агента (M12, engine/agent.ts): що відповів узимку і чому не пішов — для стрічки й сцен тижня. */
+  agentLog?: AgentLogEntry[];
 };
 
 export type CarriedFlag = {

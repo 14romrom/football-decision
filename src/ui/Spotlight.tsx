@@ -58,7 +58,7 @@ export function Spotlight({ hint, target, onDone }: Props) {
   const vh = window.innerHeight;
   const { top, left, width, height } = box;
   // Дірка в затемненні: зовнішній прямокутник за годинниковою, внутрішній — проти (evenodd).
-  const clip = `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${left}px ${top}px, ${left}px ${top + height}px, ${left + width}px ${top + height}px, ${left + width}px ${top}px, ${left}px ${top}px)`;
+  const clip = `polygon(evenodd, 0 0, 100vw 0, 100vw 100vh, 0 100vh, 0 0, ${left}px ${top}px, ${left}px ${top + height}px, ${left + width}px ${top + height}px, ${left + width}px ${top}px, ${left}px ${top}px)`;
   const above = top + height / 2 > vh / 2;
   const pos = above ? { bottom: vh - top + 12 } : { top: top + height + 12 };
   return createPortal(

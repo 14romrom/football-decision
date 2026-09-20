@@ -8,6 +8,7 @@ import weekscenesJson from './weekscenes.json';
 import adsJson from './ads.json';
 import prologueJson from './prologue.json';
 import firstmatchJson from './firstmatch.json';
+import agentJson from './agent.json';
 import { fillNamesDeep, type Roster, type TeamRoster } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
@@ -17,6 +18,7 @@ import type { Activity, WeekScene } from '../engine/week';
 import type { AdRule } from '../engine/espm';
 import type { PrologueSpread } from '../engine/prologue';
 import type { Tutorial, TutorialHint } from '../engine/match';
+import type { AgentContent } from '../engine/agent';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
@@ -64,3 +66,5 @@ export const FIRST_MATCH_TUTORIAL: Tutorial = {
   plan: FIRST_MATCH.scenes.map((s) => s.episode),
   hints: Object.fromEntries(FIRST_MATCH.scenes.map(({ episode, target, title, text }) => [episode, { target, title, text }])),
 };
+/** Сцена агента між сезонами (engine/agent.ts): сетап, голоси, три відповіді, три обставини зриву. */
+export const AGENT = agentJson as AgentContent;

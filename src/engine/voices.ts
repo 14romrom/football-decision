@@ -47,7 +47,7 @@ export function voiceSees(who: VoiceKey, player: Player): boolean {
   switch (who) {
     case 'vision': return m('vision') >= sees || m('positioning') >= sees;
     case 'instinct': return m('dribbling') >= sees || m('first_touch') >= sees;
-    case 'body': return m('pace') >= sees || m('strength') >= sees;
+    case 'body': return m('pace') >= sees || m('strength') >= sees || m('stamina') >= sees;
     case 'composure': return m('composure') >= sees;
     default: return false;
   }
@@ -85,6 +85,6 @@ export function voiceAudible(who: VoiceKey, option: EpisodeOption, state: MatchS
     case 'composure': return m('composure') >= loud || state.composureNow >= 70;
     case 'vision': return m('vision') >= loud || m('positioning') >= loud;
     case 'instinct': return m('dribbling') >= loud || m('first_touch') >= loud;
-    case 'body': return m('pace') >= loud || m('strength') >= loud || state.stamina >= 80;
+    case 'body': return m('pace') >= loud || m('strength') >= loud || m('stamina') >= loud || state.stamina >= 80;
   }
 }

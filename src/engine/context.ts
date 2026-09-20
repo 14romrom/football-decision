@@ -2,7 +2,7 @@
 // Всё, что здесь считается, потом показывается игроку списком после броска —
 // это единственный способ увидеть, что прошлые решения на что-то повлияли.
 
-import { BALANCE, POSITION_ORDER } from './balance';
+import { BALANCE, COMPOSURE_CALM, POSITION_ORDER } from './balance';
 import { neutralConditions, signatureAttrs, type MatchConditions } from './conditions';
 import { attrMod } from './attr';
 import { VOICE_LABEL, voiceAudible } from './voices';
@@ -77,8 +77,10 @@ export function computeContext(
   }
 
   // Попередній момент провалився — наступне рішення важче (тестер 17.09: «−1 після невдачі»).
+  // Спокій не тягне минулий провал у наступне рішення (COMPOSURE_CALM).
   const lastTier = [...state.log].reverse().find((e) => e.kind === 'episode')?.tier;
-  if (lastTier === 'fail' || lastTier === 'badFail') mods.push({ label: 'після провалу', value: c.afterFail, source: 'player', short: 'провал' });
+  const calm = COMPOSURE_CALM.ignoresAfterFail && option.attribute === 'composure';
+  if ((lastTier === 'fail' || lastTier === 'badFail') && !calm) mods.push({ label: 'після провалу', value: c.afterFail, source: 'player', short: 'провал' });
 
   if (state.minute > 80) {
     if (state.composureNow >= 70) mods.push({ label: 'спокійний у кінцівці', value: c.composureLateGood, source: 'player', short: 'кінцівка' });

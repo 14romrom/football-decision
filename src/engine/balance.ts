@@ -51,6 +51,10 @@ export const MOMENTUM_COST_RECOVERY = 1;
  *  тільки з 23% чистих і катастрофою. Тепер ризик, що вийшов, заводить: кураж у наступних кидках (до +2),
  *  Его починає бачити (egoSeesMomentum), голи ленти зсуваються до нас. Полоса катастрофи не тронута. */
 export const MOMENTUM_BY_BOLDNESS: Record<Position, number> = { controlled: 0, risky: 1, desperate: 2 };
+/** Спокій має свій приз (M9.7, 20.09): аудит — 69 варіантів composure з EV 0.09, «пропустити хід». Тепер варіант
+ *  Спокою не отримує «після провалу» −1 (спокійний не тягне минулу помилку в наступне рішення), а його провал
+ *  не збиває кураж (fail: 0 замість −1; катастрофа — як у всіх). Полоса катастрофи і пороги не тронуті. */
+export const COMPOSURE_CALM = { ignoresAfterFail: true, momentumOnFail: 0 };
 
 export const BALANCE = {
   staminaStart: 100,

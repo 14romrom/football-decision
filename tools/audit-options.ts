@@ -119,6 +119,8 @@ export function scoreOption(ep: Episode, o: EpisodeOption, bonus = 0, chains = t
     evSelf += p[t] * (self + (t === 'clean' ? MOMENTUM_BY_BOLDNESS[o.basePosition] * 0.4 : 0));
     // Трибуни реагують на сміливість до результату (BALANCE.systemic.boldnessHype) — теж системно.
     evSelf += p[t] * BALANCE.systemic.boldnessHype[o.basePosition] * 0.08;
+    // Спокій: провал не збиває кураж і не тягне «після провалу» в наступний кидок (COMPOSURE_CALM).
+    if (o.attribute === 'composure' && t === 'fail') evSelf += p[t] * 0.4;
     pGoal += p[t] * goal;
   }
   return { ep, o, mod, p, evTeam, evSelf, ev: evTeam * 5 + evSelf - o.staminaCost * STAMINA_WEIGHT, pGoal };

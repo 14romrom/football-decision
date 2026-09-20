@@ -51,7 +51,12 @@ export type MatchSession = {
   feedSeenNow: Set<string>;
   flavorSeenNow: Set<string>;
   injuriesSeason?: number;
+  /** Перший матч кар’єри (M12): чотири фіксовані сцени-туторіал замість плану, підказка оповідача на кожну
+   *  (епізод → рядок), реактивні сцени не спливають — кожна сцена вводить одну річ. */
+  tutorial?: Tutorial;
 };
+
+export type Tutorial = { plan: string[]; hints: Record<string, string> };
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
@@ -190,6 +195,9 @@ export type Carryover = {
   fanHype?: number;
   /** Матч з лави (career.benched): перший тайм команда грає без тебе, епізоди — після bench.entryMinute. */
   fromBench?: boolean;
+  /** Перший матч кар’єри — фіксований план і підказки (content/firstmatch.json). Довжина плану має
+   *  збігатися з кількістю слотів (з лави — чотири), інакше план ігнорується. */
+  tutorial?: Tutorial;
 };
 
 export function createMatch(
@@ -254,7 +262,9 @@ export function createMatch(
     matchId, seed, player, roster, conditions, episodes, flagRules: rules, reactiveUsed: 0, state, schedule,
     memory: toMemory(recentEpisodeIds),
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
-    plan: planEpisodes(schedule, episodes, rng, recentEpisodeIds),
+    plan: carryover.tutorial && carryover.tutorial.plan.length === schedule.length && carryover.tutorial.plan.every((id) => episodes.some((e) => e.id === id))
+      ? [...carryover.tutorial.plan] : planEpisodes(schedule, episodes, rng, recentEpisodeIds),
+    ...(carryover.tutorial ? { tutorial: carryover.tutorial } : {}),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
     feedSeen: new Set(carryover.feedSeen ?? []), feedSeenNow: new Set(), flavorSeenNow: new Set(),
     injuriesSeason: carryover.injuriesSeason,
@@ -471,6 +481,7 @@ export function fillTrigger<T>(value: T, mark: { minute: number; past: string; p
 function pickReactive(session: MatchSession, rng: Rng): Episode | null {
   const m = BALANCE.match;
   const i = session.nextIndex;
+  if (session.tutorial) return null;   // перший матч: сцени фіксовані, дублер із прологу зачекає до другого
   if (i < m.reactiveFromSlot || session.reactiveUsed >= m.maxReactive) return null;
   const state = session.state;
   const minute = session.schedule[i];

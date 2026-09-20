@@ -28,6 +28,8 @@ type Props = {
   flagRules: FlagRule[];
   /** Звено цепочки — та же минута, сцена продолжается. */
   link?: boolean;
+  /** Підказка оповідача (перший матч, M12): одна річ на сцену — під сетапом, до голосів. */
+  hint?: string;
   onChoose: (option: EpisodeOption) => void;
 };
 
@@ -40,7 +42,7 @@ function chainHint(o: EpisodeOption): string | null {
   return target ? (CHAIN_LABEL[target] ?? 'далі') : null;
 }
 
-export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, link, onChoose }: Props) {
+export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, link, hint, onChoose }: Props) {
   const options = availableOptions(episode, state, player);
   const insights = sceneInsights(episode, state, player);
   // Реплики голосов — до вариантов, по одному разу на голос; слышно только сильный.
@@ -56,6 +58,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
     <div className="scene">
       <span className="minute-tab">{minute}′{link && <i className="link-mark"> · продовження</i>}</span>
       <p className="setup">{episode.setup}</p>
+      {hint && <p className="tutor">{hint}</p>}
       {(insights.length > 0 || lines.length > 0) && (
         <div className="voices">
           {insights.map((v) => (

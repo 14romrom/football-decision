@@ -524,6 +524,8 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .prologue .nb-notes.compact .nb-note.on { grid-column: span 2; }
 .prologue .nb-notes > :nth-child(4) { --r: 1.1deg; }
 .prologue .setup + .setup { padding-top: 0; }
+/* Підказка оповідача в першому матчі (M12): той самий голос, що сетап, але на полях — курсив, тонша лінія зліва. */
+.tutor { margin: -4px 0 12px; padding: 2px 0 2px 12px; border-left: 2px solid #4a463c; font-size: 14px; line-height: 1.45; font-style: italic; color: var(--muted); }
 .nb-coach { position: relative; z-index: 1; width: 190px; margin: -4px 0 8px auto; padding: 8px 10px; background: #fff; color: #1f2333; font-family: var(--font-hand); font-size: 15px; line-height: 1.2; box-shadow: 2px 3px 8px rgba(0,0,0,.25); transform: rotate(2.5deg); clip-path: polygon(0 4%, 6% 0, 100% 2%, 98% 96%, 50% 100%, 2% 97%); }
 .nb-coach b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--bad); }
 .nb-list { margin: 6px 6px 0 0; }

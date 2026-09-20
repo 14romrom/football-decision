@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor } from './content';
+import { ACTIVITIES, ADS, EPISODES_RAW, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor } from './content';
 import { adContext, pickAds } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
@@ -145,7 +145,7 @@ function Game() {
       const { events, summary } = finishMatch(session, rng);
       // Лист фінального свистка — з того ж rng і тієї ж пам’яті рядків, що репліки: сезон не повторює його.
       const whistle = buildWhistle(
-        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow),
+        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0),
         rng, session.flavorSeen,
       );
       // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
@@ -205,6 +205,8 @@ function Game() {
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon),
         startDelta: penalty.startDelta,
         voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: consumedCareer.injuriesSeason,
+        // Перший матч кар’єри — чотири фіксовані сцени з підказками (M12); далі план як завжди.
+        ...(consumedCareer.matchesPlayed === 0 ? { tutorial: FIRST_MATCH_TUTORIAL } : {}),
       },
     );
     rngRef.current = rng;
@@ -576,6 +578,7 @@ function Game() {
             conditions={session.conditions}
             flagRules={session.flagRules}
             link={stage.link}
+            hint={session.tutorial?.hints[stage.episode.id]}
             onChoose={choose}
           />
         )}

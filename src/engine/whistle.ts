@@ -30,6 +30,8 @@ export type WhistleWhen = {
   weather?: 'clear' | 'rain' | 'heat' | 'wind';
   strength?: 'strong' | 'even' | 'weak';
   promise?: PromiseState;
+  /** Перший матч кар’єри (M12): свисток уперше говорить про віру собі. */
+  first?: boolean;
 };
 export type WhistleRule = { kind: WhistleKind; when?: WhistleWhen; lines: string[] };
 
@@ -48,7 +50,7 @@ export function promiseState(state: MatchState, episodes: Episode[], selfName: s
   return state.flags.includes('week_promise') ? 'untouched' : null;
 }
 
-export function whistleContext(state: MatchState, summary: MatchSummary, cond: MatchConditions, promise: PromiseState | null, tiredBelow: number): WhistleWhen {
+export function whistleContext(state: MatchState, summary: MatchSummary, cond: MatchConditions, promise: PromiseState | null, tiredBelow: number, first = false): WhistleWhen {
   return {
     result: summary.scoreUs > summary.scoreThem ? 'win' : summary.scoreUs < summary.scoreThem ? 'loss' : 'draw',
     scored: summary.stats.goals + summary.stats.assists > 0,
@@ -60,6 +62,7 @@ export function whistleContext(state: MatchState, summary: MatchSummary, cond: M
     weather: cond.weather,
     strength: cond.strength,
     ...(promise ? { promise } : {}),
+    ...(first ? { first } : {}),
   };
 }
 
@@ -73,8 +76,11 @@ function matches(w: WhistleWhen | undefined, c: WhistleWhen): boolean {
 
 export function pickWhistleLine(kind: WhistleKind, c: WhistleWhen, rng: Rng, seen: Set<string>, rules: WhistleRule[] = WHISTLE_RULES): string | undefined {
   const pool: { text: string; weight: number }[] = [];
-  for (const r of rules) {
-    if (r.kind !== kind || !matches(r.when, c)) continue;
+  // Перший матч кар’єри: якщо для цього виду є рядки «first», решта не конкурує — свисток має сказати
+  // про віру собі саме сьогодні, а вагами (3^ключів) це не гарантувати.
+  const fit = rules.filter((r) => r.kind === kind && matches(r.when, c));
+  const firstOnly = c.first ? fit.filter((r) => r.when?.first) : [];
+  for (const r of firstOnly.length ? firstOnly : fit) {
     const weight = 3 ** Object.keys(r.when ?? {}).length;
     for (const text of r.lines) pool.push({ text, weight });
   }

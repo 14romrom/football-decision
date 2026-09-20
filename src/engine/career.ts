@@ -62,6 +62,20 @@ export type Career = {
   agentLog?: AgentLogEntry[];
 };
 
+/** Стан арки (M13, 20.09): невпевнений → помітили → свій → не помітив, коли. Не сюжетні глави, а стани, в які
+ *  персонаж входить накопиченням; тексти (репліки Тібо, свисток, програмка, дорога на базу, стрічка) обирають
+ *  варіант за станом, як сетапи за флагами. Ціль не декларується — стан ніде не показується як шкала. */
+export type ArcStage = 1 | 2 | 3 | 4;
+
+export function arcStage(career: Career): ArcStage {
+  const a = BALANCE.arc;
+  if ((career.agentLog ?? []).length > 0) return 4;
+  const warm = (career.fanHype ?? 0) >= a.ownHype || (career.partnerBond ?? 0) >= a.ownBond;
+  if (career.matchesPlayed >= a.ownFrom && warm) return 3;
+  if (career.matchesPlayed >= a.noticedFrom) return 2;
+  return 1;
+}
+
 export type CarriedFlag = {
   flag: string; mark: Mark; opponentKey?: string;
   /** Отложенное следствие: сколько матчей флаг едет молча, прежде чем сработать (0 — в следующем). */
@@ -215,6 +229,13 @@ export function peopleFlags(career: Career): CarriedFlag[] {
   return [];
 }
 
+/** Жарт Тібо (M12/M13): перепитав у пролозі, чи це жарт, — Тібо нагнітає сильніше. Маркер для реплік і сетапів,
+ *  без модифікатора; системний, як partner_bonded. Живе, поки арка не дійде до «свій» — далі жарт уже спільний. */
+export function tiboFlags(career: Career): CarriedFlag[] {
+  if (career.prologue?.base !== 'base_vision' || arcStage(career) >= 3) return [];
+  return [{ flag: 'tibo_asked', mark: { minute: 0, episodeId: 'prologue', optionId: 'base', past: 'перепитав у Тібо, чи мафія — це жарт', whenText: 'ще до сезону' } }];
+}
+
 /** Трибуни між матчами — та сама регресія, що й довіра: пам'ятають, але не навіки. */
 export function nextMatchFanHype(endingHype: number): number {
   const reversion = BALANCE.fanHypeReversion;
@@ -234,6 +255,8 @@ export function benchAfterMatch(benched: boolean, endingTrust: number, summary: 
 }
 
 export type StartPenalty = {
+  /** Стан арки на цей матч (M13) — репліки, сетапи й свисток читають його через state.arc. */
+  arc?: ArcStage;
   staminaPenalty: number; coachTrustPenalty: number; note?: string;
   /** Матч з лави: епізоди лише після bench.entryMinute, ноги свіжі. */
   fromBench?: boolean;
@@ -283,7 +306,8 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   return {
     career: next,
     penalty: {
-      staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career)], fromBench: !!career.benched,
+      staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career), ...tiboFlags(career)], fromBench: !!career.benched,
+      arc: arcStage(career),
       attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,
     },
   };

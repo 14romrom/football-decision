@@ -197,6 +197,8 @@ export type Carryover = {
   fanHype?: number;
   /** Матч з лави (career.benched): перший тайм команда грає без тебе, епізоди — після bench.entryMinute. */
   fromBench?: boolean;
+  /** Стан арки персонажа (career.ts:arcStage) — у state.arc для when.arcMin/arcMax. */
+  arc?: number;
   /** Перший матч кар’єри — фіксований план і підказки (content/firstmatch.json). Довжина плану має
    *  збігатися з кількістю слотів (з лави — чотири), інакше план ігнорується. */
   tutorial?: Tutorial;
@@ -234,6 +236,7 @@ export function createMatch(
     scoreThem: 0,
     stamina: clamp(start.stamina - (carryover.staminaPenalty ?? 0) + (carryover.startDelta?.stamina ?? 0), 0, 100),
     composureNow: clamp(start.composure + (carryover.startDelta?.composure ?? 0), 0, 100),
+    ...(carryover.arc ? { arc: carryover.arc } : {}),
     coachTrust: clamp((carryover.coachTrust ?? BALANCE.coachTrustStart) - (carryover.coachTrustPenalty ?? 0), 0, 100),
     // Трибуни пам'ятають: база — настрій з минулого матчу, поле (дім/виїзд) додає своє поверх.
     fanHype: clamp(start.fanHype - BALANCE.fanHypeStart + (carryover.fanHype ?? BALANCE.fanHypeStart) + (carryover.startDelta?.fanHype ?? 0), 0, 100),

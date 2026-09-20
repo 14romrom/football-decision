@@ -117,6 +117,8 @@ export type MatchState = {
   scoreThem: number;
   stamina: number;        // 0..100, расходуется, не восстанавливается
   composureNow: number;   // 0..100, плавает по ходу матча
+  /** Стан арки на матч (M13, з Carryover) — для when.arcMin/arcMax у репліках, сетапах і стрічці. */
+  arc?: number;
   coachTrust: number;     // 0..100, реакция тренера
   fanHype: number;        // 0..100, реакция трибун
   momentum: number;       // -3..+3, инерция последних эпизодов
@@ -224,6 +226,9 @@ export type SituationWhen = {
    *  «какой-то удар». Сетапы своей семьи не знают — ключи только для flavor.json. */
   family?: string;
   phase?: Episode['phase'];
+  /** Стан арки персонажа (career.ts:arcStage): репліка чи сетап лише в цьому діапазоні станів. */
+  arcMin?: number;
+  arcMax?: number;
 };
 
 /** Вариант вводного текста под ситуацию. Опции и исходы у эпизода одни, а читается

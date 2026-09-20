@@ -39,6 +39,9 @@ export function matchesSituation(
   if (w.weather && w.weather !== conditions?.weather) return false;
   if (w.strength && w.strength !== conditions?.strength) return false;
   if (w.instruction && w.instruction !== conditions?.instruction) return false;
+  // Без стану арки (прогін, тести) правила з arc не підходять: вони про людину, а не про матч.
+  if (w.arcMin !== undefined && (state.arc === undefined || state.arc < w.arcMin)) return false;
+  if (w.arcMax !== undefined && (state.arc === undefined || state.arc > w.arcMax)) return false;
   return true;
 }
 

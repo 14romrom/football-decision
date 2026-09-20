@@ -22,7 +22,7 @@ import {
   type MatchSession, type MatchSummary,
 } from './engine/match';
 import {
-  applyMatchToCareer, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
+  applyMatchToCareer, arcStage, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
   type Career,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
@@ -127,7 +127,7 @@ function Game() {
       round: sn.round + 1,
       last: lastRes && lastKey ? { scoreUs: lastRes.scoreUs, scoreThem: lastRes.scoreThem, opponentGen: OPPONENTS[lastKey]?.name.gen ?? lastKey } : null,
       confidence: cond.tone.confidence, scoringStreak: scoring, dryStreak: dry, weekActivities: titles,
-      coachTrust: c.coachTrust, matchesPlayed: c.matchesPlayed, benched: c.benched,
+      coachTrust: c.coachTrust, matchesPlayed: c.matchesPlayed, benched: c.benched, arc: arcStage(c),
     };
   };
   const clubName = useCallback((key: string) => (key === US ? ROSTER.us.name.nom : OPPONENTS[key]?.name.nom ?? key), []);
@@ -152,10 +152,11 @@ function Game() {
     } else {
       const { events, summary } = finishMatch(session, rng);
       // Лист фінального свистка — з того ж rng і тієї ж пам’яті рядків, що репліки: сезон не повторює його.
-      const whistle = buildWhistle(
-        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0),
+      // Рядки свистка з іменами (M13: «{dm} б’є по плечу») — підставляємо під ростер матчу, як репліки.
+      const whistle = fillNamesDeep(buildWhistle(
+        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0, session.state.arc),
         rng, session.flavorSeen,
-      );
+      ), session.roster);
       // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
       recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds, [...session.flavorSeen], [...session.feedSeen]);
 
@@ -213,6 +214,7 @@ function Game() {
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon),
         startDelta: penalty.startDelta,
         voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: consumedCareer.injuriesSeason,
+        arc: penalty.arc,
         // Перший матч кар’єри — чотири фіксовані сцени з підказками (M12); далі план як завжди.
         ...(consumedCareer.matchesPlayed === 0 ? { tutorial: FIRST_MATCH_TUTORIAL } : {}),
       },

@@ -19,6 +19,8 @@ export type ProgrammeInput = {
   matchesPlayed: number;
   /** На лаві (M9): у заявці, але не в основі — виходить у другому таймі. */
   benched?: boolean;
+  /** Стан арки (M13): «улюбленець трибун» — тільки з уст прес-служби, і тільки коли місто вже своє. */
+  arc?: number;
 };
 
 const ORD = ['', 'перший', 'другий', 'третій', 'четвертий', 'п’ятий', 'шостий', 'сьомий', 'восьмий', 'дев’ятий', 'десятий'];
@@ -47,6 +49,13 @@ function weekLine(i: ProgrammeInput): string {
   return `Тиждень — ${acts.join(' та ')}.`;
 }
 
+/** Ставлення прес-служби дрейфує зі станом: до «свій» — нічого, далі — «улюбленець трибун», після зими — і про агента. */
+function arcLine(i: ProgrammeInput): string {
+  if ((i.arc ?? 1) >= 4) return 'Улюбленець трибун. Узимку лишився.';
+  if ((i.arc ?? 1) >= 3) return 'Улюбленець трибун.';
+  return '';
+}
+
 function coachLine(i: ProgrammeInput): string {
   if (i.benched) return 'У заявці, але починає на лаві.';
   if (i.coachTrust >= 70) return 'Місце в основі беззаперечне.';
@@ -56,7 +65,7 @@ function coachLine(i: ProgrammeInput): string {
 
 /** Заметка «Реєс» — 2–4 короткие фразы; каждая часть опциональна, пустые не оставляют дыр. */
 export function programmeNote(i: ProgrammeInput): string {
-  const parts = [lastLine(i), formLine(i), MILESTONE[i.matchesPlayed + 1] ?? '', weekLine(i), coachLine(i)].filter(Boolean);
+  const parts = [lastLine(i), formLine(i), MILESTONE[i.matchesPlayed + 1] ?? '', arcLine(i), weekLine(i), coachLine(i)].filter(Boolean);
   return parts.join(' ');
 }
 

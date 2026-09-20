@@ -8,7 +8,7 @@
 // Чистая логика; контент — content/activities.json; экран — ui/WeekScreen.tsx (тонкий).
 
 import { BALANCE } from './balance';
-import { clampTrust, peopleFlags, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
+import { arcStage, clampTrust, peopleFlags, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
 import type { Season } from './season';
 import type { Rng } from './rng';
 import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
@@ -35,6 +35,9 @@ export type ActivityWhen = {
   notFlags?: string[];
   /** Оценка трибун в последнем матче не ниже — популярність. */
   fanRatingMin?: number;
+  /** Стан арки (career.ts:arcStage): справа лише в цьому діапазоні — дорога на базу читається інакше на кожному етапі. */
+  arcMin?: number;
+  arcMax?: number;
 };
 
 export type ActivityEffect = {
@@ -105,6 +108,7 @@ export type WeekContext = {
   result: 'win' | 'draw' | 'loss' | null; bigLoss: boolean; scored: boolean; hasScored: boolean;
   position: number; clubs: number; coachTrust: number; injured: boolean;
   flags: string[]; fanRating: number;
+  arc: number;
 };
 
 const LOW_TRUST = 40;
@@ -126,6 +130,7 @@ export function weekContext(season: Season, career: Career, position: number): W
     injured: career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock'),
     flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag)],
     fanRating: last.fanRating,
+    arc: arcStage(career),
   };
 }
 
@@ -148,6 +153,8 @@ export function matchesActivity(w: ActivityWhen | undefined, c: WeekContext): bo
   if (w.flags && !w.flags.every((f) => c.flags.includes(f))) return false;
   if (w.notFlags && w.notFlags.some((f) => c.flags.includes(f))) return false;
   if (w.fanRatingMin !== undefined && c.fanRating < w.fanRatingMin) return false;
+  if (w.arcMin !== undefined && c.arc < w.arcMin) return false;
+  if (w.arcMax !== undefined && c.arc > w.arcMax) return false;
   return true;
 }
 

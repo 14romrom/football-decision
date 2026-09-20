@@ -502,7 +502,7 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .nb-note.torn { min-height: 0; padding: 0; height: 18px; opacity: .7; align-self: start; clip-path: polygon(0 0, 100% 0, 92% 100%, 60% 70%, 30% 100%, 0 60%); }
 .nb-note.torn::before { display: none; }
 .nb-train { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.nb-train em { font-style: normal; font-family: var(--font-hand); font-size: 14px; padding: 1px 9px; border: 1.5px solid var(--pen); border-radius: 999px; color: var(--pen); }
+.nb-train em { white-space: nowrap; font-style: normal; font-family: var(--font-hand); font-size: 14px; padding: 1px 9px; border: 1.5px solid var(--pen); border-radius: 999px; color: var(--pen); }
 .nb-train em.on { background: var(--pen); color: #fff; }
 .nb-empty { height: 56px; }
 /* Лист вечора — лист моменту, вписаний під день; зошит навколо гасне (як стрічка під листом у матчі). */
@@ -518,6 +518,12 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .nb-sheet-pad { height: 12px; }
 .nb-mark { margin: 2px 6px 0 0; font-family: var(--font-hand); font-size: 17px; line-height: 28px; color: var(--pen); }
 .nb-mark.muted-ink { color: #7a7f95; }
+/* Пролог (M12): стікерів чотири, після вибору вони лягають в один ряд — обраний на дві колонки, кутики по одній;
+   другий абзац листа оповідача йде без відступу під ярлик. */
+.prologue .nb-notes.compact { grid-template-columns: repeat(4, 1fr); }
+.prologue .nb-notes.compact .nb-note.on { grid-column: span 2; }
+.prologue .nb-notes > :nth-child(4) { --r: 1.1deg; }
+.prologue .setup + .setup { padding-top: 0; }
 .nb-coach { position: relative; z-index: 1; width: 190px; margin: -4px 0 8px auto; padding: 8px 10px; background: #fff; color: #1f2333; font-family: var(--font-hand); font-size: 15px; line-height: 1.2; box-shadow: 2px 3px 8px rgba(0,0,0,.25); transform: rotate(2.5deg); clip-path: polygon(0 4%, 6% 0, 100% 2%, 98% 96%, 50% 100%, 2% 97%); }
 .nb-coach b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--bad); }
 .nb-list { margin: 6px 6px 0 0; }

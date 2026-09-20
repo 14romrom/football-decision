@@ -6,6 +6,7 @@ import flagsJson from './flags.json';
 import activitiesJson from './activities.json';
 import weekscenesJson from './weekscenes.json';
 import adsJson from './ads.json';
+import prologueJson from './prologue.json';
 import { fillNamesDeep, type Roster, type TeamRoster } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
@@ -13,6 +14,7 @@ import type { Episode, FlagRule, Player } from '../engine/types';
 import type { Rng } from '../engine/rng';
 import type { Activity, WeekScene } from '../engine/week';
 import type { AdRule } from '../engine/espm';
+import type { PrologueSpread } from '../engine/prologue';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
@@ -52,3 +54,5 @@ export const ACTIVITIES = activitiesJson as Activity[];
 export const WEEK_SCENES = weekscenesJson as WeekScene[];
 /** Реклама на сторінці ESPM (engine/espm.ts): абсурд у форматах справжньої, без брендів і букмекерів. */
 export const ADS = adsJson as AdRule[];
+/** Пролог — тиждень нуль (engine/prologue.ts): три розвороти зі стікерами голосів; імена — при показі. */
+export const PROLOGUE = prologueJson as PrologueSpread[];

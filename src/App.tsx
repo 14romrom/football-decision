@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES, rosterFor } from './content';
+import { ACTIVITIES, ADS, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor } from './content';
 import { adContext, pickAds } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
+import { PrologueScreen } from './ui/PrologueScreen';
+import { finishPrologue, prologuePending, type ProloguePick } from './engine/prologue';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
 import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } from './engine/posts';
@@ -68,6 +70,8 @@ type Stage =
   | { k: 'season'; leveledFrom: number; leveledTo: number }
   | { k: 'posts'; posts: Post[]; leveledFrom: number; leveledTo: number }
   | { k: 'week'; days: WeekOffer[][]; locked: boolean; leveledFrom: number; leveledTo: number }
+  // Пролог (M12, 20.09): тиждень нуль у зошиті перед першим матчем нової кар’єри.
+  | { k: 'prologue' }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
@@ -206,7 +210,8 @@ function Game() {
     rngRef.current = rng;
     sessionRef.current = session;
     setShown([]);
-    setStage({ k: 'briefing', carryoverNote: penalty.note });
+    // Нотатки тижня і прологу зберігаються з плейсхолдерами ({dm}, {sub}) — імена підставляються тут, під ростер матчу.
+    setStage({ k: 'briefing', carryoverNote: penalty.note ? fillNames(penalty.note, session.roster) : undefined });
   }, [setCareerBoth, setSeasonBoth]);
 
   const newSeason = useCallback(() => {
@@ -354,11 +359,28 @@ function Game() {
   // на месте (выбор меняет карьеру, и неделя перестала бы быть «незакрытой» до показа итога).
   useEffect(() => {
     if (stage.k !== 'menu') return;
+    // Нова кар’єра починається з прологу (M12): три розвороти зошита до першого матчу.
+    if (prologuePending(career)) { setStage({ k: 'prologue' }); return; }
     const w = pendingWeek();
     if (w) setStage({ k: 'week', days: w.days, locked: w.locked, leveledFrom: career.level, leveledTo: career.level });
-  }, [stage.k, career.level, pendingWeek, buildPosts]);
+  }, [stage.k, career, pendingWeek, buildPosts]);
 
-  if (stage.k === 'menu' && pendingWeek()) return null;
+  if (stage.k === 'menu' && (prologuePending(career) || pendingWeek())) return null;
+
+  if (stage.k === 'prologue') {
+    return (
+      <PrologueScreen
+        spreads={fillNamesDeep(PROLOGUE, ROSTER)}
+        onFinish={(picks: ProloguePick[]) => {
+          // Наслідки — по контенту без імен: id ті самі, у флагах і бирках імена не потрібні.
+          const { career: after, tags } = finishPrologue(careerRef.current, PROLOGUE, picks);
+          setCareerBoth(after);
+          return tags;
+        }}
+        onNext={() => setStage({ k: 'menu' })}
+      />
+    );
+  }
 
   if (stage.k === 'menu' && career.unspentPoints > 0) {
     // Непотраченное очко уровня — сначала оно, потом меню: иначе после перезагрузки оно пропадало.

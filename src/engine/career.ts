@@ -54,6 +54,9 @@ export type Career = {
   /** Сколько недель подряд голос предлагал дела, а игрок не брал (week.ts:neglect). На третьей
    *  голос замовкає на матч: выбор голоса — ставка, а не вкус. */
   voiceNeglect?: Partial<Record<VoiceKey, number>>;
+  /** Пролог (M12, 20.09): які стікери обрано на трьох розворотах тижня нуль (engine/prologue.ts) — характер
+   *  на старт. Є в збереженні — пролог пройдено; base читають репліки Тібо про мафію. */
+  prologue?: Partial<Record<'scout' | 'call' | 'base', string>>;
 };
 
 export type CarriedFlag = {

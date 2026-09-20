@@ -438,6 +438,23 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
 }
 
 /** Варианты сцены, которые видит игрок: с подсказкой — только когда голос бачить. */
+/** Сцены, которые карьера уже видела (weekLog.scene, все сезоны). */
+export function seenScenes(career: Career): Set<string> {
+  return new Set((career.weekLog ?? []).map((e) => e.scene?.id).filter((id): id is string => !!id));
+}
+
+/** Сцена-продолжение для исхода: одна на неделю и **без дословных повторов** — виденную в карьере
+ *  сцену пропускаем (исход показывается без «що далі»), пока остаются невиденные. 20.09: замер на 300
+ *  сезонах — 1,35 сцены за сезон, а `sc_kid_promise` выпадала в 55% сезонов; без памяти второй
+ *  сезон начинался с той же лікарні. Когда все сцены пройдены — память сбрасывается. */
+export function sceneFor(outcome: ActivityOutcome | null | undefined, scenes: WeekScene[], seen: Set<string>, sceneUsed: boolean): WeekScene | undefined {
+  if (sceneUsed || !outcome?.followUp) return undefined;
+  const scene = scenes.find((s) => s.id === outcome.followUp);
+  if (!scene) return undefined;
+  const allSeen = scenes.every((s) => seen.has(s.id));
+  return !allSeen && seen.has(scene.id) ? undefined : scene;
+}
+
 export function sceneOptionsFor(scene: WeekScene, sees: (who: VoiceKey) => boolean): WeekSceneOption[] {
   return scene.options.filter((o) => !o.insight || sees(o.insight.who));
 }

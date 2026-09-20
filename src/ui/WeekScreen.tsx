@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { WeekOffer, WeekPick, WeekScene, WeekSceneOption } from '../engine/week';
-import { VOICE_ATTRS, sceneOptionsFor } from '../engine/week';
+import { VOICE_ATTRS, sceneFor, sceneOptionsFor } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
 import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from '../engine/types';
 import { Doodles } from './doodles';
@@ -27,6 +27,8 @@ type Props = {
   sees: (who: VoiceKey) => boolean;
   /** Тренер закрив місто — почему предложений меньше. */
   locked: boolean;
+  /** Сцены, уже виденные в карьере (week.ts:seenScenes) — дословно не повторяем. */
+  seen: Set<string>;
   /** Сид для малюнків на полях — тур сезона. */
   seed?: number;
   onFinish: (picks: WeekPick[]) => string[];
@@ -41,7 +43,7 @@ type Phase =
 
 const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
 
-export function WeekScreen({ days, scenes, sees, locked, seed = 0, onFinish, onNext }: Props) {
+export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
   const [phase, setPhase] = useState<Phase>({ p: 'pick' });
   const [picks, setPicks] = useState<WeekPick[]>([]);
@@ -74,7 +76,7 @@ export function WeekScreen({ days, scenes, sees, locked, seed = 0, onFinish, onN
   };
 
   const afterOutcome = (offer: WeekOffer) => {
-    const scene = !sceneUsed && offer.outcome?.followUp ? scenes.find((s) => s.id === offer.outcome!.followUp) : undefined;
+    const scene = sceneFor(offer.outcome, scenes, seen, sceneUsed);
     if (scene) setPhase({ p: 'scene', offer, scene });
     else advance(picks);
   };
@@ -145,7 +147,7 @@ export function WeekScreen({ days, scenes, sees, locked, seed = 0, onFinish, onN
     if (phase.p === 'summary') return <button className="primary menu-primary" onClick={onNext}>До матчу</button>;
     if (phase.p === 'outcome') {
       const out = phase.offer.outcome!;
-      return <button className="primary menu-primary" onClick={() => afterOutcome(phase.offer)}>{!sceneUsed && out.followUp ? 'Що далі' : last ? 'Підсумок тижня' : 'Далі'}</button>;
+      return <button className="primary menu-primary" onClick={() => afterOutcome(phase.offer)}>{sceneFor(out, scenes, seen, sceneUsed) ? 'Що далі' : last ? 'Підсумок тижня' : 'Далі'}</button>;
     }
     if (phase.p === 'scene') return phase.chosen ? <button className="primary menu-primary" onClick={() => advance(picks)}>{last ? 'Підсумок тижня' : 'Далі'}</button> : null;
     const offers = days[day] ?? [];

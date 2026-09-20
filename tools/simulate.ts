@@ -14,7 +14,7 @@ import type { EpisodeMemory, EpisodeOption, Tier } from '../src/engine/types';
 import { ACTIVITIES, WEEK_SCENES } from '../src/content';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, type Career } from '../src/engine/career';
 import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, type Season } from '../src/engine/season';
-import { finishWeek, planWeek, sceneOptionsFor, weekContext, weekVoiceSees, type Activity, type WeekPick } from '../src/engine/week';
+import { finishWeek, planWeek, sceneFor, sceneOptionsFor, seenScenes, weekContext, weekVoiceSees, type Activity, type WeekPick } from '../src/engine/week';
 import { dominantVoice } from '../src/engine/voices';
 
 export type PolicyName = 'always_safe' | 'always_risky' | 'greedy_personal' | 'random' | 'max_cost';
@@ -269,7 +269,7 @@ export function runCareer(seed: number, policy: WeekPolicy): CareerRun {
       // Тренировка «на выбор» — первый атрибут голоса.
       const pick: WeekPick = { day: d, activityId: offer.activity.id, ...(effect.train === 'choice' ? { trainAttr: (offer.activity.voice === 'body' ? 'pace' : 'dribbling') as 'pace' | 'dribbling' } : {}) };
       // Сцена-продолжение — случайный из видимых вариантов, одна на неделю, как на экране.
-      const scene = !sceneUsed && offer.outcome?.followUp ? WEEK_SCENES.find((sc) => sc.id === offer.outcome!.followUp) : undefined;
+      const scene = sceneFor(offer.outcome, WEEK_SCENES, seenScenes(career), sceneUsed);
       if (scene) {
         const visible = sceneOptionsFor(scene, (who) => weekVoiceSees(who, effectivePlayer(PLAYER, career), ctx, career));
         pick.scene = { id: scene.id, option: visible[wrng.int(0, visible.length - 1)].id };

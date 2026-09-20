@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ACTIVITIES, ADS, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES, rosterFor } from './content';
 import { adContext, pickAds } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
-import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
+import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
@@ -493,6 +493,7 @@ function Game() {
         scenes={fillNamesDeep(WEEK_SCENES, roster)}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
         locked={stage.locked}
+        seen={seenScenes(careerRef.current)}
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[]) => {
           // Применяем по исходным (без имён) делам и сценам: эффекты те же, id те же.

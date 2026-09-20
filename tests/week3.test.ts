@@ -6,7 +6,7 @@ import { defaultCareer, type Career } from '../src/engine/career';
 import { createSeason, ourRow, recordRound, type Season } from '../src/engine/season';
 import { BALANCE } from '../src/engine/balance';
 import {
-  finishWeek, neglectPenalties, offerWeekDays, planWeek, resolveOutcome, sceneOptionsFor, weekContext, weekVoiceSees,
+  finishWeek, neglectPenalties, offerWeekDays, planWeek, resolveOutcome, sceneFor, sceneOptionsFor, seenScenes, weekContext, weekVoiceSees,
   type ActivityEffect, type WeekOffer,
 } from '../src/engine/week';
 import { ACTIVITIES, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES } from '../src/content';
@@ -50,6 +50,16 @@ describe('контент: ісходи справ і сцени', () => {
     // Две трети дел — с развилкой: иначе исход — просто новый текст.
     const branching = ACTIVITIES.filter((a) => (a.outcomes?.length ?? 0) >= 2).length;
     expect(branching / ACTIVITIES.length).toBeGreaterThan(0.66);
+  });
+
+  it('пам’ять сцен: бачену в кар’єрі сцену пропускаємо, поки є небачені; коли всі пройдені — знову можна', () => {
+    const outcome = byId('hospital_visit').outcomes!.find((o) => o.followUp === 'sc_kid_promise')!;
+    expect(sceneFor(outcome, WEEK_SCENES, new Set(), false)?.id).toBe('sc_kid_promise');
+    expect(sceneFor(outcome, WEEK_SCENES, new Set(['sc_kid_promise']), false)).toBeUndefined();
+    expect(sceneFor(outcome, WEEK_SCENES, new Set(WEEK_SCENES.map((s) => s.id)), false)?.id).toBe('sc_kid_promise');
+    expect(sceneFor(outcome, WEEK_SCENES, new Set(), true)).toBeUndefined();   // одна на тиждень
+    const career: Career = { ...defaultCareer(), weekLog: [{ season: 1, round: 2, chosen: [], offered: [], scene: { id: 'sc_kid_promise', option: 'x' } }] };
+    expect(seenScenes(career).has('sc_kid_promise')).toBe(true);
   });
 
   it('сцени: 3–4 варіанти, один із підказкою голосу, кожен зі слідом; сцени досяжні', () => {

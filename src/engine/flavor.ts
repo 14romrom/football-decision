@@ -56,15 +56,21 @@ export function pickFlavor(rules: FlavorRule[], state: MatchState, tier: Tier, r
   return pickFlavorLine(rules, state, tier, rng, scene)?.text;
 }
 
-/** Кто говорит реплику — по тому, на что она реагирует. Экран броска показывает её как
- *  вторую реплику после голоса атрибута (Disco Elysium): «КУРАЖ [+2] — Знову…». */
+/** Кто говорит реплику. Говорящих — восемь, и все они уже есть в игре: шесть голосов картки и два
+ *  внешних судьи со своими шкалами, ТРЕНЕР и ТРИБУНИ (20.09, пользователь: СУДДЯ/ТАБЛО/ГОДИННИК под
+ *  той же капителью, что голоса на листе, читались как мусор — одна подпись означала две разные
+ *  системы). Строки предметов переподписаны голосам: партнёр — Команда, кураж/табло — Его, годинник —
+ *  Спокій, суперник/суддя — Бачення, воротар суперника — Інстинкт, свой воротар — Команда. */
+export const FLAVOR_VOICES = ['ЕГО', 'КОМАНДА', 'СПОКІЙ', 'БАЧЕННЯ', 'ІНСТИНКТ', 'ТІЛО', 'ТРЕНЕР', 'ТРИБУНИ'] as const;
+
+/** Голос для правила без явного voice — по тому, на что оно реагирует. */
 export function flavorVoice(when: SituationWhen): string {
-  if (when.momentumMin !== undefined || when.momentumMax !== undefined) return 'КУРАЖ';
+  if (when.momentumMin !== undefined || when.momentumMax !== undefined) return 'ЕГО';
   if (when.tired) return 'ТІЛО';
-  if (when.booked) return 'СУДДЯ';
+  if (when.booked) return 'СПОКІЙ';
   if (when.lowTrust) return 'ТРЕНЕР';
-  if (when.score) return 'ТАБЛО';
-  if (when.minMinute !== undefined) return 'ГОДИННИК';
+  if (when.score) return 'ЕГО';
+  if (when.minMinute !== undefined) return 'СПОКІЙ';
   return 'ТРИБУНИ';
 }
 

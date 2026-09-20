@@ -2,7 +2,7 @@
 // и её хватает на сезон без повторов.
 import { describe, it, expect } from 'vitest';
 import { makeRng } from '../src/engine/rng';
-import { flavorVoice, matchesSituation, pickFlavorLine, type FlavorRule } from '../src/engine/flavor';
+import { FLAVOR_VOICES, flavorVoice, matchesSituation, pickFlavorLine, type FlavorRule } from '../src/engine/flavor';
 import { applyChoice, availableOptions, createMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
 import { neutralConditions } from '../src/engine/conditions';
@@ -27,6 +27,13 @@ describe('реплика знает сцену', () => {
     expect(matchesSituation({ family: 'penalty' }, state(), undefined, 'clean', { family: 'edge_shot', phase: 'attack' })).toBe(false);
     expect(matchesSituation({ family: 'penalty' }, state(), undefined, 'clean')).toBe(false);
     expect(matchesSituation({ phase: 'defense' }, state(), undefined, 'clean', { family: 'last_man', phase: 'defense' })).toBe(true);
+  });
+
+  it('говорящих восемь — голоса картки, тренер, трибуни; предметов (СУДДЯ, ТАБЛО, ГОДИННИК) нет', () => {
+    for (const r of FLAVOR) if (r.voice) expect(FLAVOR_VOICES, r.lines[0]).toContain(r.voice);
+    for (const when of [{ tier: 'fail' as const }, { tier: 'fail' as const, booked: true }, { tier: 'fail' as const, score: 'trailing' as const }, { tier: 'fail' as const, minMinute: 80 }, { tier: 'fail' as const, momentumMin: 2 }]) {
+      expect(FLAVOR_VOICES).toContain(flavorVoice(when));
+    }
   });
 
   it('семейная реплика втрое вероятнее общей, явный voice перекрывает вычисленный, виденное уступает свежему', () => {

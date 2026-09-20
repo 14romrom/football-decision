@@ -678,6 +678,7 @@ html.reduce-motion .doodle svg { filter: none; }
 .say.voice-ego b { color: var(--v-ego); } .say.voice-team b { color: var(--v-team); } .say.voice-composure b { color: var(--v-composure); }
 .say.voice-vision b { color: var(--v-vision); } .say.voice-instinct b { color: var(--v-instinct); } .say.voice-body b { color: var(--v-body); }
 .say.say-second { color: #b3ae9f; font-style: italic; } .say.say-second b { font-style: normal; color: var(--hype); }
+.say.say-second.say-coach b { color: var(--warn); } .say.say-second.say-fans b { color: var(--hype); }
 .say.say-coach { color: var(--warn); } .say.say-coach b { color: var(--warn); }
 .link-mark { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
 

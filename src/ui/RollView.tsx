@@ -52,6 +52,12 @@ function reel(final: number, stopAt: number, set: (v: number) => void): () => vo
 /** Вибрация по вердикту (Налаштування → «Вібрація на штампі»). */
 const HAPTIC: Record<string, number | number[]> = { clean: 30, cost: [20, 40, 20], fail: 60, badFail: [80, 40, 80] };
 
+/** Цвет подписи второй реплики — как у голоса на листе; тренер и трибуны — своими цветами. */
+const FLAVOR_CLASS: Record<string, string> = {
+  'ЕГО': 'voice-ego', 'КОМАНДА': 'voice-team', 'СПОКІЙ': 'voice-composure', 'БАЧЕННЯ': 'voice-vision', 'ІНСТИНКТ': 'voice-instinct', 'ТІЛО': 'voice-body',
+  'ТРЕНЕР': 'say-coach', 'ТРИБУНИ': 'say-fans',
+};
+
 export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext, onVerdict }: Props) {
   const mods = useMemo<ModLine[]>(() => res.mods.filter((m, i) => i === 0 || m.value !== 0), [res]);
   // Расписание: 0 — крутятся оба, 1 — первый встал, 2 — второй встал, 3 — сумма,
@@ -147,7 +153,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         {stage >= LAST && (
           <div className="after">
             <p className="outcome">{outcome.text}</p>
-            {flavor && <p className="say say-second"><b>{flavorVoice ?? 'ТРИБУНИ'}</b> — {flavor}</p>}
+            {flavor && <p className={`say say-second ${FLAVOR_CLASS[flavorVoice ?? 'ТРИБУНИ'] ?? ''}`}><b>{flavorVoice ?? 'ТРИБУНИ'}</b> — {flavor}</p>}
             {(option.insight || option.requires?.flags?.some((f) => f.startsWith('week_'))) && (
               <p className="origin-note">
                 {option.insight

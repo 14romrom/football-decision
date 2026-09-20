@@ -683,12 +683,11 @@ html.reduce-motion .doodle svg { filter: none; }
 .link-mark { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
 
 /* Фінальний свисток (M10, 20.09): три абзаци оповідача, обіцянка — тим же голосом, трибуни — курсивом,
-   як друга репліка; варіант один і веде в роздягальню. Цифр на листі нема — вони на дошці. */
+   як друга репліка; вихід один — стандартна primary-кнопка, як «Нова кар’єра». Цифр на листі нема — вони на дошці. */
 .whistle .setup { padding-bottom: 6px; }
 .whistle .whistle-promise { padding-top: 0; }
 .whistle .whistle-crowd { padding-top: 0; padding-bottom: 16px; font-style: italic; color: #b3ae9f; }
-.whistle .choices { border-bottom: 0; }
-.whistle .choice-num { font-size: 14px; }
+.whistle .whistle-go { margin: 0 0 14px; }
 
 /* Варианты — единственная «нажимаемая» полоса листа: темнее фона, рамка сверху и снизу, номер — грань кубика кремом,
    действие первым, скобка вторым рядом, стрелка справа. */

@@ -1,6 +1,6 @@
-// Фінальний свисток (M10, 20.09): лист оповідача на полі перед роздягальнею — та сама анатомія, що в
-// листа моменту (ярлик на кромці, проза, одна натискувана смуга), без цифр і без конкретних моментів:
-// конкретика — на дошці. Єдина кнопка веде в роздягальню (дошка → картка → таблиця).
+// Фінальний свисток (M10, 20.09): лист оповідача на полі перед роздягальнею — ярлик на кромці й проза, як у
+// листа моменту, без цифр і без конкретних моментів: конкретика — на дошці. Кнопка — стандартна primary
+// («Нова кар’єра» на титулі), без підпису: це не вибір із варіантів, а один вихід (рішення користувача 20.09).
 
 import type { Whistle } from '../engine/whistle';
 
@@ -13,18 +13,7 @@ export function WhistleCard({ whistle, onNext }: Props) {
       <p className="setup">{whistle.summary}</p>
       {whistle.promise && <p className="setup whistle-promise">{whistle.promise}</p>}
       <p className="setup whistle-crowd">{whistle.crowd}</p>
-      <ol className="choices">
-        <li>
-          <button className="choice" onClick={onNext}>
-            <span className="choice-num" aria-hidden="true">→</span>
-            <span className="choice-text">
-              Перейти в роздягальню
-              <span className="bracket"><i className="origin">дошка аналітика, картка, таблиця</i></span>
-            </span>
-            <span className="choice-go" aria-hidden="true">›</span>
-          </button>
-        </li>
-      </ol>
+      <button className="primary title-primary whistle-go" onClick={onNext}>Перейти в роздягальню</button>
     </div>
   );
 }

@@ -279,3 +279,14 @@ describe('автор гола в хронологии совпадает со с
     }
   });
 });
+
+describe('аудит опций (M9, 20.09): мёртвых кнопок не прибавляется', () => {
+  it('доля доминируемых опций и число эпизодов с «правильным ответом» не выше порогов tools/audit-options.ts', async () => {
+    const { audit, AUDIT_LIMITS } = await import('../tools/audit-options');
+    const r = audit();
+    expect(r.dominated.length / r.options, 'доминируемых опций').toBeLessThanOrEqual(AUDIT_LIMITS.dominatedShare);
+    expect(r.singleAnswer.length, 'эпизодов с правильным ответом').toBeLessThanOrEqual(AUDIT_LIMITS.singleAnswer);
+    // Гол на clean у «упевнено» — только fin_* и позиція (ниша, решение 20.09).
+    expect(r.safeGoals.map((x) => `${x.ep.id}/${x.o.id}`)).toEqual([]);
+  });
+});

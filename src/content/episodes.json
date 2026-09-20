@@ -6467,13 +6467,15 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти накриваєш захисника в момент прийому — він віддає навмання, {striker} перехоплює і б’є. Штанга, але тренер підняв руки.",
+            "text": "Ти накриваєш захисника в момент прийому — він віддає навмання, {striker} перехоплює і б’є. Штанга, відскок за лицьову, кутовий. Тренер підняв руки.",
             "recap": "і відібрав м’яч у джерела, а не в адресата.",
             "apply": {
               "duelWon": true,
               "keyPass": true,
+              "corner": true,
               "coachTrust": 4,
-              "fanHype": 8
+              "fanHype": 8,
+              "momentum": 1
             }
           },
           "cost": {
@@ -8239,12 +8241,16 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти буквально проштовхуєшся крізь {them.mid.gen} до м’яча, який мав дістатися йому. Неохайно, зате наш.",
+            "text": "Ти буквально проштовхуєшся крізь {them.mid.gen} до м’яча, який мав дістатися йому. Неохайно, зате наш — і він це запам’ятає.",
             "recap": "і силою забрав власний невдалий дотик.",
             "apply": {
               "duelWon": true,
-              "fanHype": 6,
-              "coachTrust": 3
+              "fanHype": 8,
+              "coachTrust": 3,
+              "momentum": 1,
+              "addFlags": [
+                "humiliated_defender"
+              ]
             }
           },
           "cost": {
@@ -8377,13 +8383,18 @@
         },
         "outcomes": {
           "clean": {
-            "text": "М’яч і справді вилітає з купи-мали просто до тебе — вільного, на межі штрафного. Ти б’єш спокійно, майже байдуже.",
+            "text": "М’яч і справді вилітає з купи-мали просто до тебе — вільного, на межі штрафного. Усі ще там, у натовпі. Ти — з м’ячем і з часом.",
             "recap": "і дочекався підбору поза натовпом.",
             "apply": {
-              "goal": true,
-              "fanHype": 14,
-              "coachTrust": 6,
-              "composure": 4
+              "fanHype": 6,
+              "coachTrust": 4,
+              "composure": 4,
+              "followUp": "fin_shot",
+              "followUpElse": {
+                "keyPass": true,
+                "corner": true,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -9960,9 +9971,9 @@
         "label": "Переложити під зручну ногу",
         "past": "переклав м’яч під зручну ногу перед ударом",
         "attribute": "first_touch",
-        "basePosition": "controlled",
-        "effect": "standard",
-        "difficulty": 0,
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
         "staminaCost": 4,
         "goals": {
           "team": 2,
@@ -10900,12 +10911,14 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти дотягуєшся в останню мить і зачіпаєш м’яч — чисто, без фолу. Лава підхоплюється зі своїх місць.",
+            "text": "Ти дотягуєшся в останню мить і зачіпаєш м’яч — чисто, без фолу. Лава підхоплюється зі своїх місць, і трибуна за воротами теж.",
             "recap": "і дістав м’яч підкатом навздогін.",
             "apply": {
               "duelWon": true,
               "coachTrust": 8,
-              "fanHype": 6
+              "fanHype": 10,
+              "composure": 4,
+              "momentum": 1
             }
           },
           "cost": {
@@ -17463,7 +17476,7 @@
         "past": "пішов по бровці втретє, знаючи, що він чекає",
         "attribute": "pace",
         "basePosition": "desperate",
-        "effect": "standard",
+        "effect": "great",
         "difficulty": 1,
         "staminaCost": 11,
         "goals": {

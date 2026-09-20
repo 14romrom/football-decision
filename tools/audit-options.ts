@@ -71,6 +71,8 @@ type Row = {
 const STAMINA_WEIGHT = 0.25;
 /** Отрыв EV, с которого эпизод считается «с правильным ответом». */
 const SINGLE_ANSWER_GAP = 1.5;
+/** Пороги аудита (20.09: 34% и 36 на старте). Опускать после каждой партии правок 9.6, поднимать нельзя. */
+export const AUDIT_LIMITS = { dominatedShare: 0.34, singleAnswer: 36 };
 
 export function scoreOption(ep: Episode, o: EpisodeOption, bonus = 0): Row {
   const mod = Math.min(12, attrMod(PLAYER.attrs[o.attribute]) + bonus);
@@ -116,8 +118,10 @@ export function audit(bonus = 0) {
   }
 
   // Гол на чистом исходе у безопасной формы — нарушение правила «great только там, где clean решает».
+  // Исключения (решение 20.09): модули удара/пенальті (fin_*) и позиція — гол «головою» без риска —
+  // это ниша атрибута, у которого иначе нет приза; у стартового Реєса позиція +0, так что 21%.
   const safeGoals = episodes.flatMap((ep) => ep.options
-    .filter((o) => o.outcomes.clean.apply?.goal && o.basePosition === 'controlled')
+    .filter((o) => o.outcomes.clean.apply?.goal && o.basePosition === 'controlled' && !ep.id.startsWith('fin_') && o.attribute !== 'positioning')
     .map((o) => scoreOption(ep, o, bonus)));
 
   return { episodes: episodes.length, options, dominated, singleAnswer, bestForm, safeGoals };
@@ -144,9 +148,19 @@ function main() {
   console.log(`Эпизодов с «правильным ответом» (отрыв EV > ${SINGLE_ANSWER_GAP}): ${r.singleAnswer.length}`);
 
   if (r.safeGoals.length) {
-    console.log(`\nГол на clean у формы «упевнено» — ${r.safeGoals.length} (fin_* — намеренно, остальные пересмотреть):`);
+    console.log(`\nГол на clean у формы «упевнено» (кроме fin_* и позиції) — ${r.safeGoals.length}, пересмотреть:`);
     for (const x of r.safeGoals) console.log(`  ${x.ep.id.padEnd(24)} ${brief(x)} P(гол) ${pc(x.pGoal)}`);
   }
+
+  // Пороги — храповик: после каждой партии правок опускать, не поднимать. tests/content.test.ts держит их же.
+  const c = AUDIT_LIMITS;
+  const checks = [
+    [`доминируемых опций ${pc(r.dominated.length / r.options)} ≤ ${pc(c.dominatedShare)}`, r.dominated.length / r.options <= c.dominatedShare],
+    [`эпизодов с правильным ответом ${r.singleAnswer.length} ≤ ${c.singleAnswer}`, r.singleAnswer.length <= c.singleAnswer],
+    [`безопасных голов вне ниш ${r.safeGoals.length} = 0`, r.safeGoals.length === 0],
+  ] as const;
+  console.log('\nПроверки:');
+  for (const [label, ok] of checks) console.log(`  ${ok ? 'ок ' : 'НЕТ'} ${label}`);
 
   console.log(`\nЭпизоды с правильным ответом:`);
   for (const s of r.singleAnswer.sort((a, b) => b.gap - a.gap)) console.log(`  ${s.ep.id.padEnd(24)} отрыв ${f2(s.gap)}  ${brief(s.best)}`);
@@ -159,4 +173,4 @@ function main() {
   }
 }
 
-main();
+if (process.argv[1] && process.argv[1].includes('audit-options')) main();

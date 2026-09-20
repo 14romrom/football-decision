@@ -29,8 +29,10 @@ describe('контент першого матчу', () => {
       const j = BALANCE.match.minuteJitter;
       expect((e.requires?.minMinute ?? 0) <= slots[i] - j, `${s.episode}: min`).toBe(true);
       expect((e.requires?.maxMinute ?? 999) >= slots[i] + j, `${s.episode}: max`).toBe(true);
-      expect(s.hint.length).toBeGreaterThan(40);
-      expect(s.hint).not.toMatch(/!|\d|%/);
+      expect(s.text.length).toBeGreaterThan(40);
+      expect(s.title.length).toBeGreaterThan(3);
+      expect(s.title + s.text).not.toMatch(/!|\d|%/);
+      expect(['choices', 'formula', 'voices', 'verdict']).toContain(s.target);
     });
     expect(new Set(FIRST_MATCH.scenes.map((s) => s.episode)).size).toBe(4);
   });
@@ -65,7 +67,7 @@ describe('перший матч після прологу', () => {
       if (!next) break;
       if (!next.episode.followUpOnly) {
         seen.push(next.episode.id);
-        expect(session.tutorial!.hints[next.episode.id], next.episode.id).toBeDefined();
+        expect(session.tutorial!.hints[next.episode.id]?.target, next.episode.id).toBeDefined();
       }
       // Граємо перший варіант: ланцюжки можливі, реактивних бути не має.
       const option = next.episode.options.find((o) => !o.requires && !o.insight)!;

@@ -524,14 +524,45 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .prologue .nb-notes.compact .nb-note.on { grid-column: span 2; }
 .prologue .nb-notes > :nth-child(4) { --r: 1.1deg; }
 .prologue .setup + .setup { padding-top: 0; }
-/* Підказка оповідача в першому матчі (M12): той самий голос, що сетап, але на полях — курсив, тонша лінія зліва. */
-.tutor { margin: -4px 0 12px; padding: 2px 0 2px 12px; border-left: 2px solid #4a463c; font-size: 14px; line-height: 1.45; font-style: italic; color: var(--muted); }
+/* Прожектор першого матчу (M12, ui/Spotlight.tsx): затемнення з діркою, золота рамка, виноска на кремовому папері (колір програмки). */
+.spotlight { position: fixed; inset: 0; z-index: 100; }
+.spot-dim { position: absolute; inset: 0; background: rgba(8,8,10,.82); pointer-events: none; }
+.spot-ring { position: absolute; border: 2px solid #e8c46a; border-radius: 4px; box-shadow: 0 0 18px rgba(232,196,106,.35); pointer-events: none; }
+.spot-block { position: absolute; inset: 0; }
+.spot-callout { position: absolute; left: 22px; right: 22px; background: #f4f1e8; color: #1f2333; border-radius: 4px; padding: 12px 14px 10px; box-shadow: 0 16px 40px rgba(0,0,0,.7); font-size: 15px; line-height: 1.45; animation: fadeIn .25s ease-out; }
+.spot-callout::before { content: ''; position: absolute; left: 40px; border: 9px solid transparent; }
+.spot-callout.below::before { top: -9px; border-top: 0; border-bottom-color: #f4f1e8; }
+.spot-callout.above::before { bottom: -9px; border-bottom: 0; border-top-color: #f4f1e8; }
+.spot-callout b { display: block; font-family: var(--font-caps); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; color: #6a4f0c; margin-bottom: 3px; padding-right: 40px; }
+.spot-callout p { margin: 0; }
+.spot-step { position: absolute; right: 12px; top: 10px; font-family: var(--font-mono); font-size: 11px; color: #7a7f95; }
+.spot-ok { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; }
+.spot-ok span { font-size: 12px; color: #7a7f95; }
+.spot-ok button { flex: none; font-family: var(--font-caps); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 13px; background: #1f2333; color: #f4f1e8; border: 0; padding: 8px 14px; border-radius: 4px; }
+.spot-callout .kw { font-family: var(--font-mono); font-size: 12.5px; padding: 0 4px; background: #e6dfc8; border-radius: 2px; white-space: nowrap; }
+.spot-callout .kw-c { color: #1f6b3c; } .spot-callout .kw-r { color: #8a5a10; } .spot-callout .kw-d { color: #8a2a1c; } .spot-callout .kw-body { color: #a33; }
 .nb-coach { position: relative; z-index: 1; width: 190px; margin: -4px 0 8px auto; padding: 8px 10px; background: #fff; color: #1f2333; font-family: var(--font-hand); font-size: 15px; line-height: 1.2; box-shadow: 2px 3px 8px rgba(0,0,0,.25); transform: rotate(2.5deg); clip-path: polygon(0 4%, 6% 0, 100% 2%, 98% 96%, 50% 100%, 2% 97%); }
 .nb-coach b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--bad); }
-.nb-list { margin: 6px 6px 0 0; }
-.nb-list h4 { margin: 0; font-family: var(--font-hand); font-weight: 400; font-size: 24px; line-height: 28px; color: var(--pen); }
-.nb-list div { display: flex; gap: 8px; align-items: baseline; font-family: var(--font-hand); font-size: 18px; line-height: 28px; color: var(--pen); }
-.nb-list div::before { content: '☑'; font-size: 20px; } .nb-list div.none::before { content: '—'; }
+/* Лист здобутків (M12, ui/LootSheet.tsx): речі лягають по одній, назавжди — золотом, бокси картки з ▲. */
+.loot-sheet .scene { padding-bottom: 2px; }
+.loot-count { position: absolute; right: 12px; top: -1px; z-index: 2; font-family: var(--font-mono); font-size: 12px; color: #e8c46a; background: #16161a; border: 1px solid #4a463c; border-top: 0; border-radius: 0 0 3px 3px; padding: 3px 9px; opacity: 0; animation: lootRise .4s ease-out forwards; animation-delay: calc(var(--i) * .4s + .3s); }
+.loot { list-style: none; margin: 0 -2px; padding: 30px 0 4px; display: grid; gap: 8px; }
+.loot li { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 10px; padding: 9px 12px; background: #0f0f12; border: 1px solid #33333a; border-radius: 3px; font-size: 15.5px; color: #f0ebe0; opacity: 0; transform: translateY(10px); animation: lootRise .5s cubic-bezier(.2,1.2,.4,1) forwards; animation-delay: calc(var(--i) * .4s + .2s); }
+.loot li.perm { border-color: #6b5a2a; background: linear-gradient(90deg, rgba(232,196,106,.14), rgba(232,196,106,.03)); box-shadow: 0 0 22px rgba(232,196,106,.18); }
+.loot-ic { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-caps); font-size: 12px; font-weight: 600; color: #141413; background: var(--muted); }
+.loot-ic.voice-ego { background: var(--v-ego); } .loot-ic.voice-team { background: var(--v-team); } .loot-ic.voice-vision { background: var(--v-vision); } .loot-ic.voice-instinct { background: var(--v-instinct); } .loot-ic.voice-body { background: var(--v-body); } .loot-ic.voice-composure { background: var(--v-composure); }
+.loot-ic.gold { background: #e8c46a; } .loot-ic.coach, .loot-ic.train { background: var(--cream); } .loot-ic.flag { background: #b3ae9f; } .loot-ic.fans { background: var(--hype, #8fb8ff); }
+.loot-text small { display: block; font-size: 12.5px; color: var(--muted); font-style: italic; margin-top: 1px; }
+.loot-bar { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; } .loot-bar b { width: 12px; height: 8px; border: 1px solid #5a5648; border-radius: 2px; } .loot-bar b.f { background: var(--accent); border-color: var(--accent); }
+.loot-arr { font-family: var(--font-mono); font-size: 13px; color: var(--muted); } .loot-arr.up { color: var(--accent); } .loot-arr.down { color: var(--bad-soft); } .loot-arr.gold { color: #e8c46a; }
+.loot-card { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 4px; opacity: 0; animation: lootRise .5s ease-out forwards; animation-delay: calc(var(--i) * .4s + .4s); }
+.loot-box { border: 1px solid #3a3a42; padding: 6px 4px; text-align: center; font-family: var(--font-caps); font-size: 11.5px; letter-spacing: .04em; color: var(--muted); }
+.loot-box b { display: block; font-family: var(--font-mono); font-size: 14px; color: var(--ink); margin-top: 2px; }
+.loot-box.up { color: var(--ink); box-shadow: inset 0 0 0 1px currentColor, 0 0 14px rgba(232,196,106,.35); border-color: currentColor; }
+.loot-box.up.voice-vision { color: var(--v-vision); } .loot-box.up.voice-instinct { color: var(--v-instinct); } .loot-box.up.voice-body { color: var(--v-body); } .loot-box.up.voice-composure { color: var(--v-composure); }
+.loot-box.up b { color: #fff; } .loot-box.up b::after { content: ' ▲'; color: #e8c46a; font-size: 11px; }
+@keyframes lootRise { to { opacity: 1; transform: none; } }
+html.reduce-motion .loot li, html.reduce-motion .loot-count, html.reduce-motion .loot-card { animation: none; opacity: 1; transform: none; }
 /* Малюнки на полях: синя паста, тремтіння фільтром #pen. */
 .doodle { position: absolute; pointer-events: none; opacity: .5; }
 .doodle svg { display: block; overflow: visible; filter: url(#pen); }

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Spotlight, type Hint } from './Spotlight';
 import type { EpisodeOption, ModLine, Resolution, ResultBadge } from '../engine/types';
 import { VOICE_LABEL } from '../engine/voices';
 import { pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
@@ -25,6 +26,8 @@ type Props = {
   onNext: () => void;
   /** Штамп вердикта появился — поле разыгрывает розв’язку (App → Pitch). */
   onVerdict?: () => void;
+  /** Підказка-прожектор (перший матч, M12): formula — після чипів, verdict — штамп з ісходом; обидві — коли все показано. */
+  hint?: Hint;
 };
 
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
@@ -58,7 +61,10 @@ const FLAVOR_CLASS: Record<string, string> = {
   'ТРЕНЕР': 'say-coach', 'ТРИБУНИ': 'say-fans',
 };
 
-export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext, onVerdict }: Props) {
+export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext, onVerdict, hint }: Props) {
+  const formulaRef = useRef<HTMLDivElement>(null);
+  const verdictRef = useRef<HTMLDivElement>(null);
+  const [hintOpen, setHintOpen] = useState(true);
   const mods = useMemo<ModLine[]>(() => res.mods.filter((m, i) => i === 0 || m.value !== 0), [res]);
   // Расписание: 0 — крутятся оба, 1 — первый встал, 2 — второй встал, 3 — сумма,
   // 4..4+n — чипы, потом вердикт, потом исход.
@@ -126,7 +132,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         {res.critical === 'success' && stage >= 3 && <p className="crit-note">Двадцять. Таке не пояснюють.</p>}
 
         {stage >= 3 && (
-          <div className="formula" onClick={(e) => { e.stopPropagation(); setLabels((v) => !v); }}>
+          <div className="formula" ref={formulaRef} onClick={(e) => { e.stopPropagation(); setLabels((v) => !v); }}>
             <span className="chips">
               {mods.slice(0, shownChips).map((m, i) => (
                 <span key={m.label} className={`chip src-${m.source} ${m.value > 0 ? 'pos' : m.value < 0 ? 'neg' : 'zero'} chip-in`}>
@@ -146,6 +152,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
           </ul>
         )}
 
+        <div ref={verdictRef}>
         {stage >= S_VERDICT && (
           <div className={`verdict tier-${res.tier} ${critGood ? 'crit' : ''}`}>{critGood ? 'Критичний успіх' : TIER_LABEL[res.tier]}</div>
         )}
@@ -172,7 +179,11 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
             <button className="primary de-next" onClick={onNext}>{continues ? `Далі → ${continues}` : 'Граємо далі'}</button>
           </div>
         )}
+        </div>
       </div>
+      {hint && hintOpen && stage >= LAST && (hint.target === 'formula' || hint.target === 'verdict') && (
+        <Spotlight hint={hint} target={hint.target === 'formula' ? formulaRef : verdictRef} onDone={() => setHintOpen(false)} />
+      )}
     </div>
   );
 }

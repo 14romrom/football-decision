@@ -46,6 +46,10 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         <div className="l">Вібрація на штампі<small>Катастрофу відчуєш долонею</small></div>
         <Toggle name="Вібрація на штампі" on={s.haptics} onChange={(v) => set({ haptics: v })} />
       </div>
+      <div className="set">
+        <div className="l">Підказки в першому матчі<small>Прожектор на дужки, кубики, голоси і штамп</small></div>
+        <Toggle name="Підказки в першому матчі" on={s.hints} onChange={(v) => set({ hints: v })} />
+      </div>
 
       <h2 className="sect">Екран</h2>
       <div className="set">

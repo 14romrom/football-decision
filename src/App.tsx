@@ -30,7 +30,8 @@ import { readSeason, writeSeason } from './telemetry/season-storage';
 import { activeSlot } from './telemetry/slots';
 import { finaleFor, type FinaleKind } from './engine/finale';
 import { programmeNote, traitNote, type ProgrammeInput } from './engine/programme';
-import { applySettings } from './telemetry/settings';
+import { applySettings, readSettings } from './telemetry/settings';
+import type { Hint } from './ui/Spotlight';
 import { TitleScreen } from './ui/TitleScreen';
 import { Sticker } from './ui/Sticker';
 import { plural } from './ui/pluralize';
@@ -375,9 +376,10 @@ function Game() {
         spreads={fillNamesDeep(PROLOGUE, ROSTER)}
         onFinish={(picks: ProloguePick[]) => {
           // Наслідки — по контенту без імен: id ті самі, у флагах і бирках імена не потрібні.
-          const { career: after, tags } = finishPrologue(careerRef.current, PROLOGUE, picks);
+          const before = careerRef.current;
+          const { career: after, loot } = finishPrologue(before, PROLOGUE, picks);
           setCareerBoth(after);
-          return tags;
+          return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => setStage({ k: 'menu' })}
       />
@@ -532,9 +534,10 @@ function Game() {
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[]) => {
           // Применяем по исходным (без имён) делам и сценам: эффекты те же, id те же.
-          const { career: after, tags } = finishWeek(careerRef.current, ctx, stage.days, picks, WEEK_SCENES);
+          const before = careerRef.current;
+          const { career: after, loot } = finishWeek(before, ctx, stage.days, picks, WEEK_SCENES);
           setCareerBoth(after);
-          return tags;
+          return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}
       />
@@ -546,6 +549,13 @@ function Game() {
   }
 
   const session = sessionRef.current!;
+  /** Підказка-прожектор першого матчу з номером кроку; вимикається в налаштуваннях. */
+  const hintFor = (episodeId: string): Hint | undefined => {
+    const t = session.tutorial;
+    const h = t?.hints[episodeId];
+    if (!t || !h || !readSettings().hints) return undefined;
+    return { ...h, step: t.plan.indexOf(episodeId) + 1, total: t.plan.length };
+  };
   return (
     <>
       <MatchScreen
@@ -578,7 +588,7 @@ function Game() {
             conditions={session.conditions}
             flagRules={session.flagRules}
             link={stage.link}
-            hint={session.tutorial?.hints[stage.episode.id]}
+            hint={hintFor(stage.episode.id)}
             onChoose={choose}
           />
         )}
@@ -590,6 +600,7 @@ function Game() {
             flavorVoice={stage.events.find((e) => e.kind === 'episode')?.flavorVoice}
             badges={stage.events.find((e) => e.kind === 'episode')?.badges}
             continues={stage.continues}
+            hint={hintFor(stage.episode.id)}
             onNext={afterRoll}
             onVerdict={() => setFinale((f) => ({ kind: finaleFor(stage.episode, stage.option, stage.res, stage.events), id: (f?.id ?? 0) + 1 }))}
           />

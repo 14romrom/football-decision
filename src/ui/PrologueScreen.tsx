@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { PrologueOption, ProloguePick, PrologueSpread } from '../engine/prologue';
 import { VOICE_ATTRS } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
+import { LootSheet } from './LootSheet';
+import type { WeekResult } from './WeekScreen';
 import { ATTRIBUTE_LABEL, type Attribute } from '../engine/types';
 import { Doodles } from './doodles';
 
@@ -10,17 +12,17 @@ import { Doodles } from './doodles';
 // обернений до тижня: там лист іде після вибору (ісход), тут — перед ним (сетап оповідача), бо все,
 // що сталося, розповідає оповідач листом моменту, а Реєс тільки відповідає — стікерами голосів.
 // У зошиті прози від руки немає (20.09, пользователь: «текстовые составляющие — отдельным контекстным
-// окном, фразы Реєс выбирает из стикеров»): заголовок, стікери, рядок наслідку. Наприкінці — список
-// «до першого матчу» і кнопка «На лаву». Правила — engine/prologue.ts.
+// окном, фразы Реєс выбирает из стикеров»): заголовок, стікери, рядок наслідку. Наприкінці — лист
+// здобутків (LootSheet) і кнопка «На лаву». Правила — engine/prologue.ts.
 
 type Props = {
   /** Розвороти з іменами ростера. */
   spreads: PrologueSpread[];
-  onFinish: (picks: ProloguePick[]) => string[];
+  onFinish: (picks: ProloguePick[]) => WeekResult;
   onNext: () => void;
 };
 
-type Phase = { p: 'sheet' } | { p: 'pick' } | { p: 'summary'; tags: string[] };
+type Phase = { p: 'sheet' } | { p: 'pick' } | { p: 'summary'; result: WeekResult };
 
 export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
   const [i, setI] = useState(0);
@@ -38,7 +40,7 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
     const all = [...picks, pick];
     setPicks(all);
     setSelected(null); setAttr(null);
-    if (last) setPhase({ p: 'summary', tags: onFinish(all) });
+    if (last) setPhase({ p: 'summary', result: onFinish(all) });
     else { setI(i + 1); setPhase({ p: 'sheet' }); }
   };
 
@@ -77,15 +79,14 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
   };
 
   const button = (() => {
-    if (phase.p === 'summary') return <button className="primary menu-primary" onClick={onNext}>На лаву</button>;
-    if (phase.p === 'sheet') return null;   // кнопка — всередині листа
+    if (phase.p === 'summary' || phase.p === 'sheet') return null;   // кнопка — всередині листа
     return <button className="primary menu-primary" onClick={confirm} disabled={!selected}>Так і відповісти</button>;
   })();
 
   return (
     <div className="result week prologue">
       <div className="card-minute">тиждень нуль · серпень</div>
-      <div className={`nb-book ${phase.p === 'sheet' ? 'dimmed' : ''}`}>
+      <div className={`nb-book ${phase.p === 'sheet' || phase.p === 'summary' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
@@ -119,10 +120,8 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
         })}
 
         {phase.p === 'summary' && (
-          <div className="nb-list">
-            <h4>до першого матчу:</h4>
-            {phase.tags.map((t) => <div key={t} className="ok">{t}</div>)}
-          </div>
+          <LootSheet tab="ДО ПЕРШОГО МАТЧУ" loot={phase.result.loot} before={phase.result.before} after={phase.result.after}
+            empty="Три розвороти — і жодної відповіді." button="На лаву" onNext={onNext} />
         )}
       </div>
       {button}

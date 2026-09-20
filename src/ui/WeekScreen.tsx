@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import type { WeekOffer, WeekPick, WeekScene, WeekSceneOption } from '../engine/week';
+import type { LootItem, WeekOffer, WeekPick, WeekScene, WeekSceneOption } from '../engine/week';
+import { LootSheet } from './LootSheet';
 import { VOICE_ATTRS, sceneFor, sceneOptionsFor } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
-import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from '../engine/types';
+import { ATTRIBUTE_LABEL, type Attribute, type Player, type VoiceKey } from '../engine/types';
 import { Doodles } from './doodles';
 
 // Тиждень v3: три дні, у кожному три справи — одна на день; исход уже выпавший, может вести в сцену
@@ -22,6 +23,10 @@ import { Doodles } from './doodles';
 // лист живе в потоці сторінки. Причина: довга проза від руки читалась погано, і було незрозуміло, хто
 // її написав; у листа автор є — оповідач гри. У зошиті після листа лишається один короткий рядок
 // ручкою (nb-mark): наслідок і вибір у сцені.
+//
+// Підсумок тижня — **лист здобутків** (LootSheet, 20.09, макет «Здобутки і підказки», варіант Б): список
+// із галочками ручкою не читався як нагорода і не показував, куди що лягло; здобутки — результат події,
+// їх видає гра, тому вони на листі оповідача, не на папері.
 
 type Props = {
   /** Дни с предложениями и исходами, уже с именами ростера. */
@@ -36,15 +41,18 @@ type Props = {
   seen: Set<string>;
   /** Сид для малюнків на полях — тур сезона. */
   seed?: number;
-  onFinish: (picks: WeekPick[]) => string[];
+  /** Закрити тиждень: здобутки й картка до/після — для листа здобутків. */
+  onFinish: (picks: WeekPick[]) => WeekResult;
   onNext: () => void;
 };
+
+export type WeekResult = { loot: LootItem[]; before: Player; after: Player };
 
 type Phase =
   | { p: 'pick' }
   | { p: 'outcome'; offer: WeekOffer }
   | { p: 'scene'; offer: WeekOffer; scene: WeekScene; chosen?: WeekSceneOption }
-  | { p: 'summary'; tags: string[] };
+  | { p: 'summary'; result: WeekResult };
 
 const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
 
@@ -57,7 +65,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
   const sceneUsed = picks.some((p) => p.scene);
   const last = day >= days.length - 1;
 
-  const finish = (all: WeekPick[]) => setPhase({ p: 'summary', tags: onFinish(all) });
+  const finish = (all: WeekPick[]) => setPhase({ p: 'summary', result: onFinish(all) });
 
   /** Дальше после дела (или после сцены): следующий день или подсумок. Пост «тим часом у стрічці»
    *  між днями убран (19.09, пользователь): экран с одной новостью — лишний шаг. */
@@ -204,8 +212,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
   };
 
   const button = (() => {
-    if (phase.p === 'summary') return <button className="primary menu-primary" onClick={onNext}>До матчу</button>;
-    if (phase.p === 'outcome' || phase.p === 'scene') return null;   // кнопка — всередині листа
+    if (phase.p === 'summary' || phase.p === 'outcome' || phase.p === 'scene') return null;   // кнопка — всередині листа
     const offers = days[day] ?? [];
     return <button className="primary menu-primary" onClick={confirmDay}>{selected ? 'Так і зробити' : offers.length ? 'Нічого не робити сьогодні' : 'Далі'}</button>;
   })();
@@ -213,7 +220,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
   return (
     <div className="result week">
       <div className="card-minute">тиждень між матчами</div>
-      <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' ? 'dimmed' : ''}`}>
+      <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'summary' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
@@ -253,11 +260,8 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
         })}
 
         {phase.p === 'summary' && (
-          <div className="nb-list">
-            <h4>до матчу:</h4>
-            {phase.tags.length === 0 && <div className="none">три дні — і жодної справи. голоси це запам’ятають.</div>}
-            {phase.tags.map((t) => <div key={t} className="ok">{t}</div>)}
-          </div>
+          <LootSheet tab="ДО МАТЧУ" loot={phase.result.loot} before={phase.result.before} after={phase.result.after}
+            empty="Три дні — і жодної справи. Голоси це запам’ятають." button="До матчу" onNext={onNext} />
         )}
       </div>
       {button}

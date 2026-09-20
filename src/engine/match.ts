@@ -56,7 +56,9 @@ export type MatchSession = {
   tutorial?: Tutorial;
 };
 
-export type Tutorial = { plan: string[]; hints: Record<string, string> };
+export type Tutorial = { plan: string[]; hints: Record<string, TutorialHint> };
+/** Підказка-прожектор: яку деталь висвітлити (ui/Spotlight.tsx) і що сказати. */
+export type TutorialHint = { target: 'choices' | 'formula' | 'voices' | 'verdict'; title: string; text: string };
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 

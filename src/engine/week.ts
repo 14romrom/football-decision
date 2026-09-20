@@ -301,9 +301,25 @@ export const VOICE_ATTRS: Record<VoiceKey, Attribute[]> = {
 
 export type WeekChoice = { activity: Activity; trainAttr?: Attribute };
 
+/** Здобуток тижня/прологу (M12, 20.09, макет «Здобутки і підказки», варіант Б): бирка зі структурою — для
+ *  листа здобутків потрібно знати, чиє це (колір голосу), куди лягло («на матч» / «назавжди · у картку» /
+ *  «дует»), у який бік і чи є прогрес до порога. `text` — той самий рядок, що й раніше в tags. */
+export type LootItem = {
+  text: string;
+  kind: 'voice' | 'start' | 'coach' | 'perm' | 'train' | 'flag' | 'heal' | 'person';
+  who?: VoiceKey;
+  dir?: 'up' | 'down';
+  where: string;
+  progress?: [number, number];
+  attr?: Attribute;
+};
+
+/** Колір стартового ресурсу — голос, чий він: сили — Тіло, спокій — Спокій, кураж — Его; трибуни — без голосу. */
+const START_VOICE: Record<string, VoiceKey | undefined> = { stamina: 'body', composure: 'composure', momentum: 'ego', fanHype: undefined };
+
 /** Применить выбранные дела к карьере. Доверие и тренировки — сразу и навсегда, остальное —
  *  в nextMatch на один матч. Возвращает бирки для экрана: что изменилось, словами. */
-export function applyWeek(career: Career, choices: WeekChoice[]): { career: Career; tags: string[] } {
+export function applyWeek(career: Career, choices: WeekChoice[]): { career: Career; tags: string[]; loot: LootItem[] } {
   const next: Career = { ...career, training: { ...(career.training ?? {}) }, attrPoints: { ...career.attrPoints } };
   // Начинаем с того, что уже приготовлено к матчу (ответ в стрічці идёт раньше тижня, 19.09):
   // иначе неделя затирала бы его последствия. consumeStartPenalty очищает всё разом.
@@ -313,7 +329,8 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
     ...(prev?.voiceStreak ? { voiceStreak: prev.voiceStreak } : {}), ...(prev?.voiceMute ? { voiceMute: prev.voiceMute } : {}),
     ...(prev?.healed ? { healed: true } : {}),
   };
-  const tags: string[] = [];
+  const loot: LootItem[] = [];
+  const tags = { push: (item: LootItem) => { if (!loot.some((x) => x.text === item.text)) loot.push(item); } };
   let flags: CarriedFlag[] = career.carriedFlags ?? [];
   const bump = (attr: Attribute, mods: number) => { prep.attrBonus![attr] = (prep.attrBonus![attr] ?? 0) + mods * POINT_VALUE; };
 
@@ -325,22 +342,26 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
     for (const v of e.louder ?? []) {
       if (v === 'ego' || v === 'team') prep.voiceStreak = { who: v, count: 2 };
       for (const a of VOICE_ATTRS[v]) bump(a, 1);
-      tags.push(`${VOICE_LABEL[v]} гучніше`);
+      tags.push({ text: `${VOICE_LABEL[v]} гучніше`, kind: 'voice', who: v, dir: 'up', where: 'на матч' });
     }
     for (const v of e.quieter ?? []) {
       if (v === 'ego' || v === 'team') prep.voiceMute = { ...(prep.voiceMute ?? {}), [v]: BALANCE.week.muteEpisodes };
       for (const a of VOICE_ATTRS[v]) bump(a, -1);
-      tags.push(`${VOICE_LABEL[v]} тихіше`);
+      tags.push({ text: `${VOICE_LABEL[v]} тихіше`, kind: 'voice', who: v, dir: 'down', where: 'на матч' });
     }
-    if (e.stamina) { prep.start!.stamina = (prep.start!.stamina ?? 0) + e.stamina; tags.push(e.stamina > 0 ? 'сили ↑' : 'сили ↓'); }
-    if (e.composure) { prep.start!.composure = (prep.start!.composure ?? 0) + e.composure; tags.push(e.composure > 0 ? 'спокій ↑' : 'спокій ↓'); }
-    if (e.fanHype) { prep.start!.fanHype = (prep.start!.fanHype ?? 0) + e.fanHype; tags.push(e.fanHype > 0 ? 'трибуни ↑' : 'трибуни ↓'); }
-    if (e.momentum) { prep.start!.momentum = (prep.start!.momentum ?? 0) + e.momentum; tags.push(e.momentum > 0 ? 'кураж ↑' : 'кураж ↓'); }
-    if (e.coachTrust) { next.coachTrust = clampTrust(next.coachTrust + e.coachTrust); tags.push(e.coachTrust > 0 ? 'тренер ↑' : 'тренер ↓'); }
+    const start = (key: 'stamina' | 'composure' | 'fanHype' | 'momentum', label: string, delta: number) => {
+      prep.start![key] = (prep.start![key] ?? 0) + delta;
+      tags.push({ text: `${label} ${delta > 0 ? '↑' : '↓'}`, kind: 'start', who: START_VOICE[key], dir: delta > 0 ? 'up' : 'down', where: 'на старт матчу' });
+    };
+    if (e.stamina) start('stamina', 'сили', e.stamina);
+    if (e.composure) start('composure', 'спокій', e.composure);
+    if (e.fanHype) start('fanHype', 'трибуни', e.fanHype);
+    if (e.momentum) start('momentum', 'кураж', e.momentum);
+    if (e.coachTrust) { next.coachTrust = clampTrust(next.coachTrust + e.coachTrust); tags.push({ text: e.coachTrust > 0 ? 'тренер ↑' : 'тренер ↓', kind: 'coach', dir: e.coachTrust > 0 ? 'up' : 'down', where: 'одразу' }); }
     if (e.heal) {
       prep.healed = true;
       flags = flags.filter((f) => f.flag !== 'knock');
-      if (career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock')) tags.push('здоровий');
+      if (career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock')) tags.push({ text: 'здоровий', kind: 'heal', who: 'body', dir: 'up', where: 'на матч' });
     }
     const attr = e.train === 'choice' ? trainAttr : e.train;
     if (attr) {
@@ -348,10 +369,10 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
       if (n >= BALANCE.week.trainToPoint) {
         next.training![attr] = 0;
         next.attrPoints[attr] = (next.attrPoints[attr] ?? 0) + 1;
-        tags.push(`${ATTRIBUTE_LABEL[attr]} +1 назавжди`);
+        tags.push({ text: `${ATTRIBUTE_LABEL[attr]} +1 назавжди`, kind: 'perm', attr, dir: 'up', where: 'назавжди · у картку' });
       } else {
         next.training![attr] = n;
-        tags.push(`${ATTRIBUTE_LABEL[attr]}: ${n} з ${BALANCE.week.trainToPoint}`);
+        tags.push({ text: `${ATTRIBUTE_LABEL[attr]}: ${n} з ${BALANCE.week.trainToPoint}`, kind: 'train', attr, where: 'тренування', progress: [n, BALANCE.week.trainToPoint] });
       }
     }
     if (e.removeFlags?.length) flags = flags.filter((f) => !e.removeFlags!.includes(f.flag));
@@ -359,13 +380,13 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
       const after = f.after ?? 0;
       const mark: Mark = { minute: 0, episodeId: activity.id, optionId: 'week', past: f.past, previousMatch: true, whenText: whenTextFor(after) };
       flags = [...flags.filter((x) => x.flag !== f.flag), { flag: f.flag, mark, ...(after > 0 ? { after } : {}) }];
-      tags.push(after > 0 ? 'це ще відгукнеться' : 'відгукнеться на полі');
+      tags.push({ text: after > 0 ? 'це ще відгукнеться' : 'відгукнеться на полі', kind: 'flag', where: after > 0 ? whenTextFor(after) : 'на полі' });
     }
     prep.notes!.push(e.note);
   }
   next.carriedFlags = flags;
   next.nextMatch = choices.length || prev ? prep : undefined;
-  return { career: next, tags: [...new Set(tags)] };
+  return { career: next, tags: loot.map((x) => x.text), loot };
 }
 
 /** «Когда» для реактивного эпизода от дела недели. */
@@ -411,7 +432,7 @@ export function planWeek(pool: Activity[], player: Player, c: WeekContext, caree
 /** Закрыть неделю: выбранные дела с их исходами, сцена-продолжение и обида голосов — всё через
  *  applyWeek, чтобы бирки и nextMatch собирались одним способом; сцена идёт голосом подсказки,
  *  без подсказки — голосом дела, из которого выросла. */
-export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], picks: WeekPick[], scenes: WeekScene[]): { career: Career; tags: string[] } {
+export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], picks: WeekPick[], scenes: WeekScene[]): { career: Career; tags: string[]; loot: LootItem[] } {
   const choices: WeekChoice[] = [];
   const chosen: Activity[] = [];
   const outcomes: string[] = [];
@@ -433,8 +454,8 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
   }
   const offeredVoices = days.flat().map((o) => o.activity.voice);
   const { career: withNeglect, penalties } = neglectPenalties(career, offeredVoices, choices.map((x) => x.activity.voice));
-  const { career: after, tags } = applyWeek(withNeglect, [...choices, ...penalties.map((activity) => ({ activity }))]);
-  return { career: recordWeek(after, c, days.flat().map((o) => o.activity), chosen, { outcomes, ...(scene ? { scene } : {}) }), tags };
+  const { career: after, tags, loot } = applyWeek(withNeglect, [...choices, ...penalties.map((activity) => ({ activity }))]);
+  return { career: recordWeek(after, c, days.flat().map((o) => o.activity), chosen, { outcomes, ...(scene ? { scene } : {}) }), tags, loot };
 }
 
 /** Варианты сцены, которые видит игрок: с подсказкой — только когда голос бачить. */

@@ -16,7 +16,7 @@ import type { Rng } from '../engine/rng';
 import type { Activity, WeekScene } from '../engine/week';
 import type { AdRule } from '../engine/espm';
 import type { PrologueSpread } from '../engine/prologue';
-import type { Tutorial } from '../engine/match';
+import type { Tutorial, TutorialHint } from '../engine/match';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
@@ -59,8 +59,8 @@ export const ADS = adsJson as AdRule[];
 /** Пролог — тиждень нуль (engine/prologue.ts): три розвороти зі стікерами голосів; імена — при показі. */
 export const PROLOGUE = prologueJson as PrologueSpread[];
 /** Перший матч кар’єри (M12): чотири фіксовані сцени з лави, кожна з підказкою оповідача (match.ts:Tutorial). */
-export const FIRST_MATCH = firstmatchJson as { scenes: { episode: string; hint: string }[] };
+export const FIRST_MATCH = firstmatchJson as { scenes: ({ episode: string } & TutorialHint)[] };
 export const FIRST_MATCH_TUTORIAL: Tutorial = {
   plan: FIRST_MATCH.scenes.map((s) => s.episode),
-  hints: Object.fromEntries(FIRST_MATCH.scenes.map((s) => [s.episode, s.hint])),
+  hints: Object.fromEntries(FIRST_MATCH.scenes.map(({ episode, target, title, text }) => [episode, { target, title, text }])),
 };

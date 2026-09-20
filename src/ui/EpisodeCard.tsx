@@ -1,4 +1,6 @@
+import { useRef, useState } from 'react';
 import type { Episode, EpisodeOption, FlagRule, MatchState, Player } from '../engine/types';
+import { Spotlight, type Hint } from './Spotlight';
 import { VOICE_LABEL, voiceAudible } from '../engine/voices';
 import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
@@ -28,8 +30,8 @@ type Props = {
   flagRules: FlagRule[];
   /** Звено цепочки — та же минута, сцена продолжается. */
   link?: boolean;
-  /** Підказка оповідача (перший матч, M12): одна річ на сцену — під сетапом, до голосів. */
-  hint?: string;
+  /** Підказка-прожектор (перший матч, M12): ціль choices або voices — деталь листа, яку висвітлити. */
+  hint?: Hint;
   onChoose: (option: EpisodeOption) => void;
 };
 
@@ -45,6 +47,10 @@ function chainHint(o: EpisodeOption): string | null {
 export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, link, hint, onChoose }: Props) {
   const options = availableOptions(episode, state, player);
   const insights = sceneInsights(episode, state, player);
+  const voicesRef = useRef<HTMLDivElement>(null);
+  const choicesRef = useRef<HTMLOListElement>(null);
+  const [hintOpen, setHintOpen] = useState(true);
+  const spot = hint && hintOpen && (hint.target === 'choices' || hint.target === 'voices') ? hint : null;
   // Реплики голосов — до вариантов, по одному разу на голос; слышно только сильный.
   const said = new Set<string>();
   const lines = options.flatMap((o) => {
@@ -58,9 +64,8 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
     <div className="scene">
       <span className="minute-tab">{minute}′{link && <i className="link-mark"> · продовження</i>}</span>
       <p className="setup">{episode.setup}</p>
-      {hint && <p className="tutor">{hint}</p>}
       {(insights.length > 0 || lines.length > 0) && (
-        <div className="voices">
+        <div className="voices" ref={voicesRef}>
           {insights.map((v) => (
             <p key={'i' + v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b><span>{v.line}</span></p>
           ))}
@@ -70,7 +75,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
         </div>
       )}
       <div className="hand"><span>Твій хід</span></div>
-      <ol className="choices">
+      <ol className="choices" ref={choicesRef}>
         {options.map((o, i) => {
           // Форма риска уже со сдвигами от контекста: игрок должен видеть, что надёжный
           // вариант перестал быть надёжным.
@@ -96,6 +101,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
           );
         })}
       </ol>
+      {spot && <Spotlight hint={spot} target={spot.target === 'voices' ? voicesRef : choicesRef} onDone={() => setHintOpen(false)} />}
     </div>
   );
 }

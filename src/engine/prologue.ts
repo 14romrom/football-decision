@@ -8,7 +8,8 @@
 // Наслідки йдуть через applyWeek — той самий шлях, що й дела тижня: бирки, nextMatch, флаги.
 // Чистая логика; контент — content/prologue.json; экран — ui/PrologueScreen.tsx.
 
-import { applyWeek, VOICE_ATTRS, type ActivityEffect } from './week';
+import { applyWeek, VOICE_ATTRS, type ActivityEffect, type LootItem } from './week';
+import { BALANCE } from './balance';
 import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from './types';
 import type { Career } from './career';
 
@@ -52,7 +53,7 @@ export function prologuePending(career: Career): boolean {
 /** Закрити пролог: наслідки стікерів — через applyWeek (бирки й nextMatch тим самим способом, що
  *  дела тижня), пункт і партнер — окремо, бо тиждень так не вміє. Лава — примусово: за лором перший
  *  матч починається з неї. Флаги з прологу підписані «ще до сезону», а не «минулого тижня». */
-export function finishPrologue(career: Career, spreads: PrologueSpread[], picks: ProloguePick[]): { career: Career; tags: string[] } {
+export function finishPrologue(career: Career, spreads: PrologueSpread[], picks: ProloguePick[]): { career: Career; tags: string[]; loot: LootItem[] } {
   const chosen = picks.map((p) => {
     const spread = spreads.find((s) => s.id === p.spread);
     const option = spread?.options.find((o) => o.id === p.option);
@@ -63,19 +64,22 @@ export function finishPrologue(career: Career, spreads: PrologueSpread[], picks:
     activity: { id: option.id, voice: option.voice, title: option.say, line: option.line, effect: option.effect },
   })));
   const next: Career = { ...applied.career, attrPoints: { ...applied.career.attrPoints } };
-  const tags = [...applied.tags];
+  const loot: LootItem[] = [...applied.loot];
 
   for (const { pick, option } of chosen) {
     if (option.point === 'choice') {
       const attr = pick.attr && VOICE_ATTRS[option.voice].includes(pick.attr) ? pick.attr : VOICE_ATTRS[option.voice][0];
       if (attr) {
         next.attrPoints[attr] = (next.attrPoints[attr] ?? 0) + 1;
-        tags.push(`${ATTRIBUTE_LABEL[attr]} +1 назавжди`);
+        loot.push({ text: `${ATTRIBUTE_LABEL[attr]} +1 назавжди`, kind: 'perm', attr, dir: 'up', where: 'назавжди · у картку' });
       }
     }
     if (option.bond) {
       next.partnerBond = (next.partnerBond ?? 0) + option.bond;
-      tags.push(option.bond > 0 ? 'партнер: є привід довіряти' : 'партнер: є привід ображатися');
+      loot.push({
+        text: option.bond > 0 ? 'партнер: є привід довіряти' : 'партнер: є привід ображатися', kind: 'person', who: 'team',
+        dir: option.bond > 0 ? 'up' : 'down', where: 'дует', progress: [Math.max(0, next.partnerBond), BALANCE.people.partnerBonded],
+      });
     }
   }
 
@@ -83,5 +87,6 @@ export function finishPrologue(career: Career, spreads: PrologueSpread[], picks:
   next.carriedFlags = (next.carriedFlags ?? []).map((f) => (ids.has(f.mark.episodeId) ? { ...f, mark: { ...f.mark, whenText: 'ще до сезону' } } : f));
   next.benched = true;
   next.prologue = Object.fromEntries(chosen.map(({ pick, option }) => [pick.spread, option.id])) as Career['prologue'];
-  return { career: next, tags: [...new Set(tags)] };
+  const uniq = loot.filter((x, i) => loot.findIndex((y) => y.text === x.text) === i);
+  return { career: next, tags: uniq.map((x) => x.text), loot: uniq };
 }

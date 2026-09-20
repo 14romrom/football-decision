@@ -35,10 +35,10 @@ describe('сцена агента', () => {
     const sn = starSeason();
     const verdict = seasonVerdict(sn, 70);
     expect(verdict.kind).toBe('transfer');
-    expect(agentPending(defaultCareer(), sn, verdict)).toBe(true);
-    expect(agentPending(defaultCareer(), sn, { kind: 'extend', title: '', text: '' })).toBe(false);
+    expect(agentPending(defaultCareer(), sn, verdict)).toBe('winter');
+    expect(agentPending(defaultCareer(), sn, { kind: 'extend', title: '', text: '' })).toBeNull();
     const { career } = resolveAgent(defaultCareer(), sn, AGENT, 'stay');
-    expect(agentPending(career, sn, verdict)).toBe(false);
+    expect(agentPending(career, sn, verdict)).toBeNull();
     expect(career.agentLog).toEqual([{ season: sn.number, choice: 'stay' }]);
   });
 

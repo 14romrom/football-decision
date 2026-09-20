@@ -8,7 +8,7 @@
 import postsJson from '../content/posts.json';
 import { pickFresh } from './flavor';
 import type { Rng } from './rng';
-import { peopleFlags, type Career } from './career';
+import { peopleFlags, type Career, arcStage } from './career';
 import type { Season } from './season';
 import { standings, US, type MomentRef } from './season';
 import type { VoiceKey } from './types';
@@ -46,6 +46,9 @@ export type PostWhen = {
   /** Пост про конкретный момент матча: в строках доступны {moment.minute}, {moment.past},
    *  {moment.recap}; правило подходит, только если такой момент в матче был. */
   moment?: 'best' | 'worst';
+  /** Стан арки (career.ts:arcStage): ставлення міста дрейфує — «хто це» → «той з коліном» → «наш». */
+  arcMin?: number;
+  arcMax?: number;
 };
 
 /** Вид поста (19.09, «форма»): poll — опрос с абсурдными вариантами, проценты раздаёт rng;
@@ -88,6 +91,7 @@ export type PostContext = {
   lastWeek: string[];
   /** Лучший и худший момент последнего матча (season.rounds[].moments). */
   moments: { best?: MomentRef; worst?: MomentRef };
+  arc: number;
 };
 
 const LOW_TRUST = 40;
@@ -127,7 +131,9 @@ export function buildPostContext(
     leaderKey: leader.club, bottomKey: bottom.club,
     lastOpponentKey: ours ? (ours.home === US ? ours.away : ours.home) : null,
     // Неделя перед сыгранным туром записана с round = этот тур до инкремента (week.ts:recordWeek).
-    lastWeek: (career.weekLog ?? []).find((w) => w.season === season.number && w.round === season.round - 1)?.chosen ?? [],
+    // Справи минулого тижня і їхні ісходи («interview:dream_ego») — стрічка повторює те, що Реєс сказав.
+    lastWeek: (() => { const w = (career.weekLog ?? []).find((x) => x.season === season.number && x.round === season.round - 1); return [...(w?.chosen ?? []), ...(w?.outcomes ?? [])]; })(),
+    arc: arcStage(career),
     moments: last.moments ?? {},
   };
 }
@@ -164,6 +170,8 @@ export function matchesPost(w: PostWhen | undefined, c: PostContext): boolean {
   if (w.hasScored !== undefined && w.hasScored !== c.hasScored) return false;
   if (w.week && !w.week.some((id) => c.lastWeek.includes(id))) return false;
   if (w.moment && !c.moments[w.moment]) return false;
+  if (w.arcMin !== undefined && c.arc < w.arcMin) return false;
+  if (w.arcMax !== undefined && c.arc > w.arcMax) return false;
   return true;
 }
 

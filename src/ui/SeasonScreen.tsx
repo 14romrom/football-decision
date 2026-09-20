@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { isSeasonOver, SEASON_ROUNDS, standings, US, type Season, type Verdict } from '../engine/season';
 import { plural } from './pluralize';
 import type { AdRule, AdSet, ClubName } from '../engine/espm';
-import { roundHeadline } from '../engine/espm';
+import { roundHeadline, type EspmColumn } from '../engine/espm';
 
 // Экран сезона = сторінка таблиці на сайті ESPM (19.09, макет «Таблиця: ESPM», решение пользователя):
 // рамка браузера с адресом делает страницу предметом; сама страница — светлый экран с чужой
@@ -18,6 +18,8 @@ type Props = {
   playerName: string;
   ads: AdSet;
   verdict?: Verdict;
+  /** Колонка видання про Реєса за станом арки (M13, espm.ts:playerColumn); без неї — як раніше. */
+  column?: EspmColumn;
   onNext: () => void;
   onNewSeason: () => void;
 };
@@ -33,7 +35,7 @@ function Banner({ ad, dark }: { ad: AdRule; dark?: boolean }) {
   );
 }
 
-export function SeasonScreen({ season, club, playerName, ads, verdict, onNext, onNewSeason }: Props) {
+export function SeasonScreen({ season, club, playerName, ads, verdict, column, onNext, onNewSeason }: Props) {
   const rows = standings(season);
   const over = isSeasonOver(season);
   const p = season.player;
@@ -74,6 +76,15 @@ export function SeasonScreen({ season, club, playerName, ads, verdict, onNext, o
             <h4>{playerName} за сезон</h4>
             <p><span className="num">{p.matches}</span>{plural(p.matches, 'матч', 'матчі', 'матчів')} · <span className="num">{p.goals}</span>{plural(p.goals, 'гол', 'голи', 'голів')} · <span className="num">{p.assists}</span>{plural(p.assists, 'передача', 'передачі', 'передач')} · оцінка {p.matches ? fmt(p.coachSum / p.matches) : '—'}</p>
           </div>
+
+          {column && (
+            <div className="espm-col">
+              <div className="espm-kicker">{column.kicker}</div>
+              <h3>{column.title}</h3>
+              <p>{column.text}</p>
+              <div className="espm-by">Редакція · сьогодні</div>
+            </div>
+          )}
 
           {ads.banners[0] && <Banner ad={ads.banners[0]} dark />}
 

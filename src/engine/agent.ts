@@ -33,13 +33,25 @@ export type AgentContent = {
   options: AgentOption[];
   /** Чому угода зірвалась — за станом кар’єри (collapseReason). */
   collapse: Record<CollapseReason, string>;
+  /** Дует (partnerBond ≥ порога): партнер не просить лишитися — він розраховує, не питаючи. */
+  bonded: Voice;
+  /** Літній дзвінок (M13): другий сезон, обставин немає, вибір справжній. Без «зачекати». */
+  summer: { tab: string; setup: string; voices: Voice[]; options: AgentOption[] };
+  /** Від’їзд улітку — чесний епілог без покарання: останній свисток у чужому місті. */
+  epilogue: string;
 };
+
+export type AgentMode = 'winter' | 'summer';
 
 export type AgentLogEntry = { season: number; choice: AgentChoice; reason?: CollapseReason };
 
-/** Сцена йде після вердикту «трансфер», один раз на сезон. */
-export function agentPending(career: Career, season: Season, verdict: Verdict | undefined): boolean {
-  return verdict?.kind === 'transfer' && !(career.agentLog ?? []).some((a) => a.season === season.number);
+/** Сцена йде після вердикту «трансфер», один раз на сезон: перший раз — зима (угода зривається), був
+ *  уже дзвінок у минулому сезоні — літо (обставин немає, вибір справжній). */
+export function agentPending(career: Career, season: Season, verdict: Verdict | undefined): AgentMode | null {
+  if (verdict?.kind !== 'transfer' || career.ended) return null;
+  const log = career.agentLog ?? [];
+  if (log.some((a) => a.season === season.number)) return null;
+  return log.some((a) => a.season < season.number) ? 'summer' : 'winter';
 }
 
 /** Обставина зриву — з того, що гра вже знає: травма цього сезону → медогляд; лідер таблиці → клуб під
@@ -53,11 +65,16 @@ export function collapseReason(career: Career, season: Season): CollapseReason {
 
 /** Застосувати вибір: наслідки в nextMatch (перший матч нового сезону), запис у лог, текст сцени. */
 export function resolveAgent(
-  career: Career, season: Season, content: AgentContent, choice: AgentChoice,
-): { career: Career; loot: LootItem[]; text: string; reason?: CollapseReason } {
-  const option = content.options.find((o) => o.id === choice);
+  career: Career, season: Season, content: AgentContent, choice: AgentChoice, mode: AgentMode = 'winter',
+): { career: Career; loot: LootItem[]; text: string; reason?: CollapseReason; ended?: boolean } {
+  const option = (mode === 'summer' ? content.summer.options : content.options).find((o) => o.id === choice);
   if (!option) throw new Error('немає варіанта агента ' + choice);
-  const reason = choice === 'leave' ? collapseReason(career, season) : undefined;
+  if (mode === 'summer' && choice === 'leave') {
+    // Улітку «так» — це кінець кар’єри тут: епілог, без наслідків і без покарання.
+    const next: Career = { ...career, ended: { season: season.number }, agentLog: [...(career.agentLog ?? []), { season: season.number, choice }] };
+    return { career: next, loot: [], text: `${option.text} ${content.epilogue}`, ended: true };
+  }
+  const reason = mode === 'winter' && choice === 'leave' ? collapseReason(career, season) : undefined;
   const applied = applyWeek(career, [{ activity: { id: 'agent_' + choice, voice: choice === 'stay' ? 'team' : choice === 'leave' ? 'ego' : 'composure', title: option.label, line: '', effect: option.effect } }]);
   const next: Career = { ...applied.career, agentLog: [...(career.agentLog ?? []), { season: season.number, choice, ...(reason ? { reason } : {}) }] };
   const text = [option.text, reason ? content.collapse[reason] : '', option.after ?? ''].filter(Boolean).join(' ');

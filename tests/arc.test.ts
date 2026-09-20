@@ -7,7 +7,13 @@ import { matchesSituation, pickFlavorLine } from '../src/engine/flavor';
 import { pickWhistleLine, WHISTLE_RULES } from '../src/engine/whistle';
 import { programmeNote } from '../src/engine/programme';
 import { matchesActivity, type WeekContext } from '../src/engine/week';
-import { ACTIVITIES, FLAVOR, WEEK_SCENES } from '../src/content';
+import { ACTIVITIES, AGENT, ESPM_COLUMNS, FLAVOR, OPPONENTS, WEEK_SCENES } from '../src/content';
+import { matchesPost, POSTS, type PostContext } from '../src/engine/posts';
+import { playerColumn } from '../src/engine/espm';
+import { voiceAudible } from '../src/engine/voices';
+import { agentPending, resolveAgent } from '../src/engine/agent';
+import { createSeason, recordRound, seasonVerdict, type Season } from '../src/engine/season';
+import { PLAYER } from '../src/content';
 import { makeRng } from '../src/engine/rng';
 import type { MatchState } from '../src/engine/types';
 
@@ -33,14 +39,14 @@ describe('стан арки', () => {
   });
 });
 
-describe('тексти за станом', () => {
-  const state = (arc: number | undefined, flags: string[] = []): MatchState => ({
+const state = (arc: number | undefined, flags: string[] = []): MatchState => ({
     minute: 60, scoreUs: 0, scoreThem: 0, stamina: 70, composureNow: 60, coachTrust: 55, fanHype: 50, momentum: 0,
     stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 }, flags, marks: {},
     voices: { counts: { ego: 0, team: 0, composure: 0, vision: 0, instinct: 0, body: 0 }, streak: { who: null, count: 0 } }, log: [],
     ...(arc ? { arc } : {}),
   });
 
+describe('тексти за станом', () => {
   it('репліки Тібо: страшні до стану 2, сильніші після «перепитати», смішні від стану 3; без стану — жодної', () => {
     const tibo = FLAVOR.filter((r) => r.lines.some((l) => l.includes('{dm}')) && (r.when.arcMin !== undefined || r.when.arcMax !== undefined));
     expect(tibo.length).toBeGreaterThanOrEqual(5);
@@ -90,5 +96,93 @@ describe('тексти за станом', () => {
     const scene = WEEK_SCENES.find((s) => s.id === newbie.outcomes![0].followUp)!;
     expect(scene).toBeDefined();
     expect(scene.options.filter((o) => o.insight)).toHaveLength(1);
+  });
+});
+
+describe('решта пунктів арки', () => {
+  const pctx = (arc: number, over: Partial<PostContext> = {}): PostContext => ({
+    result: 'win', scoreUs: 2, scoreThem: 1, goals: 1, assists: 0, coachRating: 7, fanRating: 7, position: 3, clubs: 6, round: 4,
+    coachTrust: 55, injured: false, flags: [], nextStrength: 'even', nextFlags: [], nextVenue: 'home', leaderLost: false, bottomWon: false,
+    voice: null, hasScored: true, leaderKey: 'olvar', bottomKey: 'rioseco', lastOpponentKey: 'terranova', lastWeek: [], moments: {}, arc, ...over,
+  });
+
+  it('стрічка: на кожен стан є пости про Реєса, і вони не змішуються; інтерв’ю повторюється через тур', () => {
+    const arcPosts = POSTS.posts.filter((p) => p.group === 'self' && (p.when?.arcMin !== undefined || p.when?.arcMax !== undefined));
+    expect(arcPosts.length).toBeGreaterThanOrEqual(10);
+    for (const arc of [1, 2, 3, 4]) expect(arcPosts.filter((p) => matchesPost(p.when, pctx(arc))).length, `arc ${arc}`).toBeGreaterThanOrEqual(2);
+    expect(arcPosts.filter((p) => p.when?.arcMax === 1).every((p) => !matchesPost(p.when, pctx(3)))).toBe(true);
+    const ego = POSTS.posts.filter((p) => p.when?.week?.includes('interview:dream_ego'));
+    const team = POSTS.posts.filter((p) => p.when?.week?.includes('interview:dream_team'));
+    expect(ego.length).toBeGreaterThan(0); expect(team.length).toBeGreaterThan(0);
+    expect(ego.every((p) => matchesPost(p.when, pctx(2, { lastWeek: ['interview', 'interview:dream_ego'] })))).toBe(true);
+    expect(ego.every((p) => !matchesPost(p.when, pctx(2, { lastWeek: ['interview', 'interview:dream_team'] })))).toBe(true);
+  });
+
+  it('інтерв’ю: два ісходи голосами Его й Команди від стану 2; порада дублеру знімає sub_threat від стану 3', () => {
+    const iv = ACTIVITIES.find((a) => a.id === 'interview')!;
+    expect(iv.when?.arcMin).toBe(2);
+    expect(iv.outcomes!.map((o) => o.voice)).toEqual(['ego', 'team']);
+    const adv = ACTIVITIES.find((a) => a.id === 'sub_advice')!;
+    expect(adv.when?.flags).toContain('sub_threat');
+    expect(adv.outcomes![0].effect.removeFlags).toContain('sub_threat');
+  });
+
+  it('ESPM: колонка на кожен стан, з пам’яттю медіа', () => {
+    for (const arc of [1, 2, 3, 4]) {
+      const c = playerColumn(ESPM_COLUMNS.column, arc, makeRng(arc), new Set());
+      expect(c, `arc ${arc}`).toBeDefined();
+      expect(c!.text).not.toMatch(/!/);
+    }
+    const first = playerColumn(ESPM_COLUMNS.column, 3, makeRng(1), new Set())!;
+    const second = playerColumn(ESPM_COLUMNS.column, 3, makeRng(1), new Set([first.text]))!;
+    expect(second.text).not.toBe(first.text);
+  });
+
+  it('Спокій у стані 1 чутно лише сильним атрибутом, не спокійним матчем', () => {
+    const opt = { goals: { personal: 1, team: 1 } } as never;
+    const calm = (arc?: number) => ({ ...state(arc), composureNow: 80 });
+    const weak = { ...PLAYER, attrs: { ...PLAYER.attrs, composure: 50 } };
+    expect(voiceAudible('composure', opt, calm(1), weak)).toBe(false);
+    expect(voiceAudible('composure', opt, calm(2), weak)).toBe(true);
+    expect(voiceAudible('composure', opt, calm(undefined), weak)).toBe(true);
+  });
+
+  it('літо: другий дзвінок після зимового — без обставин; «так» завершує кар’єру епілогом, «ні» — нічого не стається', () => {
+    const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
+    const star = (n: number): Season => {
+      let sn = createSeason(3, Object.keys(OPPONENTS), n);
+      while (sn.fixtures.some((f) => f.round === sn.round)) sn = recordRound(sn, { scoreUs: 3, scoreThem: 0, goals: 1, assists: 1, coachRating: 8, fanRating: 8.5, scorers: [] }, strengths, makeRng(sn.round));
+      return sn;
+    };
+    const s1 = star(1); const v1 = seasonVerdict(s1, 70);
+    expect(agentPending(defaultCareer(), s1, v1)).toBe('winter');
+    const winter = resolveAgent(defaultCareer(), s1, AGENT, 'leave').career;
+    const s2 = star(2); const v2 = seasonVerdict(s2, 70);
+    expect(agentPending(winter, s2, v2)).toBe('summer');
+    const stay = resolveAgent(winter, s2, AGENT, 'stay', 'summer');
+    expect(stay.career.ended).toBeUndefined();
+    expect(stay.text).not.toContain(AGENT.epilogue);
+    const leave = resolveAgent(winter, s2, AGENT, 'leave', 'summer');
+    expect(leave.ended).toBe(true);
+    expect(leave.career.ended).toEqual({ season: 2 });
+    expect(leave.text).toContain(AGENT.epilogue);
+    expect(agentPending(leave.career, s2, v2)).toBeNull();
+    expect(arcStage(winter)).toBe(4);
+  });
+
+  it('психолог: три сеанси за станом — страх, впізнають, «перед сном думаєш не про удар» ближче до кінця сезону', () => {
+    const ps = ACTIVITIES.filter((x) => x.id.startsWith('psych_'));
+    expect(ps.map((x) => x.id)).toEqual(['psych_fear', 'psych_noticed', 'psych_home']);
+    const ctx = (arc: number, round: number): WeekContext => ({
+      season: 1, round, level: 1, result: 'win', bigLoss: false, scored: true, hasScored: true, position: 5, clubs: 10,
+      coachTrust: 55, injured: false, flags: [], fanRating: 7, arc,
+    });
+    expect(ps.filter((x) => matchesActivity(x.when, ctx(1, 2))).map((x) => x.id)).toEqual(['psych_fear']);
+    expect(ps.filter((x) => matchesActivity(x.when, ctx(2, 4))).map((x) => x.id)).toEqual(['psych_noticed']);
+    expect(ps.filter((x) => matchesActivity(x.when, ctx(3, 4)))).toHaveLength(0);   // «свій», але ще не кінець сезону
+    expect(ps.filter((x) => matchesActivity(x.when, ctx(3, 7))).map((x) => x.id)).toEqual(['psych_home']);
+    for (const x of ps) for (const o of x.outcomes!) { expect(o.text.length).toBeGreaterThan(80); expect(o.text).not.toMatch(/!/); }
+    // Без висновків: жодного «зрозумів», «щастя», «вирішив» у сеансах.
+    expect(JSON.stringify(ps)).not.toMatch(/зрозумів|щаст|вирішив/);
   });
 });

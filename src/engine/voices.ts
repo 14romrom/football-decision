@@ -82,7 +82,8 @@ export function voiceAudible(who: VoiceKey, option: EpisodeOption, state: MatchS
       if (listenedTwice(state, 'ego')) return false;
       // Розігналась (или неделя «Команда гучніша» — стартовая серия): зовёт даже при низком доверии.
       return state.coachTrust >= 40 || listenedTwice(state, 'team');
-    case 'composure': return m('composure') >= loud || state.composureNow >= 70;
+    // Стан арки 1 (M13): Спокій — той голос, якого Реєс не чує; чутно лише сильний атрибут, не спокійний матч.
+    case 'composure': return m('composure') >= loud || ((state.arc ?? 2) >= 2 && state.composureNow >= 70);
     case 'vision': return m('vision') >= loud || m('positioning') >= loud;
     case 'instinct': return m('dribbling') >= loud || m('first_touch') >= loud;
     case 'body': return m('pace') >= loud || m('strength') >= loud || m('stamina') >= loud || state.stamina >= 80;

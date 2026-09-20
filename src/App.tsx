@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor } from './content';
-import { adContext, pickAds } from './engine/espm';
+import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor } from './content';
+import { adContext, pickAds, playerColumn } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
@@ -77,7 +77,7 @@ type Stage =
   // Пролог (M12, 20.09): тиждень нуль у зошиті перед першим матчем нової кар’єри.
   | { k: 'prologue' }
   // Сцена агента (M12): після вердикту «трансфер», перед новим сезоном.
-  | { k: 'agent'; leveledFrom: number; leveledTo: number }
+  | { k: 'agent'; mode: 'winter' | 'summer'; leveledFrom: number; leveledTo: number }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 type Pending =
@@ -400,6 +400,21 @@ function Game() {
     return <LevelUpScreen player={PLAYER} career={career} fromLevel={career.level - career.unspentPoints} toLevel={career.level} onConfirm={confirmLevelUp} />;
   }
 
+  if (stage.k === 'menu' && career.ended) {
+    // Епілог (M13): улітку сказав агенту «так» — ця кар’єра дописана; слот можна лише почати заново.
+    return (
+      <div className="menu">
+        {film}
+        <div className="card-minute">епілог</div>
+        <section className="moment"><div className="scene">
+          <span className="minute-tab">СЕЗОН {career.ended.season} · ІНШЕ МІСТО</span>
+          <p className="setup">{fillNames(AGENT.epilogue, ROSTER)}</p>
+          <button className="primary menu-primary nb-sheet-btn" onClick={() => { location.hash = '#/slots'; }}>Нова кар’єра</button>
+        </div></section>
+      </div>
+    );
+  }
+
   if (stage.k === 'menu') {
     const fixture = ourFixture(season);
     const row = ourRow(season);
@@ -503,10 +518,13 @@ function Game() {
         // Реклама по сиду сезона и туру: перезагрузка не меняет банеры; виденные тексты — общая память медиа со стрічкою.
         ads={pickAds(ADS, adContext(season, career.coachTrust), new Set(recentPosts()), makeRng(season.seed + season.round * 6007 + 3))}
         verdict={over ? seasonVerdict(season, career.coachTrust) : undefined}
+        // Колонка видання про Реєса за станом арки (M13); імена — під наш ростер, пам’ять медіа спільна з постами.
+        column={(() => { const c = playerColumn(ESPM_COLUMNS.column, arcStage(career), makeRng(season.seed + season.round * 7331 + 5), new Set(recentPosts())); return c ? fillNamesDeep(c, ROSTER) : undefined; })()}
         onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
         onNewSeason={() => {
           // «Дзвонить агент» — не нагорода, а розвилка: спершу сцена, новий сезон — з неї.
-          if (agentPending(careerRef.current, season, over ? seasonVerdict(season, career.coachTrust) : undefined)) { setStage({ k: 'agent', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
+          const mode = agentPending(careerRef.current, season, over ? seasonVerdict(season, career.coachTrust) : undefined);
+          if (mode) { setStage({ k: 'agent', mode, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' });
         }}
       />
@@ -518,13 +536,18 @@ function Game() {
     return (<>{film}
       <AgentScene
         content={fillNamesDeep(AGENT, ROSTER)}
+        mode={stage.mode}
+        bonded={(careerRef.current.partnerBond ?? 0) >= BALANCE.people.partnerBonded}
         onChoose={(choice: AgentChoice) => {
           // Обставини зриву — за кар’єрою до нового сезону (травми цього сезону ще не обнулені).
-          const { career: after, loot, text } = resolveAgent(careerRef.current, seasonRef.current, AGENT, choice);
+          const { career: after, loot, text, ended } = resolveAgent(careerRef.current, seasonRef.current, AGENT, choice, stage.mode);
           setCareerBoth(after);
-          return { text: fillNames(text, ROSTER), loot };
+          return { text: fillNames(text, ROSTER), loot, ...(ended ? { ended } : {}) };
         }}
-        onNext={() => { newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
+        onNext={() => {
+          if (careerRef.current.ended) { location.hash = '#/'; return; }
+          newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' });
+        }}
       />
     </>);
   }

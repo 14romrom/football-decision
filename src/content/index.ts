@@ -9,6 +9,7 @@ import adsJson from './ads.json';
 import prologueJson from './prologue.json';
 import firstmatchJson from './firstmatch.json';
 import agentJson from './agent.json';
+import espmJson from './espm.json';
 import { fillNamesDeep, type Roster, type TeamRoster } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
@@ -19,6 +20,7 @@ import type { AdRule } from '../engine/espm';
 import type { PrologueSpread } from '../engine/prologue';
 import type { Tutorial, TutorialHint } from '../engine/match';
 import type { AgentContent } from '../engine/agent';
+import type { EspmColumn } from '../engine/espm';
 
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
@@ -68,3 +70,5 @@ export const FIRST_MATCH_TUTORIAL: Tutorial = {
 };
 /** Сцена агента між сезонами (engine/agent.ts): сетап, голоси, три відповіді, три обставини зриву. */
 export const AGENT = agentJson as AgentContent;
+/** Колонки ESPM про Реєса за станом арки (engine/espm.ts:playerColumn). */
+export const ESPM_COLUMNS = espmJson as { column: Record<string, EspmColumn[]> };

@@ -10,32 +10,38 @@ import { VOICE_LABEL } from '../engine/voices';
 
 type Props = {
   content: AgentContent;
-  onChoose: (choice: AgentChoice) => { text: string; loot: LootItem[] };
+  /** Зима — угода зірветься; літо — обставин немає. */
+  mode: 'winter' | 'summer';
+  /** Дует: партнер додає свій голос — не просить, а розраховує. */
+  bonded: boolean;
+  onChoose: (choice: AgentChoice) => { text: string; loot: LootItem[]; ended?: boolean };
   onNext: () => void;
 };
 
-export function AgentScene({ content, onChoose, onNext }: Props) {
-  const [done, setDone] = useState<{ text: string; loot: LootItem[] } | null>(null);
+export function AgentScene({ content, mode, bonded, onChoose, onNext }: Props) {
+  const [done, setDone] = useState<{ text: string; loot: LootItem[]; ended?: boolean } | null>(null);
+  const block = mode === 'summer' ? content.summer : content;
+  const voices = bonded ? [...block.voices, content.bonded] : block.voices;
   return (
     <div className="result agent">
       <div className="card-minute">між сезонами</div>
       <section className="moment"><div className="scene">
-        <span className="minute-tab">{content.tab.toUpperCase()}</span>
-        <p className="setup">{content.setup}</p>
+        <span className="minute-tab">{block.tab.toUpperCase()}</span>
+        <p className="setup">{block.setup}</p>
         {done ? (
           <>
             <p className="nb-chosen">{done.text}</p>
             {done.loot.length > 0 && <p className="nb-aside">{done.loot.map((l) => l.text).join(' · ')}</p>}
-            <button className="primary menu-primary nb-sheet-btn" onClick={onNext}>Новий сезон</button>
+            <button className="primary menu-primary nb-sheet-btn" onClick={onNext}>{done.ended ? 'Титул' : 'Новий сезон'}</button>
           </>
         ) : (
           <>
             <div className="voices">
-              {content.voices.map((v) => <p key={v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b><span>{v.line}</span></p>)}
+              {voices.map((v, i) => <p key={i} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b><span>{v.line}</span></p>)}
             </div>
             <div className="hand"><span>Твій хід</span></div>
             <ol className="choices">
-              {content.options.map((o, i) => (
+              {block.options.map((o, i) => (
                 <li key={o.id}>
                   <button className="choice" onClick={() => setDone(onChoose(o.id))}>
                     <span className="choice-num">{i + 1}</span>

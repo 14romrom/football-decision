@@ -19,6 +19,15 @@ export type ClubName = { nom: string; gen: string };
 const AT = ['', 'першому', 'другому', 'третьому', 'четвертому', 'п’ятому', 'шостому', 'сьомому', 'восьмому'];
 const TO = ['', 'перше', 'друге', 'третє', 'четверте', 'п’яте', 'шосте', 'сьоме', 'восьме'];
 
+/** Колонка ESPM про Реєса (M13): ставлення видання дрейфує зі станом арки — абзац в огляді («той, що після
+ *  травми») → «гравець туру?» → колонка «Чому він ще тут» → «узимку він міг піти». Вибір — pickFresh з
+ *  пам’яттю медіа (recentPosts), як реклама й пости. */
+export type EspmColumn = { kicker: string; title: string; text: string };
+export function playerColumn(columns: Record<string, EspmColumn[]>, arc: number, rng: Rng, seen: Set<string>): EspmColumn | undefined {
+  const pool = (columns[String(arc)] ?? []).map((c) => ({ ...c, weight: 1 }));
+  return pickFresh(pool, seen, rng);
+}
+
 const plural = (n: number, one: string, few: string, many: string) =>
   n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
 

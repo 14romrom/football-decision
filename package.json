@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "sim": "tsx tools/simulate.ts",
-    "qa": "tsx tools/qa-career.ts"
+    "qa": "tsx tools/qa-career.ts",
+    "audit": "tsx tools/audit-options.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

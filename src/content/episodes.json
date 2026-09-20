@@ -147,7 +147,7 @@
         "attribute": "dribbling",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 0,
         "staminaCost": 9,
         "goals": {
           "team": 1,
@@ -759,7 +759,7 @@
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 0,
-        "staminaCost": 10,
+        "staminaCost": 8,
         "goals": {
           "team": 2,
           "personal": 2
@@ -7198,7 +7198,8 @@
               "removeFlags": [
                 "partner_trusts"
               ],
-              "fanHype": 3
+              "fanHype": 6,
+              "composure": 3
             }
           },
           "fail": {
@@ -14287,7 +14288,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 3,
+        "difficulty": 2,
         "staminaCost": 9,
         "goals": {
           "team": 0,
@@ -18580,7 +18581,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
         "staminaCost": 5,
         "goals": {
           "team": 1,
@@ -18622,8 +18623,8 @@
             "recap": "і запустив пенальті вище воріт.",
             "apply": {
               "losses": 1,
-              "coachTrust": -10,
-              "fanHype": -10,
+              "coachTrust": -8,
+              "fanHype": -8,
               "composure": -12,
               "addFlags": [
                 "keeper_read",

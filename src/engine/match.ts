@@ -265,6 +265,8 @@ export function createMatch(
     text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». ' + feedLine(session, 'kickoff', rng),
   });
   if (carryover.fromBench) benchWarmup(session, rng);
+  // Флаги про партнера з тижня (whenText) — теж привід; ті, що приїхали з минулого матчу, вже пораховані там.
+  for (const f of carried) if (f.mark.whenText) countPeople(state, f.flag);
   return session;
 }
 
@@ -285,6 +287,13 @@ function benchWarmup(session: MatchSession, rng: Rng) {
   }
   state.stamina = clamp(state.stamina + BALANCE.bench.staminaBonus, 0, 100);
   state.log.push({ minute: entry, kind: 'filler', text: feedLine(session, 'benchIn', rng) });
+}
+
+/** Партнер пам’ятає (M11): кожен привід довіряти чи образитися — у лічильник матчу, далі в кар’єру. */
+function countPeople(state: MatchState, flag: string) {
+  if (flag !== 'partner_trusts' && flag !== 'partner_annoyed') return;
+  state.people = state.people ?? { partner: 0 };
+  state.people.partner += flag === 'partner_trusts' ? 1 : -1;
 }
 
 // ——— лента между эпизодами ———————————————————————————————————————————
@@ -632,6 +641,7 @@ function applyEffects(
       if (f === 'injured' && (session.injuriesSeason ?? 0) >= BALANCE.injury.maxPerSeason) f = 'knock';
       if (!state.flags.includes(f)) state.flags.push(f);
       if (mark) state.marks[f] = { minute, ...mark };   // след решения — для реактивных эпизодов
+      countPeople(state, f);
     }
   }
   if (apply.removeFlags) state.flags = state.flags.filter((f) => !apply.removeFlags!.includes(f));

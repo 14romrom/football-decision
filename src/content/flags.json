@@ -436,5 +436,23 @@
     "id": "plan_possession",
     "label": "план тренера: володіння",
     "value": 0
+  },
+  {
+    "id": "partner_bonded",
+    "label": "дует: {partner} відкривається раніше, ніж ти дивишся",
+    "value": 1,
+    "attributes": ["passing", "vision"],
+    "phases": ["attack", "transition"],
+    "source": "field",
+    "short": "дует"
+  },
+  {
+    "id": "partner_cold",
+    "label": "{partner} перестав просити м’яч",
+    "value": -1,
+    "attributes": ["passing", "vision"],
+    "phases": ["attack", "transition"],
+    "source": "field",
+    "short": "холод"
   }
 ]

@@ -43,6 +43,10 @@ export type Career = {
   weekLog?: WeekLogEntry[];
   /** Что неделя приготовила к следующему матчу — потребляется в consumeStartPenalty. */
   nextMatch?: NextMatchPrep;
+  /** Партнер з пам’яттю (M11, 20.09): сума приводів довіряти (+1) і ображатися (−1) за кар’єру — з ісходів матчу
+   *  і флагів тижня (MatchState.people). Пороги BALANCE.people відкривають флаги partner_bonded / partner_cold
+   *  на матч, тиждень і стрічку (peopleFlags). Раніше партнер жив два матчі як флаг і забувався. */
+  partnerBond?: number;
   /** Прогресс тренировок по атрибутам: BALANCE.week.trainToPoint тренировок = +1 очко навсегда. */
   training?: Partial<Record<Attribute, number>>;
   /** Травм за текущий сезон — не больше BALANCE.injury.maxPerSeason (match.ts понижает до knock). */
@@ -194,6 +198,17 @@ export function nextMatchCoachTrust(endingTrust: number): number {
   return Math.round(endingTrust * (1 - reversion) + BALANCE.coachTrustStart * reversion);
 }
 
+/** Люди з пам’яттю: флаги-пороги з кар’єри на матч, тиждень і стрічку. Не ставляться ісходами — це зведення
+ *  кар’єри, тому в тесті «правило ніхто не ставить» вони системні. Мітка — для {trigger.when} у сценах. */
+export function peopleFlags(career: Career): CarriedFlag[] {
+  const p = BALANCE.people;
+  const bond = career.partnerBond ?? 0;
+  const mark = (past: string): Mark => ({ minute: 0, episodeId: 'career', optionId: 'partner', past, whenText: 'за ці місяці' });
+  if (bond >= p.partnerBonded) return [{ flag: 'partner_bonded', mark: mark('грав із партнером в одне торкання, поки це не стало звичкою') }];
+  if (bond <= p.partnerCold) return [{ flag: 'partner_cold', mark: mark('раз за разом не віддавав партнеру, і він перестав просити') }];
+  return [];
+}
+
 /** Трибуни між матчами — та сама регресія, що й довіра: пам'ятають, але не навіки. */
 export function nextMatchFanHype(endingHype: number): number {
   const reversion = BALANCE.fanHypeReversion;
@@ -262,7 +277,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   return {
     career: next,
     penalty: {
-      staminaPenalty, coachTrustPenalty, note, flags, fromBench: !!career.benched,
+      staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career)], fromBench: !!career.benched,
       attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,
     },
   };
@@ -287,6 +302,7 @@ export function applyMatchToCareer(
     coachTrust: nextMatchCoachTrust(state.coachTrust),
     fanHype: nextMatchFanHype(state.fanHype),
     benched: benchAfterMatch(!!career.benched, state.coachTrust, summary),
+    partnerBond: (career.partnerBond ?? 0) + (state.people?.partner ?? 0),
     matchesPlayed: career.matchesPlayed + 1,
     voiceCounts: { ...career.voiceCounts },
   };

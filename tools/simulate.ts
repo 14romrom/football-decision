@@ -230,6 +230,8 @@ export type CareerRun = {
   verdict: Verdict['kind']; position: number; goals: number; assists: number; coachTrust: number;
   /** Матчів з лави за сезон — чи працює лава як петля, а не як вирок. */
   benchedMatches: number;
+  /** Партнер з пам’яттю на кінець сезону (career.partnerBond). */
+  partnerBond: number;
 };
 
 /** Сезон одним игроком: неделя → матч → карьера, как в App. Сила соперника — из расписания.
@@ -293,7 +295,7 @@ export function runCareer(seed: number, policy: WeekPolicy, matchPolicy: PolicyN
   return {
     avgResult: sumResult / n, avgCoach: sumCoach / n, avgFan: sumFan / n, points: row.points, level: career.level, distinctOffered: offeredAll.size, modsGained,
     verdict: seasonVerdict(season, career.coachTrust).kind, position: row.position, goals: season.player.goals, assists: season.player.assists, coachTrust: career.coachTrust,
-    benchedMatches,
+    benchedMatches, partnerBond: career.partnerBond ?? 0,
   };
 }
 

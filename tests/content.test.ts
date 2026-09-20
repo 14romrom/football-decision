@@ -158,7 +158,8 @@ describe('вариации сетапа и флаги (сезон)', () => {
   it('каждый флаг из контента известен: есть правило в flags.json или это системный флаг', async () => {
     const { FLAG_RULES } = await import('../src/content');
     // keeper_read ставит и движок (бачення/аналітик), и контент (первый удар) — системный.
-    const SYSTEM = ['booked', 'injured', 'sent_off', 'tired', 'keeper_read', 'knock'];
+    // partner_bonded / partner_cold — пороги career.partnerBond (career.ts:peopleFlags), ставит карьера, не исход.
+    const SYSTEM = ['booked', 'injured', 'sent_off', 'tired', 'keeper_read', 'knock', 'partner_bonded', 'partner_cold'];
     // them_<trait> ставит движок по характеристикам соперника из roster.json (match.ts).
     const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
     const used = new Set<string>();
@@ -179,7 +180,7 @@ describe('вариации сетапа и флаги (сезон)', () => {
       ...ACTIVITIES.flatMap((a) => (a.effect.flags ?? []).map((f) => f.flag)),
     ]);
     for (const r of FLAG_RULES) {
-      if (r.id.startsWith('them_') || r.id.startsWith('keeper_')) continue;
+      if (r.id.startsWith('them_') || r.id.startsWith('keeper_') || SYSTEM.includes(r.id)) continue;
       expect(set.has(r.id), `правило ${r.id} никто не ставит`).toBe(true);
     }
   });

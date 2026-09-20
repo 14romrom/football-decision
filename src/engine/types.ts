@@ -124,6 +124,9 @@ export type MatchState = {
   flags: string[];        // 'tired', 'booked', 'hero_moment' и т.п.
   marks: Record<string, Mark>;   // flag → решение, которое его поставило
   voices: VoiceTrace;
+  /** Люди з пам’яттю (M11, 20.09): скільки разів за матч партнер отримав привід довіряти (+1, partner_trusts)
+   *  чи образитися (−1, partner_annoyed) — з ісходів і з флагів тижня. У кар’єру йде як career.partnerBond. */
+  people?: { partner: number };
   log: TimelineEvent[];
 };
 

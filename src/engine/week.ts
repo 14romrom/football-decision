@@ -8,7 +8,7 @@
 // Чистая логика; контент — content/activities.json; экран — ui/WeekScreen.tsx (тонкий).
 
 import { BALANCE } from './balance';
-import { clampTrust, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
+import { clampTrust, peopleFlags, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
 import type { Season } from './season';
 import type { Rng } from './rng';
 import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
@@ -124,7 +124,7 @@ export function weekContext(season: Season, career: Career, position: number): W
     hasScored: season.player.goals + season.player.assists > 0,
     position, clubs: season.clubs.length, coachTrust: career.coachTrust,
     injured: career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock'),
-    flags: (career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag),
+    flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag)],
     fanRating: last.fanRating,
   };
 }

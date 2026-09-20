@@ -5,6 +5,11 @@
       "handle": "@sportpravda",
       "kind": "news"
     },
+    "partner": {
+      "name": "{partner}",
+      "handle": "@moraes_ten",
+      "kind": "club"
+    },
     "transferguru": {
       "name": "TransferGuru",
       "handle": "@transfer_guru",
@@ -152,6 +157,44 @@
     }
   },
   "posts": [
+    {
+      "group": "self",
+      "account": "partner",
+      "when": { "flags": ["partner_bonded"] },
+      "lines": [
+        "Кажуть, ми з {self.ins} розуміємо один одного без слів. Неправда. Він просто ніколи не слухає, тому я перестав говорити.",
+        "Пас від {self.gen} — це коли м’яч приходить туди, де ти будеш, а не де ти є. Звикаєш.",
+        "Ще один матч поруч із {self.ins}. Тренер каже «дует». Ми кажемо «хто на розминці перший — той і диригує»."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "partner",
+      "when": { "flags": ["partner_cold"] },
+      "lines": [
+        "Питають, чому не відкриваюся під {self.gen}. Відкриваюся. Просто вже не чекаю.",
+        "Робочий момент. Триває третій місяць.",
+        "Хтось запитав, чи ми з {self.ins} розмовляємо. Так. Про погоду."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "footyhub",
+      "when": { "flags": ["partner_bonded"] },
+      "lines": [
+        "{self} і {partner} — найкращий дует ліги за кількістю пасів, на які ніхто не дивився. Статистика така є.",
+        "У „{us.gen}“ склалася зв’язка {self} — {partner}. Тренер: «я тут ні до чого». Уперше згодні."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "when": { "flags": ["partner_cold"] },
+      "lines": [
+        "{partner} і {self} на полі як сусіди по сходовій клітці. вітаються і все",
+        "коли {self} востаннє віддав {partner.dat}. серйозно, хто пам’ятає"
+      ]
+    },
     {
       "group": "self",
       "account": "ultra87",

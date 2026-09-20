@@ -8,7 +8,7 @@
 import postsJson from '../content/posts.json';
 import { pickFresh } from './flavor';
 import type { Rng } from './rng';
-import type { Career } from './career';
+import { peopleFlags, type Career } from './career';
 import type { Season } from './season';
 import { standings, US, type MomentRef } from './season';
 import type { VoiceKey } from './types';
@@ -120,7 +120,7 @@ export function buildPostContext(
     position: us.position, clubs: rows.length, round: season.round,
     coachTrust: career.coachTrust,
     injured: career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock'),
-    flags: (career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag),
+    flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag)],
     nextStrength: next?.strength ?? null, nextFlags: next?.traits.map((t) => 'them_' + t) ?? [], nextVenue: next?.venue ?? null,
     leaderLost: lostBy(leader.club), bottomWon: wonBy(bottom.club),
     voice, hasScored: season.player.goals + season.player.assists > 0,

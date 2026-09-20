@@ -12,11 +12,16 @@ import { Doodles } from './doodles';
 // розворот у лінійку з червоним полем замість чотирьох екранів. Дні — заголовки від руки; пропозиції
 // голосів — стікери на скотчі в кольорі голосу (тап — обвів ручкою, інші відриваються, лишаються
 // кутики); запис вечора — від руки чорнилом обраного голосу: «ти» в тексті — це голос пише Реєсу,
-// не Реєс собі (тексты недели во втором лице, переписывать не нужно); сцена-продовження — дописка
-// чорним, варіанти — рядки з клітинками; підсумок — список «до матчу» з галочками замість екрана
-// «Тиждень позаду». Усе Neucha (як маркер на дошці: там капс і чужа рука, тут строчні й паста);
-// кнопка знизу — наша, не частина зошита. На полях — малюнки ручкою (doodles.tsx). Відкат, якщо
-// тестери спіткнуться об читаність: записи в Lora, решта від руки.
+// кутики); підсумок — список «до матчу» з галочками замість екрана «Тиждень позаду». Усе Neucha
+// (як маркер на дошці: там капс і чужа рука, тут строчні й паста); кнопка знизу — наша, не частина
+// зошита. На полях — малюнки ручкою (doodles.tsx).
+//
+// Ісход і сцена-продовження — **лист вечора** (20.09, макет «Лист вечора», решение пользователя):
+// той самий лист моменту, що в матчі (.moment / .minute-tab / .setup / .voices / .hand / .choices),
+// вписаний під день, зошит навколо гасне, як гасне стрічка в матчі. Не модальне вікно: у грі їх немає,
+// лист живе в потоці сторінки. Причина: довга проза від руки читалась погано, і було незрозуміло, хто
+// її написав; у листа автор є — оповідач гри. У зошиті після листа лишається один короткий рядок
+// ручкою (nb-mark): наслідок і вибір у сцені.
 
 type Props = {
   /** Дни с предложениями и исходами, уже с именами ростера. */
@@ -90,11 +95,14 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
   // ——— що вже записано в кожен день ———
   const pickOf = (d: number) => picks.find((p) => p.day === d);
   const offerOf = (d: number) => { const p = pickOf(d); return p ? days[d].find((o) => o.activity.id === p.activityId) : undefined; };
-  const sceneTextOf = (d: number) => {
+  /** Рядок ручкою під прожитим днем: наслідок ісходу і, якщо була сцена, її вибір. */
+  const markOf = (d: number, withScene: boolean) => {
     const p = pickOf(d);
-    if (!p?.scene) return undefined;
-    const sc = scenes.find((s) => s.id === p.scene!.id);
-    return sc?.options.find((o) => o.id === p.scene!.option)?.text;
+    const offer = offerOf(d);
+    const note = (offer?.outcome?.effect ?? offer?.activity.effect)?.note ?? '';
+    const sc = withScene && p?.scene ? scenes.find((s) => s.id === p.scene!.id) : undefined;
+    const label = sc?.options.find((o) => o.id === p!.scene!.option)?.label;
+    return [note.replace(/\.$/, ''), label ? label.toLowerCase() : ''].filter(Boolean).join(' · ');
   };
 
   /** Стікер: обраний — обведений, решта після вибору — відірвані кутики. Функция, не компонент:
@@ -132,24 +140,72 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
             {offers.map((o) => note(o, o === offer ? 'on' : 'torn'))}
           </div>
         )}
-        {offer?.outcome && (
-          <p className={`nb-entry ink-${offer.activity.voice}`}>
-            {offer.outcome.text}
-            {withScene && sceneTextOf(d) && <><br /><span className="nb-scene">{sceneTextOf(d)}</span></>}
-          </p>
-        )}
-        {!offer && <p className="nb-entry muted-ink">— день минув. Голоси запам’ятали.</p>}
+        {offer && <p className="nb-mark">{markOf(d, withScene)}</p>}
+        {!offer && <p className="nb-mark muted-ink">— день минув. голоси запам’ятали.</p>}
       </section>
+    );
+  };
+
+  /** Лист вечора: ісход, потім сцена (сетап, підказки голосів колонкою, «Твій хід»), потім вибір. */
+  const sheet = (d: number, offer: WeekOffer) => {
+    const out = offer.outcome!;
+    const voice = VOICE_LABEL[offer.activity.voice];
+    if (phase.p === 'scene') {
+      const { scene, chosen } = phase;
+      const visible = sceneOptionsFor(scene, sees);
+      return (
+        <div className="moment nb-sheet"><div className="scene">
+          <span className="minute-tab">{DAY[d].toUpperCase()} · ПІЗНО</span>
+          <p className="setup">{scene.setup}</p>
+          {chosen ? (
+            <>
+              <p className="nb-chosen"><b>{chosen.label}.</b> {chosen.text}</p>
+              <p className="nb-aside">{chosen.effect.note}</p>
+              <button className="primary menu-primary nb-sheet-btn" onClick={() => advance(picks)}>{last ? 'Підсумок тижня' : 'Далі'}</button>
+            </>
+          ) : (
+            <>
+              {visible.some((o) => o.insight) && (
+                <div className="voices">
+                  {visible.filter((o) => o.insight).map((o) => (
+                    <p key={o.id} className={`say voice-${o.insight!.who}`}><b>{VOICE_LABEL[o.insight!.who]}</b><span>{o.insight!.line}</span></p>
+                  ))}
+                </div>
+              )}
+              <div className="hand"><span>Твій хід</span></div>
+              <ol className="choices">
+                {visible.map((o, i) => (
+                  <li key={o.id}>
+                    <button className={`choice ${o.insight ? `choice-insight voice-${o.insight.who}` : ''}`} onClick={() => chooseScene(scene, o)}>
+                      <span className="choice-num">{i + 1}</span>
+                      <span className="choice-text">
+                        {o.label}
+                        {o.insight && <span className="bracket"><i className="origin">відкрив {VOICE_LABEL[o.insight.who]}</i></span>}
+                      </span>
+                      <span className="choice-go" aria-hidden="true">›</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              <div className="nb-sheet-pad" />
+            </>
+          )}
+        </div></div>
+      );
+    }
+    return (
+      <div className="moment nb-sheet"><div className="scene">
+        <span className="minute-tab">{DAY[d].toUpperCase()} · ВЕЧІР</span>
+        <p className="setup">{out.text}</p>
+        <p className={`nb-aside voice-${offer.activity.voice}`}><b>{voice}</b>{out.effect.note}</p>
+        <button className="primary menu-primary nb-sheet-btn" onClick={() => afterOutcome(offer)}>{sceneFor(out, scenes, seen, sceneUsed) ? 'Що далі' : last ? 'Підсумок тижня' : 'Далі'}</button>
+      </div></div>
     );
   };
 
   const button = (() => {
     if (phase.p === 'summary') return <button className="primary menu-primary" onClick={onNext}>До матчу</button>;
-    if (phase.p === 'outcome') {
-      const out = phase.offer.outcome!;
-      return <button className="primary menu-primary" onClick={() => afterOutcome(phase.offer)}>{sceneFor(out, scenes, seen, sceneUsed) ? 'Що далі' : last ? 'Підсумок тижня' : 'Далі'}</button>;
-    }
-    if (phase.p === 'scene') return phase.chosen ? <button className="primary menu-primary" onClick={() => advance(picks)}>{last ? 'Підсумок тижня' : 'Далі'}</button> : null;
+    if (phase.p === 'outcome' || phase.p === 'scene') return null;   // кнопка — всередині листа
     const offers = days[day] ?? [];
     return <button className="primary menu-primary" onClick={confirmDay}>{selected ? 'Так і зробити' : offers.length ? 'Нічого не робити сьогодні' : 'Далі'}</button>;
   })();
@@ -157,7 +213,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
   return (
     <div className="result week">
       <div className="card-minute">тиждень між матчами</div>
-      <div className="nb-book">
+      <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
@@ -179,27 +235,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
                 <div className="nb-notes compact">
                   {offers.map((o) => note(o, o === offer ? 'on' : 'torn'))}
                 </div>
-                <p className={`nb-entry ink-${offer.activity.voice}`}>
-                  {offer.outcome!.text}
-                  <span className="nb-note-line">{offer.outcome!.effect.note}</span>
-                </p>
-                {phase.p === 'scene' && (
-                  <div className="nb-scene-block">
-                    <p className="nb-entry nb-scene">{phase.scene.setup}</p>
-                    {phase.chosen ? (
-                      <p className="nb-entry nb-scene"><b>{phase.chosen.label}.</b> {phase.chosen.text}<span className="nb-note-line">{phase.chosen.effect.note}</span></p>
-                    ) : (
-                      <div className="nb-options">
-                        {sceneOptionsFor(phase.scene, sees).map((o) => (
-                          <button key={o.id} type="button" className={`nb-opt ${o.insight ? `ink-${o.insight.who}` : ''}`} onClick={() => chooseScene(phase.scene, o)}>
-                            <span>{o.label}</span>
-                            {o.insight && <i>{VOICE_LABEL[o.insight.who]}: «{o.insight.line}»</i>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {sheet(d, offer)}
               </section>
             );
           }

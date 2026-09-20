@@ -473,10 +473,10 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 
 /* ——— тиждень = зошит Реєса (ui/WeekScreen.tsx, 19.09, макет «Тиждень у зошиті» А v2) ———
    Зошит у лінійку з червоним полем і дірочками від кілець — єдиний особистий предмет серед екранів.
-   Усе від руки (Neucha): заголовки днів, стікери голосів, запис вечора чорнилом обраного голосу,
-   список «до матчу». Кнопка знизу — наша (Oswald), не частина зошита. Малюнки на полях — doodles.tsx. */
-.week { --pen: #2b3a6b; --paper: #f4f1e8; --rule: #c9d6e6; --margin: #e2a2a2; --font-hand: 'Neucha', 'Segoe Print', cursive;
-  --ink-body: #8a3a3a; --ink-vision: #5a3f8f; --ink-instinct: #7a5f0e; --ink-ego: #9a5a1c; --ink-composure: #2b4a8a; --ink-team: #1f6b45; }
+   Від руки (Neucha) — тільки коротке: заголовки днів, стікери голосів, рядок-наслідок під днем, список
+   «до матчу». Ісход і сцена — лист вечора (.nb-sheet = .moment з матчу). Кнопка знизу — наша (Oswald),
+   не частина зошита. Малюнки на полях — doodles.tsx. */
+.week { --pen: #2b3a6b; --paper: #f4f1e8; --rule: #c9d6e6; --margin: #e2a2a2; --font-hand: 'Neucha', 'Segoe Print', cursive; }
 .nb-book { position: relative; margin: 0 -6px; padding: 14px 14px 18px 62px; min-height: 560px; color: #1f2333; border-radius: 2px;
   background-color: var(--paper);
   background-image: linear-gradient(90deg, transparent 53px, var(--margin) 53px, var(--margin) 54px, transparent 54px), repeating-linear-gradient(180deg, transparent 0 27px, var(--rule) 27px 28px);
@@ -504,22 +504,20 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .nb-train { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .nb-train em { font-style: normal; font-family: var(--font-hand); font-size: 14px; padding: 1px 9px; border: 1.5px solid var(--pen); border-radius: 999px; color: var(--pen); }
 .nb-train em.on { background: var(--pen); color: #fff; }
-/* Запис вечора — рукою обраного голосу: «ти» в тексті — це голос пише Реєсу. */
-.nb-entry { margin: 4px 6px 0 0; font-family: var(--font-hand); font-size: 18.5px; line-height: 28px; color: var(--pen); letter-spacing: .01em; }
-.nb-entry.ink-body { color: var(--ink-body); } .nb-entry.ink-vision { color: var(--ink-vision); } .nb-entry.ink-instinct { color: var(--ink-instinct); }
-.nb-entry.ink-ego { color: var(--ink-ego); } .nb-entry.ink-composure { color: var(--ink-composure); } .nb-entry.ink-team { color: var(--ink-team); }
-.nb-entry.muted-ink { color: #7a7f95; }
-.nb-day:nth-of-type(odd) .nb-entry { transform: rotate(-.3deg); }
-.nb-note-line { display: block; font-size: 15.5px; color: #5c6690; }
-.nb-scene { color: #1f2333; opacity: .85; font-size: 17px; }
-.nb-scene-block { margin-top: 4px; }
-.nb-options { display: grid; gap: 4px; margin: 4px 6px 0 0; }
-.nb-opt { display: grid; grid-template-columns: 22px 1fr; align-items: baseline; gap: 6px; background: none; border: 0; border-radius: 0; padding: 0; text-align: left; font-family: var(--font-hand); font-size: 18px; line-height: 28px; color: var(--pen); }
-.nb-opt::before { content: '☐'; font-size: 20px; }
-.nb-opt:active::before { content: '☑'; }
-.nb-opt i { display: block; font-style: normal; font-size: 15px; line-height: 22px; opacity: .8; }
-.nb-opt.ink-vision { color: var(--ink-vision); } .nb-opt.ink-instinct { color: var(--ink-instinct); } .nb-opt.ink-body { color: var(--ink-body); } .nb-opt.ink-composure { color: var(--ink-composure); } .nb-opt.ink-ego { color: var(--ink-ego); } .nb-opt.ink-team { color: var(--ink-team); }
 .nb-empty { height: 56px; }
+/* Лист вечора — лист моменту, вписаний під день; зошит навколо гасне (як стрічка під листом у матчі). */
+.nb-book.dimmed::after { content: ''; position: absolute; inset: 0; background: rgba(16,16,20,.5); z-index: 1; pointer-events: none; }
+.nb-sheet { position: relative; z-index: 2; margin: 6px -6px 12px -36px; }
+.nb-sheet .scene { padding-bottom: 2px; }
+.nb-aside { margin: -4px 0 10px; font-size: 14px; color: var(--muted); font-style: italic; }
+.nb-aside b { font-style: normal; font-family: var(--font-caps); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; margin-right: 6px; }
+.nb-aside.voice-ego b { color: var(--v-ego); } .nb-aside.voice-team b { color: var(--v-team); } .nb-aside.voice-vision b { color: var(--v-vision); }
+.nb-aside.voice-instinct b { color: var(--v-instinct); } .nb-aside.voice-body b { color: var(--v-body); } .nb-aside.voice-composure b { color: var(--v-composure); }
+.nb-chosen { margin: -4px 0 6px; font-size: 15.5px; line-height: 1.5; color: #f0ebe0; }
+.nb-sheet-btn { margin: 4px 0 12px; }
+.nb-sheet-pad { height: 12px; }
+.nb-mark { margin: 2px 6px 0 0; font-family: var(--font-hand); font-size: 17px; line-height: 28px; color: var(--pen); }
+.nb-mark.muted-ink { color: #7a7f95; }
 .nb-coach { position: relative; z-index: 1; width: 190px; margin: -4px 0 8px auto; padding: 8px 10px; background: #fff; color: #1f2333; font-family: var(--font-hand); font-size: 15px; line-height: 1.2; box-shadow: 2px 3px 8px rgba(0,0,0,.25); transform: rotate(2.5deg); clip-path: polygon(0 4%, 6% 0, 100% 2%, 98% 96%, 50% 100%, 2% 97%); }
 .nb-coach b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--bad); }
 .nb-list { margin: 6px 6px 0 0; }

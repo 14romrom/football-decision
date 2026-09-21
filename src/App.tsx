@@ -18,9 +18,11 @@ import { LevelUpScreen } from './ui/LevelUpScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
 import {
-  applyChoice, createMatch, finishMatch, nextEpisode, sceneInsights,
+  advanceTo, applyChoice, createMatch, finishMatch, nextEpisode, sceneInsights,
   type MatchSession, type MatchSummary,
 } from './engine/match';
+import { buildEntry, type Entry } from './engine/entry';
+import { EntryCard } from './ui/EntryCard';
 import {
   applyMatchToCareer, arcStage, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
   type Career, type CarryFacts,
@@ -68,6 +70,8 @@ type Stage =
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
   // Фінальний свисток (M10, 20.09): лист оповідача на полі, потім кнопка «Перейти в роздягальню» → дошка.
   | { k: 'whistle'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
+  // Вихід із лави (21.09): лист без кубика на хвилині виходу — сетап, голоси, «Вийти на поле».
+  | { k: 'entry'; entry: Entry; minute: number; debut: boolean }
   // Після матчу (19.09): дошка аналітика → картка з дельтою → таблиця → стрічка → тиждень.
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
   | { k: 'delta'; summary: MatchSummary; before: Career; after: Career; leveledFrom: number; leveledTo: number; card: boolean }
@@ -82,6 +86,7 @@ type Stage =
 
 type Pending =
   | { kind: 'episode'; episode: Episode; minute: number; link: boolean }
+  | { kind: 'entry'; entry: Entry; minute: number; debut: boolean }
   | { kind: 'result'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career };
 
 /** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
@@ -144,6 +149,16 @@ function Game() {
   const proceed = useCallback((lead: TimelineEvent[] = []) => {
     const session = sessionRef.current!;
     const rng = rngRef.current!;
+    // Вихід із лави — подія: лента доходить до хвилини виходу і зупиняється на листі «Вийти на поле»;
+    // далі proceed() продовжує з тієї ж хвилини до наступного рішення.
+    const entryMinute = BALANCE.bench.entryMinute;
+    if (session.onBench && session.state.minute < entryMinute && (session.schedule[session.nextIndex] ?? 0) > entryMinute && !session.pendingFollowUp) {
+      const events = advanceTo(session, entryMinute, rng);
+      pendingRef.current = { kind: 'entry', entry: buildEntry(session.state, session.conditions, !!session.tutorial), minute: entryMinute, debut: !!session.tutorial };
+      setQueue([...lead, ...events]);
+      setStage({ k: 'feed' });
+      return;
+    }
     const next = nextEpisode(session, rng);
     if (next) {
       // Звено цепочки приходит без ленты: та же минута, сцена продолжается.
@@ -310,6 +325,8 @@ function Game() {
       if (p.kind === 'episode') {
         shownAtRef.current = performance.now();
         setStage({ k: 'episode', episode: p.episode, minute: p.minute, link: p.link });
+      } else if (p.kind === 'entry') {
+        setStage({ k: 'entry', entry: p.entry, minute: p.minute, debut: p.debut });
       } else {
         setStage({ k: 'whistle', whistle: p.whistle, summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo, before: p.before, after: p.after });
       }
@@ -623,9 +640,12 @@ function Game() {
         conditions={session.conditions}
         flagRules={session.flagRules}
         hideDiceZone={stage.k === 'roll'}
-        sheet={stage.k === 'whistle'}
+        sheet={stage.k === 'whistle' || stage.k === 'entry'}
         finale={finale}
       >
+        {stage.k === 'entry' && (
+          <EntryCard entry={fillNamesDeep(stage.entry, session.roster)} minute={stage.minute} debut={stage.debut} onNext={() => proceed()} />
+        )}
         {stage.k === 'whistle' && (
           <WhistleCard
             whistle={stage.whistle}

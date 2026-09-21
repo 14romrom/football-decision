@@ -139,7 +139,7 @@ describe('правило «никаких процентов» (п. 1 и п. 13 
   // тестеров и есть предмет измерения, а не подсказка игроку.
   const GAMEPLAY_UI = [
     'MatchScreen', 'EpisodeCard', 'RollView', 'BoardScreen', 'DeltaScreen', 'DebugPanel', 'BriefingScreen', 'PlayerCard',
-    'SeasonScreen', 'LevelUpScreen', 'WhistleCard', 'WeekScreen', 'PrologueScreen', 'AgentScene', 'LootSheet', 'Spotlight',
+    'SeasonScreen', 'LevelUpScreen', 'WhistleCard', 'WeekScreen', 'PrologueScreen', 'AgentScene', 'LootSheet', 'Spotlight', 'EntryCard',
   ];
 
   it('в игровых экранах нет процентов, шансов и ожидаемых значений', async () => {

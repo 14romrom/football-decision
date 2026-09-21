@@ -23,6 +23,9 @@ export type ProgrammeInput = {
   arc?: number;
   /** Луна зимового дзвінка (career.agentEcho) — перший матч нового сезону: тренер знає. */
   agentEcho?: 'leave' | 'stay' | 'wait';
+  /** Перенесене з минулого туру (career.ts:CarryFacts): вилучення, картки, травма — фразою прес-служби. Службова
+   *  сводка в підвалі програмки прибрана (21.09, пользователь: недоречно для формату, ніхто не читає). */
+  carry?: { sentOff: boolean; yellows: boolean; injured: boolean };
 };
 
 const ORD = ['', 'перший', 'другий', 'третій', 'четвертий', 'п’ятий', 'шостий', 'сьомий', 'восьмий', 'дев’ятий', 'десятий'];
@@ -61,6 +64,15 @@ function arcLine(i: ProgrammeInput): string {
   return '';
 }
 
+function carryLine(i: ProgrammeInput): string {
+  const c = i.carry;
+  if (!c) return '';
+  const bits = [c.sentOff ? 'Після вилучення в минулому турі' : c.yellows ? 'Три жовті за сезон — під наглядом' : '', c.injured ? 'грає після травми' : ''].filter(Boolean);
+  if (bits.length === 0) return '';
+  const line = bits.join(', ');
+  return line.charAt(0).toUpperCase() + line.slice(1) + '.';
+}
+
 function coachLine(i: ProgrammeInput): string {
   if (i.benched) return 'У заявці, але починає на лаві.';
   if (i.coachTrust >= 70) return 'Місце в основі беззаперечне.';
@@ -70,7 +82,7 @@ function coachLine(i: ProgrammeInput): string {
 
 /** Заметка «Реєс» — 2–4 короткие фразы; каждая часть опциональна, пустые не оставляют дыр. */
 export function programmeNote(i: ProgrammeInput): string {
-  const parts = [lastLine(i), formLine(i), MILESTONE[i.matchesPlayed + 1] ?? '', arcLine(i), weekLine(i), coachLine(i)].filter(Boolean);
+  const parts = [lastLine(i), carryLine(i), formLine(i), MILESTONE[i.matchesPlayed + 1] ?? '', arcLine(i), weekLine(i), coachLine(i)].filter(Boolean);
   return parts.join(' ');
 }
 

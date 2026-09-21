@@ -23,7 +23,7 @@ import {
 } from './engine/match';
 import {
   applyMatchToCareer, arcStage, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
-  type Career,
+  type Career, type CarryFacts,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
@@ -62,7 +62,7 @@ import { DebugPanel } from './ui/DebugPanel';
 
 type Stage =
   | { k: 'menu' }
-  | { k: 'briefing'; carryoverNote?: string }
+  | { k: 'briefing'; carry: CarryFacts }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number; link: boolean }
   | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
@@ -223,7 +223,7 @@ function Game() {
     sessionRef.current = session;
     setShown([]);
     // Нотатки тижня і прологу зберігаються з плейсхолдерами ({dm}, {sub}) — імена підставляються тут, під ростер матчу.
-    setStage({ k: 'briefing', carryoverNote: penalty.note ? fillNames(penalty.note, session.roster) : undefined });
+    setStage({ k: 'briefing', carry: penalty.facts });
   }, [setCareerBoth, setSeasonBoth]);
 
   const newSeason = useCallback(() => {
@@ -452,10 +452,10 @@ function Game() {
           conditions={session.conditions}
           opponent={OPPONENTS[session.conditions.opponentKey]}
           player={session.player}
-          carryoverNote={stage.carryoverNote}
+
           round={season.round + 1}
           usName={ROSTER.us.name.nom}
-          note={programmeNote(programmeInput(season, career, session.conditions))}
+          note={programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry })}
           trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
           onStart={kickoff}
         />

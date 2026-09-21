@@ -275,7 +275,12 @@ export function benchAfterMatch(benched: boolean, endingTrust: number, summary: 
   return endingTrust < b.demoteTrust && actions === 0;
 }
 
+/** Що переноситься в матч із минулого — для програмки (прес-служба скаже це своїми словами, без «тренер не забув»). */
+export type CarryFacts = { sentOff: boolean; yellows: boolean; injured: boolean };
+
 export type StartPenalty = {
+  /** Факти для програмки (programme.ts:carryLine); note нижче — службовий рядок, на екран не йде (21.09). */
+  facts: CarryFacts;
   /** Стан арки на цей матч (M13) — репліки, сетапи й свисток читають його через state.arc. */
   arc?: ArcStage;
   staminaPenalty: number; coachTrustPenalty: number; note?: string;
@@ -327,6 +332,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   return {
     career: next,
     penalty: {
+      facts: { sentOff: career.pendingSentOff, yellows: !career.pendingSentOff && career.careerYellows >= 3, injured: staminaPenalty > 0 },
       staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career), ...tiboFlags(career), ...prologueFlags(career), ...agentFlags(career)], fromBench: !!career.benched,
       arc: arcStage(career),
       attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,

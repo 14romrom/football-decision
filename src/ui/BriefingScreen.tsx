@@ -49,7 +49,6 @@ function toneLines(c: MatchConditions): { title: string; note: string } {
 type Props = {
   conditions: MatchConditions; opponent: Opponent; player: Player;
   /** Наслідки недели (бирки) — на програмці уходят в заметку о Реєсе; здесь остаются как подпись мелко. */
-  carryoverNote?: string;
   /** Тур (1-based), клуб-хозяин для шапки, заметка о Реєсе и черта соперника — считаются в App (engine/programme.ts). */
   round: number; usName: string; note: string; trait: string | null;
   onStart: () => void;
@@ -59,7 +58,7 @@ type Props = {
 // единственный светлый экран в игре. Рубрики: Реєс (заметка прозой), Суперник (+ черта голосом клуба),
 // Стадіон, Погода, Форма, Слово тренера цитатой в рамке. Без иронии: програмку пишет пресс-служба.
 
-export function BriefingScreen({ conditions, opponent, player, carryoverNote, round, usName, note, trait, onStart }: Props) {
+export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, onStart }: Props) {
   const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
   const venue = conditions.venue === 'home'
     ? { title: 'Вдома', note: `Трибуни знають тебе і чекають ${sig[0]} та ${sig[1]}.` }
@@ -87,7 +86,7 @@ export function BriefingScreen({ conditions, opponent, player, carryoverNote, ro
           <dt>Форма</dt><dd><b>{tone.title}.</b> {tone.note}</dd>
           <dd className="prog-quote"><b>Слово тренера · установка: {instr.title.toLowerCase()}</b>{instr.quote} {instr.note}</dd>
         </dl>
-        <div className="prog-foot"><span>Безкоштовно · не для продажу</span><span>{carryoverNote ? carryoverNote.toLowerCase() : 'надруковано вчора'}</span></div>
+        <div className="prog-foot"><span>Безкоштовно · не для продажу</span><span>надруковано вчора</span></div>
       </div>
       <button className="primary prog-cta" onClick={onStart}>Вийти на поле</button>
     </div>

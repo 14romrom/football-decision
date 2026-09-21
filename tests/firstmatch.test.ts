@@ -16,11 +16,13 @@ const byId = (id: string) => EPISODES_RAW.find((e) => e.id === id)!;
 
 describe('контент першого матчу', () => {
   it('чотири сцени, кожна — існуючий безумовний епізод, що влазить у слоти після виходу з лави', () => {
-    expect(FIRST_MATCH.scenes).toHaveLength(4);
-    const slots = BALANCE.match.episodeMinutes.filter((m) => m >= BALANCE.bench.entryMinute);
-    expect(slots).toHaveLength(4);
+    expect(FIRST_MATCH.scenes).toHaveLength(5);
+    expect(FIRST_MATCH.scenes[0].episode).toBe(BALANCE.bench.callEpisode);
+    const slots = [BALANCE.bench.callMinute, ...BALANCE.match.episodeMinutes.filter((m) => m >= BALANCE.bench.entryMinute)];
+    expect(slots).toHaveLength(5);
     FIRST_MATCH.scenes.forEach((s, i) => {
       const e = byId(s.episode);
+      if (i === 0) { expect(e.requires?.flags).toEqual(['on_bench']); expect(s.text).not.toMatch(/\d/); return; }
       expect(e, s.episode).toBeDefined();
       expect(e.followUpOnly ?? false, s.episode).toBe(false);
       expect(e.requires?.flags ?? [], s.episode).toHaveLength(0);
@@ -34,16 +36,17 @@ describe('контент першого матчу', () => {
       expect(s.title + s.text).not.toMatch(/!|\d|%/);
       expect(['choices', 'formula', 'voices', 'verdict']).toContain(s.target);
     });
-    expect(new Set(FIRST_MATCH.scenes.map((s) => s.episode)).size).toBe(4);
+    expect(new Set(FIRST_MATCH.scenes.map((s) => s.episode)).size).toBe(5);
   });
 
   it('перша сцена показує всі три форми ризику; третя — перша, де говорить Тіло', () => {
-    const forms = new Set(byId(FIRST_MATCH.scenes[0].episode).options.filter((o) => !o.requires && !o.insight).map((o) => o.basePosition));
+    const forms = new Set(byId(FIRST_MATCH.scenes[1].episode).options.filter((o) => !o.requires && !o.insight).map((o) => o.basePosition));
     expect(forms).toEqual(new Set(['controlled', 'risky', 'desperate']));
     const bodyIn = (id: string) => byId(id).options.some((o) => !o.requires && !o.insight && o.voice?.who === 'body');
     expect(bodyIn(FIRST_MATCH.scenes[0].episode)).toBe(false);
     expect(bodyIn(FIRST_MATCH.scenes[1].episode)).toBe(false);
-    expect(bodyIn(FIRST_MATCH.scenes[2].episode)).toBe(true);
+    expect(bodyIn(FIRST_MATCH.scenes[2].episode)).toBe(false);
+    expect(bodyIn(FIRST_MATCH.scenes[3].episode)).toBe(true);
   });
 });
 

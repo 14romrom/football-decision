@@ -423,6 +423,20 @@
     "value": 0
   },
   {
+    "id": "on_bench",
+    "label": "на лаві",
+    "value": 0
+  },
+  {
+    "id": "seen_from_bench",
+    "label": "прочитав з лави, де в них дірка",
+    "value": 1,
+    "attributes": ["vision", "positioning"],
+    "phases": ["attack", "transition"],
+    "source": "player",
+    "short": "з лави"
+  },
+  {
     "id": "tibo_asked",
     "label": "перепитав у Тібо про мафію",
     "value": 0

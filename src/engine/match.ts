@@ -51,6 +51,8 @@ export type MatchSession = {
   feedSeenNow: Set<string>;
   flavorSeenNow: Set<string>;
   injuriesSeason?: number;
+  /** На лаві до bench.entryMinute: сили не витрачаються, стоїть флаг on_bench; на виході — свіжі ноги і рядок «виходиш». */
+  onBench?: boolean;
   /** Перший матч кар’єри (M12): чотири фіксовані сцени-туторіал замість плану, підказка оповідача на кожну
    *  (епізод → рядок), реактивні сцени не спливають — кожна сцена вводить одну річ. */
   tutorial?: Tutorial;
@@ -222,13 +224,16 @@ export function createMatch(
     && !carried.some((f) => f.flag === 'keeper_read');
   const keeperReadPast = conditions.keeperTip ? 'вислухав аналітика про воротаря' : 'прочитав воротаря ще на розминці';
   const last = BALANCE.match.episodeMinutes.length - 1;
-  const schedule = BALANCE.match.episodeMinutes.map((m, i) => {
+  const fieldSchedule = BALANCE.match.episodeMinutes.map((m, i) => {
     const j = BALANCE.match.minuteJitter;
     const minute = m + rng.int(-j, j);
     // последний эпизод обязан быть после 85-й — это требование ТЗ, а не случайность
     return i === last ? Math.max(86, minute) : minute;
     // З лави — лише слоти після виходу: чотири рішення замість дев'яти, і кожне на вагу золота.
   }).filter((minute) => !carryover.fromBench || minute >= BALANCE.bench.entryMinute);
+  // З лави перед виходом — сцена «розминайся» (bench.callEpisode) на bench.callMinute: слот поза планувальником.
+  const benchCall = carryover.fromBench && episodes.some((e) => e.id === BALANCE.bench.callEpisode) ? [BALANCE.bench.callMinute] : [];
+  const schedule = [...benchCall, ...fieldSchedule];
 
   const state: MatchState = {
     minute: 0,
@@ -246,6 +251,7 @@ export function createMatch(
     // варианты сетапа через when.flags. Механизм тот же, что у последствий решений.
     // Без дублей: флаг недели и флаг матча с одним id (partner_annoyed) — один флаг, одна поправка.
     flags: [...new Set([
+      ...(benchCall.length ? ['on_bench'] : []),
       ...carried.map((f) => f.flag),
       ...opponentTraits(roster.them).map((t) => 'them_' + t),
       ...(roster.them.keeper ? ['keeper_' + roster.them.keeper.trait] : []),
@@ -268,7 +274,9 @@ export function createMatch(
     memory: toMemory(recentEpisodeIds),
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: carryover.tutorial && carryover.tutorial.plan.length === schedule.length && carryover.tutorial.plan.every((id) => episodes.some((e) => e.id === id))
-      ? [...carryover.tutorial.plan] : planEpisodes(schedule, episodes, rng, recentEpisodeIds),
+      ? [...carryover.tutorial.plan]
+      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds)],
+    ...(benchCall.length ? { onBench: true } : {}),
     ...(carryover.tutorial ? { tutorial: carryover.tutorial } : {}),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
     feedSeen: new Set(carryover.feedSeen ?? []), feedSeenNow: new Set(), flavorSeenNow: new Set(),
@@ -286,12 +294,14 @@ export function createMatch(
 }
 
 /** Перший тайм з лави: команда грає без тебе — лента й голи ленти по чвертях, як у звичайних
- *  проміжках, але без витрати сил і без мікротравм (ти сидиш). На виході — свіжі ноги і рядок
- *  «виходиш». Далі матч іде як завжди, з першого слота після entryMinute. */
+ *  проміжках, але без витрати сил і без мікротравм (ти сидиш). Далі — звичайна лента до сцени
+ *  «розминайся» (якщо вона є в пулі) і до виходу; на виході (benchEnter) — свіжі ноги і рядок «виходиш».
+ *  Без сцени в пулі — як раніше: одразу до entryMinute. */
 function benchWarmup(session: MatchSession, rng: Rng) {
   const state = session.state;
   const entry = BALANCE.bench.entryMinute;
-  for (const until of [15, 30, 45, entry]) {
+  const stops = session.onBench ? [15, 30, 45] : [15, 30, 45, entry];
+  for (const until of stops) {
     const from = state.minute;
     const goal = rollFillerGoal(session, rng);
     const minute = rng.int(from + 2, until - 2);
@@ -300,8 +310,17 @@ function benchWarmup(session: MatchSession, rng: Rng) {
     if (until === 45) state.log.push({ minute: 45, kind: 'halftime', text: feedLine(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
     state.minute = until;
   }
+  if (!session.onBench) benchEnter(session, rng);
+}
+
+/** Вихід із лави: свіжі ноги, флаг on_bench знято, рядок «виходиш» у стрічці. */
+function benchEnter(session: MatchSession, rng: Rng) {
+  const state = session.state;
   state.stamina = clamp(state.stamina + BALANCE.bench.staminaBonus, 0, 100);
-  state.log.push({ minute: entry, kind: 'filler', text: feedLine(session, 'benchIn', rng) });
+  syncTired(state);
+  state.flags = state.flags.filter((f) => f !== 'on_bench');
+  session.onBench = false;
+  state.log.push({ minute: BALANCE.bench.entryMinute, kind: 'filler', text: feedLine(session, 'benchIn', rng) });
 }
 
 /** Партнер пам’ятає (M11): кожен привід довіряти чи образитися — у лічильник матчу, далі в кар’єру. */
@@ -413,11 +432,13 @@ function syncTired(state: MatchState) {
  *  после 80-й, и в слышимости голоса «Спокій» (voices.ts). */
 function tickTime(session: MatchSession, minutes: number) {
   const state = session.state;
-  const heat = session.conditions.weather === 'heat' ? BALANCE.conditions.heatDrainScale : 1;
-  const knock = state.flags.includes('knock') ? BALANCE.knock.drainScale : 1;
-  const endurance = 1 - attrMod(session.player.attrs.stamina) * BALANCE.staminaAttrDrainStep;
-  state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute * heat * knock * endurance, 0, 100);
-  syncTired(state);
+  if (!session.onBench) {   // на лаві сили не йдуть — ти сидиш
+    const heat = session.conditions.weather === 'heat' ? BALANCE.conditions.heatDrainScale : 1;
+    const knock = state.flags.includes('knock') ? BALANCE.knock.drainScale : 1;
+    const endurance = 1 - attrMod(session.player.attrs.stamina) * BALANCE.staminaAttrDrainStep;
+    state.stamina = clamp(state.stamina - minutes * BALANCE.staminaDrainPerMinute * heat * knock * endurance, 0, 100);
+    syncTired(state);
+  }
 
   const c = BALANCE.crowd;
   const dir = state.fanHype >= c.hypeHighAbove ? 1 : state.fanHype < c.hypeLowBelow ? -1 : 0;
@@ -430,6 +451,13 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   const from = state.minute;
   const before = state.log.length;
   if (until <= from) return [];
+  // Вихід із лави посеред проміжку: спершу лента до хвилини виходу, потім «виходиш», потім решта.
+  const entry = BALANCE.bench.entryMinute;
+  if (session.onBench && from < entry && until > entry) {
+    const a = advanceTo(session, entry, rng);
+    const b = advanceTo(session, until, rng);
+    return [...a, ...b];
+  }
 
   if (from < 45 && until >= 45) {
     state.stamina = clamp(state.stamina + BALANCE.halftimeRecovery, 0, 100);
@@ -454,6 +482,7 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   }
   tickTime(session, gap / (beats + 1));
   state.minute = until;
+  if (session.onBench && until >= entry) benchEnter(session, rng);
 
   return state.log.slice(before);
 }

@@ -29,16 +29,25 @@ describe('лава запасних', () => {
     const rng = makeRng(11);
     const s = createMatch('b', 11, PLAYER, rng, EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES, { fromBench: true, staminaPenalty: 20 });
     expect(s.schedule.length).toBeLessThan(BALANCE.match.episodeMinutes.length);
-    expect(s.schedule.every((m) => m >= BALANCE.bench.entryMinute)).toBe(true);
-    expect(s.state.minute).toBe(BALANCE.bench.entryMinute);
-    expect(s.state.stamina).toBe(100 - 20 + BALANCE.bench.staminaBonus);
+    // Перший слот — сцена «розминайся» на лаві (21.09), решта — після виходу.
+    expect(s.schedule[0]).toBe(BALANCE.bench.callMinute);
+    expect(s.plan[0]).toBe(BALANCE.bench.callEpisode);
+    expect(s.schedule.slice(1).every((m) => m >= BALANCE.bench.entryMinute)).toBe(true);
+    expect(s.state.minute).toBe(45);
+    expect(s.state.flags).toContain('on_bench');
+    expect(s.state.stamina).toBe(100 - 20);   // сидиш — сили не йдуть, бонус на виході
     expect(s.state.log.some((e) => e.kind === 'halftime')).toBe(true);
-    expect(s.state.log.at(-1)!.minute).toBe(BALANCE.bench.entryMinute);
     let episodes = 0;
     for (;;) {
       const next = nextEpisode(s, rng);
       if (!next) break;
       episodes += 1;
+      if (episodes === 1) { expect(next.episode.id).toBe(BALANCE.bench.callEpisode); expect(s.state.stamina).toBe(80); }
+      if (episodes === 2) {
+        // Між сценою на лаві й першим рішенням на полі — вихід: свіжі ноги, флаг знято, рядок «виходиш».
+        expect(s.state.flags).not.toContain('on_bench');
+        expect(s.state.log.some((e) => e.minute === BALANCE.bench.entryMinute && e.kind === 'filler')).toBe(true);
+      }
       const option = availableOptions(next.episode, s.state, s.player)[0];
       applyChoice(s, next.episode, option, resolveOption(s.state, s.player, option, next.episode.phase, rng, s.conditions, s.flagRules), rng);
     }

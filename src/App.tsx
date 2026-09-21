@@ -9,6 +9,7 @@ import { finishPrologue, prologuePending, type ProloguePick } from './engine/pro
 import { finishVacation, vacationPending } from './engine/vacation';
 import { endingPending, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
 import { cityLine } from './engine/city';
+import { HUNTER, hunterRound } from './engine/programme';
 import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
@@ -565,6 +566,7 @@ function Game() {
           promotion={career.promotion}
           lastYear={metLastYear(career, session.conditions.opponentKey)}
           subThere={!!career.subLeft && career.subClub === session.conditions.opponentKey ? ROSTER.us.players.oldsub?.nom ?? null : null}
+          guest={hunterRound(season.number, season.round + 1) ? HUNTER.programme : null}
           coachExtra={coachGoalWord(season.number, season.round + 1, season.round > 0 ? ourRow(season).position : 6, SEASON_ROUNDS)}
           usName={ROSTER.us.name.nom}
           note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}
@@ -704,7 +706,7 @@ function Game() {
         locked={stage.locked}
         month={sn.round === WINTER_BREAK_AFTER ? 'зимова перерва · січень' : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
         // Зимова перерва (M14): чутка від агента — одним рядком, без сцени й без назв.
-        aside={sn.round === WINTER_BREAK_AFTER ? (sn.number === 1 ? 'Агент дзвонив: «цікавляться». Хто — не сказав. Ти не спитав.' : 'Агент дзвонив: «ті самі, і вже не питають про ногу». Ти сказав «навесні».') : fillNames(cityLine(arcStage(careerRef.current), sn.number, sn.round), roster)}
+        aside={sn.round === WINTER_BREAK_AFTER ? (sn.number === 1 ? 'Агент дзвонив: «цікавляться». Хто — не сказав. Ти не спитав.' : 'Агент дзвонив: «ті самі, і вже не питають про ногу». Ти сказав «навесні».') : hunterRound(sn.number, sn.round) ? HUNTER.notebook : fillNames(cityLine(arcStage(careerRef.current), sn.number, sn.round), roster)}
         seen={seenScenes(careerRef.current)}
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[], anchor?: { id: string; option: string }) => {

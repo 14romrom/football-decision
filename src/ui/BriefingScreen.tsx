@@ -59,6 +59,8 @@ type Props = {
   lastYear?: { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[] | null;
   /** Колишній дублер у складі суперника (M15) — його прізвище. */
   subThere?: string | null;
+  /** Іменний гравець у складі суперника (programme.ts:HUNTER) — рядок прес-служби після дублера. */
+  guest?: string | null;
   /** Слово тренера про мету клубу (programme.ts:coachGoalWord) — після установки. */
   coachExtra?: string | null;
   onStart: () => void;
@@ -70,7 +72,7 @@ type Props = {
 // единственный светлый экран в игре. Рубрики: Реєс (заметка прозой), Суперник (+ черта голосом клуба),
 // Стадіон, Погода, Форма, Слово тренера цитатой в рамке. Без иронии: програмку пишет пресс-служба.
 
-export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, seasonNumber, promotion, lastYear, subThere, coachExtra, onStart, onBench }: Props) {
+export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, seasonNumber, promotion, lastYear, subThere, guest, coachExtra, onStart, onBench }: Props) {
   const lastYearLine = lastYear ? ` Торік у другій лізі: ${lastYear.map((r) => `${r.scoreUs}:${r.scoreThem} ${r.venue === 'home' ? 'вдома' : 'на виїзді'}`).join(', ')}.` : '';
   const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
   const venue = conditions.venue === 'home'
@@ -95,7 +97,7 @@ export function BriefingScreen({ conditions, opponent, player, round, usName, no
         <div className="prog-rule" />
         <dl className="prog-list">
           <dt>Реєс</dt><dd><b>№10, атакувальний півзахисник.</b> {note}</dd>
-          <dt>Суперник</dt><dd><b>«{opponent.name.nom}»</b> — {opponent.blurb}. {strength}{lastYearLine}{subThere && <> У їхньому складі — {subThere}, торік ваш дублер.</>}{trait && <> {trait}<span className="prog-warn">увага</span></>}</dd>
+          <dt>Суперник</dt><dd><b>«{opponent.name.nom}»</b> — {opponent.blurb}. {strength}{lastYearLine}{subThere && <> У їхньому складі — {subThere}, торік ваш дублер.</>}{guest && <> {guest}</>}{trait && <> {trait}<span className="prog-warn">увага</span></>}</dd>
           <dt>Стадіон</dt><dd><b>{venue.title}.</b> {venue.note}</dd>
           <dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd>
           <dt>Форма</dt><dd><b>{tone.title}.</b> {tone.note}</dd>

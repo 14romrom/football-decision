@@ -93,3 +93,45 @@ describe('канва в геймплеї (звірка зі STORY.md, 21.09)', (
     expect(rx.setups?.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('якорі, розклад, ринок (21.09)', () => {
+  it('сцена-якір: S1 після 7-го — Ларссон, S2 після 7-го — місто (стан ≥ 3), один раз', async () => {
+    const { anchorScene } = await import('../src/engine/week');
+    const { WEEK_SCENES } = await import('../src/content');
+    const c = defaultCareer();
+    expect(anchorScene(1, 7, c, WEEK_SCENES)?.id).toBe('sc_larsson_training');
+    expect(anchorScene(1, 6, c, WEEK_SCENES)).toBeUndefined();
+    expect(anchorScene(1, 7, { ...c, weekLog: [{ season: 1, round: 7, offered: [], chosen: [], scene: { id: 'sc_larsson_training', option: 'together' } }] }, WEEK_SCENES)).toBeUndefined();
+    expect(anchorScene(2, 7, { ...c, matchesPlayed: 17, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_city_asks');
+    expect(anchorScene(2, 7, { ...c, matchesPlayed: 17, fanHype: 10 }, WEEK_SCENES)).toBeUndefined();   // стан 2 — ще не свій
+  });
+
+  it('pinFixture: матч із клубом — на заданий тур, коло ціле, відповідний матч теж переїхав', async () => {
+    const { createSeason, pinFixture, US } = await import('../src/engine/season');
+    const s = createSeason(5, OPPONENT_KEYS.top.concat(['olvar']), 2, ['olvar'], { club: 'olvar', round: 2 });
+    const ours = s.fixtures.filter((f) => (f.home === US && f.away === 'olvar') || (f.away === US && f.home === 'olvar')).map((f) => f.round);
+    expect(ours).toEqual([2, 7]);
+    for (let r = 0; r < 10; r++) expect(s.fixtures.filter((f) => f.round === r).length).toBe(3);
+    const each = new Set(s.fixtures.filter((f) => f.round === 2).flatMap((f) => [f.home, f.away]));
+    expect(each.size).toBe(6);
+    expect(pinFixture(s.fixtures, 'nobody', 2)).toEqual(s.fixtures);
+  });
+
+  it('ринок: ціна без відсотків і хвостів, чутка за станом, токени підставляються', async () => {
+    const { marketValue, formatMarket, rumourLine, fillMarket } = await import('../src/engine/market');
+    const { ACTIVITIES } = await import('../src/content');
+    const s1 = full([1, 0], 1);
+    const c = defaultCareer();
+    expect(marketValue(s1, c) % 25000).toBe(0);
+    expect(formatMarket(450000)).toBe('€ 450 тис.');
+    expect(formatMarket(1200000)).toBe('€ 1,2 млн');
+    expect(rumourLine(s1, c, 'Вальмари')).toMatch(/вищої ліги/);
+    const s2 = { ...full([1, 0], 2), round: 2 };
+    expect(rumourLine(s2, { ...c, agentLog: [{ season: 1, choice: 'leave', reason: 'medical' }] }, 'Вальмари')).toMatch(/медогляд/);
+    expect(marketValue(s2, { ...c, agentLog: [{ season: 1, choice: 'leave', reason: 'medical' }] })).toBeLessThan(marketValue(s2, c));
+    const g = ACTIVITIES.find((a) => a.id === 'google_self')!;
+    const filled = fillMarket(g, s1, c, 'Вальмари');
+    expect(JSON.stringify(filled)).not.toMatch(/⟨|%/);
+    expect(JSON.stringify(filled)).toMatch(/€ \d+ тис\./);
+  });
+});

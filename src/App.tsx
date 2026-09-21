@@ -2,13 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING } from './content';
 import { adContext, pickAds, playerColumn } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
-import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
+import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick, anchorScene } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
 import { PrologueScreen } from './ui/PrologueScreen';
 import { finishPrologue, prologuePending, type ProloguePick } from './engine/prologue';
 import { finishVacation, vacationPending } from './engine/vacation';
 import { endingPending, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
 import { cityLine } from './engine/city';
+import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
 import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } from './engine/posts';
@@ -274,7 +275,8 @@ function Game() {
     const keep = promo?.with ?? [];
     const rest = OPPONENT_KEYS.second.filter((k) => !prev.clubs.includes(k));
     const pool = prev.number === 1 ? [...keep, ...OPPONENT_KEYS.top, ...rest] : [...OPPONENT_KEYS.top, ...OPPONENT_KEYS.second];
-    setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), pool, prev.number + 1, keep));
+    // Матч із клубом колишнього дублера — на 3-й тур (season.ts:pinFixture), щоб сцена з Ларссоном не потрапила на «не в формі».
+    setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), pool, prev.number + 1, keep, keep[0] ? { club: keep[0], round: 2 } : undefined));
     const c = careerRef.current;
     // Рахунки минулого сезону з кожним суперником — «зустрічалися торік» (програмка, пости, флаг матчу).
     const results: NonNullable<Career['lastSeason']>['results'] = {};
@@ -695,8 +697,9 @@ function Game() {
     return (<>{film}
       <WeekScreen
         key={sn.number + ':' + sn.round}
-        days={fillNamesDeep(stage.days, roster)}
+        days={fillNamesDeep(fillMarket(stage.days, sn, careerRef.current, ROSTER.us.name.gen), roster)}
         scenes={fillNamesDeep(WEEK_SCENES, roster)}
+        anchor={anchorScene(sn.number, sn.round, careerRef.current, fillNamesDeep(WEEK_SCENES, roster))}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
         locked={stage.locked}
         month={sn.round === WINTER_BREAK_AFTER ? 'зимова перерва · січень' : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
@@ -704,10 +707,10 @@ function Game() {
         aside={sn.round === WINTER_BREAK_AFTER ? (sn.number === 1 ? 'Агент дзвонив: «цікавляться». Хто — не сказав. Ти не спитав.' : 'Агент дзвонив: «ті самі, і вже не питають про ногу». Ти сказав «навесні».') : fillNames(cityLine(arcStage(careerRef.current), sn.number, sn.round), roster)}
         seen={seenScenes(careerRef.current)}
         seed={sn.seed + sn.round}
-        onFinish={(picks: WeekPick[]) => {
+        onFinish={(picks: WeekPick[], anchor?: { id: string; option: string }) => {
           // Применяем по исходным (без имён) делам и сценам: эффекты те же, id те же.
           const before = careerRef.current;
-          const { career: after, loot } = finishWeek(before, ctx, stage.days, picks, WEEK_SCENES);
+          const { career: after, loot } = finishWeek(before, ctx, stage.days, picks, WEEK_SCENES, anchor);
           setCareerBoth(after);
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}

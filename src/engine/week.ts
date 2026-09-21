@@ -445,7 +445,7 @@ export function planWeek(pool: Activity[], player: Player, c: WeekContext, caree
 /** Закрыть неделю: выбранные дела с их исходами, сцена-продолжение и обида голосов — всё через
  *  applyWeek, чтобы бирки и nextMatch собирались одним способом; сцена идёт голосом подсказки,
  *  без подсказки — голосом дела, из которого выросла. */
-export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], picks: WeekPick[], scenes: WeekScene[]): { career: Career; tags: string[]; loot: LootItem[] } {
+export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], picks: WeekPick[], scenes: WeekScene[], anchor?: { id: string; option: string }): { career: Career; tags: string[]; loot: LootItem[] } {
   const choices: WeekChoice[] = [];
   const chosen: Activity[] = [];
   const outcomes: string[] = [];
@@ -465,10 +465,29 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
       }
     }
   }
+  // Сцена-якір — до справ тижня: її вибір іде тим самим шляхом і записується як сцена тижня (пам’ять seenScenes).
+  if (anchor) {
+    const sc = scenes.find((s) => s.id === anchor.id);
+    const opt = sc?.options.find((o) => o.id === anchor.option);
+    if (sc && opt) { scene = anchor; choices.unshift({ activity: { id: `${sc.id}:${opt.id}`, voice: opt.insight?.who ?? 'team', title: sc.id, line: '', effect: opt.effect } }); }
+  }
   const offeredVoices = days.flat().map((o) => o.activity.voice);
   const { career: withNeglect, penalties } = neglectPenalties(career, offeredVoices, choices.map((x) => x.activity.voice));
   const { career: after, tags, loot } = applyWeek(withNeglect, [...choices, ...penalties.map((activity) => ({ activity }))]);
   return { career: recordWeek(after, c, days.flat().map((o) => o.activity), chosen, { outcomes, ...(scene ? { scene } : {}) }), tags, loot };
+}
+
+/** Сцени-якорі (21.09, після звірки з STORY.md: тури 6–9 обох сезонів не мали жодної гарантованої події). Замість
+ *  випадкового «що далі» після справи — лист на початку тижня, один раз на кар’єру, у заданий тур:
+ *  S1 після 7-го туру — штрафні з дублером (Ларссон), S2 після 7-го — місто питає так, ніби ти лишаєшся (стан ≥ 3). */
+export const ANCHOR_SCENES: { seasonNumber: number; round: number; scene: string; arcMin?: number; when?: (career: Career) => boolean }[] = [
+  { seasonNumber: 1, round: 7, scene: 'sc_larsson_training', when: (c) => !c.subLeft },
+  { seasonNumber: 2, round: 7, scene: 'sc_city_asks', arcMin: 3 },
+];
+export function anchorScene(seasonNumber: number, round: number, career: Career, scenes: WeekScene[]): WeekScene | undefined {
+  const seen = seenScenes(career);
+  const a = ANCHOR_SCENES.find((x) => x.seasonNumber === seasonNumber && x.round === round && (x.arcMin === undefined || arcStage(career) >= x.arcMin) && (!x.when || x.when(career)));
+  return a && !seen.has(a.scene) ? scenes.find((s) => s.id === a.scene) : undefined;
 }
 
 /** Варианты сцены, которые видит игрок: с подсказкой — только когда голос бачить. */

@@ -7,7 +7,7 @@ import { createSeason, ourRow, recordRound, type Season } from '../src/engine/se
 import { BALANCE } from '../src/engine/balance';
 import {
   finishWeek, neglectPenalties, offerWeekDays, planWeek, resolveOutcome, sceneFor, sceneOptionsFor, seenScenes, weekContext, weekVoiceSees,
-  type ActivityEffect, type WeekOffer,
+  ANCHOR_SCENES, type ActivityEffect, type WeekOffer,
 } from '../src/engine/week';
 import { ACTIVITIES, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES, OPPONENT_KEYS } from '../src/content';
 import { fillNamesDeep } from '../src/engine/names';
@@ -63,7 +63,8 @@ describe('контент: ісходи справ і сцени', () => {
   });
 
   it('сцени: 3–4 варіанти, один із підказкою голосу, кожен зі слідом; сцени досяжні', () => {
-    const reachable = new Set(ACTIVITIES.flatMap((a) => (a.outcomes ?? []).map((o) => o.followUp)).filter(Boolean));
+    // Сцени-якорі (week.ts:ANCHOR_SCENES) досяжні за туром, не за справою.
+    const reachable = new Set([...ACTIVITIES.flatMap((a) => (a.outcomes ?? []).map((o) => o.followUp)).filter(Boolean), ...ANCHOR_SCENES.map((a) => a.scene)]);
     for (const s of WEEK_SCENES) {
       expect(reachable.has(s.id), `сцена ${s.id} нізвідки не веде`).toBe(true);
       expect(s.options.length).toBeGreaterThanOrEqual(3);

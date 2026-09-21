@@ -45,8 +45,10 @@ type Props = {
   month?: string;
   /** Рядок оповідача під шапкою (зимова чутка від агента, M14). */
   aside?: string;
+  /** Сцена-якір (week.ts:anchorScene): лист на початку тижня, до першого дня. */
+  anchor?: WeekScene;
   /** Закрити тиждень: здобутки й картка до/після — для листа здобутків. */
-  onFinish: (picks: WeekPick[]) => WeekResult;
+  onFinish: (picks: WeekPick[], anchor?: { id: string; option: string }) => WeekResult;
   onNext: () => void;
 };
 
@@ -56,20 +58,22 @@ type Phase =
   | { p: 'pick' }
   | { p: 'outcome'; offer: WeekOffer }
   | { p: 'scene'; offer: WeekOffer; scene: WeekScene; chosen?: WeekSceneOption }
+  | { p: 'anchor'; scene: WeekScene; chosen?: WeekSceneOption }
   | { p: 'summary'; result: WeekResult };
 
 const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
 
-export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, aside, onFinish, onNext }: Props) {
+export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, aside, anchor, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
-  const [phase, setPhase] = useState<Phase>({ p: 'pick' });
+  const [phase, setPhase] = useState<Phase>(anchor ? { p: 'anchor', scene: anchor } : { p: 'pick' });
+  const [anchorPick, setAnchorPick] = useState<{ id: string; option: string } | undefined>(undefined);
   const [picks, setPicks] = useState<WeekPick[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [trainAttr, setTrainAttr] = useState<Attribute | null>(null);
-  const sceneUsed = picks.some((p) => p.scene);
+  const sceneUsed = !!anchor || picks.some((p) => p.scene);   // одна сцена на тиждень: якір її і є
   const last = day >= days.length - 1;
 
-  const finish = (all: WeekPick[]) => setPhase({ p: 'summary', result: onFinish(all) });
+  const finish = (all: WeekPick[]) => setPhase({ p: 'summary', result: onFinish(all, anchorPick) });
 
   /** Дальше после дела (или после сцены): следующий день или подсумок. Пост «тим часом у стрічці»
    *  між днями убран (19.09, пользователь): экран с одной новостью — лишний шаг. */
@@ -158,6 +162,50 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
     );
   };
 
+  /** Лист-якір (week.ts:anchorScene): той самий лист сцени, тільки до першого дня і без справи над ним. */
+  const anchorSheet = (scene: WeekScene, chosen?: WeekSceneOption) => {
+    const visible = sceneOptionsFor(scene, sees);
+    return (
+      <div className="moment nb-sheet"><div className="scene">
+        <span className="minute-tab">ПІСЛЯ ТРЕНУВАННЯ</span>
+        <p className="setup">{scene.setup}</p>
+        {chosen ? (
+          <>
+            <p className="nb-chosen"><b>{chosen.label}.</b> {chosen.text}</p>
+            <p className="nb-aside">{chosen.effect.note}</p>
+            <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'pick' })}>День 1</button>
+          </>
+        ) : (
+          <>
+            {visible.some((o) => o.insight) && (
+              <div className="voices">
+                {visible.filter((o) => o.insight).map((o) => (
+                  <p key={o.id} className={`say voice-${o.insight!.who}`}><b>{VOICE_LABEL[o.insight!.who]}</b><span>{o.insight!.line}</span></p>
+                ))}
+              </div>
+            )}
+            <div className="hand"><span>Твій хід</span></div>
+            <ol className="choices">
+              {visible.map((o, i) => (
+                <li key={o.id}>
+                  <button className={`choice ${o.insight ? `choice-insight voice-${o.insight.who}` : ''}`} onClick={() => { setAnchorPick({ id: scene.id, option: o.id }); setPhase({ p: 'anchor', scene, chosen: o }); }}>
+                    <span className="choice-num">{i + 1}</span>
+                    <span className="choice-text">
+                      {o.label}
+                      {o.insight && <span className="bracket"><i className="origin">відкрив {VOICE_LABEL[o.insight.who]}</i></span>}
+                    </span>
+                    <span className="choice-go" aria-hidden="true">›</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+            <div className="nb-sheet-pad" />
+          </>
+        )}
+      </div></div>
+    );
+  };
+
   /** Лист вечора: ісход, потім сцена (сетап, підказки голосів колонкою, «Твій хід»), потім вибір. */
   const sheet = (d: number, offer: WeekOffer) => {
     const out = offer.outcome!;
@@ -216,7 +264,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
   };
 
   const button = (() => {
-    if (phase.p === 'summary' || phase.p === 'outcome' || phase.p === 'scene') return null;   // кнопка — всередині листа
+    if (phase.p === 'summary' || phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'anchor') return null;   // кнопка — всередині листа
     const offers = days[day] ?? [];
     return <button className="primary menu-primary" onClick={confirmDay}>{selected ? 'Так і зробити' : offers.length ? 'Нічого не робити сьогодні' : 'Далі'}</button>;
   })();
@@ -224,7 +272,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
   return (
     <div className="result week">
       <div className="card-minute">тиждень між матчами{month ? ` · ${month}` : ''}</div>
-      <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'summary' ? 'dimmed' : ''}`}>
+      <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'summary' || phase.p === 'anchor' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
@@ -234,7 +282,11 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
           <div className="nb-coach"><b>Тренер</b>Місто закрите. База, відео, психолог. Місто почекає.</div>
         )}
 
+        {phase.p === 'anchor' && (
+          <section className="nb-day"><h3>Після матчу<small>сцена</small></h3>{anchorSheet(phase.scene, phase.chosen)}</section>
+        )}
         {days.map((offers, d) => {
+          if (phase.p === 'anchor') return <section key={d} className="nb-day"><h3>{DAY[d] ?? `День ${d + 1}`}</h3><div className="nb-empty" /></section>;
           if (phase.p === 'summary' || d < day) return doneDay(d, true);
           if (d > day) return <section key={d} className="nb-day"><h3>{DAY[d] ?? `День ${d + 1}`}</h3><div className="nb-empty" /></section>;
 

@@ -59,6 +59,18 @@ export function makeFixtures(clubs: string[]): Fixture[] {
   return [...firstHalf, ...secondHalf];
 }
 
+/** Закріпити наш матч із клубом на тур `round` (0-based): міняємо місцями цілі тури — коло лишається колом,
+ *  відповідний матч другого кола їде разом. M15: матч із клубом колишнього дублера — 3-й тур, не перший
+ *  (там Реєс ще не в формі) і не дев’ятий (сцена загубилась би перед фіналом). */
+export function pinFixture(fixtures: Fixture[], club: string, round: number): Fixture[] {
+  const half = Math.max(...fixtures.map((f) => f.round)) + 1;
+  const hit = fixtures.find((f) => f.round < half / 2 && ((f.home === US && f.away === club) || (f.away === US && f.home === club)));
+  if (!hit || hit.round === round || round >= half / 2) return fixtures;
+  const a = hit.round; const b = round; const shift = half / 2;
+  const swap = (r: number) => (r === a ? b : r === b ? a : r === a + shift ? b + shift : r === b + shift ? a + shift : r);
+  return fixtures.map((f) => ({ ...f, round: swap(f.round) })).sort((x, y) => x.round - y.round);
+}
+
 export const LEAGUE_SIZE = 6;
 
 // ——— дві ліги (M14, 21.09) ————————————————————————————————————————————
@@ -102,15 +114,16 @@ export function promotion(season: Season): Promotion | null {
 
 /** Лига — 6 клубов: мы и пять соперников. Соперников в ростере больше, чем мест, —
  *  каждый сезон состав лиги другой (перемешивание по сиду), и второй сезон не повторяет первый. */
-export function createSeason(seed: number, opponentKeys: string[], number = 1, keep: string[] = []): Season {
+export function createSeason(seed: number, opponentKeys: string[], number = 1, keep: string[] = [], pin?: { club: string; round: number }): Season {
   const rng = makeRng(seed);
   // `keep` — клуби, що піднялися разом із нами (M14): вони в лізі точно, решта місць — жеребом.
   const picked: string[] = keep.filter((k) => opponentKeys.includes(k)).slice(0, LEAGUE_SIZE - 1);
   const pool = opponentKeys.filter((k) => !picked.includes(k));
   while (picked.length < LEAGUE_SIZE - 1 && pool.length) picked.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
   const clubs = [US, ...picked];
+  const fixtures = pin && clubs.includes(pin.club) ? pinFixture(makeFixtures(clubs), pin.club, pin.round) : makeFixtures(clubs);
   return {
-    seed, number, clubs, fixtures: makeFixtures(clubs), played: [], round: 0,
+    seed, number, clubs, fixtures, played: [], round: 0,
     player: { matches: 0, goals: 0, assists: 0, coachSum: 0, fanSum: 0 },
     teamScorers: {},
   };

@@ -10,7 +10,7 @@
 
 import { pickFresh } from './flavor';
 import type { Rng } from './rng';
-import { standings, SEASON_ROUNDS, US, type OurResult, type Season } from './season';
+import { promotion, PROMOTION_SPOTS, standings, SEASON_ROUNDS, US, type OurResult, type Season } from './season';
 import type { MatchResult } from './conditions';
 
 export type ClubName = { nom: string; gen: string };
@@ -50,13 +50,30 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
   const leaderName = club(leader.club).nom;
 
   if (season.round >= SEASON_ROUNDS) {
+    // Перший сезон — про регламент, не про чемпіона: клуб цілий рік кричав про вихід (M14).
+    const promo = promotion(season);
+    if (promo?.kind === 'earned') {
+      return leader.club === US
+        ? `Сезон закінчено. «${usName}» — чемпіон другої ліги і виходить у вищу.`
+        : `Сезон закінчено. «${usName}» — ${AT[promo.position]} місце і вихід у вищу лігу.`;
+    }
+    if (promo?.kind === 'scandal') {
+      return `Скандал із договірними матчами: цього року у вищу лігу йдуть ${promo.count} ${plural(promo.count, 'команда', 'команди', 'команд')}. «${usName}» — ${AT[promo.position]} місце — серед них.`;
+    }
     return leader.club === US
       ? `Сезон закінчено. «${usName}» — чемпіон.`
       : `Сезон закінчено. «${leaderName}» — чемпіон, «${usName}» фінішує на ${AT[us.position]} місці.`;
   }
+  // Друга ліга: після рахунку — де ми відносно зони підвищення (мета клубу, M14).
+  const zone = season.number === 1 ? (() => {
+    if (us.position <= PROMOTION_SPOTS) return ` У зоні підвищення.`;
+    const third = rows[PROMOTION_SPOTS - 1];
+    const gap = third.points - us.points;
+    return gap > 0 ? ` До зони підвищення — ${gap} ${plural(gap, 'очко', 'очки', 'очок')}.` : ` Зона підвищення — поруч, за різницею м’ячів.`;
+  })() : '';
   if (season.round === 1) {
     const how = res === 'W' ? 'з перемоги' : res === 'L' ? 'з поразки' : 'з нічиєї';
-    return `«${usName}» стартує ${how}: ${score}.`;
+    return `«${usName}» стартує ${how}: ${score}.${zone}`;
   }
 
   const prev = standings({ ...season, played: season.played.filter((m) => m.round < season.round - 1) });
@@ -77,7 +94,7 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
   const move = us.position < prevUs.position ? `піднялася на ${TO[us.position]}`
     : us.position > prevUs.position ? `опустилася на ${TO[us.position]}`
     : `лишається на ${AT[us.position]}`;
-  return `${lead} «${usName}» ${move} після ${score}.`;
+  return `${lead} «${usName}» ${move} після ${score}.${zone}`;
 }
 
 /** Підзаголовок про Реєса — реакція видання на його гру в останньому турі (21.09, пользователь: після дубля

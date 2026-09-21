@@ -41,6 +41,8 @@ type Props = {
   seen: Set<string>;
   /** Сид для малюнків на полях — тур сезона. */
   seed?: number;
+  /** Місяць у шапці зошита (M14, календар сезону). */
+  month?: string;
   /** Закрити тиждень: здобутки й картка до/після — для листа здобутків. */
   onFinish: (picks: WeekPick[]) => WeekResult;
   onNext: () => void;
@@ -56,7 +58,7 @@ type Phase =
 
 const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
 
-export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinish, onNext }: Props) {
+export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
   const [phase, setPhase] = useState<Phase>({ p: 'pick' });
   const [picks, setPicks] = useState<WeekPick[]>([]);
@@ -219,7 +221,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, onFinis
 
   return (
     <div className="result week">
-      <div className="card-minute">тиждень між матчами</div>
+      <div className="card-minute">тиждень між матчами{month ? ` · ${month}` : ''}</div>
       <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'summary' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>

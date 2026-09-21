@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { isSeasonOver, SEASON_ROUNDS, standings, US, type Season, type Verdict } from '../engine/season';
+import { isSeasonOver, leagueOf, monthOfRound, SEASON_ROUNDS, standings, US, type Season, type Verdict } from '../engine/season';
 import { plural } from './pluralize';
 import type { AdRule, AdSet, ClubName } from '../engine/espm';
 import { playerLine, roundHeadline, type EspmColumn } from '../engine/espm';
@@ -50,11 +50,11 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
       <div className="browser">
         <div className="chrome"><span className="chrome-tabs">3</span><span className="chrome-url"><b>espm.com</b>/football/liga/table</span><span aria-hidden="true">⋮</span></div>
         <div className="espm">
-          <div className="espm-mast"><span className="espm-logo"><b>ESPM</b><i>Футбол · Ліга</i></span><span className="espm-burger" aria-hidden="true" /></div>
+          <div className="espm-mast"><span className="espm-logo"><b>ESPM</b><i>Футбол · {leagueOf(season.number).name}</i></span><span className="espm-burger" aria-hidden="true" /></div>
           <nav className="espm-nav"><span>Головна</span><span className="on">Таблиця</span><span>Результати</span><span>Трансфери</span><span>Відео</span></nav>
 
           <div className="espm-art">
-            <div className="espm-kicker">Тур {season.round} з {SEASON_ROUNDS} · підсумки</div>
+            <div className="espm-kicker">{over ? `Підсумки сезону · ${leagueOf(season.number).name}` : `Тур ${season.round} з ${SEASON_ROUNDS} · ${monthOfRound(season.round)}`}</div>
             <h1 className="espm-hl">{roundHeadline(season, club)}</h1>
             {(() => { const l = playerLine(season.rounds?.[season.rounds.length - 1], { nom: playerName, gen: playerGen }); return l ? <p className="espm-dek">{l}</p> : null; })()}
             <div className="espm-by">Редакція · 2 год тому</div>

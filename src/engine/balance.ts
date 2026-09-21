@@ -61,6 +61,8 @@ export const BALANCE = {
   composureStart: 60,
   coachTrustStart: 55,
   fanHypeStart: 45,
+  /** Скандальне підвищення (M14): наскільки нижче старту трибуни на початку другого сезону. */
+  scandalHypeDrop: 15,
 
   /** Витривалість: каждый пункт модификатора снижает расход сил на эту долю. */
   staminaAttrDrainStep: 0.05,

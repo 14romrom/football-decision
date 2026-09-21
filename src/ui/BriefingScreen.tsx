@@ -2,6 +2,7 @@ import type { MatchConditions } from '../engine/conditions';
 import { signatureAttrs } from '../engine/conditions';
 import type { Attribute, Player } from '../engine/types';
 import type { Opponent } from '../content';
+import { leagueOf, monthOfRound } from '../engine/season';
 
 // Брифинг перед матчем: условия словами, без чисел. Каждая строка обещает
 // эффект, который потом появится строкой модификатора после броска — это
@@ -51,6 +52,9 @@ type Props = {
   /** Наслідки недели (бирки) — на програмці уходят в заметку о Реєсе; здесь остаются как подпись мелко. */
   /** Тур (1-based), клуб-хозяин для шапки, заметка о Реєсе и черта соперника — считаются в App (engine/programme.ts). */
   round: number; usName: string; note: string; trait: string | null;
+  /** Номер сезону — ліга й мета клубу в шапці (M14). */
+  seasonNumber: number;
+  promotion?: 'earned' | 'scandal';
   onStart: () => void;
   /** Починає на лаві — кнопка не обіцяє поле (плейтест 21.09, Б-4). */
   onBench?: boolean;
@@ -60,7 +64,7 @@ type Props = {
 // единственный светлый экран в игре. Рубрики: Реєс (заметка прозой), Суперник (+ черта голосом клуба),
 // Стадіон, Погода, Форма, Слово тренера цитатой в рамке. Без иронии: програмку пишет пресс-служба.
 
-export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, onStart, onBench }: Props) {
+export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, seasonNumber, promotion, onStart, onBench }: Props) {
   const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
   const venue = conditions.venue === 'home'
     ? { title: 'Вдома', note: `Трибуни знають тебе і чекають ${sig[0]} та ${sig[1]}.` }
@@ -77,8 +81,10 @@ export function BriefingScreen({ conditions, opponent, player, round, usName, no
   return (
     <div className="briefing">
       <div className="prog">
-        <div className="prog-top"><span>Офіційна програмка</span><span>Тур {round} · {day}</span></div>
+        <div className="prog-top"><span>Офіційна програмка · {leagueOf(seasonNumber).name}</span><span>Тур {round} · {monthOfRound(round)} · {day}</span></div>
         <h1 className="prog-title">{home} — {away}<small>Стадіон «{home}» · початок о {time}</small></h1>
+        {/* Мета клубу декларується — на відміну від мети Реєса (M14): у другій лізі — вихід, у вищій — перший сезон нагорі. */}
+        <div className="prog-goal">{seasonNumber === 1 ? 'Мета сезону — вихід у вищу лігу' : promotion === 'scandal' ? 'У вищій лізі — за регламентом' : 'Перший сезон у вищій лізі'}</div>
         <div className="prog-rule" />
         <dl className="prog-list">
           <dt>Реєс</dt><dd><b>№10, атакувальний півзахисник.</b> {note}</dd>

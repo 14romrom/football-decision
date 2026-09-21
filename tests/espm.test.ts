@@ -53,9 +53,9 @@ describe('ESPM: заголовок тура', () => {
     expect(h).toMatch(/відстає на \d+ (очко|очки|очок)|поруч, за різницею м’ячів/);
   });
 
-  it('конец сезона — «Сезон закінчено»', () => {
+  it('конец сезона — «Сезон закінчено» або регламент другої ліги (tests/promotion.test.ts)', () => {
     const s = play(Array.from({ length: SEASON_ROUNDS }, () => [1, 1] as [number, number]));
-    expect(roundHeadline(s, club)).toMatch(/^Сезон закінчено\./);
+    expect(roundHeadline(s, club)).toMatch(/^Сезон закінчено\.|^Скандал із договірними матчами/);
   });
 });
 

@@ -1024,6 +1024,7 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .18 0 0 0 0 .14 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .prog::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: repeating-linear-gradient(90deg, #6b3a2a 0 14px, transparent 14px 20px); opacity: 0.55; }
+.prog-goal { font-family: var(--font-caps); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #8a2e1c; margin: -2px 0 6px; }
 .prog-top { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #6b665a; margin: 4px 0; }
 .prog-title { margin: 0; font-family: var(--font-caps); font-weight: 600; font-size: 26px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.05; color: #1b1a17; }
 .prog-title small { display: block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; font-weight: 400; text-transform: uppercase; color: #6b665a; margin-top: 4px; }

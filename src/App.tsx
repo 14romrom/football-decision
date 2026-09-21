@@ -45,7 +45,7 @@ import { SettingsScreen } from './ui/SettingsScreen';
 import { AboutScreen } from './ui/AboutScreen';
 import { readSlotSummary } from './telemetry/saves';
 import {
-  createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, SEASON_ROUNDS, US, type Season,
+  createSeason, isSeasonOver, monthOfRound, ourFixture, ourRow, promotion, recordRound, seasonVerdict, SEASON_ROUNDS, US, type Season,
 } from './engine/season';
 import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
@@ -252,8 +252,15 @@ function Game() {
     const prev = seasonRef.current;
     // Вердикт «лава» — не текст: новий сезон починаєш із лави (career.benched), поки не вийдеш із неї.
     const benched = seasonVerdict(prev, careerRef.current.coachTrust).kind === 'bench';
-    setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS), prev.number + 1));
-    setCareerBoth({ ...careerRef.current, injuriesSeason: 0, benched });   // лимит травм — на сезон
+    // Регламент підвищення (M14): з нами йдуть ті, хто вище; нові клуби — з тих, кого в першому сезоні не було.
+    const promo = promotion(prev);
+    const fresh = Object.keys(OPPONENTS).filter((k) => !prev.clubs.includes(k));
+    const pool = [...fresh, ...Object.keys(OPPONENTS).filter((k) => !fresh.includes(k))];
+    setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), pool, prev.number + 1, promo?.with ?? []));
+    const c = careerRef.current;
+    // Скандальне підвищення — трибуни не вірять, що ми тут по праву: старт сезону холодніший (рішення 21.09).
+    const fanHype = promo?.kind === 'scandal' ? Math.min(c.fanHype ?? BALANCE.fanHypeStart, BALANCE.fanHypeStart - BALANCE.scandalHypeDrop) : c.fanHype;
+    setCareerBoth({ ...c, injuriesSeason: 0, benched, ...(promo ? { promotion: promo.kind } : {}), ...(fanHype !== undefined ? { fanHype } : {}) });   // лимит травм — на сезон
   }, [setSeasonBoth]);
 
   /** Стрічка по текущему состоянию сезона: посты с именами следующего соперника. quota — сколько
@@ -478,6 +485,8 @@ function Game() {
           player={session.player}
 
           round={season.round + 1}
+          seasonNumber={season.number}
+          promotion={career.promotion}
           usName={ROSTER.us.name.nom}
           note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}
           trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
@@ -610,6 +619,7 @@ function Game() {
         scenes={fillNamesDeep(WEEK_SCENES, roster)}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
         locked={stage.locked}
+        month={monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
         seen={seenScenes(careerRef.current)}
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[]) => {

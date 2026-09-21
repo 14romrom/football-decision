@@ -61,12 +61,52 @@ export function makeFixtures(clubs: string[]): Fixture[] {
 
 export const LEAGUE_SIZE = 6;
 
+// ——— дві ліги (M14, 21.09) ————————————————————————————————————————————
+// Перший сезон — друга ліга («нижче — тільки чемпіонат пивоварень»), другий — вища. Мета клубу на перший
+// сезон декларується (на відміну від мети Реєса): вихід — перша трійка. Не потрапили — скандал із договірними
+// матчами: нагору йде стільки команд, яке місце у «Вальмари», але з нами в наступну лігу переходять максимум
+// двоє інших (PROMOTED_WITH) — інакше «нова ліга» була б старою.
+export type League = { name: string; nameGen: string; short: string };
+export const LEAGUES: Record<number, League> = {
+  1: { name: 'Друга ліга', nameGen: 'другої ліги', short: 'друга' },
+  2: { name: 'Вища ліга', nameGen: 'вищої ліги', short: 'вища' },
+};
+export const leagueOf = (seasonNumber: number): League => LEAGUES[Math.min(seasonNumber, 2)];
+export const PROMOTION_SPOTS = 3;
+export const PROMOTED_WITH = 2;
+/** Місяць туру (1-based): серпень → травень із зимовою перервою після 5-го. */
+export const MONTHS = ['серпень', 'вересень', 'жовтень', 'листопад', 'грудень', 'лютий', 'березень', 'квітень', 'квітень', 'травень'];
+export const monthOfRound = (round: number): string => MONTHS[Math.max(0, Math.min(MONTHS.length - 1, round - 1))];
+/** Зимова перерва — між 5-м і 6-м туром (round — зіграних матчів). */
+export const WINTER_BREAK_AFTER = 5;
+
+export type Promotion = {
+  kind: 'earned' | 'scandal';
+  position: number;
+  /** Скільки команд іде нагору за регламентом (новина): трійка або, за скандалом, наше місце. */
+  count: number;
+  /** Хто піднімається разом із нами в наступний сезон (ключі клубів, без нас). */
+  with: string[];
+};
+
+/** Підсумок першого сезону за регламентом; для інших сезонів і незакінченого — null. */
+export function promotion(season: Season): Promotion | null {
+  if (season.number !== 1 || season.round < SEASON_ROUNDS) return null;
+  const rows = standings(season);
+  const us = rows.find((r) => r.club === US)!;
+  const kind = us.position <= PROMOTION_SPOTS ? 'earned' : 'scandal';
+  const count = kind === 'earned' ? PROMOTION_SPOTS : us.position;
+  const others = rows.filter((r) => r.club !== US && r.position <= count).slice(0, PROMOTED_WITH).map((r) => r.club);
+  return { kind, position: us.position, count, with: others };
+}
+
 /** Лига — 6 клубов: мы и пять соперников. Соперников в ростере больше, чем мест, —
  *  каждый сезон состав лиги другой (перемешивание по сиду), и второй сезон не повторяет первый. */
-export function createSeason(seed: number, opponentKeys: string[], number = 1): Season {
+export function createSeason(seed: number, opponentKeys: string[], number = 1, keep: string[] = []): Season {
   const rng = makeRng(seed);
-  const pool = [...opponentKeys];
-  const picked: string[] = [];
+  // `keep` — клуби, що піднялися разом із нами (M14): вони в лізі точно, решта місць — жеребом.
+  const picked: string[] = keep.filter((k) => opponentKeys.includes(k)).slice(0, LEAGUE_SIZE - 1);
+  const pool = opponentKeys.filter((k) => !picked.includes(k));
   while (picked.length < LEAGUE_SIZE - 1 && pool.length) picked.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
   const clubs = [US, ...picked];
   return {

@@ -8,6 +8,7 @@ import weekscenesJson from './weekscenes.json';
 import adsJson from './ads.json';
 import prologueJson from './prologue.json';
 import vacationJson from './vacation.json';
+import endingJson from './ending.json';
 import firstmatchJson from './firstmatch.json';
 import agentJson from './agent.json';
 import espmJson from './espm.json';
@@ -20,6 +21,7 @@ import type { Activity, WeekScene } from '../engine/week';
 import type { AdRule } from '../engine/espm';
 import type { PrologueSpread } from '../engine/prologue';
 import type { VacationSpread } from '../engine/vacation';
+import type { EndingContent } from '../engine/ending';
 import type { Tutorial, TutorialHint } from '../engine/match';
 import type { AgentContent } from '../engine/agent';
 import type { EspmColumn } from '../engine/espm';
@@ -38,6 +40,10 @@ export const DEFAULT_OPPONENT = 'sandorea';
 
 /** Ростер «мы + соперник по умолчанию» — для прогона, тестов и экрана /stats. */
 export const ROSTER: Roster = { us: rosterJson.us as TeamRoster, them: OPPONENTS[DEFAULT_OPPONENT] };
+// `{oldsub}` — колишній дублер: у чужій формі після відпустки (програмка, пости, сетап проти його клубу); до того —
+// він же, щоб плейсхолдер розв’язувався будь-яким ростером. Ставиться до EPISODES: ті заповнюються при завантаженні.
+const SUB_ORIGINAL: NameForms = { ...(rosterJson.us as TeamRoster).players.sub };
+ROSTER.us.players.oldsub = { ...SUB_ORIGINAL };
 /** Ростер на матч. С rng — у каждой роли соперника выбирается одно из имён (характеристика или
  *  вариант), одно на весь матч; без rng — каноническое, для тестов и /stats. */
 export function rosterFor(opponentKey: string, rng?: Rng): Roster {
@@ -70,6 +76,7 @@ export const ADS = adsJson as AdRule[];
 /** Пролог — тиждень нуль (engine/prologue.ts): три розвороти зі стікерами голосів; імена — при показі. */
 export const PROLOGUE = prologueJson as PrologueSpread[];
 export const VACATION = vacationJson as VacationSpread[];
+export const ENDING = endingJson as EndingContent;
 
 /** Дублер пішов (M15): ім’я `sub` у ростері підміняється на наступника — на місці, бо ROSTER читають усі
  *  (пости, агент, тиждень) і робити з нього функцію — правити півсотні викликів. Викликається з App при
@@ -79,10 +86,6 @@ export function syncRoster(subLeft: boolean): void {
   const target = subLeft ? us.subNext : SUB_ORIGINAL;
   Object.assign(ROSTER.us.players.sub, { nom: target.nom, gen: target.gen, dat: target.dat, ins: target.ins });
 }
-// `{oldsub}` — колишній дублер: у чужій формі після відпустки (програмка, пости проти його клубу); до того — він же,
-// щоб плейсхолдер розв’язувався будь-яким ростером (тест стрічки).
-const SUB_ORIGINAL: NameForms = { ...(rosterJson.us as TeamRoster).players.sub };
-ROSTER.us.players.oldsub = { ...SUB_ORIGINAL };
 /** Перший матч кар’єри (M12): чотири фіксовані сцени з лави, кожна з підказкою оповідача (match.ts:Tutorial). */
 export const FIRST_MATCH = firstmatchJson as { scenes: ({ episode: string } & TutorialHint)[] };
 export const FIRST_MATCH_TUTORIAL: Tutorial = {

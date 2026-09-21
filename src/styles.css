@@ -813,12 +813,14 @@ html.reduce-motion .doodle svg { filter: none; }
 .mod-labels { list-style: none; margin: 0; padding: 0 16px 6px; font-size: 12.5px; color: var(--muted); }
 .mod-labels li { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
 .mod-labels b { font-family: var(--font-mono); font-weight: 500; } .mod-labels b.pos { color: var(--accent); } .mod-labels b.neg { color: var(--bad-soft); }
-.verdict {
+/* Штамп вердикту кидка — тільки в сцені кидка: .verdict без області — ще й секція підсумку сезону на ESPM,
+   і та рендерилась 30-піксельними капітелями поверх кнопки «Далі» (знайдено 21.09 на фіналі M16). */
+.roll .verdict {
   margin: 4px 16px 8px; text-align: center; font-family: var(--font-caps); font-weight: 600; font-size: 30px; letter-spacing: 0.14em; text-transform: uppercase;
   animation: stamp .18s ease-out; transform-origin: center;
 }
 @keyframes stamp { from { scale: 1.5; opacity: 0; } to { scale: 1; opacity: 1; } }
-.verdict.tier-clean { color: var(--accent); } .verdict.tier-cost { color: var(--warn); } .verdict.tier-fail { color: var(--muted); } .verdict.tier-badFail { color: var(--bad); }
+.roll .verdict.tier-clean { color: var(--accent); } .roll .verdict.tier-cost { color: var(--warn); } .roll .verdict.tier-fail { color: var(--muted); } .roll .verdict.tier-badFail { color: var(--bad); }
 .after { animation: fadeIn .35s ease-out; border-top: 1px solid var(--line-2); }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .outcome { margin: 0; padding: 12px 16px 6px; font-size: 15px; line-height: 1.5; }
@@ -834,7 +836,7 @@ html.reduce-motion .doodle svg { filter: none; }
    броска (паузы, раздельная остановка, штамп) остаётся — см. RollView.tsx. */
 @media (prefers-reduced-motion: reduce) {
   .die.spinning, .die.stopped { animation: none; }
-  .verdict { animation: fadeIn .2s ease-out; }
+  .roll .verdict { animation: fadeIn .2s ease-out; }
   .chip-in { animation: fadeIn .15s ease-out; }
   .die, .dice-sum, .bar-fill { transition: none; }
 }
@@ -843,7 +845,7 @@ html.reduce-motion .doodle svg { filter: none; }
 /* Настройки устройства (settings.ts): классы на <html>. Zoom — чтобы вырос весь px-набор, а не только body. */
 html.text-large { zoom: 1.12; }
 html.reduce-motion .die.spinning, html.reduce-motion .die.stopped { animation: none; }
-html.reduce-motion .verdict { animation: fadeIn .2s ease-out; }
+html.reduce-motion .roll .verdict { animation: fadeIn .2s ease-out; }
 html.reduce-motion .chip-in { animation: fadeIn .15s ease-out; }
 html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-fill { transition: none; }
 
@@ -1012,7 +1014,7 @@ html.reduce-motion .pitch-flash.on { opacity: .2; }
 @media (prefers-reduced-motion: reduce) { .pitch-self.pulse, .pitch-flash.on, .pitch-card { animation: none; } .pitch-flash.on { opacity: .2; } }
 /* Критический успех — две десятки: золотые кубики и свой штамп. */
 .dice-stage.crit-good .die.stopped { border-color: var(--v-instinct); color: var(--v-instinct); }
-.verdict.crit { color: var(--v-instinct); font-size: 26px; letter-spacing: .12em; }
+.roll .verdict.crit { color: var(--v-instinct); font-size: 26px; letter-spacing: .12em; }
 a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 
 /* ——— програмка матчу (ui/BriefingScreen.tsx, макет «Брифинг як програмка», 19.09) ———

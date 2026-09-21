@@ -217,6 +217,18 @@ export function ourRow(season: Season): TableRow {
 
 export type Verdict = { kind: 'transfer' | 'extend' | 'bench'; title: string; text: string };
 
+/** Кінець другого сезону (M16): дзвонить той самий скаут — тепер із клубу Ліги чемпіонів. Варіанту лишитися немає;
+ *  цифри — лише протокол. Сам фінал — engine/ending.ts. */
+export function secondSeasonVerdict(season: Season, coachTrust: number): Verdict {
+  const base = seasonVerdict(season, coachTrust);
+  const row = ourRow(season);
+  const p = season.player;
+  const stats = `${p.goals} голів і ${p.assists} передач`;
+  const table = row.position === 1 ? 'Чемпіон вищої ліги' : `${row.position}-е місце у вищій лізі`;
+  const tail = base.kind === 'bench' ? ' Тренер хотів би посадити на лаву. Не встигне.' : base.kind === 'transfer' ? ' Тренер каже «скатертиною» — і, здається, це щиро.' : ' Тренер підписав би ще на рік. Не доведеться.';
+  return { kind: 'transfer', title: 'Дзвонить скаут', text: `${table}, ${stats} за сезон. Дзвонить той самий скаут, що два роки тому питав про ногу, — тепер із клубу, який грає в Лізі чемпіонів. Про ногу не питає.${tail}` };
+}
+
 /** Кінець першого сезону (M15): дзвінок агента безумовний — вихід у вищу лігу помітили. Таблиця й тренер
  *  вирішують формулювання (за таблицю / за протокол / «помітили»), а вердикт тренера й трибун (лава) лишається
  *  своїм рядком: з лави наступний сезон усе одно починаєш. Сам зрив — у відпустці (engine/vacation.ts). */

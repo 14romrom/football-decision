@@ -3,6 +3,7 @@
 // Повторы на дистанции сезона:              npm run sim -- --season 12
 // Тиждень між матчами, политики недели:     npm run sim -- --weeks 200
 // Вердикты сезона по политикам матча:        npm run sim -- --verdicts 300
+// Те саме у вищій лізі (другий сезон, M14):   npm run sim -- --verdicts 300 --top
 
 import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
@@ -238,7 +239,10 @@ export type CareerRun = {
  *  matchPolicy — чем бот играет матчи: по умолчанию случайно, для распределения вердиктов — каждой политикой. */
 export function runCareer(seed: number, policy: WeekPolicy, matchPolicy: PolicyName = 'random'): CareerRun {
   let career: Career = defaultCareer();
-  let season: Season = createSeason(seed, OPPONENT_KEYS.second);
+  // --top: вища ліга — клуби другого сезону (M14), кар’єра стартує як після відпустки (20 матчів, підвищення).
+  const top = process.argv.includes('--top');
+  let season: Season = createSeason(seed, top ? [...OPPONENT_KEYS.top, ...OPPONENT_KEYS.second.slice(0, 1)] : OPPONENT_KEYS.second, top ? 2 : 1);   // вища: 4 клуби + один, що піднявся
+  if (top) career = { ...career, matchesPlayed: 10, promotion: 'earned', fanHype: 55 };
   const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
   let sumResult = 0; let sumCoach = 0; let sumFan = 0; let n = 0; let benchedMatches = 0;
   const offeredAll = new Set<string>();

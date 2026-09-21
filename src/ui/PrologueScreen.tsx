@@ -4,7 +4,7 @@ import { VOICE_ATTRS } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
 import { LootSheet } from './LootSheet';
 import type { WeekResult } from './WeekScreen';
-import { ATTRIBUTE_LABEL, type Attribute } from '../engine/types';
+import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from '../engine/types';
 import { Doodles } from './doodles';
 
 // Пролог — тиждень нуль у зошиті (M12, 20.09, макет «Пролог у зошиті», решение пользователя): той самий
@@ -28,11 +28,17 @@ type Props = {
   arc?: number;
   /** Підписи кнопок: пролог відповідає людям, відпустка вирішує, що робити. */
   labels?: { open: string; pick: string; confirm: string };
+  /** Фінал (M16): голос відповіді скауту в пролозі — лист першого розвороту обирається ним (рима). */
+  firstVoice?: VoiceKey;
+  /** Фінал: партнер без дуету — розв’язка `replyCold`, якщо є. */
+  cold?: boolean;
+  /** Фінал: замість листа здобутків — епілог і одна кнопка. */
+  epilogue?: { tab: string; text: string[]; sign: string };
 };
 
 type Phase = { p: 'sheet' } | { p: 'pick' } | { p: 'reply'; option: PrologueOption } | { p: 'summary'; result: WeekResult };
 
-export function PrologueScreen({ spreads, onFinish, onNext, header = 'тиждень нуль · серпень', lootTab = 'ДО ПЕРШОГО МАТЧУ', lootButton = 'На лаву', lootEmpty = 'Три розвороти — і жодної відповіді.', arc = 1, labels = { open: 'Відповісти', pick: 'Обери відповідь на стікері', confirm: 'Так і відповісти' } }: Props) {
+export function PrologueScreen({ spreads, onFinish, onNext, header = 'тиждень нуль · серпень', lootTab = 'ДО ПЕРШОГО МАТЧУ', lootButton = 'На лаву', lootEmpty = 'Три розвороти — і жодної відповіді.', arc = 1, labels = { open: 'Відповісти', pick: 'Обери відповідь на стікері', confirm: 'Так і відповісти' }, firstVoice, cold = false, epilogue }: Props) {
   // Стікер зі станом арки (Спокій у відпустці): нижче стану — його немає, і гравець про нього не знає.
   const visible = (o: PrologueOption) => ((o as { arcMin?: number }).arcMin ?? 1) <= arc;
   const [i, setI] = useState(0);
@@ -57,7 +63,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, header = 'тижде
     else { setI(i + 1); setPhase({ p: 'sheet' }); }
   };
   /** Голос відповіді на попередньому розвороті — луна в листі наступного. */
-  const previousVoice = (d: number) => { const p = picks.find((x) => x.spread === spreads[d - 1]?.id); return p ? spreads[d - 1].options.find((o) => o.id === p.option)?.voice : undefined; };
+  const previousVoice = (d: number) => { if (d === 0) return firstVoice; const p = picks.find((x) => x.spread === spreads[d - 1]?.id); return p ? spreads[d - 1].options.find((o) => o.id === p.option)?.voice : undefined; };
 
   const pickOf = (s: PrologueSpread) => { const p = picks.find((x) => x.spread === s.id); return p ? s.options.find((o) => o.id === p.option) : undefined; };
 
@@ -135,7 +141,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, header = 'тижде
                 <div className="moment nb-sheet"><div className="scene">
                   <span className="minute-tab">{s.tab.toUpperCase()}</span>
                   <p className="nb-chosen"><b>{o.say}</b></p>
-                  <p className="setup" style={{ paddingTop: 0 }}>{o.reply}</p>
+                  <p className="setup" style={{ paddingTop: 0 }}>{cold && (o as { replyCold?: string }).replyCold ? (o as { replyCold?: string }).replyCold : o.reply}</p>
                   <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? 'Що далі' : 'Далі'}</button>
                 </div></div>
               </section>
@@ -152,7 +158,15 @@ export function PrologueScreen({ spreads, onFinish, onNext, header = 'тижде
           );
         })}
 
-        {phase.p === 'summary' && (
+        {phase.p === 'summary' && epilogue && (
+          <div className="moment nb-sheet loot-sheet"><div className="scene">
+            <span className="minute-tab">{epilogue.tab.toUpperCase()}</span>
+            {epilogue.text.map((t, k) => <p key={k} className="setup" style={k ? { paddingTop: 0 } : undefined}>{t}</p>)}
+            <p className="nb-aside"><b>{epilogue.sign}</b></p>
+            <button className="primary menu-primary nb-sheet-btn" onClick={onNext}>{lootButton}</button>
+          </div></div>
+        )}
+        {phase.p === 'summary' && !epilogue && (
           <LootSheet tab={lootTab} loot={phase.result.loot} before={phase.result.before} after={phase.result.after}
             empty={lootEmpty} button={lootButton} onNext={onNext} />
         )}

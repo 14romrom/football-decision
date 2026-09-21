@@ -24,6 +24,8 @@ type Props = {
   column?: EspmColumn;
   onNext: () => void;
   onNewSeason: () => void;
+  /** Після другого сезону — не «Новий сезон», а «Далі» (M16). */
+  nextLabel?: string;
 };
 
 const fmt = (n: number) => n.toFixed(1).replace('.', ',');
@@ -37,7 +39,7 @@ function Banner({ ad, dark }: { ad: AdRule; dark?: boolean }) {
   );
 }
 
-export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict, column, onNext, onNewSeason }: Props) {
+export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict, column, onNext, onNewSeason, nextLabel = 'Новий сезон' }: Props) {
   const rows = standings(season);
   const over = isSeasonOver(season);
   const p = season.player;
@@ -127,7 +129,7 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
 
       <div className="actions">
         {over
-          ? <button className="primary" onClick={onNewSeason}>Новий сезон</button>
+          ? <button className="primary" onClick={onNewSeason}>{nextLabel}</button>
           : <button className="primary" onClick={onNext}>Далі</button>}
       </div>
     </div>

@@ -49,22 +49,27 @@ function formationSpots(f: Formation, mirror: boolean, shift: number): Spot[] {
   return out;
 }
 
-/** Исходные позиции всех актёров под эпизод: схема + сдвиг фазы, Реєс в точке сцены, ближайший соперник рядом. */
-function basePositions(episode: Episode | null, strength: Strength): { pos: Pos; near: string; partner: string; spot: Spot } {
+const SUB = 'sub';   // дублер на позиції Реєса, поки той на лаві
+const BENCH: Spot = [0.44, 0.97];   // лава — біля тренера (FAMILY_SPOT.coach), трохи лівіше
+
+/** Исходные позиции всех актёров под эпизод: схема + сдвиг фазы, Реєс в точке сцены, ближайший соперник рядом.
+ *  На лаві (плейтест 21.09, Б-3): Реєс біля брівки, на його місці в схемі дублер, м’яч у центрі, суперник поруч не стає. */
+function basePositions(episode: Episode | null, strength: Strength, onBench = false): { pos: Pos; near: string; partner: string; spot: Spot } {
   const phase = episode?.phase ?? 'transition';
-  const spot = (episode?.family && FAMILY_SPOT[episode.family]) || PHASE_SPOT[phase];
+  const spot = onBench ? BENCH : (episode?.family && FAMILY_SPOT[episode.family]) || PHASE_SPOT[phase];
   const shift = PHASE_SHIFT[phase];
   const pos: Pos = {};
   formationSpots(F433, false, shift).forEach((s, i) => { pos['u' + i] = s; });
   formationSpots(THEM_BY_STRENGTH[strength], true, shift).forEach((s, i) => { pos['t' + i] = s; });
+  pos[SUB] = pos[SELF];
   pos[SELF] = spot;
   let near = 't1'; let best = Infinity;
   for (let i = 1; i < 11; i++) { const p = pos['t' + i]; const d = (p[0] - spot[0]) ** 2 + (p[1] - spot[1]) ** 2; if (d < best) { best = d; near = 't' + i; } }
-  pos[near] = [clamp(spot[0] + 0.045), clamp(spot[1] + 0.06)];
+  if (!onBench) pos[near] = [clamp(spot[0] + 0.045), clamp(spot[1] + 0.06)];
   // Партнёр для паса — ближайший свой, кроме вратаря и самого Реєса.
   let partner = 'u8'; best = Infinity;
   for (let i = 1; i < 11; i++) { if ('u' + i === SELF) continue; const p = pos['u' + i]; const d = (p[0] - spot[0]) ** 2 + (p[1] - spot[1]) ** 2; if (d < best) { best = d; partner = 'u' + i; } }
-  pos[BALL] = [spot[0] + 0.02, spot[1] + 0.035];
+  pos[BALL] = onBench ? [0.5, 0.5] : [spot[0] + 0.02, spot[1] + 0.035];
   return { pos, near, partner, spot };
 }
 
@@ -78,11 +83,13 @@ type Props = {
   finale?: { kind: FinaleKind; id: number } | null;
   /** Последняя строка ленты — поле разыгрывает её, пока эпизода нет. */
   pulse?: TimelineEvent | null;
+  /** Реєс на лаві: точка біля брівки, на полі дублер. */
+  onBench?: boolean;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', finale, pulse }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', finale, pulse, onBench = false }: Props) {
   const reduced = motionReduced();
-  const baseRef = useRef(basePositions(episode, strength));
+  const baseRef = useRef(basePositions(episode, strength, onBench));
   const [pos, setPos] = useState<Pos>(baseRef.current.pos);
   const [dur, setDur] = useState<Record<string, number>>({});
   const [lit, setLit] = useState<string | null>(null);
@@ -99,11 +106,11 @@ export function Pitch({ episode, selfName, strength = 'even', finale, pulse }: P
   // Новый эпизод: все на исходные, мяч у Реєса, следы прошлой развязки стёрты.
   useEffect(() => {
     busy.current += 1;
-    baseRef.current = basePositions(episode, strength);
+    baseRef.current = basePositions(episode, strength, onBench);
     setNet(null); setCard(null); setLit(null);
     move(baseRef.current.pos, 600);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [episode?.id, strength]);
+  }, [episode?.id, strength, onBench]);
 
   // 1. Розв’язка.
   useEffect(() => {
@@ -160,7 +167,7 @@ export function Pitch({ episode, selfName, strength = 'even', finale, pulse }: P
     const b = baseRef.current.pos;
     const r = hash(pulse.text);
     const side = pulse.kind === 'goalUs' ? 'u' : pulse.kind === 'goalThem' ? 't' : r < 0.5 ? 'u' : 't';
-    const ids = Array.from({ length: 10 }, (_, i) => side + (i + 1));
+    const ids = Array.from({ length: 10 }, (_, i) => side + (i + 1)).map((id) => (onBench && id === SELF ? SUB : id));   // з лави пас не приймають
     const start = Math.floor(r * 10);
     const chain = [ids[start], ids[(start + 3 + Math.floor(r * 7)) % 10], ids[(start + 6) % 10]];
     const run = async () => {
@@ -224,6 +231,7 @@ export function Pitch({ episode, selfName, strength = 'even', finale, pulse }: P
       </g>
       <g className="pitch-us">
         {Array.from({ length: 11 }, (_, i) => 'u' + i).filter((id) => id !== SELF).map((id) => <circle key={id} className={`pitch-dot${litClass(id)}`} style={at(id)} r="4" />)}
+        {onBench && <circle className="pitch-dot" style={at(SUB)} r="4" />}
       </g>
       <g className="pitch-dot" style={at(SELF)}>
         <circle key={pulseSelf} className={`pitch-self ${pulseSelf > 0 ? 'pulse' : ''}${litClass(SELF)}`} r="6" />

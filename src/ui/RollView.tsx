@@ -95,6 +95,14 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
     const t = setTimeout(() => setStage((s) => s + 1), schedule[stage + 1] - schedule[stage]);
     return () => clearTimeout(t);
   }, [stage, schedule, LAST]);
+  // Штамп і вихід — у кадр. На 812 px блок `.after` починався з y≈850: sticky-кнопка не піднімається вище
+  // свого контейнера, і новачок після кидка бачив «нічого не сталося» (плейтест 21.09, Б-1). Прожектор на
+  // формулу/штамп скролить сам — йому не заважаємо.
+  useEffect(() => {
+    if (stage < LAST || (hint && hintOpen && (hint.target === 'formula' || hint.target === 'verdict'))) return;
+    verdictRef.current?.scrollIntoView({ block: 'start', behavior: motionReduced() ? 'instant' as ScrollBehavior : 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage >= LAST]);
   // Барабан: у каждого кубика свой — первый встаёт на T_DIE1, второй на T_DIE2. Один запуск на
   // бросок, не на стадию: иначе замедление сбрасывалось бы при каждом шаге расписания.
   useEffect(() => {

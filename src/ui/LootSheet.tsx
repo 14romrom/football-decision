@@ -77,6 +77,7 @@ export function LootSheet({ tab, loot, before, after, empty, button, onNext }: P
       )}
       {n > 0 && (
         <div className="loot-card" style={{ ['--i' as string]: n }}>
+          <p className="loot-cap">У картку — скільки кожен голос додає до кубиків</p>
           {ATTR_VOICES.map((who) => {
             const was = voiceMod(who, before); const now = voiceMod(who, after);
             return <div key={who} className={`loot-box voice-${who} ${now > was ? 'up' : ''}`}>{BOX_LABEL[who]}<b>+{now}</b></div>;

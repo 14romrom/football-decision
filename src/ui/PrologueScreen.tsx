@@ -85,7 +85,8 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
 
   const button = (() => {
     if (phase.p === 'summary' || phase.p === 'sheet' || phase.p === 'reply') return null;   // кнопка — всередині листа
-    return <button className="primary menu-primary" onClick={confirm} disabled={!selected}>Так і відповісти</button>;
+    // Поки стікер не обрано, кнопка каже, що робити: приглушена «Так і відповісти» сама по собі не пояснювала (плейтест 21.09, Б-8).
+    return <button className="primary menu-primary" onClick={confirm} disabled={!selected}>{selected ? 'Так і відповісти' : 'Обери відповідь на стікері'}</button>;
   })();
 
   return (

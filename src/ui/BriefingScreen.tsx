@@ -52,13 +52,15 @@ type Props = {
   /** Тур (1-based), клуб-хозяин для шапки, заметка о Реєсе и черта соперника — считаются в App (engine/programme.ts). */
   round: number; usName: string; note: string; trait: string | null;
   onStart: () => void;
+  /** Починає на лаві — кнопка не обіцяє поле (плейтест 21.09, Б-4). */
+  onBench?: boolean;
 };
 
 // Програмка (19.09, макет «Брифинг як програмка»): тот же брифинг, но лист бумаги в руке перед выходом —
 // единственный светлый экран в игре. Рубрики: Реєс (заметка прозой), Суперник (+ черта голосом клуба),
 // Стадіон, Погода, Форма, Слово тренера цитатой в рамке. Без иронии: програмку пишет пресс-служба.
 
-export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, onStart }: Props) {
+export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, onStart, onBench }: Props) {
   const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
   const venue = conditions.venue === 'home'
     ? { title: 'Вдома', note: `Трибуни знають тебе і чекають ${sig[0]} та ${sig[1]}.` }
@@ -79,7 +81,7 @@ export function BriefingScreen({ conditions, opponent, player, round, usName, no
         <h1 className="prog-title">{home} — {away}<small>Стадіон «{home}» · початок о {time}</small></h1>
         <div className="prog-rule" />
         <dl className="prog-list">
-          <dt>Реєс</dt><dd><b>№10.</b> {note} <a className="prog-link" href="#/player">Картка гравця</a></dd>
+          <dt>Реєс</dt><dd><b>№10, атакувальний півзахисник.</b> {note}</dd>
           <dt>Суперник</dt><dd><b>«{opponent.name.nom}»</b> — {opponent.blurb}. {strength}{trait && <> {trait}<span className="prog-warn">увага</span></>}</dd>
           <dt>Стадіон</dt><dd><b>{venue.title}.</b> {venue.note}</dd>
           <dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd>
@@ -88,7 +90,7 @@ export function BriefingScreen({ conditions, opponent, player, round, usName, no
         </dl>
         <div className="prog-foot"><span>Безкоштовно · не для продажу</span><span>надруковано вчора</span></div>
       </div>
-      <button className="primary prog-cta" onClick={onStart}>Вийти на поле</button>
+      <button className="primary prog-cta" onClick={onStart}>{onBench ? 'На лаву' : 'Вийти на поле'}</button>
     </div>
   );
 }

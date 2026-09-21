@@ -53,6 +53,9 @@ export type MatchSession = {
   injuriesSeason?: number;
   /** На лаві до bench.entryMinute: сили не витрачаються, стоїть флаг on_bench; на виході — свіжі ноги і рядок «виходиш». */
   onBench?: boolean;
+  /** Матч почато з лави: `onBench` гасне, щойно движок дійшов до виходу, а стрічка ще дочитує перший тайм —
+   *  екран рахує «сидить/вийшов» від показаної хвилини, не від стану движка (плейтест 21.09, Б-3). */
+  fromBench?: boolean;
   /** Перший матч кар’єри (M12): чотири фіксовані сцени-туторіал замість плану, підказка оповідача на кожну
    *  (епізод → рядок), реактивні сцени не спливають — кожна сцена вводить одну річ. */
   tutorial?: Tutorial;
@@ -276,7 +279,7 @@ export function createMatch(
     plan: carryover.tutorial && carryover.tutorial.plan.length === schedule.length && carryover.tutorial.plan.every((id) => episodes.some((e) => e.id === id))
       ? [...carryover.tutorial.plan]
       : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds)],
-    ...(benchCall.length ? { onBench: true } : {}),
+    ...(benchCall.length ? { onBench: true, fromBench: true } : {}),
     ...(carryover.tutorial ? { tutorial: carryover.tutorial } : {}),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
     feedSeen: new Set(carryover.feedSeen ?? []), feedSeenNow: new Set(), flavorSeenNow: new Set(),

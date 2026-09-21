@@ -12,8 +12,8 @@ export type ProgrammeInput = {
   /** Сколько матчей подряд с результативной дией / без неё (0 — нет серии). */
   scoringStreak: number;
   dryStreak: number;
-  /** Названия дел прошлого тижня, в порядке дней. */
-  weekActivities: string[];
+  /** Дела прошлого тижня, в порядке дней; в програмку попадают только публичные (PUBLIC_ACTIVITIES). */
+  weekActivities: { id: string; title: string }[];
   coachTrust: number;
   /** Матчей за клуб до этого; веха — если этот матч круглый. */
   matchesPlayed: number;
@@ -48,10 +48,14 @@ function formLine(i: ProgrammeInput): string {
   return '';
 }
 
+/** Дела недели, о которых прес-служба может знать: публичные. Зал, собака и сварка з партнером — не её дело
+ *  (21.09, пользователь: програмка звучала как внутренняя сводка персонажа). */
+const PUBLIC_ACTIVITIES = new Set(['academy_kids', 'school_masterclass', 'press_conf_proper', 'charity_team', 'autographs', 'podcast', 'big_interview', 'presser_before_them', 'fan_podcast', 'interview']);
+
 function weekLine(i: ProgrammeInput): string {
-  const acts = i.weekActivities.filter(Boolean).slice(0, 2).map((t) => t.charAt(0).toLowerCase() + t.slice(1));
-  if (acts.length === 0) return 'Тиждень провів на базі.';
-  return `Тиждень — ${acts.join(' та ')}.`;
+  const acts = i.weekActivities.filter((a) => PUBLIC_ACTIVITIES.has(a.id)).slice(0, 1).map((a) => a.title.charAt(0).toLowerCase() + a.title.slice(1));
+  if (acts.length === 0) return '';
+  return `Цього тижня — ${acts[0]}.`;
 }
 
 /** Ставлення прес-служби дрейфує зі станом: до «свій» — нічого, далі — «улюбленець трибун», після зими — і про агента. */
@@ -73,11 +77,12 @@ function carryLine(i: ProgrammeInput): string {
   return line.charAt(0).toUpperCase() + line.slice(1) + '.';
 }
 
+// Довіра тренера — словами прес-служби про тренера, не оцінкою стану гравця.
 function coachLine(i: ProgrammeInput): string {
-  if (i.benched) return 'У заявці, але починає на лаві.';
-  if (i.coachTrust >= 70) return 'Місце в основі беззаперечне.';
-  if (i.coachTrust >= 45) return 'В основі, але тренер дивиться уважно.';
-  return 'Виходить з останнім попередженням.';
+  if (i.benched) return 'У заявці, починає на лаві.';
+  if (i.coachTrust >= 70) return 'Тренер сумнівів не має.';
+  if (i.coachTrust >= 45) return 'Тренер придивляється.';
+  return 'Тренер, кажуть, дав останнє попередження.';
 }
 
 /** Заметка «Реєс» — 2–4 короткие фразы; каждая часть опциональна, пустые не оставляют дыр. */

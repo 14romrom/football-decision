@@ -41,6 +41,21 @@ describe('форма контента', () => {
     }
   });
 
+  // past — поступок, recap — последствие: на доске аналитика они идут подряд, и «пробив низом… — і пробив низом…»
+  // читалось дважды (плейтест 21.09, Б-5). Ловим дословный повтор: первые четыре слова recap (после «і ») = начало past.
+  // Совпадение одного глагола («пробив у дотик… — і пробив у дотик просто у воротаря») в контенте повсеместно (233 из ~1200)
+  // и читается как продолжение фразы, поэтому порог — четыре слова.
+  it('recap не повторяет past дословно', () => {
+    const head = (s: string) => s.replace(/^і\s+/, '').replace(/[^\p{L}\p{N}ʼ’ ]/gu, '').toLowerCase().split(/\s+/).slice(0, 4).join(' ');
+    for (const e of EPISODES) for (const o of e.options) {
+      if (!o.past) continue;
+      for (const t of TIERS) {
+        const r = o.outcomes[t].recap;
+        expect(head(r) === head(o.past) ? `${e.id}/${o.id}/${t}: «${o.past}» — «${r}»` : '').toBe('');
+      }
+    }
+  });
+
   it('поля опций валидны: атрибут, форма риска, масштаб, стоимость 2..12', () => {
     for (const e of EPISODES) for (const o of e.options) {
       expect(ATTRS, `${e.id}/${o.id}`).toContain(o.attribute);

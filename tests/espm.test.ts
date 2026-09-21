@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { adContext, AD_SLOTS, pickAds, roundHeadline } from '../src/engine/espm';
+import { adContext, AD_SLOTS, pickAds, playerLine, roundHeadline } from '../src/engine/espm';
 import { createSeason, recordRound, SEASON_ROUNDS, US, type OurResult } from '../src/engine/season';
 import { ADS, OPPONENTS, ROSTER } from '../src/content';
 import { makeRng } from '../src/engine/rng';
@@ -13,6 +13,23 @@ function play(results: [number, number][]) {
   for (const [a, b] of results) s = recordRound(s, ours(a, b), strengths, makeRng(s.seed + s.round * 7919));
   return s;
 }
+
+describe('ESPM: підзаголовок про Реєса', () => {
+  it('дубль, гол, передача, оцінки — без цифр; рівний матч — мовчання', () => {
+    const N = { nom: 'Реєс', gen: 'Реєса' };
+    const r = (goals: number, assists: number, coach = 6, fan = 6, score: [number, number] = [2, 1]): OurResult =>
+      ({ scoreUs: score[0], scoreThem: score[1], goals, assists, coachRating: coach, fanRating: fan, scorers: [] });
+    expect(playerLine(r(2, 0), N)).toMatch(/^Дубль Реєса/);
+    expect(playerLine(r(2, 0, 6, 6, [2, 3]), N)).toContain('не врятував');
+    expect(playerLine(r(1, 1), N)).toContain('найкращий на полі');
+    expect(playerLine(r(0, 1), N)).toContain('Передача');
+    expect(playerLine(r(0, 0, 7.8, 6), N)).toContain('серед найкращих');
+    expect(playerLine(r(0, 0, 5, 5), N)).toContain('найгірших');
+    expect(playerLine(r(0, 0), N)).toBe('');
+    expect(playerLine(undefined, N)).toBe('');
+    for (const g of [0, 1, 2, 3]) expect(playerLine(r(g, 1, 8, 8), N)).not.toMatch(/\d|%/);
+  });
+});
 
 describe('ESPM: заголовок тура', () => {
   it('первый тур — «стартує з …», соперник в родительном через «проти»', () => {

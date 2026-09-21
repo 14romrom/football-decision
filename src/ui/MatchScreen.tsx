@@ -44,7 +44,7 @@ function Meter({ label, value, tone }: { label: string; value: number; tone?: st
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, player, conditions, flagRules, hideDiceZone, finale, sheet, children,
+  state, roster, shown, waiting, onSkip, episode, sheetMinute, onBench, player, conditions, flagRules, hideDiceZone, finale, sheet, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -53,6 +53,11 @@ export function MatchScreen({
   onSkip: () => void;
   /** Текущая сцена — для точки на поле и факторов «на кубик»; null между эпизодами. */
   episode: Episode | null;
+  /** Хвилина відкритого листа (сцена, кидок, вихід): годинник у шапці показує її, а між листами — хвилину
+   *  останнього показаного рядка стрічки. Движок уже на 52′, поки стрічка дочитує 9′ (плейтест 21.09, Б-7). */
+  sheetMinute?: number;
+  /** Реєс ще на лаві за показаною стрічкою — точка стоїть біля тренера, на полі замість нього дублер. */
+  onBench?: boolean;
   player: Player;
   conditions: MatchConditions;
   flagRules: FlagRule[];
@@ -72,6 +77,7 @@ export function MatchScreen({
   const insights = episode ? sceneInsights(episode, state, player) : [];
   // Сили — полоса по нижней кромке поля (19.09): сжимается влево, цвет по уровню.
   const stamina = Math.max(0, Math.min(100, state.stamina));
+  const clock = sheetMinute ?? (shown.length ? shown[shown.length - 1].minute : state.minute);
   const staminaTone = stamina < 25 ? 'low' : stamina < 50 ? 'mid' : '';
 
   return (
@@ -79,9 +85,9 @@ export function MatchScreen({
       <Film />
 
       <div className="pitch-wrap">
-        <Pitch episode={episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} />
+        <Pitch episode={episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench} />
         <div className="score-overlay">
-          <span className="score-line">{state.minute}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
+          <span className="score-line">{clock}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
           <span className="meters">
             <Meter label="тренер" value={state.coachTrust} tone={state.coachTrust < 30 ? 'low' : ''} />
             <Meter label="трибуни" value={state.fanHype} tone="hype" />

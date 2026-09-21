@@ -67,11 +67,11 @@ type Stage =
   | { k: 'briefing'; carry: CarryFacts }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number; link: boolean }
-  | { k: 'roll'; episode: Episode; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
+  | { k: 'roll'; episode: Episode; minute: number; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
   // Фінальний свисток (M10, 20.09): лист оповідача на полі, потім кнопка «Перейти в роздягальню» → дошка.
   | { k: 'whistle'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
   // Вихід із лави (21.09): лист без кубика на хвилині виходу — сетап, голоси, «Вийти на поле».
-  | { k: 'entry'; entry: Entry; minute: number; debut: boolean }
+  | { k: 'entry'; entry: Entry; minute: number; debut: boolean; lead: TimelineEvent[] }
   // Після матчу (19.09): дошка аналітика → картка з дельтою → таблиця → стрічка → тиждень.
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
   | { k: 'delta'; summary: MatchSummary; before: Career; after: Career; leveledFrom: number; leveledTo: number; card: boolean }
@@ -86,7 +86,7 @@ type Stage =
 
 type Pending =
   | { kind: 'episode'; episode: Episode; minute: number; link: boolean }
-  | { kind: 'entry'; entry: Entry; minute: number; debut: boolean }
+  | { kind: 'entry'; entry: Entry; minute: number; debut: boolean; lead: TimelineEvent[] }
   | { kind: 'result'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career };
 
 /** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
@@ -127,7 +127,7 @@ function Game() {
     let scoring = 0; for (let i = played.length - 1; i >= 0; i--) { if ((played[i].goals + played[i].assists) > 0) scoring++; else break; }
     let dry = 0; for (let i = played.length - 1; i >= 0; i--) { if ((played[i].goals + played[i].assists) === 0) dry++; else break; }
     const week = (c.weekLog ?? []).filter((w) => w.season === sn.number && w.round === sn.round).slice(-1)[0];
-    const titles = (week?.chosen ?? []).map((id) => ACTIVITIES.find((a) => a.id === id)?.title ?? '').filter(Boolean);
+    const titles = (week?.chosen ?? []).map((id) => { const a = ACTIVITIES.find((x) => x.id === id); return a ? { id, title: a.title } : null; }).filter((a): a is { id: string; title: string } => !!a);
     return {
       round: sn.round + 1,
       last: lastRes && lastKey ? { scoreUs: lastRes.scoreUs, scoreThem: lastRes.scoreThem, opponentGen: OPPONENTS[lastKey]?.name.gen ?? lastKey } : null,
@@ -142,6 +142,9 @@ function Game() {
   // Краї плівки (ui/Film.tsx): на екранах гри; матч малює свої. Дошка, ESPM і стрічка — без рамки, це «чужі» екрани.
   const film = ['result', 'season', 'posts', 'feed', 'episode', 'roll', 'whistle'].includes(stage.k) ? null : <Film />;
   const [shown, setShown] = useState<TimelineEvent[]>([]);
+  // Новий екран — з верху. Хеш-роутер скидає скрол лише на hashchange, а зміни stage всередині #/play — ні:
+  // після ESPM з кнопкою внизу стрічка відкривалась прокрученою на 861 px (плейтест 21.09, Б-1).
+  useEffect(() => { window.scrollTo(0, 0); }, [stage.k]);
   // Розв’язка на поле: вид по исходу, id — номер броска; ставится со штампом вердикта.
   const [finale, setFinale] = useState<{ kind: FinaleKind; id: number } | null>(null);
   const [queue, setQueue] = useState<TimelineEvent[]>([]);
@@ -154,7 +157,11 @@ function Game() {
     const entryMinute = BALANCE.bench.entryMinute;
     if (session.onBench && session.state.minute < entryMinute && (session.schedule[session.nextIndex] ?? 0) > entryMinute && !session.pendingFollowUp) {
       const events = advanceTo(session, entryMinute, rng);
-      pendingRef.current = { kind: 'entry', entry: buildEntry(session.state, session.conditions, !!session.tutorial), minute: entryMinute, debut: !!session.tutorial };
+      // Рядок «виходиш із лави» (benchEnter) — після листа виходу, не до нього: інакше стрічка виводила гравця
+      // раніше, ніж він натиснув «Вийти на поле» (плейтест 21.09, Б-9).
+      const last = events[events.length - 1];
+      const exitLine = last && last.minute === entryMinute && last.kind === 'filler' ? [events.pop()!] : [];
+      pendingRef.current = { kind: 'entry', entry: buildEntry(session.state, session.conditions, !!session.tutorial), minute: entryMinute, debut: !!session.tutorial, lead: exitLine };
       setQueue([...lead, ...events]);
       setStage({ k: 'feed' });
       return;
@@ -326,7 +333,7 @@ function Game() {
         shownAtRef.current = performance.now();
         setStage({ k: 'episode', episode: p.episode, minute: p.minute, link: p.link });
       } else if (p.kind === 'entry') {
-        setStage({ k: 'entry', entry: p.entry, minute: p.minute, debut: p.debut });
+        setStage({ k: 'entry', entry: p.entry, minute: p.minute, debut: p.debut, lead: p.lead });
       } else {
         setStage({ k: 'whistle', whistle: p.whistle, summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo, before: p.before, after: p.after });
       }
@@ -375,7 +382,7 @@ function Game() {
     // уже с учётом этого исхода. В ленту события попадают по кнопке «Далі».
     const { events } = applyChoice(session, stage.episode, option, res, rng, FLAVOR);
     const continues = session.pendingFollowUp ? CHAIN_NEXT[session.pendingFollowUp] ?? 'далі' : undefined;
-    setStage({ k: 'roll', episode: stage.episode, option, res, events, continues });
+    setStage({ k: 'roll', episode: stage.episode, minute: stage.minute, option, res, events, continues });
   }, [stage]);
 
   const afterRoll = useCallback(() => {
@@ -472,9 +479,10 @@ function Game() {
 
           round={season.round + 1}
           usName={ROSTER.us.name.nom}
-          note={programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry })}
+          note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}
           trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
           onStart={kickoff}
+          onBench={!!session.onBench}
         />
         <DebugPanel session={session} />
       </>
@@ -532,6 +540,7 @@ function Game() {
         season={season}
         club={clubForms}
         playerName={ROSTER.us.players.self.nom}
+        playerGen={ROSTER.us.players.self.gen}
         // Реклама по сиду сезона и туру: перезагрузка не меняет банеры; виденные тексты — общая память медиа со стрічкою.
         ads={pickAds(ADS, adContext(season, career.coachTrust), new Set(recentPosts()), makeRng(season.seed + season.round * 6007 + 3))}
         verdict={over ? seasonVerdict(season, career.coachTrust) : undefined}
@@ -636,6 +645,8 @@ function Game() {
         waiting={stage.k === 'feed' && queue.length > 0}
         onSkip={skip}
         episode={stage.k === 'episode' || stage.k === 'roll' ? stage.episode : null}
+        sheetMinute={stage.k === 'episode' || stage.k === 'roll' || stage.k === 'entry' ? stage.minute : undefined}
+        onBench={!!session.fromBench && (shown.length ? shown[shown.length - 1].minute : 0) < BALANCE.bench.entryMinute}
         player={session.player}
         conditions={session.conditions}
         flagRules={session.flagRules}
@@ -644,7 +655,7 @@ function Game() {
         finale={finale}
       >
         {stage.k === 'entry' && (
-          <EntryCard entry={fillNamesDeep(stage.entry, session.roster)} minute={stage.minute} debut={stage.debut} onNext={() => proceed()} />
+          <EntryCard entry={fillNamesDeep(stage.entry, session.roster)} minute={stage.minute} debut={stage.debut} onNext={() => proceed(stage.lead)} />
         )}
         {stage.k === 'whistle' && (
           <WhistleCard

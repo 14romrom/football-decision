@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { isSeasonOver, SEASON_ROUNDS, standings, US, type Season, type Verdict } from '../engine/season';
 import { plural } from './pluralize';
 import type { AdRule, AdSet, ClubName } from '../engine/espm';
-import { roundHeadline, type EspmColumn } from '../engine/espm';
+import { playerLine, roundHeadline, type EspmColumn } from '../engine/espm';
 
 // Экран сезона = сторінка таблиці на сайті ESPM (19.09, макет «Таблиця: ESPM», решение пользователя):
 // рамка браузера с адресом делает страницу предметом; сама страница — светлый экран с чужой
@@ -16,6 +16,8 @@ type Props = {
   season: Season;
   club: (key: string) => ClubName;
   playerName: string;
+  /** Родовий для підзаголовка («Дубль Реєса»). */
+  playerGen: string;
   ads: AdSet;
   verdict?: Verdict;
   /** Колонка видання про Реєса за станом арки (M13, espm.ts:playerColumn); без неї — як раніше. */
@@ -35,7 +37,7 @@ function Banner({ ad, dark }: { ad: AdRule; dark?: boolean }) {
   );
 }
 
-export function SeasonScreen({ season, club, playerName, ads, verdict, column, onNext, onNewSeason }: Props) {
+export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict, column, onNext, onNewSeason }: Props) {
   const rows = standings(season);
   const over = isSeasonOver(season);
   const p = season.player;
@@ -54,6 +56,7 @@ export function SeasonScreen({ season, club, playerName, ads, verdict, column, o
           <div className="espm-art">
             <div className="espm-kicker">Тур {season.round} з {SEASON_ROUNDS} · підсумки</div>
             <h1 className="espm-hl">{roundHeadline(season, club)}</h1>
+            {(() => { const l = playerLine(season.rounds?.[season.rounds.length - 1], { nom: playerName, gen: playerGen }); return l ? <p className="espm-dek">{l}</p> : null; })()}
             <div className="espm-by">Редакція · 2 год тому</div>
             <table className="espm-tbl">
               <thead><tr><th>#</th><th>Клуб</th><th>І</th><th>В</th><th>Н</th><th>П</th><th>М</th><th>О</th></tr></thead>

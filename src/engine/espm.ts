@@ -10,7 +10,7 @@
 
 import { pickFresh } from './flavor';
 import type { Rng } from './rng';
-import { standings, SEASON_ROUNDS, US, type Season } from './season';
+import { standings, SEASON_ROUNDS, US, type OurResult, type Season } from './season';
 import type { MatchResult } from './conditions';
 
 export type ClubName = { nom: string; gen: string };
@@ -78,6 +78,24 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
     : us.position > prevUs.position ? `опустилася на ${TO[us.position]}`
     : `лишається на ${AT[us.position]}`;
   return `${lead} «${usName}» ${move} після ${score}.`;
+}
+
+/** Підзаголовок про Реєса — реакція видання на його гру в останньому турі (21.09, пользователь: після дубля
+ *  новини мовчали). Без чисел: дубль, гол, «серед найкращих» за оцінками тренера й трибун, або мовчання,
+ *  коли нічого не сталося; провал — теж новина. Оцінка тренера 0–10, трибун 0–10 (whistle/board). */
+export function playerLine(last: OurResult | undefined, name: { nom: string; gen: string }): string {
+  if (!last) return '';
+  const { goals, assists, coachRating, fanRating } = last;
+  const lost = last.scoreUs < last.scoreThem;
+  if (goals >= 3) return `Хет-трик ${name.gen} — головна тема вечора.`;
+  if (goals === 2) return lost ? `Дубль ${name.gen} команду не врятував.` : `Дубль ${name.gen} — головна тема вечора.`;
+  if (goals === 1 && assists >= 1) return `Гол і передача: ${name.nom} — найкращий на полі.`;
+  if (goals === 1) return lost ? `Гол ${name.gen} — єдине, що варто переглянути.` : `Гол ${name.gen} вирішив долю матчу.`;
+  if (assists >= 2) return `Дві передачі ${name.gen}: у центрі поля все йшло через нього.`;
+  if (assists === 1) return `Передача ${name.gen} — момент туру.`;
+  if (coachRating >= 7.5 || fanRating >= 8) return `${name.nom} — серед найкращих на полі, хоч і без гола.`;
+  if (coachRating < 5.5 && fanRating < 5.5) return `${name.nom} — один із найгірших у складі. Питання до тренера.`;
+  return '';
 }
 
 // ——— реклама ————————————————————————————————————————————————————————

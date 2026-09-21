@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { PrologueOption, ProloguePick, PrologueSpread } from '../engine/prologue';
+import { sheetFor, type PrologueOption, type ProloguePick, type PrologueSpread } from '../engine/prologue';
 import { VOICE_ATTRS } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
 import { LootSheet } from './LootSheet';
@@ -22,7 +22,7 @@ type Props = {
   onNext: () => void;
 };
 
-type Phase = { p: 'sheet' } | { p: 'pick' } | { p: 'summary'; result: WeekResult };
+type Phase = { p: 'sheet' } | { p: 'pick' } | { p: 'reply'; option: PrologueOption } | { p: 'summary'; result: WeekResult };
 
 export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
   const [i, setI] = useState(0);
@@ -37,12 +37,17 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
     const option = spread.options.find((o) => o.id === selected);
     if (!option) return;
     const pick: ProloguePick = { spread: spread.id, option: option.id, ...(option.point ? { attr: attr ?? VOICE_ATTRS[option.voice][0] } : {}) };
-    const all = [...picks, pick];
-    setPicks(all);
+    setPicks([...picks, pick]);
     setSelected(null); setAttr(null);
-    if (last) setPhase({ p: 'summary', result: onFinish(all) });
+    // Розворот закінчується розв’язкою — реакцією співрозмовника і фактом «що далі», — а не паузою.
+    setPhase({ p: 'reply', option });
+  };
+  const afterReply = () => {
+    if (last) setPhase({ p: 'summary', result: onFinish(picks) });
     else { setI(i + 1); setPhase({ p: 'sheet' }); }
   };
+  /** Голос відповіді на попередньому розвороті — луна в листі наступного. */
+  const previousVoice = (d: number) => { const p = picks.find((x) => x.spread === spreads[d - 1]?.id); return p ? spreads[d - 1].options.find((o) => o.id === p.option)?.voice : undefined; };
 
   const pickOf = (s: PrologueSpread) => { const p = picks.find((x) => x.spread === s.id); return p ? s.options.find((o) => o.id === p.option) : undefined; };
 
@@ -79,14 +84,14 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
   };
 
   const button = (() => {
-    if (phase.p === 'summary' || phase.p === 'sheet') return null;   // кнопка — всередині листа
+    if (phase.p === 'summary' || phase.p === 'sheet' || phase.p === 'reply') return null;   // кнопка — всередині листа
     return <button className="primary menu-primary" onClick={confirm} disabled={!selected}>Так і відповісти</button>;
   })();
 
   return (
     <div className="result week prologue">
       <div className="card-minute">тиждень нуль · серпень</div>
-      <div className={`nb-book ${phase.p === 'sheet' || phase.p === 'summary' ? 'dimmed' : ''}`}>
+      <div className={`nb-book ${phase.p === 'sheet' || phase.p === 'reply' || phase.p === 'summary' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
@@ -102,8 +107,25 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
                 <h3>{s.title}</h3>
                 <div className="moment nb-sheet"><div className="scene">
                   <span className="minute-tab">{s.tab.toUpperCase()}</span>
-                  {s.sheet.map((t, k) => <p key={k} className="setup">{t}</p>)}
+                  {sheetFor(s, previousVoice(d)).map((t, k) => <p key={k} className="setup">{t}</p>)}
                   <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'pick' })}>Відповісти</button>
+                </div></div>
+              </section>
+            );
+          }
+
+          if (phase.p === 'reply') {
+            // Розв’язка: обраний стікер уже обведений, інші відірвані; лист з реакцією і кнопка «Далі».
+            const o = phase.option;
+            return (
+              <section key={s.id} className="nb-day">
+                <h3>{s.title}<small>{VOICE_LABEL[o.voice].toLowerCase()}</small></h3>
+                <div className="nb-notes compact">{s.options.map((x) => note(x, x === o ? 'on' : 'torn'))}</div>
+                <div className="moment nb-sheet"><div className="scene">
+                  <span className="minute-tab">{s.tab.toUpperCase()}</span>
+                  <p className="nb-chosen"><b>{o.say}</b></p>
+                  <p className="setup" style={{ paddingTop: 0 }}>{o.reply}</p>
+                  <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? 'Що далі' : 'Далі'}</button>
                 </div></div>
               </section>
             );

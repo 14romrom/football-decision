@@ -62,6 +62,8 @@ export type Career = {
   agentLog?: AgentLogEntry[];
   /** Кар’єру завершено (M13): улітку сказав агенту «так» — епілог, далі тільки нова кар’єра. */
   ended?: { season: number };
+  /** Луна зимового дзвінка на один матч (agentFlags, програмка); знімає applyMatchToCareer. */
+  agentEcho?: 'leave' | 'stay' | 'wait';
 };
 
 /** Стан арки (M13, 20.09): невпевнений → помітили → свій → не помітив, коли. Не сюжетні глави, а стани, в які
@@ -231,6 +233,23 @@ export function peopleFlags(career: Career): CarriedFlag[] {
   return [];
 }
 
+/** Тон відповіді тренеру в пролозі (21.09) — маркер на перший матч: «лава — це ненадовго» тренер пам’ятає на розминці. */
+export function prologueFlags(career: Career): CarriedFlag[] {
+  const tone: Record<string, string> = { call_ego: 'call_tone_ego', call_team: 'call_tone_team', call_vision: 'call_tone_vision' };
+  const flag = career.prologue?.call ? tone[career.prologue.call] : undefined;
+  if (!flag || career.matchesPlayed > 0) return [];
+  return [{ flag, mark: { minute: 0, episodeId: 'prologue', optionId: 'call', past: 'відповів тренеру по телефону', whenText: 'ще до сезону' } }];
+}
+
+/** Луна сцени агента (21.09): що Реєс відповів узимку, тренер і Тібо пам’ятають перший матч нового сезону —
+ *  маркер на матч (agent_left / agent_stayed / agent_waited) і рядок у програмці; знімається після матчу. */
+export function agentFlags(career: Career): CarriedFlag[] {
+  const echo = career.agentEcho;
+  if (!echo) return [];
+  const flag = echo === 'leave' ? 'agent_left' : echo === 'stay' ? 'agent_stayed' : 'agent_waited';
+  return [{ flag, mark: { minute: 0, episodeId: 'agent', optionId: echo, past: 'говорив з агентом узимку', whenText: 'ще взимку' } }];
+}
+
 /** Жарт Тібо (M12/M13): перепитав у пролозі, чи це жарт, — Тібо нагнітає сильніше. Маркер для реплік і сетапів,
  *  без модифікатора; системний, як partner_bonded. Живе, поки арка не дійде до «свій» — далі жарт уже спільний. */
 export function tiboFlags(career: Career): CarriedFlag[] {
@@ -308,7 +327,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   return {
     career: next,
     penalty: {
-      staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career), ...tiboFlags(career)], fromBench: !!career.benched,
+      staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career), ...tiboFlags(career), ...prologueFlags(career), ...agentFlags(career)], fromBench: !!career.benched,
       arc: arcStage(career),
       attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,
     },
@@ -336,6 +355,7 @@ export function applyMatchToCareer(
     benched: benchAfterMatch(!!career.benched, state.coachTrust, summary),
     partnerBond: (career.partnerBond ?? 0) + (state.people?.partner ?? 0),
     matchesPlayed: career.matchesPlayed + 1,
+    agentEcho: undefined,
     voiceCounts: { ...career.voiceCounts },
   };
   for (const [voice, count] of Object.entries(state.voices.counts) as [VoiceKey, number][]) {

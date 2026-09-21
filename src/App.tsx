@@ -127,7 +127,7 @@ function Game() {
       round: sn.round + 1,
       last: lastRes && lastKey ? { scoreUs: lastRes.scoreUs, scoreThem: lastRes.scoreThem, opponentGen: OPPONENTS[lastKey]?.name.gen ?? lastKey } : null,
       confidence: cond.tone.confidence, scoringStreak: scoring, dryStreak: dry, weekActivities: titles,
-      coachTrust: c.coachTrust, matchesPlayed: c.matchesPlayed, benched: c.benched, arc: arcStage(c),
+      coachTrust: c.coachTrust, matchesPlayed: c.matchesPlayed, benched: c.benched, arc: arcStage(c), agentEcho: c.agentEcho,
     };
   };
   const clubName = useCallback((key: string) => (key === US ? ROSTER.us.name.nom : OPPONENTS[key]?.name.nom ?? key), []);

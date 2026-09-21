@@ -423,6 +423,36 @@
     "value": 0
   },
   {
+    "id": "call_tone_ego",
+    "label": "сказав тренеру: лава — це ненадовго",
+    "value": 0
+  },
+  {
+    "id": "call_tone_team",
+    "label": "сказав тренеру: скажіть, що робити",
+    "value": 0
+  },
+  {
+    "id": "call_tone_vision",
+    "label": "спитав тренера про партнера",
+    "value": 0
+  },
+  {
+    "id": "agent_left",
+    "label": "узимку хотів піти",
+    "value": 0
+  },
+  {
+    "id": "agent_stayed",
+    "label": "узимку відмовив агенту",
+    "value": 0
+  },
+  {
+    "id": "agent_waited",
+    "label": "узимку відклав агента до літа",
+    "value": 0
+  },
+  {
     "id": "on_bench",
     "label": "на лаві",
     "value": 0

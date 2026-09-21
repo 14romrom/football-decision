@@ -76,7 +76,7 @@ export function resolveAgent(
   }
   const reason = mode === 'winter' && choice === 'leave' ? collapseReason(career, season) : undefined;
   const applied = applyWeek(career, [{ activity: { id: 'agent_' + choice, voice: choice === 'stay' ? 'team' : choice === 'leave' ? 'ego' : 'composure', title: option.label, line: '', effect: option.effect } }]);
-  const next: Career = { ...applied.career, agentLog: [...(career.agentLog ?? []), { season: season.number, choice, ...(reason ? { reason } : {}) }] };
+  const next: Career = { ...applied.career, agentEcho: choice, agentLog: [...(career.agentLog ?? []), { season: season.number, choice, ...(reason ? { reason } : {}) }] };
   const text = [option.text, reason ? content.collapse[reason] : '', option.after ?? ''].filter(Boolean).join(' ');
   return { career: next, loot: applied.loot, text, ...(reason ? { reason } : {}) };
 }

@@ -27,6 +27,9 @@ export type PrologueOption = {
   point?: 'choice';
   /** Партнер з пам’яттю (M11): привід довіряти ще до першого матчу. */
   bond?: number;
+  /** Розв’язка (21.09, рішення користувача): реакція співрозмовника на тон і факт «що далі» — розворот закінчується
+   *  подією, а не паузою; наступний лист починається мостиком. */
+  reply: string;
   effect: ActivityEffect;
 };
 
@@ -39,8 +42,19 @@ export type PrologueSpread = {
   tab: string;
   /** Абзаци листа оповідача. */
   sheet: string[];
+  /** Луна: варіант листа за голосом відповіді на попередньому розвороті (тренер чув, що ти сказав скауту). */
+  sheetBy?: Partial<Record<VoiceKey, string[]>>;
   options: PrologueOption[];
 };
+
+/** Лист розвороту з урахуванням попередньої відповіді. */
+export function sheetFor(spread: PrologueSpread, previousVoice: VoiceKey | undefined): string[] {
+  return (previousVoice && spread.sheetBy?.[previousVoice]) || spread.sheet;
+}
+
+/** Тон відповіді тренеру живе перший матч (career.ts:prologueFlags): сетап сцени «розминайся» і репліки ТРЕНЕРА
+ *  пам’ятають «лава — це ненадовго». Маркер системний, без модифікатора. */
+export const CALL_TONE_FLAG: Record<string, string> = { call_ego: 'call_tone_ego', call_team: 'call_tone_team', call_vision: 'call_tone_vision' };
 
 export type ProloguePick = { spread: PrologueSpread['id']; option: string; attr?: Attribute };
 

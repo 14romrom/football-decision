@@ -28,6 +28,7 @@ describe('контент прологу', () => {
         expect(o.say.length, o.id).toBeGreaterThan(5);
         expect(o.line.length, o.id).toBeGreaterThan(5);
         expect(o.mark.length, o.id).toBeGreaterThan(5);
+        expect(o.reply.length, `${o.id}: розв’язка`).toBeGreaterThan(40);
         expect(o.effect.note.length, o.id).toBeGreaterThan(10);
         for (const f of o.effect.flags ?? []) expect(KNOWN_FLAGS.has(f.flag), `${o.id}: флаг ${f.flag}`).toBe(true);
         if (o.point) expect(VOICE_ATTRS[o.voice].length, `${o.id}: пункт без атрибутів голосу`).toBeGreaterThan(0);
@@ -41,7 +42,7 @@ describe('контент прологу', () => {
 
   it('без «!» і без цифр — тон гри; плейсхолдери розв’язуються, фамілій своїх немає', () => {
     const raw = JSON.stringify(PROLOGUE);
-    const texts = PROLOGUE.flatMap((s) => [s.title, s.sub, s.tab, ...s.sheet, ...s.options.flatMap((o) => [o.say, o.line, o.mark, o.effect.note])]).join('\n');
+    const texts = PROLOGUE.flatMap((s) => [s.title, s.sub, s.tab, ...s.sheet, ...Object.values(s.sheetBy ?? {}).flat(), ...s.options.flatMap((o) => [o.say, o.line, o.mark, o.reply, o.effect.note])]).join('\n');
     expect(texts).not.toMatch(/!/);
     expect(texts).not.toMatch(/\d/);
     const surnames = Object.values(ROSTER.us.players).flatMap((p) => [p.nom, p.gen, p.dat, p.ins]);
@@ -101,5 +102,19 @@ describe('finishPrologue', () => {
       expect(career.carriedFlags ?? []).toHaveLength(0);
       expect(career.prologue?.base).toBe(s.id);
     }
+  });
+
+  it('луна: лист тренера і бази залежить від голосу попередньої відповіді; після дзвінка — маркер тону на перший матч', async () => {
+    const { sheetFor } = await import('../src/engine/prologue');
+    const { prologueFlags } = await import('../src/engine/career');
+    const call = PROLOGUE.find((s) => s.id === 'call')!;
+    expect(sheetFor(call, 'ego')[0]).not.toBe(sheetFor(call, undefined)[0]);
+    expect(sheetFor(call, 'ego')[0]).toMatch(/через рік/);
+    expect(sheetFor(call, 'composure')).toEqual(call.sheet);
+    const base = PROLOGUE.find((s) => s.id === 'base')!;
+    for (const v of ['ego', 'team', 'vision'] as const) expect(sheetFor(base, v)[0]).toMatch(/десятого трамвая/);
+    const { career } = finishPrologue(defaultCareer(), PROLOGUE, [pick('call_ego')]);
+    expect(prologueFlags(career).map((f) => f.flag)).toEqual(['call_tone_ego']);
+    expect(prologueFlags({ ...career, matchesPlayed: 1 })).toHaveLength(0);
   });
 });

@@ -513,6 +513,7 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .nb-book.dimmed::after { content: ''; position: absolute; inset: 0; background: rgba(16,16,20,.5); z-index: 1; pointer-events: none; }
 .nb-sheet { position: relative; z-index: 2; margin: 6px -6px 12px -36px; }
 .nb-sheet .scene { padding-bottom: 2px; }
+.nb-intro { position: relative; z-index: 1; margin: 2px 0 10px 44px; font-family: var(--font-hand); font-size: 16px; color: var(--pen); }
 .nb-aside { margin: -4px 0 10px; font-size: 14px; color: var(--muted); font-style: italic; }
 .nb-aside b { font-style: normal; font-family: var(--font-caps); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; margin-right: 6px; }
 .nb-aside.voice-ego b { color: var(--v-ego); } .nb-aside.voice-team b { color: var(--v-team); } .nb-aside.voice-vision b { color: var(--v-vision); }

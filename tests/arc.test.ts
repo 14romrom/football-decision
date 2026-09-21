@@ -7,7 +7,7 @@ import { matchesSituation, pickFlavorLine } from '../src/engine/flavor';
 import { pickWhistleLine, WHISTLE_RULES } from '../src/engine/whistle';
 import { programmeNote } from '../src/engine/programme';
 import { matchesActivity, type WeekContext } from '../src/engine/week';
-import { ACTIVITIES, AGENT, ESPM_COLUMNS, FLAVOR, OPPONENTS, WEEK_SCENES } from '../src/content';
+import { ACTIVITIES, AGENT, ESPM_COLUMNS, FLAVOR, OPPONENTS, WEEK_SCENES, OPPONENT_KEYS } from '../src/content';
 import { matchesPost, POSTS, type PostContext } from '../src/engine/posts';
 import { playerColumn } from '../src/engine/espm';
 import { voiceAudible } from '../src/engine/voices';
@@ -150,7 +150,7 @@ describe('решта пунктів арки', () => {
   it('літо: другий дзвінок після зимового — без обставин; «так» завершує кар’єру епілогом, «ні» — нічого не стається', () => {
     const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
     const star = (n: number): Season => {
-      let sn = createSeason(3, Object.keys(OPPONENTS), n);
+      let sn = createSeason(3, OPPONENT_KEYS.second, n);
       while (sn.fixtures.some((f) => f.round === sn.round)) sn = recordRound(sn, { scoreUs: 3, scoreThem: 0, goals: 1, assists: 1, coachRating: 8, fanRating: 8.5, scorers: [] }, strengths, makeRng(sn.round));
       return sn;
     };

@@ -8,7 +8,7 @@ import { neutralConditions } from '../src/engine/conditions';
 import { applyMatchToCareer, defaultCareer } from '../src/engine/career';
 import { BALANCE } from '../src/engine/balance';
 import { runSeason } from '../tools/simulate';
-import { EPISODES, EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, rosterFor } from '../src/content';
+import { EPISODES, EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, rosterFor, OPPONENT_KEYS } from '../src/content';
 import type { MatchState } from '../src/engine/types';
 
 const high = (n: number) => ({ ...makeRng(1), roll: () => n });
@@ -154,7 +154,7 @@ describe('условные варианты и правила по опциям'
 
 describe('скрытое чтение воротаря', () => {
   it('у каждого клуба воротар со звичкою, флаг keeper_<trait> стоит с первой минуты, а keeper_read — нет', () => {
-    for (const k of Object.keys(OPPONENTS)) {
+    for (const k of OPPONENT_KEYS.second) {
       expect(OPPONENTS[k].keeper?.trait, k).toBeTruthy();
       const s = createMatch('k', 1, PLAYER, makeRng(1), EPISODES_RAW, rosterFor(k), neutralConditions(k), [], FLAG_RULES);
       expect(s.state.flags).toContain('keeper_' + OPPONENTS[k].keeper!.trait);
@@ -230,7 +230,7 @@ describe('плейсхолдеры с цифрой и строки ленты', 
   it('ни одна строка матча не содержит сырого плейсхолдера ({cb2.gen} из плейтеста 17.09)', () => {
     for (let seed = 1; seed < 40; seed++) {
       const rng = makeRng(seed);
-      const s = createMatch('l', seed, PLAYER, rng, EPISODES_RAW, rosterFor(Object.keys(OPPONENTS)[seed % 6]), undefined, [], FLAG_RULES);
+      const s = createMatch('l', seed, PLAYER, rng, EPISODES_RAW, rosterFor(OPPONENT_KEYS.second[seed % 6]), undefined, [], FLAG_RULES);
       for (;;) {
         const next = nextEpisode(s, rng);
         if (!next) break;

@@ -9,7 +9,7 @@ import {
   finishWeek, neglectPenalties, offerWeekDays, planWeek, resolveOutcome, sceneFor, sceneOptionsFor, seenScenes, weekContext, weekVoiceSees,
   type ActivityEffect, type WeekOffer,
 } from '../src/engine/week';
-import { ACTIVITIES, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES } from '../src/content';
+import { ACTIVITIES, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, WEEK_SCENES, OPPONENT_KEYS } from '../src/content';
 import { fillNamesDeep } from '../src/engine/names';
 import type { VoiceKey } from '../src/engine/types';
 
@@ -19,7 +19,7 @@ const ATTRS = Object.keys(PLAYER.attrs);
 const KNOWN_FLAGS = new Set([...FLAG_RULES.map((f) => f.id), 'keeper_read']);
 
 function seasonWith(results: [number, number][], fan = 6): Season {
-  let sn = createSeason(7, Object.keys(OPPONENTS));
+  let sn = createSeason(7, OPPONENT_KEYS.second);
   results.forEach(([us, them], i) => {
     sn = recordRound(sn, { scoreUs: us, scoreThem: them, goals: 0, assists: 0, coachRating: 6, fanRating: fan, scorers: [] }, strengths, makeRng(100 + i));
   });

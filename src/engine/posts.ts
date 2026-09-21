@@ -8,7 +8,7 @@
 import postsJson from '../content/posts.json';
 import { pickFresh } from './flavor';
 import type { Rng } from './rng';
-import { peopleFlags, type Career, arcStage } from './career';
+import { peopleFlags, type Career, arcStage, metLastYear } from './career';
 import type { Season } from './season';
 import { standings, US, type MomentRef } from './season';
 import type { VoiceKey } from './types';
@@ -124,8 +124,9 @@ export function buildPostContext(
     position: us.position, clubs: rows.length, round: season.round,
     coachTrust: career.coachTrust,
     injured: career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock'),
-    flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag)],
-    nextStrength: next?.strength ?? null, nextFlags: next?.traits.map((t) => 'them_' + t) ?? [], nextVenue: next?.venue ?? null,
+    // Підвищення (M14): `promoted_earned` / `promoted_scandal` на весь другий сезон; `met_last_year` — суперник із минулого сезону.
+    flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag), ...(career.promotion ? ['promoted_' + career.promotion] : [])],
+    nextStrength: next?.strength ?? null, nextFlags: [...(next?.traits.map((t) => 'them_' + t) ?? []), ...(next && metLastYear(career, next.opponentKey) ? ['met_last_year'] : [])], nextVenue: next?.venue ?? null,
     leaderLost: lostBy(leader.club), bottomWon: wonBy(bottom.club),
     voice, hasScored: season.player.goals + season.player.assists > 0,
     leaderKey: leader.club, bottomKey: bottom.club,

@@ -13,7 +13,7 @@ import {
   applyWeek, coachLocksCity, matchesActivity, offerWeek, recordWeek, VOICE_ORDER, weekContext, weekPending,
   type Activity, type WeekContext,
 } from '../src/engine/week';
-import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER } from '../src/content';
+import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, OPPONENT_KEYS } from '../src/content';
 import { fillNamesDeep } from '../src/engine/names';
 import type { MatchState } from '../src/engine/types';
 import type { MatchSummary } from '../src/engine/match';
@@ -21,7 +21,7 @@ import type { MatchSummary } from '../src/engine/match';
 const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
 
 function seasonWith(results: [number, number, number?][], fan = 7.5): Season {
-  let sn = createSeason(7, Object.keys(OPPONENTS));
+  let sn = createSeason(7, OPPONENT_KEYS.second);
   results.forEach(([us, them, goals = 0], i) => {
     sn = recordRound(sn, { scoreUs: us, scoreThem: them, goals, assists: 0, coachRating: 6, fanRating: fan, scorers: [] }, strengths, makeRng(100 + i));
   });
@@ -38,7 +38,7 @@ const emptyState = (): MatchState => ({
 
 describe('контекст и предложения', () => {
   it('без сыгранного тура недели нет; после — результат, разгром, травма, флаги', () => {
-    expect(weekContext(createSeason(1, Object.keys(OPPONENTS)), defaultCareer(), 3)).toBeNull();
+    expect(weekContext(createSeason(1, OPPONENT_KEYS.second), defaultCareer(), 3)).toBeNull();
     const c = ctxFor(seasonWith([[0, 3]]), { ...defaultCareer(), injuredMatches: 1, carriedFlags: [
       { flag: 'partner_annoyed', mark: { minute: 1, episodeId: 'e', optionId: 'o', past: 'x' } },
       { flag: 'ref_annoyed', mark: { minute: 0, episodeId: 'w', optionId: 'o', past: 'y' }, after: 1 },
@@ -201,7 +201,7 @@ describe('контент недели', () => {
 
   it('на дистанции сезона игрок видит много разных дел', () => {
     let career = { ...defaultCareer(), level: 3 };
-    let sn = createSeason(3, Object.keys(OPPONENTS));
+    let sn = createSeason(3, OPPONENT_KEYS.second);
     const seen = new Set<string>();
     for (let r = 0; r < 10; r++) {
       sn = recordRound(sn, { scoreUs: r % 3, scoreThem: 1, goals: r % 2, assists: 0, coachRating: 6, fanRating: 7, scorers: [] }, strengths, makeRng(r));

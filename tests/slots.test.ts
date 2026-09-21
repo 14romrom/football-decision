@@ -8,7 +8,7 @@ import { recordResult, readHistory } from '../src/telemetry/history';
 import { readAllSlots, readSlotSummary, resetSlot } from '../src/telemetry/saves';
 import { defaultCareer } from '../src/engine/career';
 import { createSeason } from '../src/engine/season';
-import { OPPONENTS } from '../src/content';
+import { OPPONENT_KEYS } from '../src/content';
 
 // Тесты идут в node — localStorage подменяем Map-заглушкой с тем же интерфейсом.
 function fakeStorage() {
@@ -38,7 +38,7 @@ describe('слоты карьеры', () => {
 
   it('слоты не видят друг друга: карьера, сезон и история — по активному слоту', () => {
     writeCareer({ ...defaultCareer(), matchesPlayed: 5 });
-    writeSeason(createSeason(1, Object.keys(OPPONENTS)));
+    writeSeason(createSeason(1, OPPONENT_KEYS.second));
     recordResult(2, 1, ['ep_a']);
     setActiveSlot(1);
     expect(activeSlot()).toBe(1);
@@ -56,10 +56,10 @@ describe('слоты карьеры', () => {
     expect(all).toHaveLength(SLOT_COUNT);
     expect(all.every((s) => s.empty)).toBe(true);
     // App создаёт сезон при первом заходе — это ещё не карьера.
-    writeSeason(createSeason(7, Object.keys(OPPONENTS)));
+    writeSeason(createSeason(7, OPPONENT_KEYS.second));
     expect(readSlotSummary(0).empty).toBe(true);
     expect(readSlotSummary(0).round).toBe(1);
-    const sn = createSeason(7, Object.keys(OPPONENTS));
+    const sn = createSeason(7, OPPONENT_KEYS.second);
     sn.round = 4;
     writeSeason(sn);
     writeCareer({ ...defaultCareer(), matchesPlayed: 4 });

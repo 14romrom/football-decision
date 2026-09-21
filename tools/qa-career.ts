@@ -6,7 +6,7 @@
 import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
 import { applyChoice, availableOptions, createMatch, finishMatch, nextEpisode, sceneInsights } from '../src/engine/match';
-import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, rosterFor } from '../src/content';
+import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, rosterFor, OPPONENT_KEYS } from '../src/content';
 import { generateConditions } from '../src/engine/conditions';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, spendPoint, type Career } from '../src/engine/career';
 import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, type Season } from '../src/engine/season';
@@ -20,7 +20,7 @@ const ATTRS = Object.keys(PLAYER.attrs) as Attribute[];
 
 function runCareer(seed: number) {
   let career: Career = defaultCareer();
-  let season: Season = createSeason(seed, Object.keys(OPPONENTS));
+  let season: Season = createSeason(seed, OPPONENT_KEYS.second);
   const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
   let insightsSeen = 0; let insightsTaken = 0; let flavorMissing = 0; let rolls = 0;
   let locked = 0;

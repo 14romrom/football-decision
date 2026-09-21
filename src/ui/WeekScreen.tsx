@@ -43,6 +43,8 @@ type Props = {
   seed?: number;
   /** Місяць у шапці зошита (M14, календар сезону). */
   month?: string;
+  /** Рядок оповідача під шапкою (зимова чутка від агента, M14). */
+  aside?: string;
   /** Закрити тиждень: здобутки й картка до/після — для листа здобутків. */
   onFinish: (picks: WeekPick[]) => WeekResult;
   onNext: () => void;
@@ -58,7 +60,7 @@ type Phase =
 
 const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
 
-export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, onFinish, onNext }: Props) {
+export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, aside, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
   const [phase, setPhase] = useState<Phase>({ p: 'pick' });
   const [picks, setPicks] = useState<WeekPick[]>([]);
@@ -227,6 +229,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
         <Doodles seed={seed} />
+        {aside && <p className="nb-aside nb-intro">{aside}</p>}
         {locked && (
           <div className="nb-coach"><b>Тренер</b>Місто закрите. База, відео, психолог. Місто почекає.</div>
         )}

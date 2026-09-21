@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor } from './content';
+import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS } from './content';
 import { adContext, pickAds, playerColumn } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick } from './engine/week';
@@ -25,7 +25,7 @@ import { buildEntry, type Entry } from './engine/entry';
 import { EntryCard } from './ui/EntryCard';
 import {
   applyMatchToCareer, arcStage, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
-  type Career, type CarryFacts,
+  metLastYear, type Career, type CarryFacts,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
@@ -45,7 +45,7 @@ import { SettingsScreen } from './ui/SettingsScreen';
 import { AboutScreen } from './ui/AboutScreen';
 import { readSlotSummary } from './telemetry/saves';
 import {
-  createSeason, isSeasonOver, monthOfRound, ourFixture, ourRow, promotion, recordRound, seasonVerdict, SEASON_ROUNDS, US, type Season,
+  createSeason, isSeasonOver, monthOfRound, ourFixture, ourRow, promotion, recordRound, seasonVerdict, SEASON_ROUNDS, US, WINTER_BREAK_AFTER, type Season,
 } from './engine/season';
 import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
@@ -114,7 +114,7 @@ function Game() {
   const setCareerBoth = useCallback((c: Career) => { careerRef.current = c; writeCareer(c); setCareer(c); }, []);
 
   // Сезон: расписание и таблица (M5-лайт). Создаётся при первом заходе, живёт в localStorage.
-  const seasonRef = useRef<Season>(readSeason() ?? createSeason(Math.floor(Math.random() * 1e9), Object.keys(OPPONENTS)));
+  const seasonRef = useRef<Season>(readSeason() ?? createSeason(Math.floor(Math.random() * 1e9), OPPONENT_KEYS.second));
   const [season, setSeason] = useState<Season>(seasonRef.current);
   const setSeasonBoth = useCallback((sn: Season) => { seasonRef.current = sn; writeSeason(sn); setSeason(sn); }, []);
   useEffect(() => { writeSeason(seasonRef.current); }, []);
@@ -232,7 +232,9 @@ function Game() {
       episodeMemory(BALANCE.match.memory.horizon), FLAG_RULES,
       {
         coachTrust: consumedCareer.coachTrust, fanHype: consumedCareer.fanHype, fromBench: penalty.fromBench,
-        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
+        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty,
+        // «Зустрічалися торік» (M14): флаг матчу для сетапів і реплік, коли суперник був у минулому сезоні.
+        flags: metLastYear(consumedCareer, conditions.opponentKey) ? [...penalty.flags, { flag: 'met_last_year', mark: { minute: 0, episodeId: 'season', optionId: 'met', past: 'грали з ними торік' } }] : penalty.flags,
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon),
         startDelta: penalty.startDelta,
         voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: consumedCareer.injuriesSeason,
@@ -254,13 +256,22 @@ function Game() {
     const benched = seasonVerdict(prev, careerRef.current.coachTrust).kind === 'bench';
     // Регламент підвищення (M14): з нами йдуть ті, хто вище; нові клуби — з тих, кого в першому сезоні не було.
     const promo = promotion(prev);
-    const fresh = Object.keys(OPPONENTS).filter((k) => !prev.clubs.includes(k));
-    const pool = [...fresh, ...Object.keys(OPPONENTS).filter((k) => !fresh.includes(k))];
+    // Вища ліга: клуби вищої ліги; якщо місць більше, ніж їх, — добираємо з тих, кого в першому сезоні не було.
+    const rest = OPPONENT_KEYS.second.filter((k) => !prev.clubs.includes(k));
+    const pool = prev.number === 1 ? [...OPPONENT_KEYS.top, ...rest] : [...OPPONENT_KEYS.top, ...OPPONENT_KEYS.second];
     setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), pool, prev.number + 1, promo?.with ?? []));
     const c = careerRef.current;
+    // Рахунки минулого сезону з кожним суперником — «зустрічалися торік» (програмка, пости, флаг матчу).
+    const results: NonNullable<Career['lastSeason']>['results'] = {};
+    for (const m of prev.played) {
+      if (m.home !== US && m.away !== US) continue;
+      const key = m.home === US ? m.away : m.home;
+      (results[key] ??= []).push(m.home === US ? { scoreUs: m.homeGoals, scoreThem: m.awayGoals, venue: 'home' } : { scoreUs: m.awayGoals, scoreThem: m.homeGoals, venue: 'away' });
+    }
+    const lastSeason = { number: prev.number, position: ourRow(prev).position, results };
     // Скандальне підвищення — трибуни не вірять, що ми тут по праву: старт сезону холодніший (рішення 21.09).
     const fanHype = promo?.kind === 'scandal' ? Math.min(c.fanHype ?? BALANCE.fanHypeStart, BALANCE.fanHypeStart - BALANCE.scandalHypeDrop) : c.fanHype;
-    setCareerBoth({ ...c, injuriesSeason: 0, benched, ...(promo ? { promotion: promo.kind } : {}), ...(fanHype !== undefined ? { fanHype } : {}) });   // лимит травм — на сезон
+    setCareerBoth({ ...c, injuriesSeason: 0, benched, lastSeason, ...(promo ? { promotion: promo.kind } : {}), ...(fanHype !== undefined ? { fanHype } : {}) });   // лимит травм — на сезон
   }, [setSeasonBoth]);
 
   /** Стрічка по текущему состоянию сезона: посты с именами следующего соперника. quota — сколько
@@ -487,6 +498,7 @@ function Game() {
           round={season.round + 1}
           seasonNumber={season.number}
           promotion={career.promotion}
+          lastYear={metLastYear(career, session.conditions.opponentKey)}
           usName={ROSTER.us.name.nom}
           note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}
           trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
@@ -619,7 +631,9 @@ function Game() {
         scenes={fillNamesDeep(WEEK_SCENES, roster)}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
         locked={stage.locked}
-        month={monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
+        month={sn.round === WINTER_BREAK_AFTER ? 'зимова перерва · січень' : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
+        // Зимова перерва (M14): чутка від агента — одним рядком, без сцени й без назв.
+        aside={sn.round === WINTER_BREAK_AFTER ? (sn.number === 1 ? 'Агент дзвонив: «цікавляться». Хто — не сказав. Ти не спитав.' : 'Агент дзвонив: «ті самі, і вже не питають про ногу». Ти сказав «навесні».') : undefined}
         seen={seenScenes(careerRef.current)}
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[]) => {

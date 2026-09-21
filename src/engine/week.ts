@@ -9,7 +9,7 @@
 
 import { BALANCE } from './balance';
 import { arcStage, clampTrust, peopleFlags, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
-import type { Season } from './season';
+import { WINTER_BREAK_AFTER, type Season } from './season';
 import type { Rng } from './rng';
 import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
 import { VOICE_LABEL, voiceSees } from './voices';
@@ -32,6 +32,8 @@ export type ActivityWhen = {
   injured?: boolean;
   /** Флаги, принесённые из матча (partner_annoyed, booked…). */
   flags?: string[];
+  /** Зимова перерва (M14): дела, що є тільки взимку, — і навпаки. */
+  winter?: boolean;
   notFlags?: string[];
   /** Оценка трибун в последнем матче не ниже — популярність. */
   fanRatingMin?: number;
@@ -109,6 +111,8 @@ export type WeekContext = {
   position: number; clubs: number; coachTrust: number; injured: boolean;
   flags: string[]; fanRating: number;
   arc: number;
+  /** Тиждень — зимова перерва (після WINTER_BREAK_AFTER туру); необов’язкове — тести й старі контексти без нього. */
+  winter?: boolean;
 };
 
 const LOW_TRUST = 40;
@@ -131,6 +135,7 @@ export function weekContext(season: Season, career: Career, position: number): W
     flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag)],
     fanRating: last.fanRating,
     arc: arcStage(career),
+    winter: season.round === WINTER_BREAK_AFTER,
   };
 }
 
@@ -155,6 +160,7 @@ export function matchesActivity(w: ActivityWhen | undefined, c: WeekContext): bo
   if (w.fanRatingMin !== undefined && c.fanRating < w.fanRatingMin) return false;
   if (w.arcMin !== undefined && c.arc < w.arcMin) return false;
   if (w.arcMax !== undefined && c.arc > w.arcMax) return false;
+  if (w.winter !== undefined && w.winter !== !!c.winter) return false;
   return true;
 }
 

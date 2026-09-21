@@ -193,7 +193,7 @@ describe('вариации сетапа и флаги (сезон)', () => {
     const { ACTIVITIES, WEEK_SCENES } = await import('../src/content');
     const set = new Set([
       ...EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))),
-      ...ACTIVITIES.flatMap((a) => (a.effect.flags ?? []).map((f) => f.flag)),
+      ...ACTIVITIES.flatMap((a) => [...(a.effect.flags ?? []), ...(a.outcomes ?? []).flatMap((o) => o.effect.flags ?? [])].map((f) => f.flag)),
       // Сцени тижня теж ставлять флаги (M11: скаут на трибуні, ультрас за тебе).
       ...WEEK_SCENES.flatMap((s) => s.options.flatMap((o) => (o.effect.flags ?? []).map((f) => f.flag))),
     ]);
@@ -212,7 +212,7 @@ describe('вариации сетапа и флаги (сезон)', () => {
     const { ACTIVITIES } = await import('../src/content');
     const setters = new Set([
       ...EPISODES.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).flatMap((out) => out?.apply?.addFlags ?? []))),
-      ...ACTIVITIES.flatMap((a) => (a.effect.flags ?? []).map((f) => f.flag)),
+      ...ACTIVITIES.flatMap((a) => [...(a.effect.flags ?? []), ...(a.outcomes ?? []).flatMap((o) => o.effect.flags ?? [])].map((f) => f.flag)),
     ]);
     for (const e of EPISODES.filter((x) => x.requires?.flags?.length)) {
       const flag = e.requires!.flags![0];

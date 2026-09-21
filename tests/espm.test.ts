@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { adContext, AD_SLOTS, pickAds, playerLine, roundHeadline } from '../src/engine/espm';
 import { createSeason, recordRound, SEASON_ROUNDS, US, type OurResult } from '../src/engine/season';
-import { ADS, OPPONENTS, ROSTER } from '../src/content';
+import { ADS, OPPONENTS, ROSTER, OPPONENT_KEYS } from '../src/content';
 import { makeRng } from '../src/engine/rng';
 
 const club = (key: string) => (key === US ? ROSTER.us.name : OPPONENTS[key].name);
@@ -9,7 +9,7 @@ const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [
 const ours = (scoreUs: number, scoreThem: number): OurResult => ({ scoreUs, scoreThem, goals: 0, assists: 0, coachRating: 6, fanRating: 6, scorers: [] });
 
 function play(results: [number, number][]) {
-  let s = createSeason(7, Object.keys(OPPONENTS));
+  let s = createSeason(7, OPPONENT_KEYS.second);
   for (const [a, b] of results) s = recordRound(s, ours(a, b), strengths, makeRng(s.seed + s.round * 7919));
   return s;
 }

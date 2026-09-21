@@ -5,13 +5,13 @@ import { makeRng } from '../src/engine/rng';
 import { defaultCareer } from '../src/engine/career';
 import { createSeason, recordRound, seasonVerdict, type Season } from '../src/engine/season';
 import { agentPending, collapseReason, resolveAgent } from '../src/engine/agent';
-import { AGENT, OPPONENTS, ROSTER } from '../src/content';
+import { AGENT, OPPONENTS, ROSTER, OPPONENT_KEYS } from '../src/content';
 import { fillNamesDeep } from '../src/engine/names';
 
 const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
 /** Сезон-зірка: голи в кожному турі, високі оцінки — вердикт «трансфер» за протоколом. */
 function starSeason(): Season {
-  let sn = createSeason(3, Object.keys(OPPONENTS));
+  let sn = createSeason(3, OPPONENT_KEYS.second);
   while (sn.fixtures.some((f) => f.round === sn.round)) {
     sn = recordRound(sn, { scoreUs: 3, scoreThem: 0, goals: 1, assists: 1, coachRating: 8, fanRating: 8.5, scorers: [] }, strengths, makeRng(sn.round));
   }
@@ -47,7 +47,7 @@ describe('сцена агента', () => {
     expect(collapseReason({ ...defaultCareer(), injuriesSeason: 1 }, sn)).toBe('medical');
     expect(collapseReason(defaultCareer(), sn)).toBe('debts');   // сезон-зірка — лідер
     // Не лідер: одна перемога, решта поразки.
-    let low = createSeason(4, Object.keys(OPPONENTS));
+    let low = createSeason(4, OPPONENT_KEYS.second);
     while (low.fixtures.some((f) => f.round === low.round)) {
       low = recordRound(low, { scoreUs: 1, scoreThem: 2, goals: 1, assists: 0, coachRating: 6, fanRating: 8, scorers: [] }, strengths, makeRng(low.round));
     }

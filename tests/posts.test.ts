@@ -6,9 +6,9 @@ import { createSeason, ourFixture, recordRound, US } from '../src/engine/season'
 import { defaultCareer } from '../src/engine/career';
 import { fillNames, opponentTraits } from '../src/engine/names';
 import { buildFeed, buildPostContext, matchesPost, minuteOrdinal, POST_QUOTA, postQuota, POSTS, type PostContext, type PostGroup } from '../src/engine/posts';
-import { OPPONENTS, rosterFor } from '../src/content';
+import { OPPONENTS, rosterFor, OPPONENT_KEYS } from '../src/content';
 
-const keys = Object.keys(OPPONENTS);
+const keys = OPPONENT_KEYS.second;
 const strengths = Object.fromEntries(keys.map((k) => [k, OPPONENTS[k].strength]));
 const GROUPS: PostGroup[] = ['self', 'league', 'world', 'cross', 'meta'];
 const EXTRA = {

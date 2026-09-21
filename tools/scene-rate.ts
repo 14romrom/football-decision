@@ -3,7 +3,7 @@
 // «одно любимое дело» (худший случай: игрок всё время выбирает одно и то же).
 //   npx tsx tools/scene-rate.ts 300
 
-import { ACTIVITIES, OPPONENTS, PLAYER, WEEK_SCENES } from '../src/content';
+import { ACTIVITIES, OPPONENTS, PLAYER, WEEK_SCENES, OPPONENT_KEYS } from '../src/content';
 import { defaultCareer, effectivePlayer, type Career } from '../src/engine/career';
 import { createSeason, isSeasonOver, ourRow, recordRound, type OurResult } from '../src/engine/season';
 import { finishWeek, planWeek, sceneFor, sceneOptionsFor, seenScenes, weekContext, weekVoiceSees, type WeekPick } from '../src/engine/week';
@@ -13,7 +13,7 @@ const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [
 const N = Number(process.argv[2] ?? 300);
 
 function run(seed: number, favourite?: string) {
-  let season = createSeason(seed, Object.keys(OPPONENTS));
+  let season = createSeason(seed, OPPONENT_KEYS.second);
   let career: Career = defaultCareer();
   const rng = makeRng(seed);
   const seen: string[] = [];

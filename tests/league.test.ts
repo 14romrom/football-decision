@@ -11,10 +11,10 @@ import { resolveOption } from '../src/engine/resolve';
 import { generateConditions, neutralConditions } from '../src/engine/conditions';
 import { initVoiceTrace } from '../src/engine/voices';
 import { applyMatchToCareer, defaultCareer, CARRIED_FLAGS } from '../src/engine/career';
-import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, rosterFor } from '../src/content';
+import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, rosterFor, OPPONENT_KEYS } from '../src/content';
 import type { MatchState } from '../src/engine/types';
 
-const keys = Object.keys(OPPONENTS);
+const keys = OPPONENT_KEYS.second;
 const strengths = Object.fromEntries(keys.map((k) => [k, OPPONENTS[k].strength]));
 
 const state = (over: Partial<MatchState> = {}): MatchState => ({

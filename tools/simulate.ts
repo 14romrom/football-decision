@@ -8,7 +8,7 @@ import { makeRng } from '../src/engine/rng';
 import { resolveOption } from '../src/engine/resolve';
 import { applyChoice, availableOptions, createMatch, finishMatch, nextEpisode, optionCost } from '../src/engine/match';
 import type { MatchSummary } from '../src/engine/match';
-import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, rosterFor } from '../src/content';
+import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, rosterFor, OPPONENT_KEYS } from '../src/content';
 import { generateConditions, neutralConditions, type MatchConditions } from '../src/engine/conditions';
 import { BALANCE, POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeMemory, EpisodeOption, Tier } from '../src/engine/types';
@@ -238,7 +238,7 @@ export type CareerRun = {
  *  matchPolicy — чем бот играет матчи: по умолчанию случайно, для распределения вердиктов — каждой политикой. */
 export function runCareer(seed: number, policy: WeekPolicy, matchPolicy: PolicyName = 'random'): CareerRun {
   let career: Career = defaultCareer();
-  let season: Season = createSeason(seed, Object.keys(OPPONENTS));
+  let season: Season = createSeason(seed, OPPONENT_KEYS.second);
   const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
   let sumResult = 0; let sumCoach = 0; let sumFan = 0; let n = 0; let benchedMatches = 0;
   const offeredAll = new Set<string>();

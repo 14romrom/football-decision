@@ -25,8 +25,13 @@ import type { EspmColumn } from '../engine/espm';
 // JSON намеренно остаётся плоским файлом контента: писать эпизоды должно быть
 // можно без оглядки на TypeScript. Проверку формы делает tests/content.test.ts.
 
-export type Opponent = TeamRoster & { strength: Strength; blurb: string };
+export type Opponent = TeamRoster & { strength: Strength; blurb: string; /** Вища ліга (M14); без поля — друга. */ tier?: 'top' };
 export const OPPONENTS = rosterJson.opponents as unknown as Record<string, Opponent>;
+/** Клуби за лігами (M14): перший сезон — тільки друга ліга; другий — вища плюс ті, хто піднявся з нами. */
+export const OPPONENT_KEYS = {
+  second: Object.keys(OPPONENTS).filter((k) => OPPONENTS[k].tier !== 'top'),
+  top: Object.keys(OPPONENTS).filter((k) => OPPONENTS[k].tier === 'top'),
+};
 export const DEFAULT_OPPONENT = 'sandorea';
 
 /** Ростер «мы + соперник по умолчанию» — для прогона, тестов и экрана /stats. */

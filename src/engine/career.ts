@@ -26,6 +26,8 @@ export type Career = {
   benched?: boolean;
   /** Як піднялися у вищу лігу (M14): чесно або за скандалом — тексти другого сезону й холодніші трибуни на старті. */
   promotion?: 'earned' | 'scandal';
+  /** Минулий сезон (M14): рахунки з кожним суперником — «зустрічалися торік» у програмці, постах і сетапах. */
+  lastSeason?: { number: number; position: number; results: Record<string, { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[]> };
   /** Несгоревшие жёлтые за карьеру; на третьей — тренер начинает следующий матч настороже. */
   careerYellows: number;
   /** Сколько ближайших матчей ещё аукается травма (сниженный старт сил). */
@@ -80,6 +82,12 @@ export function arcStage(career: Career): ArcStage {
   if (career.matchesPlayed >= a.ownFrom && warm) return 3;
   if (career.matchesPlayed >= a.noticedFrom) return 2;
   return 1;
+}
+
+/** Суперник був у минулому сезоні (M14): для програмки, постів і флагу матчу `met_last_year`. */
+export function metLastYear(career: Career, opponentKey: string): { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[] | null {
+  const r = career.lastSeason?.results[opponentKey];
+  return r && r.length ? r : null;
 }
 
 export type CarriedFlag = {

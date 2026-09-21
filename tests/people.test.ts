@@ -3,13 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { makeRng } from '../src/engine/rng';
 import { applyChoice, createMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
-import { EPISODES_RAW, FLAG_RULES, PLAYER, ROSTER } from '../src/content';
+import { EPISODES_RAW, FLAG_RULES, PLAYER, ROSTER, OPPONENT_KEYS } from '../src/content';
 import { neutralConditions } from '../src/engine/conditions';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, peopleFlags } from '../src/engine/career';
 import { buildPostContext } from '../src/engine/posts';
 import { weekContext } from '../src/engine/week';
 import { createSeason, recordRound } from '../src/engine/season';
-import { OPPONENTS } from '../src/content';
 import { BALANCE } from '../src/engine/balance';
 import type { MatchSummary } from '../src/engine/match';
 
@@ -45,7 +44,7 @@ describe('партнер з пам’яттю', () => {
     expect(peopleFlags({ ...defaultCareer(), partnerBond: 0 })).toEqual([]);
     const bonded = { ...defaultCareer(), partnerBond: p.partnerBonded };
     expect(consumeStartPenalty(bonded).penalty.flags.map((f) => f.flag)).toContain('partner_bonded');
-    let season = createSeason(1, Object.keys(OPPONENTS));
+    let season = createSeason(1, OPPONENT_KEYS.second);
     season = recordRound(season, { scoreUs: 1, scoreThem: 0, goals: 0, assists: 0, coachRating: 6, fanRating: 6, scorers: [] }, {}, makeRng(2));
     expect(buildPostContext(season, bonded, null)!.flags).toContain('partner_bonded');
     expect(weekContext(season, bonded, 1)!.flags).toContain('partner_bonded');

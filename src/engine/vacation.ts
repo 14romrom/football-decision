@@ -4,9 +4,11 @@
 //      Правило M13 працює само: від’їзд абстрактно (тепло, чужий стадіон без назви), місто предметно (дача Тібо, база).
 //   2. Медогляд — травма на індивідуальному тренуванні перед оглядом, єдина причина зриву (борги прибрано:
 //      клуб із боргами продає першим). Травма стається завжди; вибір — як готувався, і від нього — тяжкість.
+//      Не жорстока (рішення користувача 21.09): розтягнення, до серпня нога в порядку — Реєс починає другий сезон,
+//      тільки не в формі: літо без передсезонки → сили на старті нижчі й маркер `out_of_form` на 1–2 матчі.
 //      Корінь — страх не пройти перевірку (M12: страх втратити професію) — голос, якого не чутно.
 //   3. База — дублер пішов у клуб, що піднявся разом із нами; новачок на позиції; жарт Тібо — з уст Реєса.
-// Наслідки — через applyWeek, як у прологу; травма — career.injuredMatches (consumeStartPenalty бере її сама);
+// Наслідки — через applyWeek, як у прологу; форма — nextMatch.start.stamina + флаг out_of_form (flags.json);
 // запис в agentLog — «дзвінок був, зірвався через медогляд», тому літо другого сезону — фінальний дзвінок.
 
 import { applyWeek, type LootItem } from './week';
@@ -19,8 +21,8 @@ export type VacationOption = PrologueOption & { injury?: Injury; arcMin?: number
 export type VacationSpread = Omit<PrologueSpread, 'options'> & { options: VacationOption[] };
 export type VacationPick = { spread: string; option: string };
 
-/** Скільки матчів нового сезону — «після травми» (consumeStartPenalty: сили −20 на старті). */
-const INJURY_MATCHES: Record<Injury, number> = { heavy: 2, medium: 1, light: 1 };
+/** Літо без передсезонки: сили на старті першого матчу нижчі, маркер «не в формі» на стільки матчів. */
+const FORM: Record<Injury, { stamina: number; matches: number }> = { heavy: { stamina: -12, matches: 2 }, medium: { stamina: -8, matches: 2 }, light: { stamina: -4, matches: 1 } };
 
 /** Відпустка — один раз, після першого сезону, коли той закінчено. */
 export function vacationPending(career: Career, seasonNumber: number, seasonOver: boolean): boolean {
@@ -43,8 +45,14 @@ export function finishVacation(
   const loot: LootItem[] = [...applied.loot];
 
   const injury = chosen.map(({ option }) => option.injury).find((x): x is Injury => !!x) ?? 'medium';
-  next.injuredMatches = Math.max(next.injuredMatches, INJURY_MATCHES[injury]);
-  loot.push({ text: injury === 'light' ? 'нога: легка травма, перший матч — обережно' : `нога: травма, ${INJURY_MATCHES[injury] === 1 ? 'перший матч' : 'перші матчі'} після неї`, kind: 'start', dir: 'down', where: 'старт сезону' });
+  const form = FORM[injury];
+  const prep = next.nextMatch ?? {};
+  next.nextMatch = { ...prep, start: { ...(prep.start ?? {}), stamina: (prep.start?.stamina ?? 0) + form.stamina } };
+  next.carriedFlags = [
+    ...(next.carriedFlags ?? []),
+    ...Array.from({ length: form.matches }, (_, i) => ({ flag: 'out_of_form', after: i, mark: { minute: 0, episodeId: 'vacation', optionId: injury, past: 'пропустив передсезонку', whenText: 'улітку' } })),
+  ];
+  loot.push({ text: form.matches === 1 ? 'форма: літо без передсезонки — перший матч важчий' : 'форма: літо без передсезонки — перші матчі важчі', kind: 'start', who: 'body', dir: 'down', where: 'старт сезону' });
 
   // Дзвінок був, зірвався через медогляд: літо другого сезону — фінальний дзвінок (agent.ts:agentPending).
   next.agentLog = [...(career.agentLog ?? []), { season: seasonNumber, choice: 'leave', reason: 'medical' }];

@@ -19592,6 +19592,241 @@
     ]
   },
   {
+    "id": "rx_sub_there",
+    "phase": "transition",
+    "weight": 2.0,
+    "family": "duel",
+    "requires": {
+      "minMinute": 15,
+      "maxMinute": 85,
+      "flags": [
+        "sub_there"
+      ]
+    },
+    "setup": "М’яч приходить до тебе в центрі, спиною до воріт, і в спину дихає {oldsub} — у їхній формі, з їхнім номером. Торік він дихав так само з лави. Ви ніколи про це не говорили. Простору немає, є секунда і він.",
+    "setups": [
+      {
+        "when": {
+          "score": "trailing",
+          "minMinute": 60
+        },
+        "text": "Ви програєте, і м’яч приходить до тебе спиною до воріт, а в спину дихає {oldsub} — у їхній формі. Торік він чекав своєї черги на лаві. Сьогодні він чекає твоєї помилки. Секунда — і він."
+      },
+      {
+        "when": {
+          "tired": true
+        },
+        "text": "Ноги важкі, м’яч приходить спиною до воріт, і в спину дихає {oldsub} — у їхній формі, з їхнім номером. Він свіжий. Він три сезони чекав саме такого моменту."
+      }
+    ],
+    "options": [
+      {
+        "id": "beat_him",
+        "label": "Розвернутися й обіграти його",
+        "past": "обіграв {oldsub.gen} у його новій формі",
+        "attribute": "dribbling",
+        "basePosition": "risky",
+        "effect": "standard",
+        "difficulty": 1,
+        "staminaCost": 5,
+        "goals": {
+          "team": 2,
+          "personal": 2
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Він три сезони чекав. Хай побачить, чому."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Розворот через ту ногу, якої він не чекає, — і {oldsub} лишається стояти. Ти йдеш до штрафного, і трибуни знають, кого ти щойно обіграв.",
+            "recap": "і {oldsub} лишився стояти.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "keyPass": true,
+              "momentum": 2,
+              "fanHype": 6,
+              "coachTrust": 2
+            }
+          },
+          "cost": {
+            "text": "Ти йдеш повз нього — і він чіпляє за футболку. Фол, штрафний. {oldsub} не вибачається. Ти б теж не вибачився.",
+            "recap": "і {oldsub} сфолив на тобі.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "freeKick": true,
+              "fanHype": 3,
+              "stamina": -2
+            }
+          },
+          "fail": {
+            "text": "Він читає розворот раніше, ніж ти його робиш, — три сезони дивився на тебе з лави. М’яч у нього. Атака їхня.",
+            "recap": "і {oldsub} прочитав розворот.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "composure": -3,
+              "coachTrust": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти розвертаєшся в нього — і він забирає м’яч так, ніби чекав саме цього. Два паси, {them.striker} сам проти {keeper.gen}. Гол. {oldsub} не святкує. Дивиться на тебе.",
+            "recap": "і {oldsub} відібрав м’яч на гол.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "concede": true,
+              "scorer": "striker",
+              "coachTrust": -6,
+              "composure": -5,
+              "fanHype": -4
+            }
+          }
+        }
+      },
+      {
+        "id": "simple",
+        "label": "Віддати простіше. Це матч, не дуель",
+        "past": "віддав простіше, не граючи з {oldsub.ins}",
+        "attribute": "passing",
+        "basePosition": "controlled",
+        "effect": "limited",
+        "difficulty": -2,
+        "staminaCost": 2,
+        "goals": {
+          "team": 2,
+          "personal": 0
+        },
+        "voice": {
+          "who": "team",
+          "line": "Це не про нього. Це про рахунок."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти віддаєш у дотик, не розвертаючись, і {partner} веде атаку далі. {oldsub} лишається з порожнім місцем. {coach} киває: правильно.",
+            "recap": "і не дав {oldsub.dat} дуелі.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "coachTrust": 4,
+              "composure": 2
+            }
+          },
+          "cost": {
+            "text": "Віддаєш назад. Атака жива, але повільна — трибуни хотіли дуелі і не отримали.",
+            "recap": "і віддав назад, не граючи з ним.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "coachTrust": 2,
+              "fanHype": -3
+            }
+          },
+          "fail": {
+            "text": "Пас у дотик — не туди: {oldsub} ставить ногу і зрізає його. М’яч у них. Він знав, куди ти віддаси: сам би віддав туди ж.",
+            "recap": "і {oldsub} зрізав пас.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Пас назад — і {oldsub} читає його, як свій. Перехоплення, пас у розріз, і {them.winger} б’є повз {keeper.gen}. Гол.",
+            "recap": "і подарував {oldsub.dat} перехоплення на гол.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "concede": true,
+              "scorer": "winger",
+              "coachTrust": -5,
+              "composure": -4
+            }
+          }
+        }
+      },
+      {
+        "id": "shoulder",
+        "label": "Прийняти стик корпусом і втримати",
+        "past": "втримав {oldsub.gen} корпусом",
+        "attribute": "strength",
+        "basePosition": "risky",
+        "effect": "limited",
+        "difficulty": 0,
+        "staminaCost": 6,
+        "goals": {
+          "team": 1,
+          "personal": 1
+        },
+        "voice": {
+          "who": "body",
+          "line": "Він два сезони дихав у спину. Хай відчує плече."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти приймаєш його плечем і не сходиш з місця. {oldsub} відлітає, суддя мовчить, м’яч твій. Ви обидва знаєте, що це було не про м’яч.",
+            "recap": "і {oldsub} відлетів від плеча.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "duelWon": true,
+              "momentum": 1,
+              "fanHype": 4
+            }
+          },
+          "cost": {
+            "text": "Стик рівний — суддя свистить фол на тобі. {oldsub} підводиться першим і подає руку. Ти береш. Це вперше, коли ви торкнулися.",
+            "recap": "і сфолив на {oldsub.dat} у стику.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "duelWon": true,
+              "stamina": -3,
+              "coachTrust": -1
+            }
+          },
+          "fail": {
+            "text": "Він важчий, ніж торік, — там його годують краще. М’яч викочується, ти на газоні.",
+            "recap": "і програв {oldsub.dat} стик.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "stamina": -4,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти йдеш у стик надто пізно — лікоть, свисток, жовта. {oldsub} лежить довше, ніж треба, і встає з посмішкою.",
+            "recap": "і отримав жовту за лікоть на {oldsub.dat}.",
+            "apply": {
+              "removeFlags": [
+                "sub_there"
+              ],
+              "addFlags": [
+                "booked"
+              ],
+              "coachTrust": -4,
+              "composure": -4
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
     "id": "rx_ref_favor",
     "phase": "transition",
     "weight": 1.5,

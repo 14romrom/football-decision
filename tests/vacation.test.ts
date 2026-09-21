@@ -49,19 +49,26 @@ describe('відпустка', () => {
     expect(vacationPending({ ...defaultCareer(), vacation: { trip: 'trip_base' } }, 1, true)).toBe(false);
   });
 
-  it('фініш: травма за вибором, лог агента «зірвалося через медогляд», дублер пішов у клуб, що піднявся з нами', () => {
+  it('фініш: форма за вибором (не травма — рішення 21.09), лог агента «зірвалося через медогляд», дублер пішов у клуб, що піднявся з нами', () => {
     const sn = full([3, 0], 7, 7, 1);
     const promo = promotion(sn)!;
     const heavy = finishVacation(defaultCareer(), VACATION, [{ spread: 'trip', option: 'trip_tibo' }, { spread: 'medical', option: 'med_show' }, { spread: 'return', option: 'ret_joke' }], promo, 1);
-    expect(heavy.career.injuredMatches).toBe(2);
+    expect(heavy.career.injuredMatches).toBe(0);
+    expect(heavy.career.nextMatch?.start?.stamina).toBe(-12);
+    expect(heavy.career.carriedFlags?.filter((f) => f.flag === 'out_of_form').map((f) => f.after)).toEqual([0, 1]);
     expect(heavy.career.agentLog).toEqual([{ season: 1, choice: 'leave', reason: 'medical' }]);
     expect(heavy.career.subLeft).toBe(true);
     expect(heavy.career.subClub).toBe(promo.with[0]);
     expect(heavy.career.vacation).toEqual({ trip: 'trip_tibo', medical: 'med_show', return: 'ret_joke' });
     expect(heavy.career.carriedFlags?.some((f) => f.flag === 'tibo_joke_told')).toBe(true);
-    expect(consumeStartPenalty(heavy.career).penalty.staminaPenalty).toBe(20);
+    const start = consumeStartPenalty(heavy.career);
+    expect(start.penalty.staminaPenalty).toBe(0);
+    expect(start.penalty.flags.some((f) => f.flag === 'out_of_form')).toBe(true);
+    expect(start.penalty.facts.outOfForm).toBe(true);
+    expect(start.career.carriedFlags?.filter((f) => f.flag === 'out_of_form').length).toBe(1);   // другий матч ще не в формі
     const light = finishVacation(defaultCareer(), VACATION, [{ spread: 'medical', option: 'med_physio' }], promo, 1);
-    expect(light.career.injuredMatches).toBe(1);
+    expect(light.career.nextMatch?.start?.stamina).toBe(-4);
+    expect(light.career.carriedFlags?.filter((f) => f.flag === 'out_of_form').length).toBe(1);
     // Другий сезон після відпустки — літній дзвінок, фінальний.
     const sn2 = { ...sn, number: 2 };
     expect(agentPending(heavy.career, sn2, { kind: 'transfer', title: '', text: '' })).toBe('summer');

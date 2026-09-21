@@ -8,6 +8,7 @@ import { PrologueScreen } from './ui/PrologueScreen';
 import { finishPrologue, prologuePending, type ProloguePick } from './engine/prologue';
 import { finishVacation, vacationPending } from './engine/vacation';
 import { endingPending, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
+import { cityLine } from './engine/city';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
 import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } from './engine/posts';
@@ -33,7 +34,7 @@ import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
 import { activeSlot } from './telemetry/slots';
 import { finaleFor, type FinaleKind } from './engine/finale';
-import { programmeNote, traitNote, type ProgrammeInput } from './engine/programme';
+import { programmeNote, traitNote, type ProgrammeInput, coachGoalWord } from './engine/programme';
 import { applySettings, readSettings } from './telemetry/settings';
 import type { Hint } from './ui/Spotlight';
 import { Film } from './ui/Film';
@@ -184,7 +185,7 @@ function Game() {
       // Лист фінального свистка — з того ж rng і тієї ж пам’яті рядків, що репліки: сезон не повторює його.
       // Рядки свистка з іменами (M13: «{dm} б’є по плечу») — підставляємо під ростер матчу, як репліки.
       const whistle = fillNamesDeep(buildWhistle(
-        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0, session.state.arc),
+        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0, session.state.arc, season.number >= 2),
         rng, session.flavorSeen,
       ), session.roster);
       // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
@@ -562,6 +563,7 @@ function Game() {
           promotion={career.promotion}
           lastYear={metLastYear(career, session.conditions.opponentKey)}
           subThere={!!career.subLeft && career.subClub === session.conditions.opponentKey ? ROSTER.us.players.oldsub?.nom ?? null : null}
+          coachExtra={coachGoalWord(season.number, season.round + 1, season.round > 0 ? ourRow(season).position : 6, SEASON_ROUNDS)}
           usName={ROSTER.us.name.nom}
           note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}
           trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
@@ -699,7 +701,7 @@ function Game() {
         locked={stage.locked}
         month={sn.round === WINTER_BREAK_AFTER ? 'зимова перерва · січень' : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
         // Зимова перерва (M14): чутка від агента — одним рядком, без сцени й без назв.
-        aside={sn.round === WINTER_BREAK_AFTER ? (sn.number === 1 ? 'Агент дзвонив: «цікавляться». Хто — не сказав. Ти не спитав.' : 'Агент дзвонив: «ті самі, і вже не питають про ногу». Ти сказав «навесні».') : undefined}
+        aside={sn.round === WINTER_BREAK_AFTER ? (sn.number === 1 ? 'Агент дзвонив: «цікавляться». Хто — не сказав. Ти не спитав.' : 'Агент дзвонив: «ті самі, і вже не питають про ногу». Ти сказав «навесні».') : fillNames(cityLine(arcStage(careerRef.current), sn.number, sn.round), roster)}
         seen={seenScenes(careerRef.current)}
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[]) => {

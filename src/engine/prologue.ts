@@ -45,6 +45,8 @@ export type PrologueSpread = {
   sheet: string[];
   /** Луна: варіант листа за голосом відповіді на попередньому розвороті (тренер чув, що ти сказав скауту). */
   sheetBy?: Partial<Record<VoiceKey, string[]>>;
+  /** Фінал (M16): лист без дуету з партнером — коли партнер холодний (ui/PrologueScreen `cold`). */
+  sheetCold?: string[];
   options: PrologueOption[];
 };
 

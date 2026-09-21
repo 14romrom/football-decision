@@ -59,6 +59,8 @@ type Props = {
   lastYear?: { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[] | null;
   /** Колишній дублер у складі суперника (M15) — його прізвище. */
   subThere?: string | null;
+  /** Слово тренера про мету клубу (programme.ts:coachGoalWord) — після установки. */
+  coachExtra?: string | null;
   onStart: () => void;
   /** Починає на лаві — кнопка не обіцяє поле (плейтест 21.09, Б-4). */
   onBench?: boolean;
@@ -68,7 +70,7 @@ type Props = {
 // единственный светлый экран в игре. Рубрики: Реєс (заметка прозой), Суперник (+ черта голосом клуба),
 // Стадіон, Погода, Форма, Слово тренера цитатой в рамке. Без иронии: програмку пишет пресс-служба.
 
-export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, seasonNumber, promotion, lastYear, subThere, onStart, onBench }: Props) {
+export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, seasonNumber, promotion, lastYear, subThere, coachExtra, onStart, onBench }: Props) {
   const lastYearLine = lastYear ? ` Торік у другій лізі: ${lastYear.map((r) => `${r.scoreUs}:${r.scoreThem} ${r.venue === 'home' ? 'вдома' : 'на виїзді'}`).join(', ')}.` : '';
   const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
   const venue = conditions.venue === 'home'
@@ -97,7 +99,7 @@ export function BriefingScreen({ conditions, opponent, player, round, usName, no
           <dt>Стадіон</dt><dd><b>{venue.title}.</b> {venue.note}</dd>
           <dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd>
           <dt>Форма</dt><dd><b>{tone.title}.</b> {tone.note}</dd>
-          <dd className="prog-quote"><b>Слово тренера · установка: {instr.title.toLowerCase()}</b>{instr.quote} {instr.note}</dd>
+          <dd className="prog-quote"><b>Слово тренера · установка: {instr.title.toLowerCase()}</b>{instr.quote} {instr.note}{coachExtra ? ` ${coachExtra}` : ''}</dd>
         </dl>
         <div className="prog-foot"><span>Безкоштовно · не для продажу</span><span>надруковано вчора</span></div>
       </div>

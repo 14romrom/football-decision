@@ -27,7 +27,7 @@ export type ProgrammeInput = {
   agentEcho?: 'leave' | 'stay' | 'wait';
   /** Перенесене з минулого туру (career.ts:CarryFacts): вилучення, картки, травма — фразою прес-служби. Службова
    *  сводка в підвалі програмки прибрана (21.09, пользователь: недоречно для формату, ніхто не читає). */
-  carry?: { sentOff: boolean; yellows: boolean; injured: boolean };
+  carry?: { sentOff: boolean; yellows: boolean; injured: boolean; outOfForm?: boolean };
 };
 
 const ORD = ['', 'перший', 'другий', 'третій', 'четвертий', 'п’ятий', 'шостий', 'сьомий', 'восьмий', 'дев’ятий', 'десятий'];
@@ -75,7 +75,7 @@ function arcLine(i: ProgrammeInput): string {
 function carryLine(i: ProgrammeInput): string {
   const c = i.carry;
   if (!c) return '';
-  const bits = [c.sentOff ? 'Після вилучення в минулому турі' : c.yellows ? 'Три жовті за сезон — під наглядом' : '', c.injured ? 'грає після травми' : ''].filter(Boolean);
+  const bits = [c.sentOff ? 'Після вилучення в минулому турі' : c.yellows ? 'Три жовті за сезон — під наглядом' : '', c.injured ? 'грає після травми' : c.outOfForm ? 'літо минуло без передсезонки — форма не та' : ''].filter(Boolean);
   if (bits.length === 0) return '';
   const line = bits.join(', ');
   return line.charAt(0).toUpperCase() + line.slice(1) + '.';
@@ -93,6 +93,16 @@ function coachLine(i: ProgrammeInput): string {
 export function programmeNote(i: ProgrammeInput): string {
   const parts = [lastLine(i), carryLine(i), formLine(i), MILESTONE[i.matchesPlayed + 1] ?? '', arcLine(i), weekLine(i), coachLine(i)].filter(Boolean);
   return parts.join(' ');
+}
+
+/** Мета клубу словами тренера (M14, після звірки з STORY.md: «Мендонса говорив „трійка“ так, ніби це прізвище»).
+ *  Друга ліга, з 7-го туру: у трійці — одне, поза нею — інше; далі за кількістю турів. Null — нічого не додаємо. */
+export function coachGoalWord(seasonNumber: number, round: number, position: number, rounds: number): string | null {
+  if (seasonNumber !== 1 || round < 7) return null;
+  const left = rounds - round + 1;
+  if (position <= 3) return left <= 1 ? 'І ще: «Ми в трійці. До свистка це нічого не означає».' : 'І ще: «Ми в трійці. Це нічого не означає до травня».';
+  if (left <= 1) return 'І ще: «Трійка. Один матч. Я не прошу — я кажу».';
+  return `І ще: «Трійка. Це не побажання, це завдання. ${left === 2 ? 'Два тури' : `${left} тури`} — і всі мають значення».`;
 }
 
 /** Черта соперника голосом клуба: одна фраза, без модификаторов; `side` — «гостей» или «господарів». */

@@ -472,6 +472,14 @@
     "value": 0
   },
   {
+    "id": "out_of_form",
+    "label": "не в формі після літа без передсезонки",
+    "value": -1,
+    "attributes": ["pace", "stamina"],
+    "source": "player",
+    "short": "не в формі"
+  },
+  {
     "id": "sub_there",
     "label": "колишній дублер у їхній формі",
     "value": 0

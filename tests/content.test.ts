@@ -177,7 +177,9 @@ describe('вариации сетапа и флаги (сезон)', () => {
     const SYSTEM = ['booked', 'injured', 'sent_off', 'tired', 'keeper_read', 'knock', 'partner_bonded', 'partner_cold', 'tibo_asked', 'on_bench',
       'call_tone_ego', 'call_tone_team', 'call_tone_vision', 'agent_left', 'agent_stayed', 'agent_waited',
       // M14/M15: ставить App при створенні матчу — суперник із минулого сезону, колишній дублер у їхній формі.
-      'met_last_year', 'sub_there'];
+      'met_last_year', 'sub_there',
+      // M15: ставить відпустка (engine/vacation.ts) — літо без передсезонки.
+      'out_of_form'];
     // them_<trait> ставит движок по характеристикам соперника из roster.json (match.ts).
     const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
     const used = new Set<string>();
@@ -219,6 +221,7 @@ describe('вариации сетапа и флаги (сезон)', () => {
     for (const e of EPISODES.filter((x) => x.requires?.flags?.length)) {
       const flag = e.requires!.flags![0];
       if (flag === 'on_bench') continue;   // ставить і знімає движок (match.ts: лава)
+      if (flag === 'sub_there') continue;   // ставить App при створенні матчу: колишній дублер у їхній формі (M15)
       expect(setters.has(flag), `${e.id}: ${flag}`).toBe(true);
       if (flag === 'booked') continue;
       for (const o of e.options) {

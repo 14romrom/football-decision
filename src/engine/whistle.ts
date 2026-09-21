@@ -34,6 +34,8 @@ export type WhistleWhen = {
   first?: boolean;
   /** Стан арки (M13): три регістри свистка — нога, «ніхто не сказав молодець», «не подивився на трибуну». */
   arc?: number;
+  /** Вища ліга (M14): другий сезон — стадіони в три яруси, і свисток це знає. */
+  top?: boolean;
 };
 export type WhistleRule = { kind: WhistleKind; when?: WhistleWhen; lines: string[] };
 
@@ -52,7 +54,7 @@ export function promiseState(state: MatchState, episodes: Episode[], selfName: s
   return state.flags.includes('week_promise') ? 'untouched' : null;
 }
 
-export function whistleContext(state: MatchState, summary: MatchSummary, cond: MatchConditions, promise: PromiseState | null, tiredBelow: number, first = false, arc?: number): WhistleWhen {
+export function whistleContext(state: MatchState, summary: MatchSummary, cond: MatchConditions, promise: PromiseState | null, tiredBelow: number, first = false, arc?: number, top = false): WhistleWhen {
   return {
     result: summary.scoreUs > summary.scoreThem ? 'win' : summary.scoreUs < summary.scoreThem ? 'loss' : 'draw',
     scored: summary.stats.goals + summary.stats.assists > 0,
@@ -65,6 +67,7 @@ export function whistleContext(state: MatchState, summary: MatchSummary, cond: M
     strength: cond.strength,
     ...(promise ? { promise } : {}),
     ...(first ? { first } : {}),
+    ...(top ? { top } : {}),
     ...(arc ? { arc } : {}),
   };
 }

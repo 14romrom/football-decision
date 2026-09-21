@@ -293,7 +293,7 @@ export function benchAfterMatch(benched: boolean, endingTrust: number, summary: 
 }
 
 /** Що переноситься в матч із минулого — для програмки (прес-служба скаже це своїми словами, без «тренер не забув»). */
-export type CarryFacts = { sentOff: boolean; yellows: boolean; injured: boolean };
+export type CarryFacts = { sentOff: boolean; yellows: boolean; injured: boolean; /** Літо без передсезонки (M15): маркер out_of_form на цей матч. */ outOfForm?: boolean };
 
 export type StartPenalty = {
   /** Факти для програмки (programme.ts:carryLine); note нижче — службовий рядок, на екран не йде (21.09). */
@@ -349,7 +349,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   return {
     career: next,
     penalty: {
-      facts: { sentOff: career.pendingSentOff, yellows: !career.pendingSentOff && career.careerYellows >= 3, injured: staminaPenalty > 0 },
+      facts: { sentOff: career.pendingSentOff, yellows: !career.pendingSentOff && career.careerYellows >= 3, injured: staminaPenalty > 0, outOfForm: flags.some((f) => f.flag === 'out_of_form') },
       staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career), ...tiboFlags(career), ...prologueFlags(career), ...agentFlags(career)], fromBench: !!career.benched,
       arc: arcStage(career),
       attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,

@@ -124,7 +124,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, header = 'тижде
                 <h3>{s.title}</h3>
                 <div className="moment nb-sheet"><div className="scene">
                   <span className="minute-tab">{s.tab.toUpperCase()}</span>
-                  {sheetFor(s, previousVoice(d)).map((t, k) => <p key={k} className="setup">{t}</p>)}
+                  {(cold && s.sheetCold ? s.sheetCold : sheetFor(s, previousVoice(d))).map((t, k) => <p key={k} className="setup">{t}</p>)}
                   <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'pick' })}>{labels.open}</button>
                 </div></div>
               </section>

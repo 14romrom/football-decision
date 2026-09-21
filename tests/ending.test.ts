@@ -56,3 +56,40 @@ describe('останній дзвінок', () => {
     expect(career.carriedFlags?.some((f) => f.flag === 'tibo_joke_told')).toBe(true);
   });
 });
+
+describe('канва в геймплеї (звірка зі STORY.md, 21.09)', () => {
+  it('рядок міста — на кожен стан, за сезон без повторів, з іменами ростера', async () => {
+    const { cityLine } = await import('../src/engine/city');
+    const { fillNames } = await import('../src/engine/names');
+    for (const arc of [1, 2, 3, 4]) {
+      const seen = new Set<string>();
+      for (let round = 1; round <= 5; round++) { const l = cityLine(arc, 1, round); expect(l.length).toBeGreaterThan(10); expect(fillNames(l, ROSTER)).not.toMatch(/\{[a-z]/); seen.add(l); }
+      expect(seen.size).toBe(5);
+    }
+  });
+  it('слово тренера про трійку — друга ліга з 7-го туру; у трійці — інше; у вищій — мовчить', async () => {
+    const { coachGoalWord } = await import('../src/engine/programme');
+    expect(coachGoalWord(1, 6, 5, 10)).toBeNull();
+    expect(coachGoalWord(2, 8, 5, 10)).toBeNull();
+    expect(coachGoalWord(1, 7, 5, 10)).toMatch(/Трійка.*завдання/);
+    expect(coachGoalWord(1, 10, 5, 10)).toMatch(/Один матч/);
+    expect(coachGoalWord(1, 8, 2, 10)).toMatch(/Ми в трійці/);
+  });
+  it('свисток знає вищу лігу; фінал: рими в листі третього розвороту, холодний варіант без квитків', async () => {
+    const { pickWhistleLine } = await import('../src/engine/whistle');
+    const { makeRng } = await import('../src/engine/rng');
+    const top = pickWhistleLine('summary', { result: 'win', top: true }, makeRng(1), new Set());
+    expect(top).toBeTruthy();
+    const tram = ENDING.spreads.find((s) => s.id === 'tram')!;
+    expect(tram.sheet.join(' ')).toMatch(/Мафія знає, де ти житимеш/);
+    expect(tram.sheet.join(' ')).toMatch(/два квитки/);
+    expect(tram.sheet.join(' ')).toMatch(/Ти був хороший/);
+    expect(tram.sheetCold!.join(' ')).not.toMatch(/два квитки/);
+    expect(tram.sheetCold!.join(' ')).toMatch(/Ти був хороший/);
+    // Реактивна сцена з Ларссоном: кожен варіант знімає флаг, є сетапи.
+    const { EPISODES } = await import('../src/content');
+    const rx = EPISODES.find((e) => e.id === 'rx_sub_there')!;
+    expect(rx.requires?.flags).toEqual(['sub_there']);
+    expect(rx.setups?.length).toBeGreaterThanOrEqual(2);
+  });
+});

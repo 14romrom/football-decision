@@ -472,6 +472,16 @@
     "value": 0
   },
   {
+    "id": "sub_there",
+    "label": "колишній дублер у їхній формі",
+    "value": 0
+  },
+  {
+    "id": "met_last_year",
+    "label": "грали з ними торік",
+    "value": 0
+  },
+  {
     "id": "tibo_joke_told",
     "label": "«мафію» розповіли за столом у Тібо",
     "value": 0

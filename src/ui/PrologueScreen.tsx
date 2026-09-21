@@ -20,11 +20,21 @@ type Props = {
   spreads: PrologueSpread[];
   onFinish: (picks: ProloguePick[]) => WeekResult;
   onNext: () => void;
+  /** Відпустка (M15) використовує той самий екран: інша шапка, інший лист здобутків, стікери за станом арки. */
+  header?: string;
+  lootTab?: string;
+  lootButton?: string;
+  lootEmpty?: string;
+  arc?: number;
+  /** Підписи кнопок: пролог відповідає людям, відпустка вирішує, що робити. */
+  labels?: { open: string; pick: string; confirm: string };
 };
 
 type Phase = { p: 'sheet' } | { p: 'pick' } | { p: 'reply'; option: PrologueOption } | { p: 'summary'; result: WeekResult };
 
-export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
+export function PrologueScreen({ spreads, onFinish, onNext, header = 'тиждень нуль · серпень', lootTab = 'ДО ПЕРШОГО МАТЧУ', lootButton = 'На лаву', lootEmpty = 'Три розвороти — і жодної відповіді.', arc = 1, labels = { open: 'Відповісти', pick: 'Обери відповідь на стікері', confirm: 'Так і відповісти' } }: Props) {
+  // Стікер зі станом арки (Спокій у відпустці): нижче стану — його немає, і гравець про нього не знає.
+  const visible = (o: PrologueOption) => ((o as { arcMin?: number }).arcMin ?? 1) <= arc;
   const [i, setI] = useState(0);
   const [phase, setPhase] = useState<Phase>({ p: 'sheet' });
   const [picks, setPicks] = useState<ProloguePick[]>([]);
@@ -77,7 +87,7 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
     return (
       <section key={s.id} className="nb-day">
         <h3>{s.title}{o && <small>{VOICE_LABEL[o.voice].toLowerCase()}</small>}</h3>
-        <div className="nb-notes compact">{s.options.map((x) => note(x, x === o ? 'on' : 'torn'))}</div>
+        <div className="nb-notes compact">{s.options.filter(visible).map((x) => note(x, x === o ? 'on' : 'torn'))}</div>
         {o && <p className="nb-mark">{o.mark}</p>}
       </section>
     );
@@ -86,12 +96,12 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
   const button = (() => {
     if (phase.p === 'summary' || phase.p === 'sheet' || phase.p === 'reply') return null;   // кнопка — всередині листа
     // Поки стікер не обрано, кнопка каже, що робити: приглушена «Так і відповісти» сама по собі не пояснювала (плейтест 21.09, Б-8).
-    return <button className="primary menu-primary" onClick={confirm} disabled={!selected}>{selected ? 'Так і відповісти' : 'Обери відповідь на стікері'}</button>;
+    return <button className="primary menu-primary" onClick={confirm} disabled={!selected}>{selected ? labels.confirm : labels.pick}</button>;
   })();
 
   return (
     <div className="result week prologue">
-      <div className="card-minute">тиждень нуль · серпень</div>
+      <div className="card-minute">{header}</div>
       <div className={`nb-book ${phase.p === 'sheet' || phase.p === 'reply' || phase.p === 'summary' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
@@ -109,7 +119,7 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
                 <div className="moment nb-sheet"><div className="scene">
                   <span className="minute-tab">{s.tab.toUpperCase()}</span>
                   {sheetFor(s, previousVoice(d)).map((t, k) => <p key={k} className="setup">{t}</p>)}
-                  <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'pick' })}>Відповісти</button>
+                  <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'pick' })}>{labels.open}</button>
                 </div></div>
               </section>
             );
@@ -121,7 +131,7 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
             return (
               <section key={s.id} className="nb-day">
                 <h3>{s.title}<small>{VOICE_LABEL[o.voice].toLowerCase()}</small></h3>
-                <div className="nb-notes compact">{s.options.map((x) => note(x, x === o ? 'on' : 'torn'))}</div>
+                <div className="nb-notes compact">{s.options.filter(visible).map((x) => note(x, x === o ? 'on' : 'torn'))}</div>
                 <div className="moment nb-sheet"><div className="scene">
                   <span className="minute-tab">{s.tab.toUpperCase()}</span>
                   <p className="nb-chosen"><b>{o.say}</b></p>
@@ -136,15 +146,15 @@ export function PrologueScreen({ spreads, onFinish, onNext }: Props) {
             <section key={s.id} className="nb-day">
               <h3>{s.title}<small>{s.sub}</small></h3>
               <div className="nb-notes">
-                {s.options.map((o) => note(o, selected === o.id ? 'on' : 'open', () => { setSelected(selected === o.id ? null : o.id); setAttr(null); }))}
+                {s.options.filter(visible).map((o) => note(o, selected === o.id ? 'on' : 'open', () => { setSelected(selected === o.id ? null : o.id); setAttr(null); }))}
               </div>
             </section>
           );
         })}
 
         {phase.p === 'summary' && (
-          <LootSheet tab="ДО ПЕРШОГО МАТЧУ" loot={phase.result.loot} before={phase.result.before} after={phase.result.after}
-            empty="Три розвороти — і жодної відповіді." button="На лаву" onNext={onNext} />
+          <LootSheet tab={lootTab} loot={phase.result.loot} before={phase.result.before} after={phase.result.after}
+            empty={lootEmpty} button={lootButton} onNext={onNext} />
         )}
       </div>
       {button}

@@ -7,10 +7,11 @@ import activitiesJson from './activities.json';
 import weekscenesJson from './weekscenes.json';
 import adsJson from './ads.json';
 import prologueJson from './prologue.json';
+import vacationJson from './vacation.json';
 import firstmatchJson from './firstmatch.json';
 import agentJson from './agent.json';
 import espmJson from './espm.json';
-import { fillNamesDeep, type Roster, type TeamRoster } from '../engine/names';
+import { fillNamesDeep, type Roster, type TeamRoster, type NameForms } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
 import type { Episode, FlagRule, Player } from '../engine/types';
@@ -18,6 +19,7 @@ import type { Rng } from '../engine/rng';
 import type { Activity, WeekScene } from '../engine/week';
 import type { AdRule } from '../engine/espm';
 import type { PrologueSpread } from '../engine/prologue';
+import type { VacationSpread } from '../engine/vacation';
 import type { Tutorial, TutorialHint } from '../engine/match';
 import type { AgentContent } from '../engine/agent';
 import type { EspmColumn } from '../engine/espm';
@@ -67,6 +69,20 @@ export const WEEK_SCENES = weekscenesJson as WeekScene[];
 export const ADS = adsJson as AdRule[];
 /** Пролог — тиждень нуль (engine/prologue.ts): три розвороти зі стікерами голосів; імена — при показі. */
 export const PROLOGUE = prologueJson as PrologueSpread[];
+export const VACATION = vacationJson as VacationSpread[];
+
+/** Дублер пішов (M15): ім’я `sub` у ростері підміняється на наступника — на місці, бо ROSTER читають усі
+ *  (пости, агент, тиждень) і робити з нього функцію — правити півсотні викликів. Викликається з App при
+ *  завантаженні кар’єри й після відпустки; `false` повертає Ларссона (нова кар’єра). */
+export function syncRoster(subLeft: boolean): void {
+  const us = rosterJson.us as TeamRoster & { subNext: NameForms };
+  const target = subLeft ? us.subNext : SUB_ORIGINAL;
+  Object.assign(ROSTER.us.players.sub, { nom: target.nom, gen: target.gen, dat: target.dat, ins: target.ins });
+}
+// `{oldsub}` — колишній дублер: у чужій формі після відпустки (програмка, пости проти його клубу); до того — він же,
+// щоб плейсхолдер розв’язувався будь-яким ростером (тест стрічки).
+const SUB_ORIGINAL: NameForms = { ...(rosterJson.us as TeamRoster).players.sub };
+ROSTER.us.players.oldsub = { ...SUB_ORIGINAL };
 /** Перший матч кар’єри (M12): чотири фіксовані сцени з лави, кожна з підказкою оповідача (match.ts:Tutorial). */
 export const FIRST_MATCH = firstmatchJson as { scenes: ({ episode: string } & TutorialHint)[] };
 export const FIRST_MATCH_TUTORIAL: Tutorial = {

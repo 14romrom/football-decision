@@ -27,7 +27,9 @@ describe('стан арки', () => {
     expect(arcStage(career({ matchesPlayed: a.ownFrom }))).toBe(2);   // без тепла — ще не свій
     expect(arcStage(career({ matchesPlayed: a.ownFrom, fanHype: a.ownHype }))).toBe(3);
     expect(arcStage(career({ matchesPlayed: a.ownFrom, partnerBond: a.ownBond }))).toBe(3);
-    expect(arcStage(career({ matchesPlayed: 1, agentLog: [{ season: 1, choice: 'stay' }] }))).toBe(4);
+    // M15: дзвінок був у відпустці після першого сезону — стан 4 не раніше середини другого (settledFrom).
+    expect(arcStage(career({ matchesPlayed: 11, fanHype: 60, agentLog: [{ season: 1, choice: 'stay' }] }))).toBe(3);
+    expect(arcStage(career({ matchesPlayed: 15, agentLog: [{ season: 1, choice: 'stay' }] }))).toBe(4);
   });
 
   it('стан їде в матч через consumeStartPenalty; tibo_asked — тільки після «перепитати» і до стану 3', () => {
@@ -154,9 +156,10 @@ describe('решта пунктів арки', () => {
       while (sn.fixtures.some((f) => f.round === sn.round)) sn = recordRound(sn, { scoreUs: 3, scoreThem: 0, goals: 1, assists: 1, coachRating: 8, fanRating: 8.5, scorers: [] }, strengths, makeRng(sn.round));
       return sn;
     };
+    // M15: у першому сезоні сцени немає — дзвінок і зрив у відпустці; «зимовий» лог кладе finishVacation.
     const s1 = star(1); const v1 = seasonVerdict(s1, 70);
-    expect(agentPending(defaultCareer(), s1, v1)).toBe('winter');
-    const winter = resolveAgent(defaultCareer(), s1, AGENT, 'leave').career;
+    expect(agentPending(defaultCareer(), s1, v1)).toBeNull();
+    const winter = { ...defaultCareer(), agentLog: [{ season: 1, choice: 'leave' as const, reason: 'medical' as const }], agentEcho: 'leave' as const };
     const s2 = star(2); const v2 = seasonVerdict(s2, 70);
     expect(agentPending(winter, s2, v2)).toBe('summer');
     const stay = resolveAgent(winter, s2, AGENT, 'stay', 'summer');
@@ -167,7 +170,7 @@ describe('решта пунктів арки', () => {
     expect(leave.career.ended).toEqual({ season: 2 });
     expect(leave.text).toContain(AGENT.epilogue);
     expect(agentPending(leave.career, s2, v2)).toBeNull();
-    expect(arcStage(winter)).toBe(4);
+    expect(arcStage({ ...winter, matchesPlayed: 15 })).toBe(4);   // M15: стан 4 — з середини другого сезону
   });
 
   it('психолог: три сеанси за станом — страх, впізнають, «перед сном думаєш не про удар» ближче до кінця сезону', () => {

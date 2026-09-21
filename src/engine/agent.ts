@@ -49,6 +49,8 @@ export type AgentLogEntry = { season: number; choice: AgentChoice; reason?: Coll
  *  уже дзвінок у минулому сезоні — літо (обставин немає, вибір справжній). */
 export function agentPending(career: Career, season: Season, verdict: Verdict | undefined): AgentMode | null {
   if (verdict?.kind !== 'transfer' || career.ended) return null;
+  // Перший сезон (M15): дзвінок і зрив живуть у відпустці (engine/vacation.ts), сцени тут немає.
+  if (season.number === 1) return null;
   const log = career.agentLog ?? [];
   if (log.some((a) => a.season === season.number)) return null;
   return log.some((a) => a.season < season.number) ? 'summer' : 'winter';

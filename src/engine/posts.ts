@@ -125,8 +125,8 @@ export function buildPostContext(
     coachTrust: career.coachTrust,
     injured: career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock'),
     // Підвищення (M14): `promoted_earned` / `promoted_scandal` на весь другий сезон; `met_last_year` — суперник із минулого сезону.
-    flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag), ...(career.promotion ? ['promoted_' + career.promotion] : [])],
-    nextStrength: next?.strength ?? null, nextFlags: [...(next?.traits.map((t) => 'them_' + t) ?? []), ...(next && metLastYear(career, next.opponentKey) ? ['met_last_year'] : [])], nextVenue: next?.venue ?? null,
+    flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag), ...(career.promotion ? ['promoted_' + career.promotion] : []), ...(career.subLeft ? ['sub_left'] : [])],
+    nextStrength: next?.strength ?? null, nextFlags: [...(next?.traits.map((t) => 'them_' + t) ?? []), ...(next && metLastYear(career, next.opponentKey) ? ['met_last_year'] : []), ...(next && career.subLeft && career.subClub === next.opponentKey ? ['sub_there'] : [])], nextVenue: next?.venue ?? null,
     leaderLost: lostBy(leader.club), bottomWon: wonBy(bottom.club),
     voice, hasScored: season.player.goals + season.player.assists > 0,
     leaderKey: leader.club, bottomKey: bottom.club,

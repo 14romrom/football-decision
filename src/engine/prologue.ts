@@ -34,7 +34,8 @@ export type PrologueOption = {
 };
 
 export type PrologueSpread = {
-  id: 'scout' | 'call' | 'base';
+  /** 'scout' | 'call' | 'base' у пролозі; відпустка (engine/vacation.ts) — свої. */
+  id: string;
   title: string;
   /** Підпис заголовка, поки розворот відкритий; після вибору — голос обраного стікера. */
   sub: string;
@@ -56,7 +57,7 @@ export function sheetFor(spread: PrologueSpread, previousVoice: VoiceKey | undef
  *  пам’ятають «лава — це ненадовго». Маркер системний, без модифікатора. */
 export const CALL_TONE_FLAG: Record<string, string> = { call_ego: 'call_tone_ego', call_team: 'call_tone_team', call_vision: 'call_tone_vision' };
 
-export type ProloguePick = { spread: PrologueSpread['id']; option: string; attr?: Attribute };
+export type ProloguePick = { spread: string; option: string; attr?: Attribute };
 
 /** Пролог — один раз на кар’єру, до першого матчу. Старі збереження з зіграними матчами його не бачать:
  *  їхній Реєс уже має характер. */

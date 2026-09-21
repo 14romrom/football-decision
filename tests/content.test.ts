@@ -175,7 +175,9 @@ describe('вариации сетапа и флаги (сезон)', () => {
     // keeper_read ставит и движок (бачення/аналітик), и контент (первый удар) — системный.
     // partner_bonded / partner_cold — пороги career.partnerBond (career.ts:peopleFlags), ставит карьера, не исход.
     const SYSTEM = ['booked', 'injured', 'sent_off', 'tired', 'keeper_read', 'knock', 'partner_bonded', 'partner_cold', 'tibo_asked', 'on_bench',
-      'call_tone_ego', 'call_tone_team', 'call_tone_vision', 'agent_left', 'agent_stayed', 'agent_waited'];
+      'call_tone_ego', 'call_tone_team', 'call_tone_vision', 'agent_left', 'agent_stayed', 'agent_waited',
+      // M14/M15: ставить App при створенні матчу — суперник із минулого сезону, колишній дублер у їхній формі.
+      'met_last_year', 'sub_there'];
     // them_<trait> ставит движок по характеристикам соперника из roster.json (match.ts).
     const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
     const used = new Set<string>();

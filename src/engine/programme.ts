@@ -5,6 +5,8 @@
 export type ProgrammeInput = {
   /** Тур, который предстоит (1-based). */
   round: number;
+  /** Номер сезону (M14): другий — вища ліга. */
+  seasonNumber?: number;
   /** Прошлый матч: счёт и соперник в родительном («проти «Ольвара»»). */
   last?: { scoreUs: number; scoreThem: number; opponentGen: string } | null;
   /** Тонус из условий матча: −2…+2. */
@@ -32,7 +34,7 @@ const ORD = ['', 'перший', 'другий', 'третій', 'четверт
 const MILESTONE: Record<number, string> = { 10: 'Десятий матч за клуб.', 25: 'Двадцять п’ятий матч за клуб.', 50: 'П’ятдесятий матч за клуб.', 100: 'Сотий матч за клуб.' };
 
 function lastLine(i: ProgrammeInput): string {
-  if (!i.last) return i.round === 1 ? 'Дебютує в сезоні.' : '';
+  if (!i.last) return i.round === 1 ? ((i.seasonNumber ?? 1) >= 2 ? 'Перший матч у вищій лізі.' : 'Дебютує в сезоні.') : '';
   const { scoreUs: a, scoreThem: b, opponentGen } = i.last;
   const score = `${a}:${b}`;
   const kind = a > b ? 'перемоги' : a < b ? 'поразки' : 'нічиєї';
@@ -60,10 +62,12 @@ function weekLine(i: ProgrammeInput): string {
 
 /** Ставлення прес-служби дрейфує зі станом: до «свій» — нічого, далі — «улюбленець трибун», після зими — і про агента. */
 function arcLine(i: ProgrammeInput): string {
-  if (i.agentEcho === 'leave') return 'Улюбленець трибун. Тренер: «Кажуть, узимку хотів піти». Не питання.';
-  if (i.agentEcho === 'stay') return 'Улюбленець трибун. Про зиму тренер не сказав ні слова — це його спосіб сказати «дякую».';
-  if (i.agentEcho === 'wait') return 'Улюбленець трибун. «До літа», — сказав тренер. Він теж чув.';
-  if ((i.arc ?? 1) >= 4) return 'Улюбленець трибун. Узимку лишився.';
+  // Луна дзвінка (M15 — у відпустці): «улюбленець» — тільки зі стану 3, прес-служба не поспішає.
+  const own = (i.arc ?? 1) >= 3 ? 'Улюбленець трибун. ' : '';
+  if (i.agentEcho === 'leave') return `${own}Тренер: «Кажуть, улітку мало не пішов». Не питання.`;
+  if (i.agentEcho === 'stay') return `${own}Про літо тренер не сказав ні слова — це його спосіб сказати «дякую».`;
+  if (i.agentEcho === 'wait') return `${own}«До зими», — сказав тренер. Він теж чув.`;
+  if ((i.arc ?? 1) >= 4) return 'Улюбленець трибун. Улітку лишився.';
   if ((i.arc ?? 1) >= 3) return 'Улюбленець трибун.';
   return '';
 }

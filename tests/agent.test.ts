@@ -35,11 +35,14 @@ describe('сцена агента', () => {
     const sn = starSeason();
     const verdict = seasonVerdict(sn, 70);
     expect(verdict.kind).toBe('transfer');
-    expect(agentPending(defaultCareer(), sn, verdict)).toBe('winter');
-    expect(agentPending(defaultCareer(), sn, { kind: 'extend', title: '', text: '' })).toBeNull();
-    const { career } = resolveAgent(defaultCareer(), sn, AGENT, 'stay');
-    expect(agentPending(career, sn, verdict)).toBeNull();
-    expect(career.agentLog).toEqual([{ season: sn.number, choice: 'stay' }]);
+    // Перший сезон (M15) — дзвінок і зрив у відпустці, сцени немає; другий без дзвінка в логу — «зима» (старі збереження).
+    expect(agentPending(defaultCareer(), sn, verdict)).toBeNull();
+    const sn2 = { ...sn, number: 2 };
+    expect(agentPending(defaultCareer(), sn2, verdict)).toBe('winter');
+    expect(agentPending(defaultCareer(), sn2, { kind: 'extend', title: '', text: '' })).toBeNull();
+    const { career } = resolveAgent(defaultCareer(), sn2, AGENT, 'stay');
+    expect(agentPending(career, sn2, verdict)).toBeNull();
+    expect(career.agentLog).toEqual([{ season: 2, choice: 'stay' }]);
   });
 
   it('«так» зривається за обставинами: травма → медогляд, лідер → борги, інакше → скаут; Реєс лишається', () => {

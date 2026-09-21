@@ -26,6 +26,11 @@ export type Career = {
   benched?: boolean;
   /** Як піднялися у вищу лігу (M14): чесно або за скандалом — тексти другого сезону й холодніші трибуни на старті. */
   promotion?: 'earned' | 'scandal';
+  /** Відпустка (M15): розворот → обраний стікер; є — відпустку прожито. */
+  vacation?: Record<string, string>;
+  /** Дублер пішов після першого сезону (M15) — ім’я в ростері підміняється (content:syncRoster); клуб, куди пішов. */
+  subLeft?: boolean;
+  subClub?: string;
   /** Минулий сезон (M14): рахунки з кожним суперником — «зустрічалися торік» у програмці, постах і сетапах. */
   lastSeason?: { number: number; position: number; results: Record<string, { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[]> };
   /** Несгоревшие жёлтые за карьеру; на третьей — тренер начинает следующий матч настороже. */
@@ -77,7 +82,7 @@ export type ArcStage = 1 | 2 | 3 | 4;
 
 export function arcStage(career: Career): ArcStage {
   const a = BALANCE.arc;
-  if ((career.agentLog ?? []).length > 0) return 4;
+  if ((career.agentLog ?? []).length > 0 && career.matchesPlayed >= a.settledFrom) return 4;
   const warm = (career.fanHype ?? 0) >= a.ownHype || (career.partnerBond ?? 0) >= a.ownBond;
   if (career.matchesPlayed >= a.ownFrom && warm) return 3;
   if (career.matchesPlayed >= a.noticedFrom) return 2;

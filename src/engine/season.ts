@@ -217,6 +217,30 @@ export function ourRow(season: Season): TableRow {
 
 export type Verdict = { kind: 'transfer' | 'extend' | 'bench'; title: string; text: string };
 
+/** Кінець першого сезону (M15): дзвінок агента безумовний — вихід у вищу лігу помітили. Таблиця й тренер
+ *  вирішують формулювання (за таблицю / за протокол / «помітили»), а вердикт тренера й трибун (лава) лишається
+ *  своїм рядком: з лави наступний сезон усе одно починаєш. Сам зрив — у відпустці (engine/vacation.ts). */
+export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict {
+  const base = seasonVerdict(season, coachTrust);
+  const k = BALANCE.season;
+  const row = ourRow(season);
+  const p = season.player;
+  const actions = p.goals + p.assists;
+  const stats = `${p.goals} голів і ${p.assists} передач`;
+  const promo = promotion(season);
+  const how = promo?.kind === 'scandal' ? 'Вихід у вищу лігу — хай і за регламентом —' : 'Вихід у вищу лігу';
+  let text: string;
+  if (row.position <= k.transferPosition && coachTrust >= k.transferTrust) {
+    text = `${row.position}-е місце, ${stats}. ${how} помітили не тільки в місті: клуб із вищої ліги хоче тебе вже влітку. Медогляд у липні. Тренер не радий — але це найкраща з його проблем.`;
+  } else if (actions >= k.starActions) {
+    text = `${stats} за сезон — і ${how.charAt(0).toLowerCase() + how.slice(1)} помітили: клуб із вищої ліги дзвонить за протоколом, попри ${row.position}-е місце. Медогляд у липні.`;
+  } else {
+    text = `${row.position}-е місце, ${stats}. ${how} помітили ті, хто дивиться не таблицю, а поле: клуб із вищої ліги дзвонить — не через цифри, а тому, що бачив тебе. Медогляд у липні.`;
+  }
+  if (base.kind === 'bench') text += ' А наступний сезон усе одно починаєш з лави: ' + (base.text.includes('свист') ? 'трибуни свистіли, і президент це чув.' : 'тренер не дивиться в очі.');
+  return { kind: 'transfer', title: 'Дзвонить агент', text };
+}
+
 /** Итог сезона — две силы (M9, 20.09). Тренер: место, довіра, средняя оценка. Трибуни и протокол:
  *  средняя оценка трибун и голы+асисты. Тренер садит — трибуни защищают или свистят; агент звонит
  *  за таблицу или за протокол. Текст называет причину: игрок должен понять, что именно решило,

@@ -7,7 +7,7 @@ import { SLOT_BASES, slotKey } from './slots';
 
 const key = (slot?: number) => slotKey(SLOT_BASES.history, slot);
 
-export type HistoryEntry = { result: MatchResult; scoreUs: number; scoreThem: number; at: number; episodes?: string[]; flavor?: string[]; feed?: string[] };
+export type HistoryEntry = { result: MatchResult; scoreUs: number; scoreThem: number; at: number; episodes?: string[]; flavor?: string[]; feed?: string[]; setups?: string[] };
 
 export function readHistory(slot?: number): HistoryEntry[] {
   try {
@@ -36,15 +36,21 @@ export function recentFlavor(horizon: number): string[] {
   return readHistory().slice(-horizon).flatMap((h) => h.flavor ?? []);
 }
 
+/** Вступи сцен (сетапи) за всю кар’єру — не горизонт: на горизонті сим повторів тексту не зрушив (21%), бо епізод
+ *  повертається пізніше, ніж горизонт його забуває (match.ts:withSetup). */
+export function allSetups(): string[] {
+  return readHistory().flatMap((h) => h.setups ?? []);
+}
+
 /** Строки ленты последних матчей — тот же принцип, что у реплик (feed.ts). */
 export function recentFeed(horizon: number): string[] {
   return readHistory().slice(-horizon).flatMap((h) => h.feed ?? []);
 }
 
-export function recordResult(scoreUs: number, scoreThem: number, episodes: string[], flavor: string[] = [], feed: string[] = []) {
+export function recordResult(scoreUs: number, scoreThem: number, episodes: string[], flavor: string[] = [], feed: string[] = [], setups: string[] = []) {
   const result: MatchResult = scoreUs > scoreThem ? 'W' : scoreUs < scoreThem ? 'L' : 'D';
   try {
-    localStorage.setItem(key(), JSON.stringify([...readHistory(), { result, scoreUs, scoreThem, at: Date.now(), episodes, flavor, feed }]));
+    localStorage.setItem(key(), JSON.stringify([...readHistory(), { result, scoreUs, scoreThem, at: Date.now(), episodes, flavor, feed, setups }]));
   } catch { /* приватный режим — тонус просто останется нейтральным */ }
 }
 

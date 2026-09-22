@@ -11,7 +11,7 @@ import { endingPending, finishEnding, partnerBonded, prologueVoice } from './eng
 import { HUNTER, hunterRound } from './engine/programme';
 import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
-import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, recordPosts, recordResult } from './telemetry/history';
+import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, allSetups, recordPosts, recordResult } from './telemetry/history';
 import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } from './engine/posts';
 import { PostsScreen } from './ui/PostsScreen';
 import { fillNames, opponentTraits } from './engine/names';
@@ -190,7 +190,7 @@ function Game() {
         rng, session.flavorSeen,
       ), session.roster);
       // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
-      recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds, [...session.flavorSeen], [...session.feedSeen]);
+      recordResult(summary.scoreUs, summary.scoreThem, session.usedEpisodeIds, [...session.flavorSeen], [...session.feedSeen], [...session.setupSeenNow]);
 
       const before = careerRef.current;
       const hadDominantVoice = dominantVoice(session.state.voices) !== null;
@@ -250,7 +250,7 @@ function Game() {
           // Колишній дублер у їхній формі (M15): сетапи й репліки знають, хто дихав у спину торік.
           ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey ? [{ flag: 'sub_there', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: 'грав проти колишнього дублера' } }] : []),
         ],
-        flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon),
+        flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon), setupSeen: allSetups(),
         startDelta: penalty.startDelta,
         voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: consumedCareer.injuriesSeason,
         arc: penalty.arc,

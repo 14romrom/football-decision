@@ -140,11 +140,12 @@ describe('связность и покрытие расписания', () => {
 describe('вариации сетапа и флаги (сезон)', () => {
   const WHEN_KEYS = ['tier', 'score', 'minMinute', 'maxMinute', 'tired', 'booked', 'lowTrust', 'momentumMin', 'momentumMax', 'venue', 'weather', 'strength', 'instruction', 'flags'];
 
-  it('setups: непустое условие из известных ключей, текст отличается от базового и от соседей', () => {
+  // Пустое `when` разрешено (22.09, M17): безусловные варианты — запасные вступления для самых частых сцен, чтобы второе
+  // и третье появление эпизода за карьеру читалось иначе (match.ts:withSetup берёт невиданный из подходящих).
+  it('setups: условие из известных ключей, текст отличается от базового и от соседей', () => {
     for (const e of EPISODES) {
       for (const v of e.setups ?? []) {
         const keys = Object.keys(v.when);
-        expect(keys.length, `${e.id}: пустое when`).toBeGreaterThan(0);
         for (const k of keys) expect(WHEN_KEYS, `${e.id}: when.${k}`).toContain(k);
         expect(v.text.length, e.id).toBeGreaterThan(20);
         expect(v.text, e.id).not.toBe(e.setup);

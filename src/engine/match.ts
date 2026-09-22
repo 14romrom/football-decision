@@ -7,7 +7,7 @@ import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
 import { pickFeedLine, type FeedKind } from './feed';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL, voiceSeesNow } from './voices';
-import { mostSpecific, pickFlavorLine, scoreState, type FlavorRule } from './flavor';
+import { matchesSituation, pickFlavorLine, pickFresh, scoreState, type FlavorRule } from './flavor';
 import { pickOutcome, resultBadges } from './resolve';
 import type { Rng } from './rng';
 import type {
@@ -45,6 +45,9 @@ export type MatchSession = {
   finished: boolean;
   /** Реплики второго голоса, уже прочитанные в этом матче — flavor.ts не повторяет их, пока есть свежие. */
   flavorSeen: Set<string>;
+  /** Сетапи (вступи сцен), прочитані в цьому й останніх матчах: серед підхожих варіантів береться невиданий (21.09). */
+  setupSeen: Set<string>;
+  setupSeenNow: Set<string>;
   /** Строки ленты, прочитанные в этом и прошлых матчах (feed.ts) — свежие в приоритете. */
   feedSeen: Set<string>;
   /** Прочитанное только в этом матче — вторая ступень свежести (flavor.ts:pickFresh). */
@@ -188,6 +191,7 @@ export type Carryover = {
   /** Реплики второго голоса из последних матчей (telemetry/history.ts:recentFlavor) —
    *  считаются уже прочитанными, чтобы сезон не повторял одни и те же строки. */
   flavorSeen?: string[];
+  setupSeen?: string[];
   /** То же для строк ленты (telemetry/history.ts:recentFeed). */
   feedSeen?: string[];
   /** Сдвиг стартовых ресурсов от недели між матчами (career.ts:NextMatchPrep.start). */
@@ -283,6 +287,7 @@ export function createMatch(
     ...(carryover.tutorial ? { tutorial: carryover.tutorial } : {}),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
     feedSeen: new Set(carryover.feedSeen ?? []), feedSeenNow: new Set(), flavorSeenNow: new Set(),
+    setupSeen: new Set(carryover.setupSeen ?? []), setupSeenNow: new Set(),
     injuriesSeason: carryover.injuriesSeason,
   };
   state.log.push({
@@ -541,13 +546,20 @@ function pickReactive(session: MatchSession, rng: Rng): Episode | null {
   return withSetup(fillTrigger(chosen, mark), session, rng);
 }
 
-/** Вариант сетапа под ситуацию: самое конкретное подходящее правило из `setups`,
- *  при равной конкретности — случайное; без подходящего остаётся базовый `setup`. */
+/** Вариант сетапа под ситуацию. Було «найконкретніше правило»: у дощ завжди дощовий текст, і та сама сцена
+ *  вдруге читалась тим самим вступом, хоча три інші варіанти гравець ще не бачив (21.09: до 20-го туру повторів
+ *  тексту 21%). Тепер — як репліки й стрічка (pickFresh): серед усіх підхожих варіантів (плюс базовий) береться
+ *  непрочитаний, вага 3^ключів тримає конкретніший попереду, поки він свіжий; прочитані повертаються, коли
+ *  свіжих не лишилось. Пам’ять — session.setupSeen, між матчами через history.allSetups (уся кар’єра, не горизонт:
+ *  епізод повертається пізніше, ніж горизонт його забуває). Безумовні варіанти (`when: {}`) — у 28 найчастіших сцен
+ *  по два запасних вступи (22.09): без них сим на 20 турів давав повтор тексту 18% — у типовій ситуації підходив лише базовий. */
 function withSetup(episode: Episode, session: MatchSession, rng: Rng): Episode {
   if (!episode.setups?.length) return episode;
-  const top = mostSpecific(episode.setups, session.state, session.conditions);
-  if (top.length === 0) return episode;
-  return { ...episode, setup: rng.pick(top).text };
+  const fitting = episode.setups.filter((v) => matchesSituation(v.when, session.state, session.conditions));
+  const pool = [{ text: episode.setup, weight: 1 }, ...fitting.map((v) => ({ text: v.text, weight: 3 ** Object.keys(v.when).length }))];
+  const pick = pickFresh(pool, session.setupSeen, rng, session.setupSeenNow) ?? pool[0];
+  session.setupSeen.add(pick.text); session.setupSeenNow.add(pick.text);
+  return { ...episode, setup: pick.text };
 }
 
 /** Закрыт ли эпизод динамическим условием — флагом или счётом. Планировщик их не знает. */

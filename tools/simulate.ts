@@ -145,6 +145,8 @@ export type SeasonReport = {
 export function runSeason(seedBase: number, matches: number): { repeats: number[]; repeatsLast2: number[]; repeatsSetup: number[]; unique: number } {
   const history: string[][] = [];
   const setupsSeen = new Set<string>();
+  // Пам’ять вступів між матчами — як у грі (history.allSetups): уся кар’єра.
+  const setupsCarried: string[] = [];
   const repeats: number[] = [];
   const repeatsLast2: number[] = [];
   const repeatsSetup: number[] = [];
@@ -158,7 +160,7 @@ export function runSeason(seedBase: number, matches: number): { repeats: number[
     const seed = seedBase + k;
     const rng = makeRng(seed);
     const conditions = generateConditions(rng, OPPONENTS, { confidence: rng.int(-2, 2), fatigue: k % 4 });
-    const session = createMatch(`season-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, memory, FLAG_RULES);
+    const session = createMatch(`season-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, memory, FLAG_RULES, { setupSeen: [...setupsCarried] });
     let setupRepeats = 0;
     let slots = 0;
     for (;;) {
@@ -169,6 +171,7 @@ export function runSeason(seedBase: number, matches: number): { repeats: number[
       const key = next.episode.id + '|' + next.episode.setup.replace(/\d+-й/g, 'N-й');
       if (setupsSeen.has(key)) setupRepeats += 1;
       setupsSeen.add(key);
+      setupsCarried.push(next.episode.setup);
       const option = POLICIES.random(availableOptions(next.episode, session.state, session.player), (n) => rng.int(0, n - 1));
       const res = resolveOption(session.state, session.player, option, next.episode.phase, rng, session.conditions, session.flagRules);
       applyChoice(session, next.episode, option, res, rng);

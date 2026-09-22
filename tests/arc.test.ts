@@ -174,7 +174,8 @@ describe('решта пунктів арки', () => {
   });
 
   it('психолог: три сеанси за станом — страх, впізнають, «перед сном думаєш не про удар» ближче до кінця сезону', () => {
-    const ps = ACTIVITIES.filter((x) => x.id.startsWith('psych_'));
+    // psych_red (M18.0) — не про стан арки, а про червону картку минулого матчу; у сеанси за станом не входить.
+    const ps = ACTIVITIES.filter((x) => x.id.startsWith('psych_') && x.id !== 'psych_red');
     expect(ps.map((x) => x.id)).toEqual(['psych_fear', 'psych_noticed', 'psych_home']);
     const ctx = (arc: number, round: number): WeekContext => ({
       season: 1, round, level: 1, result: 'win', bigLoss: false, scored: true, hasScored: true, position: 5, clubs: 10,

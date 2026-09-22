@@ -385,8 +385,10 @@ function rollFillerGoal(session: MatchSession, rng: Rng): 'us' | 'them' | null {
   // Сильный соперник чаще забивает сам, слабый — чаще пропускает от партнёров.
   const edge = BALANCE.conditions.strongFillerGoal;
   const s = session.conditions.strength;
-  const pUs = clamp(m.fillerGoalUs + state.momentum * m.fillerGoalMomentum + (s === 'weak' ? edge : 0), 0.01, 0.2);
-  const pThem = clamp(m.fillerGoalThem - state.momentum * m.fillerGoalMomentum + (s === 'strong' ? edge : s === 'weak' ? -edge : 0), 0.01, 0.2);
+  // Меншість після червоної: команда дограє вдесятьох, і стрічка це знає.
+  const short = state.flags.includes('sent_off');
+  const pUs = clamp(m.fillerGoalUs + state.momentum * m.fillerGoalMomentum + (s === 'weak' ? edge : 0) + (short ? m.shorthandedUs : 0), 0.01, 0.2);
+  const pThem = clamp(m.fillerGoalThem - state.momentum * m.fillerGoalMomentum + (s === 'strong' ? edge : s === 'weak' ? -edge : 0) + (short ? m.shorthandedThem : 0), 0.01, 0.2);
   const r = rng.next();
   if (r < pUs) return 'us';
   if (r < pUs + pThem) return 'them';
@@ -716,6 +718,8 @@ function applyEffects(
     for (let f of apply.addFlags) {
       // Не больше maxPerSeason травм за сезон: дальше исход даёт мікротравму, а не пошкодження.
       if (f === 'injured' && (session.injuriesSeason ?? 0) >= BALANCE.injury.maxPerSeason) f = 'knock';
+      // Червона — не просто прапор: команда лишається вдесятьох, і кураж падає разово (M18.0).
+      if (f === 'sent_off' && !state.flags.includes(f)) state.momentum = clamp(state.momentum - 2, -3, 3);
       if (!state.flags.includes(f)) state.flags.push(f);
       if (mark) state.marks[f] = { minute, ...mark };   // след решения — для реактивных эпизодов
       countPeople(state, f);

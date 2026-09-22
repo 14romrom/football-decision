@@ -36,6 +36,8 @@ export type ActivityWhen = {
   flags?: string[];
   /** Зимова перерва (M14): дела, що є тільки взимку, — і навпаки. */
   winter?: boolean;
+  /** Тиждень після червоної картки (M18.0): вибачитися, поговорити, розібрати момент. */
+  sentOff?: boolean;
   notFlags?: string[];
   /** Оценка трибун в последнем матче не ниже — популярність. */
   fanRatingMin?: number;
@@ -116,6 +118,8 @@ export type WeekContext = {
   arc: number;
   /** Тиждень — зимова перерва (після WINTER_BREAK_AFTER туру); необов’язкове — тести й старі контексти без нього. */
   winter?: boolean;
+  /** Минулого матчу була червона (career.pendingSentOff) — тиждень це знає. */
+  sentOff?: boolean;
 };
 
 const LOW_TRUST = 40;
@@ -139,6 +143,7 @@ export function weekContext(season: Season, career: Career, position: number): W
     fanRating: last.fanRating,
     arc: arcStage(career),
     winter: season.round === WINTER_BREAK_AFTER,
+    sentOff: career.pendingSentOff,
   };
 }
 
@@ -155,6 +160,7 @@ export function matchesActivity(w: ActivityWhen | undefined, c: WeekContext): bo
   if (w.lowTrust !== undefined && w.lowTrust !== c.coachTrust < LOW_TRUST) return false;
   if (w.highTrust !== undefined && w.highTrust !== c.coachTrust >= HIGH_TRUST) return false;
   if (w.minLevel !== undefined && c.level < w.minLevel) return false;
+  if (w.sentOff !== undefined && w.sentOff !== c.sentOff) return false;
   if (w.minSeason !== undefined && c.season < w.minSeason) return false;
   if (w.maxSeason !== undefined && c.season > w.maxSeason) return false;
   if (w.minRound !== undefined && c.round < w.minRound) return false;

@@ -61,6 +61,10 @@ export type Career = {
   partnerBond?: number;
   /** Прогресс тренировок по атрибутам: BALANCE.week.trainToPoint тренировок = +1 очко навсегда. */
   training?: Partial<Record<Attribute, number>>;
+  /** Ріст від матчу (M18.4): скільки чистих ісходів зроблено кожним атрибутом за кар’єру.
+   *  Кожні BALANCE.growth.useToPoint дають +1 очко назавжди — лічильник не обнуляється,
+   *  щоб «ще два до пункту» можна було показати на картці. */
+  useCounts?: Partial<Record<Attribute, number>>;
   /** Травм за текущий сезон — не больше BALANCE.injury.maxPerSeason (match.ts понижает до knock). */
   injuriesSeason?: number;
   /** Сколько недель подряд голос предлагал дела, а игрок не брал (week.ts:neglect). На третьей
@@ -359,9 +363,34 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
 
 /** Обновление карьеры по итогам матча: опыт, уровень (без авто-траты очка — это отдельный
  *  экран выбора), доверие тренера, счётчик жёлтых/травм, профиль голосов. */
+/** Очки, які вже видані за використання атрибута: ціла частина від лічильника чистих. */
+const usePoints = (n: number) => Math.floor(n / BALANCE.growth.useToPoint);
+
+/** Ріст від матчу (M18.4): чисті ісходи цього матчу додаються до лічильників кар’єри, і кожен перехід
+ *  через поріг дає +1 очко назавжди. Повертає нові лічильники, очки і те, що саме виросло (для дошки). */
+export function growthFromMatch(career: Career, state: MatchState): {
+  useCounts: Partial<Record<Attribute, number>>; attrPoints: Partial<Record<Attribute, number>>; grew: { attr: Attribute; total: number }[];
+} {
+  const useCounts = { ...(career.useCounts ?? {}) };
+  const attrPoints = { ...career.attrPoints };
+  const grew: { attr: Attribute; total: number }[] = [];
+  for (const [a, n] of Object.entries(state.cleanBy ?? {}) as [Attribute, number][]) {
+    const was = useCounts[a] ?? 0;
+    const now = was + n;
+    useCounts[a] = now;
+    const gained = usePoints(now) - usePoints(was);
+    if (gained > 0) {
+      attrPoints[a] = (attrPoints[a] ?? 0) + gained;
+      grew.push({ attr: a, total: now });
+    }
+  }
+  return { useCounts, attrPoints, grew };
+}
+
 export function applyMatchToCareer(
   career: Career, state: MatchState, summary: MatchSummary, hadDominantVoice: boolean, opponentKey?: string,
 ): Career {
+  const growth = growthFromMatch(career, state);
   const xp = career.xp + xpForMatch(summary, hadDominantVoice);
   // Уровень не откатывается: после удвоения порогов (17.09) сохранённый уровень тестера может
   // быть выше, чем даёт таблица, — он остаётся, а следующий придёт по новой таблице.
@@ -370,6 +399,8 @@ export function applyMatchToCareer(
     ...career,
     xp,
     level,
+    useCounts: growth.useCounts,
+    attrPoints: growth.attrPoints,
     // Уровни выключены (BALANCE.growth.levels): опыт и уровень считаются, очков не дают.
     unspentPoints: (career.unspentPoints ?? 0) + (BALANCE.growth.levels ? level - career.level : 0),
     injuriesSeason: (career.injuriesSeason ?? 0) + (state.flags.includes('injured') ? 1 : 0),

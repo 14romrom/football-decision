@@ -11,7 +11,7 @@ import { CARRIED_FLAGS, effectivePlayer, type Career } from './career';
 import { pickMoments, type MatchSummary } from './match';
 import { dominantCareerVoice } from './week';
 import { voiceSees, VOICE_LABEL } from './voices';
-import type { Episode, MatchState, Player, TimelineEvent, VoiceKey } from './types';
+import { ATTRIBUTE_LABEL, type Attribute, type Episode, type MatchState, type Player, type TimelineEvent, type VoiceKey } from './types';
 
 export type BoardRole = 'best' | 'turn' | 'worst';
 export type BoardMoment = {
@@ -177,6 +177,12 @@ export function cardDelta(
     const was = voiceSees(who, pBefore); const now = voiceSees(who, pAfter);
     if (was !== now) voiceNotes.push(now ? `${VOICE_LABEL[who]} тепер бачить.` : `${VOICE_LABEL[who]} більше не бачить.`);
   }
+  // Ріст від матчу (M18.4): очко за використання — подія на дошці, а не тиха зміна цифри на картці.
+  for (const [a2, n] of Object.entries(after.attrPoints) as [Attribute, number][]) {
+    const was = (before.attrPoints as Partial<Record<Attribute, number>>)[a2] ?? 0;
+    if (n > was) voiceNotes.push(`${ATTRIBUTE_LABEL[a2]} — ${after.useCounts?.[a2] ?? 0} чистих за кар’єру. Тепер це твоє: +1 назавжди.`);
+  }
+
   const domBefore = dominantCareerVoice(before);
   const domAfter = dominantCareerVoice(after);
   if (domAfter && domAfter !== domBefore) voiceNotes.push(`${VOICE_LABEL[domAfter]} тепер говорить з картки.`);

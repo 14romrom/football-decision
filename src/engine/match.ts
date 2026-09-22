@@ -769,6 +769,11 @@ export function applyChoice(
 
   state.minute = minute;
   state.stamina = clamp(state.stamina - optionCost(option), 0, 100);
+  // Ріст від матчу (M18.4): чистий ісход зараховується атрибуту, яким його зробили.
+  if (res.tier === 'clean') {
+    state.cleanBy = { ...(state.cleanBy ?? {}) };
+    state.cleanBy[option.attribute] = (state.cleanBy[option.attribute] ?? 0) + 1;
+  }
   // Кураж витрачається на кидок, у який він щось дав (MOMENTUM_SPEND): крок до нуля з будь-якого боку.
   const cm = BALANCE.contextMod;
   const used = Math.max(cm.momentumMin, Math.min(cm.momentumMax, state.momentum));   // скільки кураж дав саме цьому кидку

@@ -112,6 +112,8 @@ export type VoiceTrace = {
 };
 
 export type MatchState = {
+  /** Чисті ісходи за атрибутом у цьому матчі (M18.4): з них росте картка — `career.useCounts`. */
+  cleanBy?: Partial<Record<Attribute, number>>;
   minute: number;
   scoreUs: number;
   scoreThem: number;

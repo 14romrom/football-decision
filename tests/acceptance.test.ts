@@ -16,7 +16,8 @@ describe('критерии приёмки, п. 13', () => {
     // вылетел бы из коридора. После расширения пула (21 новый эпизод, +2) хвост сдвинулся
     // с 80 до 83: новый контент — в основном короткие решения (средний максимум по эпизоду
     // 7.7 против 9.9 у исходных 27), и даже жадный бот иногда набирает матч из них.
-    const runs = seeds(200).map((s) => runMatch(s, 'max_cost'));
+    // Матчі, обірвані червоною (M18.0), у критерій не йдуть: ноги не кінчаються в того, кого вигнали на 30-й.
+    const runs = seeds(200).map((s) => runMatch(s, 'max_cost')).filter((r) => !r.sentOff);
     const minutes = runs.map((r) => r.emptyAtMinute);
     // «Все» — слишком хрупкое требование: pushGoal больше не тратит rng.pick() на гол
     // с уже названным в тексте автором (apply.scorer) — сдвигает случайную последовательность
@@ -91,6 +92,11 @@ describe('матч целиком', () => {
         const res = resolveOption(session.state, session.player, option, next.episode.phase, rng);
         applyChoice(session, next.episode, option, res, rng);
         minutes.push(next.minute);
+      }
+      // Червона картка (M18.0) закінчує матч для гравця: слотів менше, і це правило, а не збій.
+      if (session.state.flags.includes('sent_off')) {
+        expect(minutes.length, `seed ${seed}`).toBeGreaterThan(0);
+        continue;
       }
       // Цепочка (apply.followUp) добавляет решения в тот же слот: минута повторяется, id — нет.
       const slots = new Set(minutes).size;
@@ -183,7 +189,10 @@ describe('состав матча (после первого плейтеста)
   it('в каждом матче минимум три оборонительных эпизода', () => {
     const byId = new Map(EPISODES.map((e) => [e.id, e]));
     for (const seed of seeds(300, 21000)) {
-      const defense = play(seed).filter((id) => byId.get(id)!.phase === 'defense').length;
+      const ids = play(seed);
+      // Матч, обірваний червоною (M18.0), квоту оборони не зобов’язаний добрати.
+      if (ids.length < BALANCE.match.episodeMinutes.length) continue;
+      const defense = ids.filter((id) => byId.get(id)!.phase === 'defense').length;
       expect(defense, `seed ${seed}`).toBeGreaterThanOrEqual(BALANCE.match.minDefense);
     }
   });

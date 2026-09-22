@@ -194,6 +194,9 @@ export type Carryover = {
   setupSeen?: string[];
   /** То же для строк ленты (telemetry/history.ts:recentFeed). */
   feedSeen?: string[];
+  /** Канвові епізоди, які не можна лишати на вагу (M18.0): id ставиться в останній підхожий слот плану.
+   *  Так гарантуються «тебе міняють на Марена» і «агент на трибуні» — за прохождение тестера вони не випали. */
+  forceEpisodes?: string[];
   /** Сдвиг стартовых ресурсов от недели між матчами (career.ts:NextMatchPrep.start). */
   startDelta?: { stamina?: number; composure?: number; fanHype?: number; momentum?: number };
   /** Неделя сделала Его/Команду гучнішими: матч начинается с их серии (voices.ts:listenedTwice). */
@@ -297,6 +300,15 @@ export function createMatch(
     kind: 'kickoff',
     text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». ' + feedLine(session, 'kickoff', rng),
   });
+  // Канвові епізоди (M18.0): ставимо в останній слот, чия хвилина підходить під requires, — вони не мусять
+  // вигравати у ваги в планувальника. Якщо епізоду немає в пулі цієї ліги, просто пропускаємо.
+  for (const id of carryover.forceEpisodes ?? []) {
+    const ep = episodes.find((e) => e.id === id);
+    if (!ep || session.plan.includes(id)) continue;
+    const off = session.plan.length - fieldSchedule.length;   // перший слот — «розминайся» з лави, поля він не займає
+    const slot = fieldSchedule.map((m, i) => ({ m, i })).reverse().find(({ m }) => fitsMinute(ep, m));
+    if (slot) session.plan[slot.i + off] = id;
+  }
   if (carryover.fromBench) benchWarmup(session, rng);
   // Флаги про партнера з тижня (whenText) — теж привід; ті, що приїхали з минулого матчу, вже пораховані там.
   for (const f of carried) if (f.mark.whenText) countPeople(state, f.flag);
@@ -616,6 +628,9 @@ export function nextEpisode(
   session: MatchSession, rng: Rng,
 ): { episode: Episode; minute: number; events: TimelineEvent[] } | null {
   if (session.nextIndex >= session.schedule.length) return null;
+  // Вилучення (22.09, плейтест: «була червона, а персонаж лишився на полі»): рішень більше немає —
+  // finishMatch дограє стрічку до 90-ї без тебе, свисток знає, що ти дивився з тунелю (whistle: sentOff).
+  if (session.state.flags.includes('sent_off') && !session.pendingFollowUp) return null;
   const minute = session.schedule[session.nextIndex];
   // Звено цепочки: тот же слот, без ленты между решениями — сцена продолжается.
   if (session.pendingFollowUp) {

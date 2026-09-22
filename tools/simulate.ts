@@ -38,6 +38,8 @@ export type MatchRun = {
   tiers: Tier[];
   /** Минута, на которой стамина впервые упала до нуля (null — не упала). */
   emptyAtMinute: number | null;
+  /** Матч обірвано червоною карткою (M18.0): рішень менше, критерії по цілому матчу не рахуються. */
+  sentOff: boolean;
 };
 
 export type ConditionsMode = 'neutral' | 'random';
@@ -65,8 +67,9 @@ export function runMatch(seed: number, policy: PolicyName, mode: ConditionsMode 
     if (emptyAtMinute === null && session.state.stamina <= 0) emptyAtMinute = next.minute;
   }
 
+  const sentOff = session.state.flags.includes('sent_off');
   const { summary } = finishMatch(session, rng);
-  return { summary, tiers, emptyAtMinute };
+  return { summary, tiers, emptyAtMinute, sentOff };
 }
 
 // ——— агрегаты ——————————————————————————————————————————————————————

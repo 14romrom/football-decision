@@ -28,6 +28,8 @@ export type ActivityWhen = {
   highTrust?: boolean;
   minLevel?: number;
   minSeason?: number;
+  /** Справа лише до цього сезону включно (M18.0): «дивитися вищу лігу» не пропонується тому, хто вже в ній. */
+  maxSeason?: number;
   minRound?: number;
   injured?: boolean;
   /** Флаги, принесённые из матча (partner_annoyed, booked…). */
@@ -154,6 +156,7 @@ export function matchesActivity(w: ActivityWhen | undefined, c: WeekContext): bo
   if (w.highTrust !== undefined && w.highTrust !== c.coachTrust >= HIGH_TRUST) return false;
   if (w.minLevel !== undefined && c.level < w.minLevel) return false;
   if (w.minSeason !== undefined && c.season < w.minSeason) return false;
+  if (w.maxSeason !== undefined && c.season > w.maxSeason) return false;
   if (w.minRound !== undefined && c.round < w.minRound) return false;
   if (w.injured !== undefined && w.injured !== c.injured) return false;
   if (w.flags && !w.flags.every((f) => c.flags.includes(f))) return false;

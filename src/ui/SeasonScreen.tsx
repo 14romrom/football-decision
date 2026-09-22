@@ -127,11 +127,10 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
         </section>
       )}
 
-      <div className="actions">
-        {over
-          ? <button className="primary" onClick={onNewSeason}>{nextLabel}</button>
-          : <button className="primary" onClick={onNext}>Далі</button>}
-      </div>
+      {/* Кнопка прилипає до низу, як на решті екранів (22.09, плейтест: до «Далі» доводилось гортати всю рекламу). */}
+      {over
+        ? <button className="primary menu-primary" onClick={onNewSeason}>{nextLabel}</button>
+        : <button className="primary menu-primary" onClick={onNext}>Далі</button>}
     </div>
   );
 }

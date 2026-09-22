@@ -38,6 +38,8 @@ export type WhistleWhen = {
   top?: boolean;
   /** Вилучення (M18.0): кінцівку ти дивився не з поля. */
   sentOff?: boolean;
+  /** Тебе замінили по ходу (M18): кінцівку ти дивився з лави, і це вирішив тренер. */
+  subbedOff?: boolean;
 };
 export type WhistleRule = { kind: WhistleKind; when?: WhistleWhen; lines: string[] };
 
@@ -56,7 +58,7 @@ export function promiseState(state: MatchState, episodes: Episode[], selfName: s
   return state.flags.includes('week_promise') ? 'untouched' : null;
 }
 
-export function whistleContext(state: MatchState, summary: MatchSummary, cond: MatchConditions, promise: PromiseState | null, tiredBelow: number, first = false, arc?: number, top = false, sentOff = false): WhistleWhen {
+export function whistleContext(state: MatchState, summary: MatchSummary, cond: MatchConditions, promise: PromiseState | null, tiredBelow: number, first = false, arc?: number, top = false, sentOff = false, subbedOff = false): WhistleWhen {
   return {
     result: summary.scoreUs > summary.scoreThem ? 'win' : summary.scoreUs < summary.scoreThem ? 'loss' : 'draw',
     scored: summary.stats.goals + summary.stats.assists > 0,
@@ -70,6 +72,7 @@ export function whistleContext(state: MatchState, summary: MatchSummary, cond: M
     ...(promise ? { promise } : {}),
     ...(first ? { first } : {}),
     ...(sentOff ? { sentOff } : {}),
+    ...(subbedOff ? { subbedOff } : {}),
     ...(top ? { top } : {}),
     ...(arc ? { arc } : {}),
   };
@@ -90,7 +93,7 @@ export function pickWhistleLine(kind: WhistleKind, c: WhistleWhen, rng: Rng, see
   const fit = rules.filter((r) => r.kind === kind && matches(r.when, c));
   const firstOnly = c.first ? fit.filter((r) => r.when?.first) : [];
   // Вилучення так само витісняє решту: після червоної свисток не може говорити «ти дотягнув до кінця».
-  const offOnly = c.sentOff ? fit.filter((r) => r.when?.sentOff) : [];
+  const offOnly = c.sentOff ? fit.filter((r) => r.when?.sentOff) : c.subbedOff ? fit.filter((r) => r.when?.subbedOff) : [];
   for (const r of firstOnly.length ? firstOnly : offOnly.length ? offOnly : fit) {
     const weight = 3 ** Object.keys(r.when ?? {}).length;
     for (const text of r.lines) pool.push({ text, weight });

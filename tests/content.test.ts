@@ -182,7 +182,9 @@ describe('вариации сетапа и флаги (сезон)', () => {
       // M17: ставить App — другий матч із клубом Ларссона, агент на трибуні навесні S2.
       'sub_there_again', 'agent_in_stands',
       // M15: ставить відпустка (engine/vacation.ts) — літо без передсезонки.
-      'out_of_form'];
+      'out_of_form',
+      // M18: тебе замінили по ходу матчу (match.ts:subOffNow) — ісходи ep_subbed_off ставлять цей флаг.
+      'subbed_off'];
     // them_<trait> ставит движок по характеристикам соперника из roster.json (match.ts).
     const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
     const used = new Set<string>();

@@ -11,7 +11,7 @@ import { endingPending, finishEnding, partnerBonded, prologueVoice } from './eng
 import { HUNTER, hunterRound } from './engine/programme';
 /** Тур другого сезону (0-based, після зими), у якому агент сидить на трибуні (rx_top_agent_in_stands). */
 const AGENT_IN_STANDS_ROUND = 6;
-/** Тур другого сезону (0-based), у якому тренер міняє тебе на Марена (ep_top_subbed_for_maren). */
+/** Тур другого сезону (0-based), у якому тренер міняє тебе на Марена — канвовий показ ep_subbed_off. */
 const SUBBED_ROUND = 3;
 import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
@@ -192,7 +192,7 @@ function Game() {
       // Лист фінального свистка — з того ж rng і тієї ж пам’яті рядків, що репліки: сезон не повторює його.
       // Рядки свистка з іменами (M13: «{dm} б’є по плечу») — підставляємо під ростер матчу, як репліки.
       const whistle = fillNamesDeep(buildWhistle(
-        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0, session.state.arc, season.number >= 2, session.state.flags.includes('sent_off')),
+        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0, session.state.arc, season.number >= 2, session.state.flags.includes('sent_off'), session.state.flags.includes('subbed_off')),
         rng, session.flavorSeen,
       ), session.roster);
       // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
@@ -264,7 +264,7 @@ function Game() {
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon), setupSeen: allSetups(),
         // Канва не конкурує з вагою (M18.0): два епізоди вищої ліги ставимо в план примусово.
         forceEpisodes: seasonRef.current.number >= 2
-          ? [...(seasonRef.current.round === SUBBED_ROUND ? ['ep_top_subbed_for_maren'] : []),
+          ? [...(seasonRef.current.round === SUBBED_ROUND ? ['ep_subbed_off'] : []),
              ...(seasonRef.current.round === AGENT_IN_STANDS_ROUND ? ['rx_top_agent_in_stands'] : [])]
           : [],
         startDelta: penalty.startDelta,

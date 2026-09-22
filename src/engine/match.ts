@@ -614,7 +614,7 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
   // Менять не с чем — берём свежий эпизод вне плана. Играть «тягнути час» при 0:1
   // хуже, чем нарушить раскладку; квоту обороны при этом сохраняем.
   const fresh = episodes.filter((e) =>
-    !isReactive(e) && !e.followUpOnly && !blocked(e) && fitsMinute(e, session.schedule[i])
+    !isReactive(e) && !e.followUpOnly && e.weight > 0 && !blocked(e) && fitsMinute(e, session.schedule[i])
     && !session.plan.includes(e.id) && !session.usedEpisodeIds.includes(e.id)
     && (planned.phase !== 'defense' || e.phase === 'defense'));
   if (fresh.length > 0) {
@@ -630,9 +630,9 @@ export function nextEpisode(
   session: MatchSession, rng: Rng,
 ): { episode: Episode; minute: number; events: TimelineEvent[] } | null {
   if (session.nextIndex >= session.schedule.length) return null;
-  // Вилучення (22.09, плейтест: «була червона, а персонаж лишився на полі»): рішень більше немає —
-  // finishMatch дограє стрічку до 90-ї без тебе, свисток знає, що ти дивився з тунелю (whistle: sentOff).
-  if (session.state.flags.includes('sent_off') && !session.pendingFollowUp) return null;
+  // Вилучення і заміна (22.09): рішень більше немає — finishMatch дограє стрічку до 90-ї без тебе,
+  // свисток знає, звідки ти це дивився (whistle: sentOff / subbedOff).
+  if (!session.pendingFollowUp && (session.state.flags.includes('sent_off') || session.state.flags.includes('subbed_off'))) return null;
   const minute = session.schedule[session.nextIndex];
   // Звено цепочки: тот же слот, без ленты между решениями — сцена продолжается.
   if (session.pendingFollowUp) {
@@ -642,9 +642,24 @@ export function nextEpisode(
     return { episode: withSetup(filled, session, rng), minute, events: [] };
   }
   const events = advanceTo(session, minute, rng);
+  // Тренер знімає: довіра нижче порога, у матчі ні гола, ні асиста, друга половина, і ти не щойно з лави.
+  const sub = subOffNow(session);
+  if (sub) return { episode: withSetup(sub, session, rng), minute, events };
   const episode = pickEpisode(session, rng);
   if (!episode) return null;
   return { episode, minute, events };
+}
+
+/** Заміна по ходу матчу (M18): епізод «тебе міняють» замість планового слоту. Рішення там одне й не про м’яч,
+ *  а його ісход ставить `subbed_off` — далі nextEpisode віддає null, і стрічка дограє без тебе. */
+function subOffNow(session: MatchSession): Episode | null {
+  const b = BALANCE.bench;
+  const s = session.state;
+  if (session.fromBench || session.onBench || session.tutorial) return null;
+  if (s.flags.includes('subbed_off') || s.flags.includes('sent_off')) return null;
+  if (s.minute < b.subOffMinute || s.coachTrust >= b.subOffTrust) return null;
+  if (s.stats.goals + s.stats.assists > 0) return null;
+  return session.episodes.find((e) => e.id === b.subOffEpisode) ?? null;
 }
 
 /** Варианты, доступные сейчас: условные («по підказці») — только при флагах. */

@@ -35224,13 +35224,10 @@
     ]
   },
   {
-    "id": "ep_top_subbed_for_maren",
+    "id": "ep_subbed_off",
     "phase": "transition",
-    "weight": 1.0,
-    "requires": {
-      "league": "top",
-      "minMinute": 85
-    },
+    "weight": 0.0,
+    "requires": {},
     "family": "coach",
     "setup": "Табло. Твій номер — червоним, номер {sub.gen} — зеленим. {coach} не дивиться на тебе, дивиться на годинник. {sub} біля бровки вже без манішки, стрибає на місці. До тебе метрів сорок і три яруси, які дивляться, як ти підеш.",
     "setups": [
@@ -35251,6 +35248,12 @@
           "lowTrust": true
         },
         "text": "Табло: ти — червоним, {sub} — зеленим. Ти чекав цього з розминки. {coach} не дивиться; він давно не дивиться. {sub} на бровці без манішки, і сорок метрів до нього — найдовші сьогодні."
+      },
+      {
+        "when": {
+          "lowTrust": true
+        },
+        "text": "Табло. Твій номер — червоним. {coach} не дивиться на тебе й тоді, коли ти проходиш повз, — дивиться в поле, ніби там уже без тебе цікавіше. {sub} біжить на твоє місце, застібаючись на ходу."
       }
     ],
     "options": [
@@ -35279,7 +35282,10 @@
               "fanHype": 9,
               "coachTrust": -2,
               "composure": 2,
-              "momentum": 1
+              "momentum": 1,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "cost": {
@@ -35287,7 +35293,10 @@
             "recap": "і пішов повільно, суддя підганяв.",
             "apply": {
               "fanHype": 2,
-              "coachTrust": -3
+              "coachTrust": -3,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "fail": {
@@ -35295,7 +35304,10 @@
             "recap": "і йшов повільно під свист.",
             "apply": {
               "fanHype": -2,
-              "coachTrust": -3
+              "coachTrust": -3,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "badFail": {
@@ -35303,7 +35315,8 @@
             "recap": "і дістав жовту, йдучи на заміну.",
             "apply": {
               "addFlags": [
-                "booked"
+                "booked",
+                "subbed_off"
               ],
               "coachTrust": -6,
               "fanHype": -3
@@ -35335,7 +35348,10 @@
             "apply": {
               "coachTrust": 7,
               "fanHype": 3,
-              "composure": 2
+              "composure": 2,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "cost": {
@@ -35343,7 +35359,10 @@
             "recap": "і побіг на заміну без слів.",
             "apply": {
               "coachTrust": 3,
-              "composure": 1
+              "composure": 1,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "fail": {
@@ -35351,7 +35370,10 @@
             "recap": "і побіг на заміну, не пояснивши зону.",
             "apply": {
               "coachTrust": 0,
-              "composure": -1
+              "composure": -1,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "badFail": {
@@ -35360,7 +35382,10 @@
             "apply": {
               "fanHype": -4,
               "coachTrust": -2,
-              "composure": -2
+              "composure": -2,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           }
         }
@@ -35388,7 +35413,10 @@
             "recap": "і спитав тренера, чому міняє — і почув відповідь.",
             "apply": {
               "coachTrust": 6,
-              "composure": 4
+              "composure": 4,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "cost": {
@@ -35396,7 +35424,10 @@
             "recap": "і спитав тренера — «потім».",
             "apply": {
               "coachTrust": 1,
-              "composure": 1
+              "composure": 1,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "fail": {
@@ -35404,7 +35435,10 @@
             "recap": "і спитав тренера при всіх, він не відповів.",
             "apply": {
               "coachTrust": -3,
-              "fanHype": -1
+              "fanHype": -1,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "badFail": {
@@ -35412,7 +35446,10 @@
             "recap": "і посварився з тренером на заміні.",
             "apply": {
               "coachTrust": -7,
-              "fanHype": -2
+              "fanHype": -2,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           }
         }
@@ -35441,7 +35478,10 @@
             "apply": {
               "coachTrust": 4,
               "fanHype": 3,
-              "composure": 2
+              "composure": 2,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "cost": {
@@ -35449,7 +35489,10 @@
             "recap": "і сів на лаву після обіймів.",
             "apply": {
               "coachTrust": 2,
-              "composure": 1
+              "composure": 1,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "fail": {
@@ -35457,7 +35500,10 @@
             "recap": "і обійняв повітря на бровці.",
             "apply": {
               "fanHype": -1,
-              "composure": -1
+              "composure": -1,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           },
           "badFail": {
@@ -35465,7 +35511,10 @@
             "recap": "і затримав заміну обіймами.",
             "apply": {
               "coachTrust": -3,
-              "fanHype": -2
+              "fanHype": -2,
+              "addFlags": [
+                "subbed_off"
+              ]
             }
           }
         }

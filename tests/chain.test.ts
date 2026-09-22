@@ -186,17 +186,18 @@ describe('скрытое чтение воротаря', () => {
   });
 
   it('сетап удара говорит, что ты знаешь о воротаре, только когда прочитал', () => {
-    const { s, rng } = sessionAt(3, 'ep_wing_one_on_one', 'castelrio', ['keeper_read']);   // castelrio: падає рано
-    const first = nextEpisode(s, rng)!;
-    const cut = first.episode.options.find((o) => o.id === 'cut_inside')!;
-    applyChoice(s, first.episode, cut, resolveOption(s.state, s.player, cut, first.episode.phase, high(19)), rng);
-    const link = nextEpisode(s, rng)!;
-    expect(link.episode.setup).toContain('падає рано');
-    const { s: blind, rng: rng2 } = sessionAt(3, 'ep_wing_one_on_one', 'castelrio');
-    const f2 = nextEpisode(blind, rng2)!;
-    const cut2 = f2.episode.options.find((o) => o.id === 'cut_inside')!;
-    applyChoice(blind, f2.episode, cut2, resolveOption(blind.state, blind.player, cut2, f2.episode.phase, high(19)), rng2);
-    expect(nextEpisode(blind, rng2)!.episode.setup).not.toContain('падає рано');
+    // Вариант сетапа выбирается среди подходящих по свежести (M17.1), а не строго «самый конкретный»,
+    // поэтому «прочитал» проверяем по серии сидов: без флага строка не появляется никогда, с флагом — появляется.
+    const linkSetup = (seed: number, flags: string[]) => {
+      const { s, rng } = sessionAt(seed, 'ep_wing_one_on_one', 'castelrio', flags);   // castelrio: падає рано
+      const first = nextEpisode(s, rng)!;
+      const cut = first.episode.options.find((o) => o.id === 'cut_inside')!;
+      applyChoice(s, first.episode, cut, resolveOption(s.state, s.player, cut, first.episode.phase, high(19)), rng);
+      return nextEpisode(s, rng)!.episode.setup;
+    };
+    const seeds = Array.from({ length: 12 }, (_, i) => 3 + i);
+    expect(seeds.filter((i) => linkSetup(i, ['keeper_read']).includes('падає рано')).length).toBeGreaterThan(0);
+    expect(seeds.some((i) => linkSetup(i, []).includes('падає рано'))).toBe(false);
   });
 });
 

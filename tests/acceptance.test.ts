@@ -16,7 +16,7 @@ describe('критерии приёмки, п. 13', () => {
     // вылетел бы из коридора. После расширения пула (21 новый эпизод, +2) хвост сдвинулся
     // с 80 до 83: новый контент — в основном короткие решения (средний максимум по эпизоду
     // 7.7 против 9.9 у исходных 27), и даже жадный бот иногда набирает матч из них.
-    // Матчі, обірвані червоною (M18.0), у критерій не йдуть: ноги не кінчаються в того, кого вигнали на 30-й.
+    // Матчі, обірвані червоною або заміною, у критерій не йдуть: ноги не кінчаються в того, кого зняли на 30-й.
     const runs = seeds(200).map((s) => runMatch(s, 'max_cost')).filter((r) => !r.sentOff);
     const minutes = runs.map((r) => r.emptyAtMinute);
     // «Все» — слишком хрупкое требование: pushGoal больше не тратит rng.pick() на гол
@@ -93,8 +93,8 @@ describe('матч целиком', () => {
         applyChoice(session, next.episode, option, res, rng);
         minutes.push(next.minute);
       }
-      // Червона картка (M18.0) закінчує матч для гравця: слотів менше, і це правило, а не збій.
-      if (session.state.flags.includes('sent_off')) {
+      // Червона (M18.0) і заміна тренером (M18) закінчують матч для гравця: слотів менше, і це правило, а не збій.
+      if (session.state.flags.includes('sent_off') || session.state.flags.includes('subbed_off')) {
         expect(minutes.length, `seed ${seed}`).toBeGreaterThan(0);
         continue;
       }
@@ -120,7 +120,9 @@ describe('матч целиком', () => {
         const res = resolveOption(session.state, session.player, option, next.episode.phase, rng);
         applyChoice(session, next.episode, option, res, rng);
       }
+      const early = session.state.flags.includes('sent_off') || session.state.flags.includes('subbed_off');
       const { summary } = finishMatch(session, rng);
+      if (early) continue;   // матч обірвано червоною або заміною — пересказ коротший за правилом
       expect(summary.recap.length).toBeGreaterThanOrEqual(4);
       expect(summary.recap.length).toBeLessThanOrEqual(6);
       // последняя строка — счёт и две расходящиеся оценки, остальные — моменты с минутами
@@ -190,7 +192,7 @@ describe('состав матча (после первого плейтеста)
     const byId = new Map(EPISODES.map((e) => [e.id, e]));
     for (const seed of seeds(300, 21000)) {
       const ids = play(seed);
-      // Матч, обірваний червоною (M18.0), квоту оборони не зобов’язаний добрати.
+      // Матч, обірваний червоною або заміною, квоту оборони не зобов’язаний добрати.
       if (ids.length < BALANCE.match.episodeMinutes.length) continue;
       const defense = ids.filter((id) => byId.get(id)!.phase === 'defense').length;
       expect(defense, `seed ${seed}`).toBeGreaterThanOrEqual(BALANCE.match.minDefense);

@@ -63,7 +63,7 @@ describe('лента между эпизодами', () => {
   });
 
   it('условия ленты — только известные флаги (характеристики соперника и системные)', () => {
-    const known = new Set([...FLAG_RULES.map((f) => f.id), 'booked', 'injured', 'sent_off', 'tired', 'knock']);
+    const known = new Set([...FLAG_RULES.map((f) => f.id), 'booked', 'injured', 'sent_off', 'subbed_off', 'tired', 'knock']);
     for (const r of FEED) for (const f of r.when?.flags ?? []) expect(known.has(f), f).toBe(true);
   });
 

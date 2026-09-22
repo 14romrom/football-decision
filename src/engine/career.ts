@@ -65,6 +65,8 @@ export type Career = {
    *  Кожні BALANCE.growth.useToPoint дають +1 очко назавжди — лічильник не обнуляється,
    *  щоб «ще два до пункту» можна було показати на картці. */
   useCounts?: Partial<Record<Attribute, number>>;
+  /** Лист травня (M19.2) вже показано — щоб не повторювався при поверненні в меню. */
+  mayDone?: boolean;
   /** Травм за текущий сезон — не больше BALANCE.injury.maxPerSeason (match.ts понижает до knock). */
   injuriesSeason?: number;
   /** Сколько недель подряд голос предлагал дела, а игрок не брал (week.ts:neglect). На третьей

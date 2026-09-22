@@ -9,6 +9,7 @@ import { finishPrologue, prologuePending, type ProloguePick } from './engine/pro
 import { finishVacation, vacationPending } from './engine/vacation';
 import { endingPending, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
 import { HUNTER, hunterRound } from './engine/programme';
+import { maySpread } from './engine/may';
 /** Тур другого сезону (0-based, після зими), у якому агент сидить на трибуні (rx_top_agent_in_stands). */
 const AGENT_IN_STANDS_ROUND = 6;
 /** Тур другого сезону (0-based), у якому тренер міняє тебе на Марена — канвовий показ ep_subbed_off. */
@@ -91,6 +92,7 @@ type Stage =
   // Пролог (M12, 20.09): тиждень нуль у зошиті перед першим матчем нової кар’єри.
   | { k: 'prologue' }
   // Відпустка (M15): три розвороти між сезонами — дзвінок, травма перед медоглядом, база.
+  | { k: 'may'; leveledFrom: number; leveledTo: number }
   | { k: 'vacation'; leveledFrom: number; leveledTo: number }
   // Останній дзвінок (M16): три розвороти прощання й епілог — кінець першої частини.
   | { k: 'ending' }
@@ -481,6 +483,36 @@ function Game() {
     </>);
   }
 
+  if (stage.k === 'may') {
+    const spread = maySpread(season)!;
+    return (<>{film}
+      <PrologueScreen
+        key="may"
+        spreads={fillNamesDeep([spread], ROSTER)}
+        header="травень · після останнього туру"
+        lootTab="ЩО ЛИШИЛОСЯ"
+        lootButton="Далі"
+        lootEmpty="Травень минув, і нічого не лишилося."
+        labels={{ open: 'Вирішити', pick: 'Обери, як вчинити', confirm: 'Так і зробити' }}
+        arc={arcStage(career)}
+        onFinish={(picks: ProloguePick[]) => {
+          const before = careerRef.current;
+          const option = spread.options.find((o) => o.id === picks[0]?.option);
+          const { career: applied, loot } = applyWeek(before, option ? [{ activity: { id: `${spread.id}:${option.id}`, voice: option.voice, title: spread.title, line: '', effect: option.effect } }] : []);
+          const after = { ...applied, mayDone: true };
+          setCareerBoth(after);
+          return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
+        }}
+        onNext={() => {
+          if (vacationPending(careerRef.current, season.number, true)) { setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
+          const mode = agentPending(careerRef.current, season, seasonVerdict(season, career.coachTrust));
+          if (mode) { setStage({ k: 'agent', mode, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
+          newSeason(); setStage({ k: 'menu' });
+        }}
+      />
+    </>);
+  }
+
   if (stage.k === 'vacation') {
     const leveled = stage.leveledTo > stage.leveledFrom;
     return (<>{film}
@@ -666,6 +698,10 @@ function Game() {
         column={(() => { const c = playerColumn(ESPM_COLUMNS.column, arcStage(career), makeRng(season.seed + season.round * 7331 + 5), new Set(recentPosts())); return c ? fillNamesDeep(c, ROSTER) : undefined; })()}
         onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
         onNewSeason={() => {
+          // Лист травня (M19.2): що сталося після останнього матчу — за зайнятим місцем, до відпустки.
+          if (season.number === 1 && over && !careerRef.current.mayDone && maySpread(season)) {
+            setStage({ k: 'may', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return;
+          }
           // «Дзвонить агент» — не нагорода, а розвилка: спершу сцена, новий сезон — з неї.
           if (vacationPending(careerRef.current, season.number, over)) { setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           if (endingPending(careerRef.current, season.number, over)) { setStage({ k: 'ending' }); return; }

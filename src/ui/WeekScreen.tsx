@@ -68,7 +68,9 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
   const [picks, setPicks] = useState<WeekPick[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [trainAttr, setTrainAttr] = useState<Attribute | null>(null);
-  const sceneUsed = !!anchor || picks.some((p) => p.scene);   // одна сцена на тиждень: якір її і є
+  // Два листи в ключовий тиждень (M20, 22.09): якір на початку тижня не з’їдає вечірню сцену від справи —
+  // канва й «що сталося на тижні» більше не конкурують за один слот. Сцен від справ усе одно не більше однієї.
+  const sceneUsed = picks.some((p) => p.scene);
   const last = day >= days.length - 1;
 
   const finish = (all: WeekPick[]) => setPhase({ p: 'summary', result: onFinish(all, anchorPick) });

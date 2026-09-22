@@ -256,6 +256,12 @@ export function resolveOutcome(activity: Activity, player: Player, c: WeekContex
 export function offerWeekDays(pool: Activity[], c: WeekContext, career: Career, rng: Rng): Activity[][] {
   const log = career.weekLog ?? [];
   const thisSeason = log.filter((e) => e.season === c.season);
+  // Свіжість справ за всю кар’єру (M20, 22.09; тестер: «стікери повторюються в другому сезоні»): те саме
+  // правило, що для реплік, стрічки й сетапів — бачене поступається небаченому. Сезонні лічильники нижче
+  // лишаються: вони про «щойно пропонували», а це — про «вже читав колись».
+  const everChosen = new Set(log.flatMap((e) => e.chosen ?? []));
+  const everOffered = new Set(log.flatMap((e) => e.offered ?? []));
+
   const lastChosen = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.chosen ?? []).includes(id)).map((e) => e.round));
   const lastOffered = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.offered ?? []).includes(id)).map((e) => e.round));
   const locked = coachLocksCity(c);
@@ -283,7 +289,11 @@ export function offerWeekDays(pool: Activity[], c: WeekContext, career: Career, 
         if (dayVoices.has(voice) || (capped && (perVoice[voice] ?? 0) >= w.maxPerVoice)) continue;
         const fitting = pool.filter((a) => a.voice === voice && !used.has(a.id) && fits(a));
         if (fitting.length === 0) continue;
-        const weighted = fitting.map((a) => ({ a, weight: (a.weight ?? 1) * (c.round - lastOffered(a.id) < w.recentPenalty ? 0.25 : 1) }));
+        // Небачене за кар’єру йде першим: якщо такі є, бачені в цьому колі не конкурують.
+        const fresh = fitting.filter((a) => !everChosen.has(a.id));
+        const seenOnce = fitting.filter((a) => !everOffered.has(a.id));
+        const candidates = fresh.length ? fresh : seenOnce.length ? seenOnce : fitting;
+        const weighted = candidates.map((a) => ({ a, weight: (a.weight ?? 1) * (c.round - lastOffered(a.id) < w.recentPenalty ? 0.25 : 1) }));
         const total = weighted.reduce((s, x) => s + x.weight, 0);
         let r = rng.next() * total;
         let pick = weighted[weighted.length - 1].a;
@@ -496,7 +506,7 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
  *  пользователь: текст губиться серед стікерів, гравець його пропускає; тепер це листи, як у пролозі.
  *  Один якір на тиждень: спершу за туром, потім за станом — перехід, що збігся з зимою чи Ларссоном, чекає тиждень.
  *  Місто — лише перша ліга: у вищій воно вже «питає» (sc_city_asks). */
-export const ANCHOR_SCENES: { seasonNumber?: number; round?: number; scene: string; arcMin?: number; when?: (career: Career) => boolean }[] = [
+export const ANCHOR_SCENES: { seasonNumber?: number; round?: number; byRound?: number; scene: string; arcMin?: number; when?: (career: Career) => boolean }[] = [
   { seasonNumber: 1, round: 2, scene: 'sc_hunter' },
   { seasonNumber: 1, round: 5, scene: 'sc_winter_call_1' },
   { seasonNumber: 2, round: 5, scene: 'sc_winter_call_2' },
@@ -504,12 +514,23 @@ export const ANCHOR_SCENES: { seasonNumber?: number; round?: number; scene: stri
   { seasonNumber: 2, round: 7, scene: 'sc_city_asks', arcMin: 3 },
   { seasonNumber: 1, arcMin: 2, scene: 'sc_city_driver' },
   { seasonNumber: 1, arcMin: 3, scene: 'sc_city_kiosk' },
+  // Канва не конкурує з фоном (M20, 22.09): сцени, без яких історія не збирається, приходять якорем, якщо
+  // не випали самі від справи. `byRound` — «не пізніше ніж»: до цього туру ще є шанс зустріти їх звичайним шляхом.
+  { seasonNumber: 1, round: 1, scene: 'sc_first_week' },          // понеділок після дебюту: чия була шафка
+  { seasonNumber: 2, round: 1, scene: 'sc_top_first_week' },      // та сама база, інший календар
+  { seasonNumber: 2, round: 8, scene: 'sc_tibo_next_year' },      // Тібо питає, чи будеш наступного року
+  { seasonNumber: 1, byRound: 3, scene: 'sc_sub_talk' },          // дублер робить твій фінт краще
+  { seasonNumber: 1, byRound: 8, scene: 'sc_agent_call' },        // скаут буде на трибуні
+  { arcMin: 3, scene: 'sc_tibo_newbie' },                          // Реєс по цей бік жарту про мафію
+  { seasonNumber: 2, byRound: 3, scene: 'sc_fan_confront' },      // тридцять людей біля воріт бази
 ];
 export function anchorScene(seasonNumber: number, round: number, career: Career, scenes: WeekScene[]): WeekScene | undefined {
   const seen = seenScenes(career);
   const arc = arcStage(career);
   const fits = (x: (typeof ANCHOR_SCENES)[number]) =>
     (x.seasonNumber === undefined || x.seasonNumber === seasonNumber) && (x.round === undefined || x.round === round)
+    // «Не пізніше ніж» (M20): канвова сцена, що не випала сама, приходить якорем з цього туру.
+    && (x.byRound === undefined || round >= x.byRound)
     && (x.arcMin === undefined || arc >= x.arcMin) && (!x.when || x.when(career)) && !seen.has(x.scene);
   const a = ANCHOR_SCENES.find((x) => x.round !== undefined && fits(x)) ?? ANCHOR_SCENES.find((x) => x.round === undefined && fits(x));
   return a ? scenes.find((s) => s.id === a.scene) : undefined;

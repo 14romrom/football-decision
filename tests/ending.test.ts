@@ -91,10 +91,10 @@ describe('якорі, розклад, ринок (21.09)', () => {
     const { WEEK_SCENES } = await import('../src/content');
     const c = defaultCareer();
     expect(anchorScene(1, 7, c, WEEK_SCENES)?.id).toBe('sc_larsson_training');
-    expect(anchorScene(1, 6, c, WEEK_SCENES)).toBeUndefined();
-    expect(anchorScene(1, 7, { ...c, weekLog: [{ season: 1, round: 7, offered: [], chosen: [], scene: { id: 'sc_larsson_training', option: 'together' } }] }, WEEK_SCENES)).toBeUndefined();
+    expect(anchorScene(1, 6, c, WEEK_SCENES)?.id).not.toBe('sc_larsson_training');
+    expect(anchorScene(1, 7, { ...c, weekLog: [{ season: 1, round: 7, offered: [], chosen: [], scene: { id: 'sc_larsson_training', option: 'together' } }] }, WEEK_SCENES)?.id).not.toBe('sc_larsson_training');
     expect(anchorScene(2, 7, { ...c, matchesPlayed: 17, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_city_asks');
-    expect(anchorScene(2, 7, { ...c, matchesPlayed: 17, fanHype: 10 }, WEEK_SCENES)).toBeUndefined();   // стан 2 — ще не свій
+    expect(anchorScene(2, 7, { ...c, matchesPlayed: 17, fanHype: 10 }, WEEK_SCENES)?.id).not.toBe('sc_city_asks');   // стан 2 — ще не свій
   });
 
   // 22.09: рядок міста й зимова чутка стали листами (пользователь: aside губиться серед стікерів).
@@ -103,24 +103,24 @@ describe('якорі, розклад, ринок (21.09)', () => {
     const { WEEK_SCENES } = await import('../src/content');
     const c = defaultCareer();
     expect(anchorScene(1, 2, c, WEEK_SCENES)?.id).toBe('sc_hunter');
-    expect(anchorScene(2, 2, { ...c, matchesPlayed: 12 }, WEEK_SCENES)).toBeUndefined();
+    expect(anchorScene(2, 2, { ...c, matchesPlayed: 12 }, WEEK_SCENES)?.id).not.toBe('sc_hunter');
     expect(anchorScene(1, 5, { ...c, matchesPlayed: 5 }, WEEK_SCENES)?.id).toBe('sc_winter_call_1');
     expect(anchorScene(2, 5, { ...c, matchesPlayed: 15 }, WEEK_SCENES)?.id).toBe('sc_winter_call_2');
     const seenHunter = { ...c, weekLog: [{ season: 1, round: 2, offered: [], chosen: [], scene: { id: 'sc_hunter', option: 'ask_tibo' } }] };
-    expect(anchorScene(1, 2, seenHunter, WEEK_SCENES)).toBeUndefined();
+    expect(anchorScene(1, 2, seenHunter, WEEK_SCENES)?.id).not.toBe('sc_hunter');
   });
   it('якорі за станом: перший тиждень у стані 2 — водій, у стані 3 — кіоск; тур важливіший за стан; тільки перша ліга', async () => {
     const { anchorScene } = await import('../src/engine/week');
     const { WEEK_SCENES } = await import('../src/content');
     const c = defaultCareer();
-    expect(anchorScene(1, 1, c, WEEK_SCENES)).toBeUndefined();                                         // стан 1 — нічого
+    expect(anchorScene(1, 1, c, WEEK_SCENES)?.id).not.toBe('sc_city_driver');                          // стан 1 — міста ще нема
     expect(anchorScene(1, 3, { ...c, matchesPlayed: 3 }, WEEK_SCENES)?.id).toBe('sc_city_driver');     // стан 2
     const driverSeen = { ...c, matchesPlayed: 4, weekLog: [{ season: 1, round: 3, offered: [], chosen: [], scene: { id: 'sc_city_driver', option: 'nod' } }] };
-    expect(anchorScene(1, 4, driverSeen, WEEK_SCENES)).toBeUndefined();                                 // стан 2 і далі — раз
+    expect(anchorScene(1, 4, driverSeen, WEEK_SCENES)?.id).not.toBe('sc_city_driver');                   // стан 2 і далі — раз
     expect(anchorScene(1, 5, { ...driverSeen, matchesPlayed: 6, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_winter_call_1');   // зима важливіша за перехід
     expect(anchorScene(1, 6, { ...driverSeen, matchesPlayed: 6, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_city_kiosk');      // стан 3 — тижнем пізніше
     expect(anchorScene(1, 3, { ...c, matchesPlayed: 6, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_city_driver');              // стан 3 одразу — спершу водій
-    expect(anchorScene(2, 8, { ...c, matchesPlayed: 18, fanHype: 60 }, WEEK_SCENES)).toBeUndefined();  // вища ліга — без міста
+    expect(anchorScene(2, 8, { ...c, matchesPlayed: 18, fanHype: 60 }, WEEK_SCENES)?.id).not.toBe('sc_city_driver');  // вища ліга — без міста
   });
 
   it('pinFixture: матч із клубом — на заданий тур, коло ціле, відповідний матч теж переїхав', async () => {

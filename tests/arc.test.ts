@@ -6,7 +6,7 @@ import { BALANCE } from '../src/engine/balance';
 import { matchesSituation, pickFlavorLine } from '../src/engine/flavor';
 import { pickWhistleLine, WHISTLE_RULES } from '../src/engine/whistle';
 import { programmeNote } from '../src/engine/programme';
-import { matchesActivity, type WeekContext } from '../src/engine/week';
+import { ANCHOR_SCENES, matchesActivity, type WeekContext } from '../src/engine/week';
 import { ACTIVITIES, AGENT, ESPM_COLUMNS, FLAVOR, OPPONENTS, WEEK_SCENES, OPPONENT_KEYS } from '../src/content';
 import { matchesPost, POSTS, type PostContext } from '../src/engine/posts';
 import { playerColumn } from '../src/engine/espm';
@@ -91,13 +91,13 @@ describe('тексти за станом', () => {
       const fit = walks.filter((w) => matchesActivity(w.when, ctx(arc)));
       expect(fit, `arc ${arc}`).toHaveLength(1);
     }
-    const newbie = ACTIVITIES.find((x) => x.id === 'tibo_newbie')!;
-    expect(matchesActivity(newbie.when, ctx(2))).toBe(false);
-    expect(matchesActivity(newbie.when, ctx(3))).toBe(true);
-    expect(newbie.once).toBe(true);
-    const scene = WEEK_SCENES.find((s) => s.id === newbie.outcomes![0].followUp)!;
+    // Новенький (M20): справи більше немає — сцена приходить якорем від стану 3, і сама представляє його.
+    expect(ACTIVITIES.find((x) => x.id === 'tibo_newbie')).toBeUndefined();
+    const scene = WEEK_SCENES.find((s) => s.id === 'sc_tibo_newbie')!;
     expect(scene).toBeDefined();
+    expect(scene.setup).toMatch(/новенький|новачок/i);
     expect(scene.options.filter((o) => o.insight)).toHaveLength(1);
+    expect(ANCHOR_SCENES.find((a2) => a2.scene === 'sc_tibo_newbie')?.arcMin).toBe(3);
   });
 });
 

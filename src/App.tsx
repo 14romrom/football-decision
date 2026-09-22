@@ -8,7 +8,6 @@ import { PrologueScreen } from './ui/PrologueScreen';
 import { finishPrologue, prologuePending, type ProloguePick } from './engine/prologue';
 import { finishVacation, vacationPending } from './engine/vacation';
 import { endingPending, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
-import { cityLine } from './engine/city';
 import { HUNTER, hunterRound } from './engine/programme';
 import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
@@ -705,8 +704,6 @@ function Game() {
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
         locked={stage.locked}
         month={sn.round === WINTER_BREAK_AFTER ? 'зимова перерва · січень' : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
-        // Зимова перерва (M14): чутка від агента — одним рядком, без сцени й без назв.
-        aside={sn.round === WINTER_BREAK_AFTER ? (sn.number === 1 ? 'Агент дзвонив: «цікавляться». Хто — не сказав. Ти не спитав.' : 'Агент дзвонив: «ті самі, і вже не питають про ногу». Ти сказав «навесні».') : hunterRound(sn.number, sn.round) ? HUNTER.notebook : fillNames(cityLine(arcStage(careerRef.current), sn.number, sn.round), roster)}
         seen={seenScenes(careerRef.current)}
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[], anchor?: { id: string; option: string }) => {

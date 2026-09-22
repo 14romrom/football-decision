@@ -88,7 +88,8 @@ export type ActivityOutcome = {
 /** Сцена-продолжение: решение без кубика. Вариант с insight виден только тому, чей голос бачить
  *  (weekVoiceSees) — прокачка открывает варианты и между матчами. */
 export type WeekSceneOption = { id: string; label: string; text: string; effect: ActivityEffect; insight?: { who: VoiceKey; line: string } };
-export type WeekScene = { id: string; setup: string; options: WeekSceneOption[] };
+/** `tab` — ярлик на кромці листа-якоря («ТРАМВАЙ № 10»), `head` — заголовок дня в зошиті над ним (без нього — «Після матчу»). */
+export type WeekScene = { id: string; setup: string; options: WeekSceneOption[]; tab?: string; head?: string };
 
 export type Activity = {
   id: string;
@@ -478,16 +479,31 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
 }
 
 /** Сцени-якорі (21.09, після звірки з STORY.md: тури 6–9 обох сезонів не мали жодної гарантованої події). Замість
- *  випадкового «що далі» після справи — лист на початку тижня, один раз на кар’єру, у заданий тур:
- *  S1 після 7-го туру — штрафні з дублером (Ларссон), S2 після 7-го — місто питає так, ніби ти лишаєшся (стан ≥ 3). */
-export const ANCHOR_SCENES: { seasonNumber: number; round: number; scene: string; arcMin?: number; when?: (career: Career) => boolean }[] = [
+ *  випадкового «що далі» після справи — лист на початку тижня, один раз на кар’єру. Два види:
+ *  за туром (`round`): S1 після 2-го — Хантер, після 5-го — зимовий дзвінок агента (обидва сезони), S1 після 7-го —
+ *  штрафні з дублером (Ларссон), S2 після 7-го — місто питає так, ніби ти лишаєшся (стан ≥ 3);
+ *  за станом арки (`arcMin` без `round`, 22.09): перший тиждень у новому стані — водій десятого перестав дивитися
+ *  (стан 2), кіоск не дав решти (стан 3). До 22.09 ці моменти й зимова чутка йшли рядком `aside` під шапкою зошита —
+ *  пользователь: текст губиться серед стікерів, гравець його пропускає; тепер це листи, як у пролозі.
+ *  Один якір на тиждень: спершу за туром, потім за станом — перехід, що збігся з зимою чи Ларссоном, чекає тиждень.
+ *  Місто — лише перша ліга: у вищій воно вже «питає» (sc_city_asks). */
+export const ANCHOR_SCENES: { seasonNumber?: number; round?: number; scene: string; arcMin?: number; when?: (career: Career) => boolean }[] = [
+  { seasonNumber: 1, round: 2, scene: 'sc_hunter' },
+  { seasonNumber: 1, round: 5, scene: 'sc_winter_call_1' },
+  { seasonNumber: 2, round: 5, scene: 'sc_winter_call_2' },
   { seasonNumber: 1, round: 7, scene: 'sc_larsson_training', when: (c) => !c.subLeft },
   { seasonNumber: 2, round: 7, scene: 'sc_city_asks', arcMin: 3 },
+  { seasonNumber: 1, arcMin: 2, scene: 'sc_city_driver' },
+  { seasonNumber: 1, arcMin: 3, scene: 'sc_city_kiosk' },
 ];
 export function anchorScene(seasonNumber: number, round: number, career: Career, scenes: WeekScene[]): WeekScene | undefined {
   const seen = seenScenes(career);
-  const a = ANCHOR_SCENES.find((x) => x.seasonNumber === seasonNumber && x.round === round && (x.arcMin === undefined || arcStage(career) >= x.arcMin) && (!x.when || x.when(career)));
-  return a && !seen.has(a.scene) ? scenes.find((s) => s.id === a.scene) : undefined;
+  const arc = arcStage(career);
+  const fits = (x: (typeof ANCHOR_SCENES)[number]) =>
+    (x.seasonNumber === undefined || x.seasonNumber === seasonNumber) && (x.round === undefined || x.round === round)
+    && (x.arcMin === undefined || arc >= x.arcMin) && (!x.when || x.when(career)) && !seen.has(x.scene);
+  const a = ANCHOR_SCENES.find((x) => x.round !== undefined && fits(x)) ?? ANCHOR_SCENES.find((x) => x.round === undefined && fits(x));
+  return a ? scenes.find((s) => s.id === a.scene) : undefined;
 }
 
 /** Варианты сцены, которые видит игрок: с подсказкой — только когда голос бачить. */

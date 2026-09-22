@@ -58,15 +58,6 @@ describe('останній дзвінок', () => {
 });
 
 describe('канва в геймплеї (звірка зі STORY.md, 21.09)', () => {
-  it('рядок міста — на кожен стан, за сезон без повторів, з іменами ростера', async () => {
-    const { cityLine } = await import('../src/engine/city');
-    const { fillNames } = await import('../src/engine/names');
-    for (const arc of [1, 2, 3, 4]) {
-      const seen = new Set<string>();
-      for (let round = 1; round <= 5; round++) { const l = cityLine(arc, 1, round); expect(l.length).toBeGreaterThan(10); expect(fillNames(l, ROSTER)).not.toMatch(/\{[a-z]/); seen.add(l); }
-      expect(seen.size).toBe(5);
-    }
-  });
   it('слово тренера про трійку — друга ліга з 7-го туру; у трійці — інше; у вищій — мовчить', async () => {
     const { coachGoalWord } = await import('../src/engine/programme');
     expect(coachGoalWord(1, 6, 5, 10)).toBeNull();
@@ -104,6 +95,32 @@ describe('якорі, розклад, ринок (21.09)', () => {
     expect(anchorScene(1, 7, { ...c, weekLog: [{ season: 1, round: 7, offered: [], chosen: [], scene: { id: 'sc_larsson_training', option: 'together' } }] }, WEEK_SCENES)).toBeUndefined();
     expect(anchorScene(2, 7, { ...c, matchesPlayed: 17, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_city_asks');
     expect(anchorScene(2, 7, { ...c, matchesPlayed: 17, fanHype: 10 }, WEEK_SCENES)).toBeUndefined();   // стан 2 — ще не свій
+  });
+
+  // 22.09: рядок міста й зимова чутка стали листами (пользователь: aside губиться серед стікерів).
+  it('якорі за туром: Хантер після 2-го, зимовий дзвінок після 5-го в обох сезонах — і лише раз', async () => {
+    const { anchorScene } = await import('../src/engine/week');
+    const { WEEK_SCENES } = await import('../src/content');
+    const c = defaultCareer();
+    expect(anchorScene(1, 2, c, WEEK_SCENES)?.id).toBe('sc_hunter');
+    expect(anchorScene(2, 2, { ...c, matchesPlayed: 12 }, WEEK_SCENES)).toBeUndefined();
+    expect(anchorScene(1, 5, { ...c, matchesPlayed: 5 }, WEEK_SCENES)?.id).toBe('sc_winter_call_1');
+    expect(anchorScene(2, 5, { ...c, matchesPlayed: 15 }, WEEK_SCENES)?.id).toBe('sc_winter_call_2');
+    const seenHunter = { ...c, weekLog: [{ season: 1, round: 2, offered: [], chosen: [], scene: { id: 'sc_hunter', option: 'ask_tibo' } }] };
+    expect(anchorScene(1, 2, seenHunter, WEEK_SCENES)).toBeUndefined();
+  });
+  it('якорі за станом: перший тиждень у стані 2 — водій, у стані 3 — кіоск; тур важливіший за стан; тільки перша ліга', async () => {
+    const { anchorScene } = await import('../src/engine/week');
+    const { WEEK_SCENES } = await import('../src/content');
+    const c = defaultCareer();
+    expect(anchorScene(1, 1, c, WEEK_SCENES)).toBeUndefined();                                         // стан 1 — нічого
+    expect(anchorScene(1, 3, { ...c, matchesPlayed: 3 }, WEEK_SCENES)?.id).toBe('sc_city_driver');     // стан 2
+    const driverSeen = { ...c, matchesPlayed: 4, weekLog: [{ season: 1, round: 3, offered: [], chosen: [], scene: { id: 'sc_city_driver', option: 'nod' } }] };
+    expect(anchorScene(1, 4, driverSeen, WEEK_SCENES)).toBeUndefined();                                 // стан 2 і далі — раз
+    expect(anchorScene(1, 5, { ...driverSeen, matchesPlayed: 6, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_winter_call_1');   // зима важливіша за перехід
+    expect(anchorScene(1, 6, { ...driverSeen, matchesPlayed: 6, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_city_kiosk');      // стан 3 — тижнем пізніше
+    expect(anchorScene(1, 3, { ...c, matchesPlayed: 6, fanHype: 60 }, WEEK_SCENES)?.id).toBe('sc_city_driver');              // стан 3 одразу — спершу водій
+    expect(anchorScene(2, 8, { ...c, matchesPlayed: 18, fanHype: 60 }, WEEK_SCENES)).toBeUndefined();  // вища ліга — без міста
   });
 
   it('pinFixture: матч із клубом — на заданий тур, коло ціле, відповідний матч теж переїхав', async () => {

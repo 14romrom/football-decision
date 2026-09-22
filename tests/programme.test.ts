@@ -27,15 +27,13 @@ describe('програмка', () => {
     expect(traitNote(['unknown'], 'home')).toBeNull();
     for (const t of ['star', 'dribbler', 'playmaker', 'veteran', 'youngster', 'hard', 'rookie', 'target', 'captain', 'local']) expect(TRAIT_NOTE[t], t).toBeTruthy();
   });
-  // Пасхалка: Алекс Хантер, № 29, 32 роки — тільки 2-й тур першого сезону; програмка суха, зошит не пояснює, звідки обличчя.
+  // Пасхалка: Алекс Хантер, № 29, 32 роки — тільки 2-й тур першого сезону; програмка суха; лист того ж тижня — sc_hunter (week3.test).
   it('Алекс Хантер — один раз за кар’єру, № 29, без «!»', () => {
     expect(hunterRound(1, 2)).toBe(true);
     expect(hunterRound(1, 1)).toBe(false);
     expect(hunterRound(1, 3)).toBe(false);
     expect(hunterRound(2, 2)).toBe(false);
     expect(HUNTER.programme).toContain('№ 29 Алекс Хантер, 32 роки');
-    expect(HUNTER.notebook).toContain('Алекс Хантер');
-    expect(HUNTER.notebook).not.toMatch(/FIFA|Journey|\bEA\b/);
-    expect(HUNTER.programme + HUNTER.notebook).not.toMatch(/!|%/);
+    expect(HUNTER.programme).not.toMatch(/!|%|FIFA|Journey/);
   });
 });

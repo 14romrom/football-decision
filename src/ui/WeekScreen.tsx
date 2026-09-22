@@ -43,8 +43,6 @@ type Props = {
   seed?: number;
   /** Місяць у шапці зошита (M14, календар сезону). */
   month?: string;
-  /** Рядок оповідача під шапкою (зимова чутка від агента, M14). */
-  aside?: string;
   /** Сцена-якір (week.ts:anchorScene): лист на початку тижня, до першого дня. */
   anchor?: WeekScene;
   /** Закрити тиждень: здобутки й картка до/після — для листа здобутків. */
@@ -63,7 +61,7 @@ type Phase =
 
 const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
 
-export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, aside, anchor, onFinish, onNext }: Props) {
+export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, anchor, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
   const [phase, setPhase] = useState<Phase>(anchor ? { p: 'anchor', scene: anchor } : { p: 'pick' });
   const [anchorPick, setAnchorPick] = useState<{ id: string; option: string } | undefined>(undefined);
@@ -167,7 +165,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
     const visible = sceneOptionsFor(scene, sees);
     return (
       <div className="moment nb-sheet"><div className="scene">
-        <span className="minute-tab">ПІСЛЯ ТРЕНУВАННЯ</span>
+        <span className="minute-tab">{scene.tab ?? 'ПІСЛЯ ТРЕНУВАННЯ'}</span>
         <p className="setup">{scene.setup}</p>
         {chosen ? (
           <>
@@ -277,13 +275,12 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
         <Doodles seed={seed} />
-        {aside && <p className="nb-aside nb-intro">{aside}</p>}
         {locked && (
           <div className="nb-coach"><b>Тренер</b>Місто закрите. База, відео, психолог. Місто почекає.</div>
         )}
 
         {phase.p === 'anchor' && (
-          <section className="nb-day"><h3>Після матчу<small>сцена</small></h3>{anchorSheet(phase.scene, phase.chosen)}</section>
+          <section className="nb-day"><h3>{phase.scene.head ?? 'Після матчу'}<small>сцена</small></h3>{anchorSheet(phase.scene, phase.chosen)}</section>
         )}
         {days.map((offers, d) => {
           if (phase.p === 'anchor') return <section key={d} className="nb-day"><h3>{DAY[d] ?? `День ${d + 1}`}</h3><div className="nb-empty" /></section>;

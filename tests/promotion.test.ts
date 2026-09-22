@@ -1,6 +1,6 @@
 // Дві ліги (M14, 21.09): регламент підвищення, склад другого сезону, календар і заголовки ESPM.
 import { describe, it, expect } from 'vitest';
-import { createSeason, leagueOf, monthOfRound, promotion, PROMOTED_WITH, recordRound, SEASON_ROUNDS, standings, US, type OurResult } from '../src/engine/season';
+import { createSeason, isSeasonOver, leagueOf, monthOfRound, playoffPending, playoffWon, promotion, PROMOTED_WITH, recordPlayoff, recordRound, SEASON_ROUNDS, standings, US, withPlayoff, type OurResult } from '../src/engine/season';
 import { roundHeadline } from '../src/engine/espm';
 import { OPPONENTS, ROSTER, OPPONENT_KEYS } from '../src/content';
 import { makeRng } from '../src/engine/rng';
@@ -13,7 +13,13 @@ function play(results: [number, number][], number = 1) {
   for (const [a, b] of results) s = recordRound(s, ours(a, b), strengths, makeRng(s.seed + s.round * 7919));
   return s;
 }
-const full = (score: [number, number], number = 1) => play(Array.from({ length: SEASON_ROUNDS }, () => score), number);
+const full = (score: [number, number], number = 1) => withPlayoff(play(Array.from({ length: SEASON_ROUNDS }, () => score), number));
+/** Сезон, що закінчився третім місцем: круг із чергуванням перемог і поразок дає нас у зоні стикових. */
+const toPlayoff = () => {
+  let s = createSeason(7, OPPONENT_KEYS.second, 1);
+  for (let i = 0; i < SEASON_ROUNDS; i++) s = recordRound(s, ours(i % 2 ? 1 : 0, i % 2 ? 0 : 1), strengths, makeRng(s.seed + s.round * 7919));
+  return withPlayoff(s);
+};
 
 describe('дві ліги', () => {
   it('перший сезон — друга ліга, другий — вища; місяці серпень → травень', () => {
@@ -26,13 +32,13 @@ describe('дві ліги', () => {
     expect(monthOfRound(10)).toBe('травень');
   });
 
-  it('трійка — чесний вихід; нижче — скандал на стільки команд, яке місце; з нами йдуть максимум двоє', () => {
+  it('двійка — прямий вихід; нижче — за регламентом на стільки команд, яке місце; з нами йдуть максимум двоє', () => {
     const won = full([5, 0]);
     const p = promotion(won)!;
     expect(p.kind).toBe('earned');
     expect(p.position).toBe(1);
-    expect(p.count).toBe(3);
-    expect(p.with.length).toBe(PROMOTED_WITH);
+    expect(p.count).toBe(2);
+    expect(p.with.length).toBe(p.count - 1);   // нагору йдуть count, з них ми — один
     const lost = full([0, 5]);
     const q = promotion(lost)!;
     expect(q.kind).toBe('scandal');
@@ -40,6 +46,30 @@ describe('дві ліги', () => {
     expect(q.count).toBe(q.position);
     expect(q.with.length).toBe(PROMOTED_WITH);
     expect(q.with.every((k) => standings(lost).find((r) => r.club === k)!.position < q.position)).toBe(true);
+  });
+
+  it('стикові: третє чи четверте місце — 11-й матч, поле в третього; перемога веде нагору, поразка — за регламентом', () => {
+    const s = toPlayoff();
+    const pos = standings(s).find((r) => r.club === US)!.position;
+    expect([3, 4]).toContain(pos);
+    expect(playoffPending(s)).toBe(true);
+    expect(isSeasonOver(s)).toBe(false);                       // сезон не закінчено, поки стики не зіграні
+    expect(s.playoff!.venue).toBe(pos === 3 ? 'home' : 'away');
+    const win = recordPlayoff(s, ours(2, 1));
+    expect(playoffWon(win)).toBe(true);
+    expect(isSeasonOver(win)).toBe(true);
+    expect(promotion(win)!.kind).toBe('earned');
+    expect(promotion(win)!.count).toBe(3);                     // двоє прямо плюс ми
+    expect(win.player.matches).toBe(SEASON_ROUNDS + 1);        // 11-й матч рахується в статистику
+    const lose = recordPlayoff(s, ours(0, 1));
+    expect(playoffWon(lose)).toBe(false);
+    expect(promotion(lose)!.kind).toBe('scandal');             // дискваліфікація у вищій лізі — нагору все одно
+    expect(standings(lose).find((r) => r.club === US)!.position).toBe(pos);   // стики в таблицю не йдуть
+  });
+
+  it('перше-друге місце стиків не дає: ми не в парі', () => {
+    expect(full([5, 0]).playoff).toBeUndefined();
+    expect(playoffPending(full([5, 0]))).toBe(false);
   });
 
   it('незакінчений і другий сезон — без регламенту', () => {
@@ -57,13 +87,18 @@ describe('дві ліги', () => {
   });
 
   it('ESPM: у другій лізі заголовок каже про зону підвищення, підсумок — про регламент', () => {
-    expect(roundHeadline(play([[0, 3], [0, 2]]), club)).toMatch(/зон[иа] підвищення/);
-    expect(roundHeadline(play([[3, 0]]), club)).toContain('У зоні підвищення.');   // лідер після другого туру — без зони: перше місце і так каже все
+    expect(roundHeadline(play([[0, 3], [0, 2]]), club)).toMatch(/стиков|підвищення/);
+    expect(roundHeadline(play([[3, 0]]), club)).toContain('зоні прямого підвищення');
     expect(roundHeadline(play([[3, 0], [2, 0]], 2), club)).not.toMatch(/підвищення/);
     expect(roundHeadline(full([5, 0]), club)).toMatch(/чемпіон другої ліги і виходить у вищу/);
     const scandal = roundHeadline(full([0, 5]), club);
-    expect(scandal).toMatch(/^Скандал із договірними матчами/);
-    expect(scandal).toMatch(/у вищу лігу йдуть \d (команди|команд|команда)/);
+    expect(scandal).toMatch(/^У вищій лізі дискваліфікували клуб/);
+    expect(scandal).toMatch(/нагору цього року йдуть \d (команди|команд|команда)/);
+    // Стикові: спершу про пару, після матчу — про результат.
+    const po = toPlayoff();
+    expect(roundHeadline(po, club)).toMatch(/стикові проти/);
+    expect(roundHeadline(recordPlayoff(po, ours(2, 1)), club)).toMatch(/^Стикові: /);
+    expect(roundHeadline(recordPlayoff(po, ours(0, 2)), club)).toMatch(/^Стикові програні/);
     expect(roundHeadline(full([5, 0], 2), club)).toMatch(/^Сезон закінчено\. «Вальмара» — чемпіон\./);
   });
 });

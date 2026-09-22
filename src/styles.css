@@ -368,6 +368,10 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .espm-reco small { display: block; color: #999; font-size: 10px; margin-top: 2px; }
 .espm-classified { border-top: 1px dashed #ccc; padding: 8px 0; font-size: 12.5px; font-family: Georgia, serif; }
 .espm-classified:last-child { border-bottom: 1px dashed #ccc; }
+/* Зони регламенту в таблиці (M19): смужка зліва — пряме підвищення і стикові. */
+.espm-tbl tr.zone-up td:first-child { box-shadow: inset 3px 0 0 #1b7f3b; }
+.espm-tbl tr.zone-po td:first-child { box-shadow: inset 3px 0 0 #c8892a; }
+.espm-rule { margin: 6px 0 0; font-size: 11.5px; line-height: 1.4; color: #555; }
 .espm-cookie { position: sticky; bottom: 0; margin-top: 14px; background: #1f1f23; color: var(--ink); padding: 9px 12px; font-size: 12px; display: flex; gap: 10px; align-items: center; }
 .espm-cookie button { flex: none; background: #fff; color: #111; border: 0; border-radius: 0; padding: 4px 10px; font-size: 11.5px; font-weight: 600; font-family: var(--web-font); }
 .verdict { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; margin-top: 16px; }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { isSeasonOver, leagueOf, monthOfRound, SEASON_ROUNDS, standings, US, type Season, type Verdict } from '../engine/season';
+import { isSeasonOver, leagueOf, monthOfRound, SEASON_ROUNDS, standings, US, type Season, type Verdict, PLAYOFF_SPOTS, PROMOTION_SPOTS } from '../engine/season';
 import { plural } from './pluralize';
 import type { AdRule, AdSet, ClubName } from '../engine/espm';
 import { playerLine, roundHeadline, type EspmColumn } from '../engine/espm';
@@ -64,7 +64,8 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
               <thead><tr><th>#</th><th>Клуб</th><th>І</th><th>В</th><th>Н</th><th>П</th><th>М</th><th>О</th></tr></thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.club} className={r.club === US ? 'us' : ''}>
+                  // Зони регламенту (M19): двоє прямо нагору, третє-четверте — стикові. Тільки перший сезон.
+                  <tr key={r.club} className={[r.club === US ? 'us' : '', season.number === 1 && r.position <= PROMOTION_SPOTS ? 'zone-up' : '', season.number === 1 && PLAYOFF_SPOTS.includes(r.position) ? 'zone-po' : ''].filter(Boolean).join(' ')}>
                     <td>{r.position}</td><td>{club(r.club).nom}</td>
                     <td>{r.played}</td><td>{r.won}</td><td>{r.drawn}</td><td>{r.lost}</td>
                     <td>{r.goalsFor}:{r.goalsAgainst}</td><td>{r.points}</td>
@@ -72,6 +73,7 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
                 ))}
               </tbody>
             </table>
+            {season.number === 1 && <p className="espm-rule">Регламент: нагору виходять двоє; третє і четверте грають стикові — один матч, переможець третій.</p>}
           </div>
 
           {scorers.length > 0 && (

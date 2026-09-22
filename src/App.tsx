@@ -55,7 +55,7 @@ import { SettingsScreen } from './ui/SettingsScreen';
 import { AboutScreen } from './ui/AboutScreen';
 import { readSlotSummary } from './telemetry/saves';
 import {
-  createSeason, firstSeasonVerdict, secondSeasonVerdict, isSeasonOver, monthOfRound, ourFixture, ourRow, promotion, recordRound, seasonVerdict, SEASON_ROUNDS, US, WINTER_BREAK_AFTER, type Season,
+  createSeason, firstSeasonVerdict, secondSeasonVerdict, isSeasonOver, monthOfRound, ourFixture, ourRow, playoffPending, promotion, recordPlayoff, recordRound, seasonVerdict, SEASON_ROUNDS, US, WINTER_BREAK_AFTER, withPlayoff, type Season,
 } from './engine/season';
 import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
@@ -194,7 +194,7 @@ function Game() {
       // Лист фінального свистка — з того ж rng і тієї ж пам’яті рядків, що репліки: сезон не повторює його.
       // Рядки свистка з іменами (M13: «{dm} б’є по плечу») — підставляємо під ростер матчу, як репліки.
       const whistle = fillNamesDeep(buildWhistle(
-        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0, session.state.arc, season.number >= 2, session.state.flags.includes('sent_off'), session.state.flags.includes('subbed_off')),
+        whistleContext(session.state, summary, session.conditions, promiseState(session.state, session.episodes, session.roster.us.players.self.nom), BALANCE.tiredBelow, careerRef.current.matchesPlayed === 0, session.state.arc, season.number >= 2, session.state.flags.includes('sent_off'), session.state.flags.includes('subbed_off'), playoffPending(seasonRef.current)),
         rng, session.flavorSeen,
       ), session.roster);
       // Тонус, память эпизодов и прочитанные реплики — для следующего матча.
@@ -208,15 +208,19 @@ function Game() {
 
       // Тур закрыт: наш результат настоящий, чужие матчи — по силе клубов (свой rng по сиду сезона и туру).
       const sn = seasonRef.current;
-      if (!isSeasonOver(sn)) {
+      const ourResult = {
+        scoreUs: summary.scoreUs, scoreThem: summary.scoreThem,
+        goals: summary.stats.goals, assists: summary.stats.assists,
+        coachRating: summary.coachRating, fanRating: summary.fanRating,
+        scorers: summary.goals.filter((g) => g.side === 'us').map((g) => g.scorer),
+        moments: summary.moments ?? {},
+      };
+      if (playoffPending(sn)) {
+        // Стикові (M19): 11-й матч поза кругом — у таблицю не йде, але сезон закриває саме він.
+        setSeasonBoth(recordPlayoff(sn, ourResult));
+      } else if (!isSeasonOver(sn)) {
         const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
-        setSeasonBoth(recordRound(sn, {
-          scoreUs: summary.scoreUs, scoreThem: summary.scoreThem,
-          goals: summary.stats.goals, assists: summary.stats.assists,
-          coachRating: summary.coachRating, fanRating: summary.fanRating,
-          scorers: summary.goals.filter((g) => g.side === 'us').map((g) => g.scorer),
-          moments: summary.moments ?? {},
-        }, strengths, makeRng(sn.seed + sn.round * 7919)));
+        setSeasonBoth(withPlayoff(recordRound(sn, ourResult, strengths, makeRng(sn.seed + sn.round * 7919))));
       }
 
       pendingRef.current = {
@@ -589,6 +593,7 @@ function Game() {
           lastYear={metLastYear(career, session.conditions.opponentKey)}
           subThere={!!career.subLeft && career.subClub === session.conditions.opponentKey ? ROSTER.us.players.oldsub?.nom ?? null : null}
           guest={hunterRound(season.number, season.round + 1) ? HUNTER.programme : null}
+          playoff={playoffPending(season)}
           coachExtra={coachGoalWord(season.number, season.round + 1, season.round > 0 ? ourRow(season).position : 6, SEASON_ROUNDS)}
           usName={ROSTER.us.name.nom}
           note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}

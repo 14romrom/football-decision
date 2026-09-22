@@ -55,6 +55,8 @@ type Props = {
   /** Номер сезону — ліга й мета клубу в шапці (M14). */
   seasonNumber: number;
   promotion?: 'earned' | 'scandal';
+  /** Стикові (M19): один матч за вихід — шапка й мета кажуть про це, а не про тур. */
+  playoff?: boolean;
   /** Торішні рахунки з цим суперником (career.metLastYear) — «зустрічалися торік». */
   lastYear?: { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[] | null;
   /** Колишній дублер у складі суперника (M15) — його прізвище. */
@@ -72,7 +74,7 @@ type Props = {
 // единственный светлый экран в игре. Рубрики: Реєс (заметка прозой), Суперник (+ черта голосом клуба),
 // Стадіон, Погода, Форма, Слово тренера цитатой в рамке. Без иронии: програмку пишет пресс-служба.
 
-export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, seasonNumber, promotion, lastYear, subThere, guest, coachExtra, onStart, onBench }: Props) {
+export function BriefingScreen({ conditions, opponent, player, round, usName, note, trait, seasonNumber, promotion, lastYear, subThere, guest, playoff, coachExtra, onStart, onBench }: Props) {
   const lastYearLine = lastYear ? ` Торік у другій лізі: ${lastYear.map((r) => `${r.scoreUs}:${r.scoreThem} ${r.venue === 'home' ? 'вдома' : 'на виїзді'}`).join(', ')}.` : '';
   const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
   const venue = conditions.venue === 'home'
@@ -90,10 +92,12 @@ export function BriefingScreen({ conditions, opponent, player, round, usName, no
   return (
     <div className="briefing">
       <div className="prog">
-        <div className="prog-top"><span>Офіційна програмка · {leagueOf(seasonNumber).name}</span><span>Тур {round} · {monthOfRound(round)} · {day}</span></div>
+        <div className="prog-top"><span>Офіційна програмка · {leagueOf(seasonNumber).name}</span><span>{playoff ? 'Стикові · травень' : `Тур ${round} · ${monthOfRound(round)}`} · {day}</span></div>
         <h1 className="prog-title">{home} — {away}<small>Стадіон «{home}» · початок о {time}</small></h1>
         {/* Мета клубу декларується — на відміну від мети Реєса (M14): у другій лізі — вихід, у вищій — перший сезон нагорі. */}
-        <div className="prog-goal">{seasonNumber === 1 ? 'Мета сезону — вихід у вищу лігу' : promotion === 'scandal' ? 'У вищій лізі — за регламентом' : 'Перший сезон у вищій лізі'}</div>
+        <div className="prog-goal">{playoff ? 'Один матч за вихід: переможець іде нагору третім'
+          : seasonNumber === 1 ? 'Мета — двійка; третє і четверте грають стикові'
+          : promotion === 'scandal' ? 'У вищій лізі — за регламентом' : 'Перший сезон у вищій лізі'}</div>
         <div className="prog-rule" />
         <dl className="prog-list">
           <dt>Реєс</dt><dd><b>№10, атакувальний півзахисник.</b> {note}</dd>

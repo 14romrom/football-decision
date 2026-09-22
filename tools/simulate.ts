@@ -15,7 +15,7 @@ import { BALANCE, POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeMemory, EpisodeOption, Tier } from '../src/engine/types';
 import { ACTIVITIES, WEEK_SCENES } from '../src/content';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, type Career } from '../src/engine/career';
-import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, type Season, type Verdict } from '../src/engine/season';
+import { createSeason, isSeasonOver, ourFixture, ourRow, playoffPending, recordPlayoff, recordRound, seasonVerdict, withPlayoff, type Season, type Verdict } from '../src/engine/season';
 import { finishWeek, planWeek, sceneFor, sceneOptionsFor, seenScenes, weekContext, weekVoiceSees, type Activity, type WeekPick } from '../src/engine/week';
 import { dominantVoice } from '../src/engine/voices';
 
@@ -277,10 +277,13 @@ export function runCareer(seed: number, policy: WeekPolicy, matchPolicy: PolicyN
     }
     const { summary } = finishMatch(session, rng);
     career = applyMatchToCareer(career, session.state, summary, dominantVoice(session.state.voices) !== null, conditions.opponentKey);
-    season = recordRound(season, {
+    const ourRes = {
       scoreUs: summary.scoreUs, scoreThem: summary.scoreThem, goals: summary.stats.goals, assists: summary.stats.assists,
       coachRating: summary.coachRating, fanRating: summary.fanRating, scorers: [],
-    }, strengths, makeRng(seed + season.round * 7919));
+    };
+    // Стикові (M19) — 11-й матч поза кругом: у таблицю не йде, але сезон закриває.
+    season = playoffPending(season) ? recordPlayoff(season, ourRes)
+      : withPlayoff(recordRound(season, ourRes, strengths, makeRng(seed + season.round * 7919)));
     sumResult += (summary.coachRating + summary.fanRating) / 2; sumCoach += summary.coachRating; sumFan += summary.fanRating; n += 1;
     if (isSeasonOver(season)) break;
     const ctx = weekContext(season, career, ourRow(season).position)!;

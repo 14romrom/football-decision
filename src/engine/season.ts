@@ -32,6 +32,9 @@ export type Season = {
   teamScorers: Record<string, number>;
   /** Наши матчи по турам как есть — для тижня між матчами (week.ts): результат, голи, оцінки. */
   rounds?: OurResult[];
+  /** Стикові (M19, рішення користувача 22.09: двоє нагору, третє — стики): після 10-го туру третє місце
+   *  грає з четвертим один матч. Ставиться, коли круг дограно і ми в парі; `result` — наш рахунок. */
+  playoff?: { opponent: string; venue: 'home' | 'away'; result?: { scoreUs: number; scoreThem: number } };
 };
 
 export type TableRow = {
@@ -84,7 +87,9 @@ export const LEAGUES: Record<number, League> = {
   2: { name: 'Вища ліга', nameGen: 'вищої ліги', short: 'вища' },
 };
 export const leagueOf = (seasonNumber: number): League => LEAGUES[Math.min(seasonNumber, 2)];
-export const PROMOTION_SPOTS = 3;
+/** Прямо нагору — двоє; третє місце грає стикові з четвертим, переможець іде третім (M19). */
+export const PROMOTION_SPOTS = 2;
+export const PLAYOFF_SPOTS = [3, 4];
 export const PROMOTED_WITH = 2;
 /** Місяць туру (1-based): серпень → травень із зимовою перервою після 5-го. */
 export const MONTHS = ['серпень', 'вересень', 'жовтень', 'листопад', 'грудень', 'лютий', 'березень', 'квітень', 'квітень', 'травень'];
@@ -106,8 +111,11 @@ export function promotion(season: Season): Promotion | null {
   if (season.number !== 1 || season.round < SEASON_ROUNDS) return null;
   const rows = standings(season);
   const us = rows.find((r) => r.club === US)!;
-  const kind = us.position <= PROMOTION_SPOTS ? 'earned' : 'scandal';
-  const count = kind === 'earned' ? PROMOTION_SPOTS : us.position;
+  // Двоє прямо; третє місце — через стикові; програш у стиках і місця нижче — за регламентом
+  // (у вищій лізі дискваліфікували клуб, нагору беруть ще одну команду).
+  const won = playoffWon(season);
+  const kind = us.position <= PROMOTION_SPOTS || won === true ? 'earned' : 'scandal';
+  const count = kind === 'earned' ? PROMOTION_SPOTS + (won === true ? 1 : 0) : us.position;
   const others = rows.filter((r) => r.club !== US && r.position <= count).slice(0, PROMOTED_WITH).map((r) => r.club);
   return { kind, position: us.position, count, with: others };
 }
@@ -130,11 +138,51 @@ export function createSeason(seed: number, opponentKeys: string[], number = 1, k
 }
 
 export function isSeasonOver(season: Season): boolean {
-  return season.round >= SEASON_ROUNDS;
+  if (season.round < SEASON_ROUNDS) return false;
+  // Стикові дограються як 11-й матч: сезон не закінчено, поки пара є, а результату немає.
+  return !(season.playoff && !season.playoff.result);
+}
+
+/** Чи чекають на нас стикові: круг дограно, ми третій або четвертий, першого сезону. */
+export function playoffPending(season: Season): boolean {
+  return !!season.playoff && !season.playoff.result;
+}
+
+/** Пара стикових після останнього туру: третій проти четвертого, поле — у третього (M19).
+ *  Повертає сезон зі стиками, якщо ми в парі; інакше сезон як є — стики чужих клубів гра не показує. */
+export function withPlayoff(season: Season): Season {
+  if (season.number !== 1 || season.round < SEASON_ROUNDS || season.playoff) return season;
+  const rows = standings(season);
+  const us = rows.find((r) => r.club === US)!;
+  if (!PLAYOFF_SPOTS.includes(us.position)) return season;
+  const other = rows.find((r) => r.club !== US && PLAYOFF_SPOTS.includes(r.position))!;
+  return { ...season, playoff: { opponent: other.club, venue: us.position === PLAYOFF_SPOTS[0] ? 'home' : 'away' } };
+}
+
+/** Закрити стикові нашим рахунком. */
+export function recordPlayoff(season: Season, ours: OurResult): Season {
+  const p = season.player;
+  return {
+    ...season,
+    playoff: { ...season.playoff!, result: { scoreUs: ours.scoreUs, scoreThem: ours.scoreThem } },
+    player: {
+      matches: p.matches + 1, goals: p.goals + ours.goals, assists: p.assists + ours.assists,
+      coachSum: p.coachSum + ours.coachRating, fanSum: p.fanSum + ours.fanRating,
+    },
+    rounds: [...(season.rounds ?? []), ours],
+  };
+}
+
+/** Виграли стикові? null — стиків не було. */
+export function playoffWon(season: Season): boolean | null {
+  const r = season.playoff?.result;
+  if (!r) return null;
+  return r.scoreUs > r.scoreThem;
 }
 
 /** Наш матч текущего тура: с кем и где. */
 export function ourFixture(season: Season): { opponentKey: string; venue: 'home' | 'away'; round: number } | null {
+  if (playoffPending(season)) return { opponentKey: season.playoff!.opponent, venue: season.playoff!.venue, round: SEASON_ROUNDS };
   if (isSeasonOver(season)) return null;
   const f = season.fixtures.find((x) => x.round === season.round && (x.home === US || x.away === US))!;
   return { opponentKey: f.home === US ? f.away : f.home, venue: f.home === US ? 'home' : 'away', round: season.round };
@@ -253,7 +301,10 @@ export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict 
   const actions = p.goals + p.assists;
   const stats = `${p.goals} голів і ${p.assists} передач`;
   const promo = promotion(season);
-  const how = promo?.kind === 'scandal' ? 'Вихід у вищу лігу — хай і за регламентом —' : 'Вихід у вищу лігу';
+  const won = playoffWon(season);
+  // Три гілки регламенту (M19): двійка — прямо, стики виграли — через них, решта — «за регламентом».
+  const how = promo?.kind === 'scandal' ? 'Вихід у вищу лігу — хай і за регламентом —'
+    : won === true ? 'Вихід через стикові' : 'Вихід у вищу лігу';
   let text: string;
   if (row.position <= k.transferPosition && coachTrust >= k.transferTrust) {
     text = `${row.position}-е місце, ${stats}. ${how} помітили не тільки в місті: клуб із вищої ліги хоче тебе вже влітку. Медогляд у липні. Тренер не радий — але це найкраща з його проблем.`;

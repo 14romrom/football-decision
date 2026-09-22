@@ -58,13 +58,13 @@ describe('останній дзвінок', () => {
 });
 
 describe('канва в геймплеї (звірка зі STORY.md, 21.09)', () => {
-  it('слово тренера про трійку — друга ліга з 7-го туру; у трійці — інше; у вищій — мовчить', async () => {
+  it('слово тренера про мету — друга ліга з 7-го туру; у двійці, у стиках і нижче — різне; у вищій мовчить', async () => {
     const { coachGoalWord } = await import('../src/engine/programme');
     expect(coachGoalWord(1, 6, 5, 10)).toBeNull();
     expect(coachGoalWord(2, 8, 5, 10)).toBeNull();
-    expect(coachGoalWord(1, 7, 5, 10)).toMatch(/Трійка.*завдання/);
+    expect(coachGoalWord(1, 7, 5, 10)).toMatch(/одне місце/);
     expect(coachGoalWord(1, 10, 5, 10)).toMatch(/Один матч/);
-    expect(coachGoalWord(1, 8, 2, 10)).toMatch(/Ми в трійці/);
+    expect(coachGoalWord(1, 8, 2, 10)).toMatch(/Ми в двійці/);
   });
   it('свисток знає вищу лігу; фінал: рими в листі третього розвороту, холодний варіант без квитків', async () => {
     const { pickWhistleLine } = await import('../src/engine/whistle');

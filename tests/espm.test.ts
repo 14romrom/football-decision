@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { adContext, AD_SLOTS, pickAds, playerLine, roundHeadline } from '../src/engine/espm';
-import { createSeason, recordRound, SEASON_ROUNDS, US, type OurResult } from '../src/engine/season';
+import { createSeason, recordRound, SEASON_ROUNDS, US, type OurResult, withPlayoff } from '../src/engine/season';
 import { ADS, OPPONENTS, ROSTER, OPPONENT_KEYS } from '../src/content';
 import { makeRng } from '../src/engine/rng';
 
@@ -53,9 +53,9 @@ describe('ESPM: заголовок тура', () => {
     expect(h).toMatch(/відстає на \d+ (очко|очки|очок)|поруч, за різницею м’ячів/);
   });
 
-  it('конец сезона — «Сезон закінчено» або регламент другої ліги (tests/promotion.test.ts)', () => {
+  it('конец сезона — «Сезон закінчено», регламент або стикові (tests/promotion.test.ts)', () => {
     const s = play(Array.from({ length: SEASON_ROUNDS }, () => [1, 1] as [number, number]));
-    expect(roundHeadline(s, club)).toMatch(/^Сезон закінчено\.|^Скандал із договірними матчами/);
+    expect(roundHeadline(withPlayoff(s), club)).toMatch(/^Сезон закінчено\.|^У вищій лізі дискваліфікували клуб|^Круг дограно\./);
   });
 });
 

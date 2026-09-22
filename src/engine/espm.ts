@@ -10,7 +10,7 @@
 
 import { pickFresh } from './flavor';
 import type { Rng } from './rng';
-import { promotion, PROMOTION_SPOTS, standings, SEASON_ROUNDS, US, type OurResult, type Season } from './season';
+import { PLAYOFF_SPOTS, playoffPending, playoffWon, promotion, PROMOTION_SPOTS, standings, SEASON_ROUNDS, US, type OurResult, type Season } from './season';
 import type { MatchResult } from './conditions';
 
 export type ClubName = { nom: string; gen: string };
@@ -50,6 +50,22 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
   const leaderName = club(leader.club).nom;
 
   if (season.round >= SEASON_ROUNDS) {
+    // Стикові (M19): поки пара є, а результату немає — заголовок про них, а не про підсумок сезону.
+    if (playoffPending(season)) {
+      const rival = club(season.playoff!.opponent);
+      return `Круг дограно. «${usName}» — ${AT[us.position]} місце і стикові проти «${rival.gen}»: один матч, переможець іде нагору третім.`;
+    }
+    const won = playoffWon(season);
+    if (won === true) {
+      const rival = club(season.playoff!.opponent);
+      const r = season.playoff!.result!;
+      return `Стикові: «${usName}» — «${rival.nom}» ${r.scoreUs}:${r.scoreThem}. Третє місце у вищій лізі — наше.`;
+    }
+    if (won === false) {
+      const rival = club(season.playoff!.opponent);
+      const r = season.playoff!.result!;
+      return `Стикові програні: «${usName}» — «${rival.nom}» ${r.scoreUs}:${r.scoreThem}. Сезон закінчено ${AT[us.position]} місцем.`;
+    }
     // Перший сезон — про регламент, не про чемпіона: клуб цілий рік кричав про вихід (M14).
     const promo = promotion(season);
     if (promo?.kind === 'earned') {
@@ -58,7 +74,8 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
         : `Сезон закінчено. «${usName}» — ${AT[promo.position]} місце і вихід у вищу лігу.`;
     }
     if (promo?.kind === 'scandal') {
-      return `Скандал із договірними матчами: цього року у вищу лігу йдуть ${promo.count} ${plural(promo.count, 'команда', 'команди', 'команд')}. «${usName}» — ${AT[promo.position]} місце — серед них.`;
+      // M19: місце звільняє дискваліфікація у вищій лізі — так програш у стиках усе одно веде нагору.
+      return `У вищій лізі дискваліфікували клуб: нагору цього року йдуть ${promo.count} ${plural(promo.count, 'команда', 'команди', 'команд')}. «${usName}» — ${AT[promo.position]} місце — серед них.`;
     }
     return leader.club === US
       ? `Сезон закінчено. «${usName}» — чемпіон.`
@@ -66,10 +83,15 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
   }
   // Друга ліга: після рахунку — де ми відносно зони підвищення (мета клубу, M14).
   const zone = season.number === 1 ? (() => {
-    if (us.position <= PROMOTION_SPOTS) return ` У зоні підвищення.`;
-    const third = rows[PROMOTION_SPOTS - 1];
-    const gap = third.points - us.points;
-    return gap > 0 ? ` До зони підвищення — ${gap} ${plural(gap, 'очко', 'очки', 'очок')}.` : ` Зона підвищення — поруч, за різницею м’ячів.`;
+    if (us.position <= PROMOTION_SPOTS) return ` У зоні прямого підвищення: нагору йдуть двоє.`;
+    if (PLAYOFF_SPOTS.includes(us.position)) {
+      const second = rows[PROMOTION_SPOTS - 1];
+      const gap = second.points - us.points;
+      return ` У зоні стикових. До прямого підвищення — ${gap} ${plural(gap, 'очко', 'очки', 'очок')}.`;
+    }
+    const last = rows[PLAYOFF_SPOTS[PLAYOFF_SPOTS.length - 1] - 1];
+    const gap = last.points - us.points;
+    return gap > 0 ? ` До стикових — ${gap} ${plural(gap, 'очко', 'очки', 'очок')}.` : ` Стикові — поруч, за різницею м’ячів.`;
   })() : '';
   if (season.round === 1) {
     const how = res === 'W' ? 'з перемоги' : res === 'L' ? 'з поразки' : 'з нічиєї';

@@ -711,14 +711,15 @@ html.reduce-motion .doodle svg { filter: none; }
 .scene { position: relative; padding: 0 14px; }
 .minute-tab { position: absolute; top: -1px; left: 12px; z-index: 2; font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.08em; font-size: 13px; color: var(--ink); background: #16161a; border: 1px solid #4a463c; border-top: 0; border-radius: 0 0 3px 3px; padding: 2px 9px; }
 .minute-tab .link-mark { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0; text-transform: none; color: var(--muted); font-style: normal; }
-.setup { margin: 0; padding: 30px 0 14px; font-size: 16.5px; line-height: 1.5; color: #f0ebe0; position: relative; }
+.setup { margin: 0; padding: 28px 0 10px; font-size: 16.5px; line-height: 1.5; color: #f0ebe0; position: relative; }
 /* Голоса без коробки и курсивом (19.09, «Лист моменту: де кнопки»): обведённый блок с фоном читался как
    «тут интерактив», а наказовий спосіб реплик («Прийми», «Кинь стійку») — как варианты. */
 .voices { position: relative; margin: 0 -14px; padding: 4px 14px 2px; }
-.voices .say { display: grid; grid-template-columns: 6rem 1fr; gap: 10px; padding-left: 0; text-indent: 0; font-size: 14.5px; margin-bottom: 8px; font-style: italic; color: #b3ae9f; }
+/* Щільніше відступами, не контентом (22.09): колонка 5.25rem — репліки рідше переносяться на третій рядок. */
+.voices .say { display: grid; grid-template-columns: 5.25rem 1fr; gap: 8px; padding-left: 0; text-indent: 0; font-size: 14.5px; margin-bottom: 4px; font-style: italic; color: #b3ae9f; }
 .voices .say b { text-align: right; padding-top: 2px; padding-right: 10px; font-style: normal; }
 /* «Твій хід» — единственное место на листе, где сказано, что надо решать. */
-.hand { display: flex; align-items: center; gap: 10px; margin: 6px -14px 0; padding: 6px 14px 4px; }
+.hand { display: flex; align-items: center; gap: 10px; margin: 2px -14px 0; padding: 4px 14px 2px; }
 .hand::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
 .hand span { font-family: var(--font-caps); font-weight: 500; font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream); }
 .say { margin: 0 0 9px; padding-left: 16px; text-indent: -16px; font-size: 15px; line-height: 1.5; color: var(--ink); }
@@ -745,8 +746,9 @@ html.reduce-motion .doodle svg { filter: none; }
   display: flex; width: 100%; text-align: left; min-height: 48px; box-sizing: border-box;
   padding: 12px 14px; gap: 12px; align-items: flex-start; background: none; border: 0; border-radius: 0; color: var(--ink); font: inherit; font-size: 15px; line-height: 1.4;
 }
-.choice-text { flex: 1; }
-.choice-text .bracket { display: block; margin-top: 2px; }
+/* Скобка в рядок з ярликом, коли влазить; другим рядом — лише в довгих ярликів (22.09, економія висоти листа). */
+.choice-text { flex: 1; display: flex; flex-wrap: wrap; column-gap: 10px; row-gap: 2px; align-items: baseline; }
+.choice-text .bracket { display: inline; margin: 0; }
 .choice-go { flex: none; align-self: center; color: var(--faint); font-size: 18px; line-height: 1; }
 .choices li + li .choice { border-top: 1px solid #26262b; }   /* граница между вариантами: промах на тапе — необратимое решение */
 .choice:hover { background: #131316; }
@@ -979,7 +981,17 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .tape-line.age-2 { color: #9c9889; font-size: 14px; }
 .tape-line.age-3 { color: var(--muted); font-size: 13.5px; }
 /* 3. Сили — полоса по нижней кромке поля: сжимается влево, цвет по уровню. */
+/* Смужка замість поля, поки лист відкритий (22.09, макет «Лист моменту за згином»): клуби, великий рахунок з кольором
+   за станом рахунку і тонка лінія сил. Без хвилини (вона на ярлику листа) і без тренера/трибун — вони на полі. */
+.score-strip { position: relative; margin: 6px 0 0; padding: 9px 12px 11px; background: #0f1310; border: 1px solid #2a3a2c; border-radius: 3px;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; overflow: clip; animation: fadeIn .2s ease-out; }
+.strip-team { font-family: var(--font-caps); font-weight: 500; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; color: var(--ink); }
+.strip-team.r { text-align: right; }
+.strip-score { font-family: var(--font-mono); font-weight: 600; font-size: 26px; line-height: 1; color: var(--cream); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.strip-score.trail { color: var(--bad-soft); } .strip-score.lead { color: var(--accent); }
+html.reduce-motion .score-strip { animation: none; }
 .stamina-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: rgba(0,0,0,.45); }
+.stamina-bar.thin { height: 3px; background: #1c1c20; }
 .stamina-bar i { display: block; height: 100%; background: var(--accent); transition: width .6s ease, background-color .6s ease; }
 .stamina-bar.mid i { background: var(--warn); }
 .stamina-bar.low i { background: var(--bad); }

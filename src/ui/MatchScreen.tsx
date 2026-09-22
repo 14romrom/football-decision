@@ -14,6 +14,13 @@ import { Icon } from './icons';
 // старые строки гаснут и уходят под поле, — сцена (EpisodeCard) или бросок (RollView), внизу
 // зона «на кубик»: факторы состояния, которые движок добавит к любому варианту, и сили.
 // Тренер и трибуни — маленькие шкалы в углу поля: их место в игре не изменилось, только объём.
+//
+// **Два стани екрана** (22.09, макет «Лист моменту за згином», решение пользователя): поки лист відкритий
+// (сцена з варіантами, вихід з лави, свисток) — поле згорнуте в смужку з великим рахунком і лінією сил, стрічки
+// нема; так лист із голосами й варіантами влазить в один екран (плейтест: варіанти регулярно були за згином —
+// поле 160 px і стрічка з’їдали половину висоти). Рахунок у смужці великий і кольоровий: він — перше, на що
+// дивишся, обираючи форму ризику. Тренер/трибуни, хвилина й тайм у смужці не потрібні (хвилина — на ярлику листа);
+// вони повертаються разом із полем на кидку: там штамп і розв’язка йдуть на полі, як і раніше.
 
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
 
@@ -79,12 +86,20 @@ export function MatchScreen({
   const stamina = Math.max(0, Math.min(100, state.stamina));
   const clock = sheetMinute ?? (shown.length ? shown[shown.length - 1].minute : state.minute);
   const staminaTone = stamina < 25 ? 'low' : stamina < 50 ? 'mid' : '';
+  // Лист відкритий — читаємо й вирішуємо: поле й стрічка не потрібні. На кидку (hideDiceZone) поле повертається.
+  const moment = (!!episode && !hideDiceZone) || !!sheet;
+  const scoreTone = state.scoreUs > state.scoreThem ? 'lead' : state.scoreUs < state.scoreThem ? 'trail' : '';
 
   return (
     <div className="match de-match">
       <Film />
 
-      <div className="pitch-wrap">
+      {moment ? <div className="score-strip">
+        <span className="strip-team">{roster.us.name.nom}</span>
+        <b className={`strip-score ${scoreTone}`}>{state.scoreUs} : {state.scoreThem}</b>
+        <span className="strip-team r">{roster.them.name.nom}</span>
+        <div className={`stamina-bar thin ${staminaTone}`} title={`сили ${Math.round(stamina)}`} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
+      </div> : <div className="pitch-wrap">
         <Pitch episode={episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench} />
         <div className="score-overlay">
           <span className="score-line">{clock}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
@@ -96,9 +111,9 @@ export function MatchScreen({
         <div className={`stamina-bar ${staminaTone}`} title={`сили ${Math.round(stamina)}`} aria-hidden="true">
           <b>сили</b><i style={{ width: `${stamina}%` }} />
         </div>
-      </div>
+      </div>}
 
-      <div className={`tape ${episode || sheet ? 'dimmed' : ''}`}>
+      {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}`}>
         <div className="tape-shade" />
         {hidden > 0 && !expanded && (
           <button className="tape-more" onClick={() => setExpanded(true)}>{Icon.list()} ще {hidden} {hidden === 1 ? 'подія' : hidden < 5 ? 'події' : 'подій'}</button>
@@ -116,7 +131,7 @@ export function MatchScreen({
           <p className="tape-line say say-coach"><b>Тренер</b> — дедалі частіше поглядає на брівку: там уже розминаються.</p>
         )}
         {waiting && <button className="skip" onClick={onSkip}>далі ⟶</button>}
-      </div>
+      </div>}
 
       {/* Карточка момента отделена от таймлайна панелью: сцена, варианты и зона «на кубик» — одно целое.
           Пока эпизода нет (идёт лента), панели нет — пустая рамка с одной шкалой сил читалась как сбой. */}

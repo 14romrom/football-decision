@@ -20,7 +20,9 @@ import { Icon } from './icons';
 // нема; так лист із голосами й варіантами влазить в один екран (плейтест: варіанти регулярно були за згином —
 // поле 160 px і стрічка з’їдали половину висоти). Рахунок у смужці великий і кольоровий: він — перше, на що
 // дивишся, обираючи форму ризику. Тренер/трибуни, хвилина й тайм у смужці не потрібні (хвилина — на ярлику листа);
-// вони повертаються разом із полем на кидку: там штамп і розв’язка йдуть на полі, як і раніше.
+// вони повертаються разом із полем після кидка. **Кидок — теж лист** (22.09, плейтест: кубики під стрічкою за згином):
+// смужка й без стрічки, поки не натиснуто «далі»; поле повертається зі стрічкою, і розв’язка (finale) грає при монтуванні
+// поля — тому поле під час стрічки стоїть за останньою сценою (`pitchEpisode`), а не за «нічим».
 
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
 
@@ -51,7 +53,7 @@ function Meter({ label, value, tone }: { label: string; value: number; tone?: st
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, sheetMinute, onBench, player, conditions, flagRules, hideDiceZone, finale, sheet, children,
+  state, roster, shown, waiting, onSkip, episode, pitchEpisode, sheetMinute, onBench, player, conditions, flagRules, hideDiceZone, finale, sheet, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -60,6 +62,8 @@ export function MatchScreen({
   onSkip: () => void;
   /** Текущая сцена — для точки на поле и факторов «на кубик»; null между эпизодами. */
   episode: Episode | null;
+  /** Остання сцена — позиція Реєса на полі між листами: розв’язка грає вже після «далі», з місця цієї сцени. */
+  pitchEpisode?: Episode | null;
   /** Хвилина відкритого листа (сцена, кидок, вихід): годинник у шапці показує її, а між листами — хвилину
    *  останнього показаного рядка стрічки. Движок уже на 52′, поки стрічка дочитує 9′ (плейтест 21.09, Б-7). */
   sheetMinute?: number;
@@ -86,8 +90,8 @@ export function MatchScreen({
   const stamina = Math.max(0, Math.min(100, state.stamina));
   const clock = sheetMinute ?? (shown.length ? shown[shown.length - 1].minute : state.minute);
   const staminaTone = stamina < 25 ? 'low' : stamina < 50 ? 'mid' : '';
-  // Лист відкритий — читаємо й вирішуємо: поле й стрічка не потрібні. На кидку (hideDiceZone) поле повертається.
-  const moment = (!!episode && !hideDiceZone) || !!sheet;
+  // Лист відкритий — сцена, кидок, вихід, свисток: поле й стрічка не потрібні, все в один екран.
+  const moment = !!episode || !!sheet;
   const scoreTone = state.scoreUs > state.scoreThem ? 'lead' : state.scoreUs < state.scoreThem ? 'trail' : '';
 
   return (
@@ -100,7 +104,7 @@ export function MatchScreen({
         <span className="strip-team r">{roster.them.name.nom}</span>
         <div className={`stamina-bar thin ${staminaTone}`} title={`сили ${Math.round(stamina)}`} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
       </div> : <div className="pitch-wrap">
-        <Pitch episode={episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench} />
+        <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench} />
         <div className="score-overlay">
           <span className="score-line">{clock}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
           <span className="meters">

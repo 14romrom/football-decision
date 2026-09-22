@@ -159,6 +159,8 @@ function Game() {
   useEffect(() => { window.scrollTo(0, 0); }, [stage.k]);
   // Розв’язка на поле: вид по исходу, id — номер броска; ставится со штампом вердикта.
   const [finale, setFinale] = useState<{ kind: FinaleKind; id: number } | null>(null);
+  // Остання сцена — для поля між листами (MatchScreen.pitchEpisode): розв’язка грає з її місця після «далі».
+  const lastEpisodeRef = useRef<Episode | null>(null);
   const [queue, setQueue] = useState<TimelineEvent[]>([]);
 
   const proceed = useCallback((lead: TimelineEvent[] = []) => {
@@ -737,6 +739,7 @@ function Game() {
     if (!t || !h || !readSettings().hints) return undefined;
     return { ...h, step: t.plan.indexOf(episodeId) + 1, total: t.plan.length };
   };
+  if (stage.k === 'episode' || stage.k === 'roll') lastEpisodeRef.current = stage.episode;
   return (
     <>
       <MatchScreen
@@ -746,6 +749,7 @@ function Game() {
         waiting={stage.k === 'feed' && queue.length > 0}
         onSkip={skip}
         episode={stage.k === 'episode' || stage.k === 'roll' ? stage.episode : null}
+        pitchEpisode={lastEpisodeRef.current}
         sheetMinute={stage.k === 'episode' || stage.k === 'roll' || stage.k === 'entry' ? stage.minute : undefined}
         onBench={!!session.fromBench && (shown.length ? shown[shown.length - 1].minute : 0) < BALANCE.bench.entryMinute}
         player={session.player}

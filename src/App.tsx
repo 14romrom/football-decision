@@ -13,6 +13,8 @@ import { HUNTER, hunterRound } from './engine/programme';
 const AGENT_IN_STANDS_ROUND = 6;
 /** Тур другого сезону (0-based), у якому тренер міняє тебе на Марена — канвовий показ ep_subbed_off. */
 const SUBBED_ROUND = 3;
+/** Скільки перших турів першого сезону виходиш із мандражем (M18.3). */
+const NERVES_ROUNDS = 2;
 import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, allSetups, recordPosts, recordResult } from './telemetry/history';
@@ -258,6 +260,11 @@ function Game() {
           // Другий матч із його клубом (M17): Ларссон виходить з їхньої лави — реактивна сцена rx_top_larsson_from_bench.
           ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey && seasonRef.current.played.some((f) => (f.home === US && f.away === consumedCareer.subClub) || (f.away === US && f.home === consumedCareer.subClub))
             ? [{ flag: 'sub_there_again', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: 'грав проти колишнього дублера вдруге' } }] : []),
+          // Мандраж (M18.3): перші два тури першого сезону і перший тур у вищій лізі — поки в сезоні немає
+          // жодної результативної дії. Гол або асист знімає його достроково: страх лікується не часом.
+          ...((seasonRef.current.number === 1 ? seasonRef.current.round < NERVES_ROUNDS : seasonRef.current.round === 0)
+            && (seasonRef.current.player.goals + seasonRef.current.player.assists) === 0
+            ? [{ flag: 'nerves', mark: { minute: 0, episodeId: 'season', optionId: 'nerves', past: 'виходив із мандражем' } }] : []),
           // Весна другого сезону (M17, канва): агент на трибуні з чужим шарфом — один матч, після зими, абстрактно.
           ...(seasonRef.current.number >= 2 && seasonRef.current.round === AGENT_IN_STANDS_ROUND ? [{ flag: 'agent_in_stands', mark: { minute: 0, episodeId: 'season', optionId: 'agent', past: 'бачив агента на трибуні' } }] : []),
         ],

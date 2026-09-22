@@ -184,7 +184,9 @@ describe('вариации сетапа и флаги (сезон)', () => {
       // M15: ставить відпустка (engine/vacation.ts) — літо без передсезонки.
       'out_of_form',
       // M18: тебе замінили по ходу матчу (match.ts:subOffNow) — ісходи ep_subbed_off ставлять цей флаг.
-      'subbed_off'];
+      'subbed_off',
+      // M18.3: мандраж перших турів — ставить App, знімається голом/асистом у сезоні.
+      'nerves'];
     // them_<trait> ставит движок по характеристикам соперника из roster.json (match.ts).
     const known = new Set([...FLAG_RULES.map((r) => r.id), ...SYSTEM]);
     const used = new Set<string>();

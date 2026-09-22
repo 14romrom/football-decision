@@ -145,7 +145,14 @@ export function computeContext(
   if (cond.venue === 'away' && state.minute >= k.awayLateMinute) {
     mods.push({ label: 'чужий стадіон, кінцівка', value: k.awayLateNerves, source: 'field', short: 'виїзд' });
   }
-  if (cond.strength === 'strong') mods.push({ label: 'сильний суперник', value: k.strongOpponent, source: 'field', short: 'сильні' });
+  // Ліга і сила суперника не складаються (те саме правило, що для рис суперника): іде одна, найсильніша.
+  // Інакше в другому сезоні кожен матч проти сильного клубу відкривався з −2, і вища ліга ставала стіною.
+  if (cond.league === 'top' || cond.strength === 'strong') {
+    const top = cond.league === 'top' ? { label: 'вища ліга', value: k.topLeague, short: 'вища ліга' } : null;
+    const strong = cond.strength === 'strong' ? { label: 'сильний суперник', value: k.strongOpponent, short: 'сильні' } : null;
+    const worst = [top, strong].filter((x): x is NonNullable<typeof x> => !!x).sort((a2, b2) => a2.value - b2.value)[0];
+    mods.push({ ...worst, source: 'field' });
+  }
   if (cond.strength === 'weak') mods.push({ label: 'слабкий суперник', value: k.weakOpponent, source: 'field', short: 'слабкі' });
   if (cond.weather === 'rain' && (option.attribute === 'dribbling' || option.attribute === 'passing')) {
     mods.push({ label: 'мокрий газон', value: k.rainPenalty, source: 'field', short: 'газон' });

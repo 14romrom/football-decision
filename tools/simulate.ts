@@ -159,7 +159,9 @@ export function runSeason(seedBase: number, matches: number): { repeats: number[
     });
     const seed = seedBase + k;
     const rng = makeRng(seed);
-    const conditions = generateConditions(rng, OPPONENTS, { confidence: rng.int(-2, 2), fatigue: k % 4 });
+    // --season N --top: як у кар’єрі — перша половина в другій лізі, друга у вищій (M17: там +16 епізодів).
+    const league = process.argv.includes('--top') && k >= matches / 2 ? 'top' as const : 'second' as const;
+    const conditions = { ...generateConditions(rng, OPPONENTS, { confidence: rng.int(-2, 2), fatigue: k % 4 }), league };
     const session = createMatch(`season-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, memory, FLAG_RULES, { setupSeen: [...setupsCarried] });
     let setupRepeats = 0;
     let slots = 0;
@@ -252,7 +254,7 @@ export function runCareer(seed: number, policy: WeekPolicy, matchPolicy: PolicyN
   while (!isSeasonOver(season)) {
     const fixture = ourFixture(season)!;
     const rng = makeRng(seed * 31 + season.round);
-    const conditions = generateConditions(rng, OPPONENTS, { confidence: 0, fatigue: 0 }, fixture);
+    const conditions = { ...generateConditions(rng, OPPONENTS, { confidence: 0, fatigue: 0 }, fixture), league: top ? 'top' as const : 'second' as const };
     const { career: consumed, penalty } = consumeStartPenalty(career);
     career = consumed;
     if (penalty.fromBench) benchedMatches += 1;

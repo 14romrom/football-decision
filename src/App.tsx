@@ -9,6 +9,8 @@ import { finishPrologue, prologuePending, type ProloguePick } from './engine/pro
 import { finishVacation, vacationPending } from './engine/vacation';
 import { endingPending, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
 import { HUNTER, hunterRound } from './engine/programme';
+/** Тур другого сезону (0-based, після зими), у якому агент сидить на трибуні (rx_top_agent_in_stands). */
+const AGENT_IN_STANDS_ROUND = 6;
 import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, allSetups, recordPosts, recordResult } from './telemetry/history';
@@ -229,7 +231,7 @@ function Game() {
     const rng = makeRng(seed);
     // Условия матча — по сиду и расписанию сезона, тонус — из истории этого устройства.
     const fixture = ourFixture(seasonRef.current) ?? undefined;
-    const conditions = generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)), fixture);
+    const conditions = { ...generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)), fixture), league: seasonRef.current.number >= 2 ? 'top' as const : 'second' as const };
 
     // Перенос из карьеры: травма/карточка прошлого матча бьют по старту этого,
     // доверие тренера продолжается (с регрессией), а не сбрасывается на 55.
@@ -249,6 +251,11 @@ function Game() {
           ...(metLastYear(consumedCareer, conditions.opponentKey) ? [{ flag: 'met_last_year', mark: { minute: 0, episodeId: 'season', optionId: 'met', past: 'грали з ними торік' } }] : []),
           // Колишній дублер у їхній формі (M15): сетапи й репліки знають, хто дихав у спину торік.
           ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey ? [{ flag: 'sub_there', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: 'грав проти колишнього дублера' } }] : []),
+          // Другий матч із його клубом (M17): Ларссон виходить з їхньої лави — реактивна сцена rx_top_larsson_from_bench.
+          ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey && seasonRef.current.played.some((f) => (f.home === US && f.away === consumedCareer.subClub) || (f.away === US && f.home === consumedCareer.subClub))
+            ? [{ flag: 'sub_there_again', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: 'грав проти колишнього дублера вдруге' } }] : []),
+          // Весна другого сезону (M17, канва): агент на трибуні з чужим шарфом — один матч, після зими, абстрактно.
+          ...(seasonRef.current.number >= 2 && seasonRef.current.round === AGENT_IN_STANDS_ROUND ? [{ flag: 'agent_in_stands', mark: { minute: 0, episodeId: 'season', optionId: 'agent', past: 'бачив агента на трибуні' } }] : []),
         ],
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon), setupSeen: allSetups(),
         startDelta: penalty.startDelta,

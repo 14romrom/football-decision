@@ -78,7 +78,7 @@ const SINGLE_ANSWER_GAP = 1.5;
 /** Пороги аудита — храповик: опускать после каждой партии правок 9.6, поднимать нельзя.
  *  20.09: 34% / 36 на старте → 26% / 23 после пяти партий (кураж за ризик, цепочки и спокій в модели, призы
  *  проигравшим, «пас під удар» на складності ≥ 1, без двойной цены сил). */
-export const AUDIT_LIMITS = { dominatedShare: 0.27, singleAnswer: 24 };
+export const AUDIT_LIMITS = { dominatedShare: 0.25, singleAnswer: 24 };
 
 const unconditional = (o: EpisodeOption) => !o.requires && !o.insight;
 

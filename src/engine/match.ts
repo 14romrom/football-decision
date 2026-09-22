@@ -220,7 +220,9 @@ export function createMatch(
   flagRules: FlagRule[] = [],
   carryover: Carryover = {},
 ): MatchSession {
-  const episodes = fillNamesDeep(rawEpisodes, roster);
+  // Ліга (M17): епізоди «тільки вища ліга» в другій не існують — інакше сим і тести другої ліги їх би бачили.
+  const league = conditions.league ?? 'second';
+  const episodes = fillNamesDeep(rawEpisodes.filter((e) => !e.requires?.league || e.requires.league === league), roster);
   const rules = fillNamesDeep(flagRules, roster);
   const start = startResources(conditions);
   // Флаги про конкретного соперника (keeper_read) доживают только до матча с тем же клубом.

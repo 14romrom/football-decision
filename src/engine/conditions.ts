@@ -29,6 +29,8 @@ export type MatchConditions = {
   tone: Tone;
   /** Аналитик перед матчем рассказал про воротаря — флаг keeper_read с первой минуты. */
   keeperTip?: boolean;
+  /** Ліга матчу (M17): без поля — друга. Епізоди з requires.league іншої ліги в пул не потрапляють. */
+  league?: 'top' | 'second';
 };
 
 export type MatchResult = 'W' | 'D' | 'L';

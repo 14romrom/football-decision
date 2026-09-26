@@ -1,0 +1,20 @@
+{
+  "sc_hunter": { "focus": "50% 38%" },
+  "sc_winter_call_1": { "focus": "50% 40%" },
+  "sc_winter_call_2": { "focus": "50% 40%" },
+  "sc_larsson_training": { "focus": "50% 45%" },
+  "sc_city_driver": { "focus": "50% 48%" },
+  "sc_city_kiosk": { "focus": "50% 42%" },
+  "sc_city_asks": { "focus": "50% 44%" },
+  "sc_first_week": { "focus": "50% 40%" },
+  "sc_top_first_week": { "focus": "50% 42%" },
+  "sc_tibo_next_year": { "focus": "50% 40%" },
+  "sc_tibo_newbie": { "focus": "50% 38%" },
+  "sc_sub_talk": { "focus": "50% 38%" },
+  "sc_agent_call": { "focus": "50% 40%" },
+  "sc_fan_confront": { "focus": "50% 45%" },
+  "sc_night_before": { "focus": "50% 45%" },
+  "sc_first_injury": { "focus": "50% 30%" },
+  "sc_pitch_no_date": { "focus": "50% 55%" },
+  "sc_medical": { "focus": "50% 42%" }
+}

@@ -1,2 +1,6 @@
 node_modules
 dist
+
+# Исходники кадров якорей (JPEG ~12 МБ): в сборку едут webp из public/img/anchors,
+# их собирает npx tsx tools/optimize-images.ts
+images

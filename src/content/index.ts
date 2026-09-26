@@ -13,6 +13,7 @@ import firstmatchJson from './firstmatch.json';
 import agentJson from './agent.json';
 import espmJson from './espm.json';
 import studiedJson from './studied.json';
+import shotsJson from './shots.json';
 import { fillNamesDeep, type Roster, type TeamRoster, type NameForms } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
@@ -105,3 +106,13 @@ export const STUDIED_LINES = studiedJson as string[];
 /** Рядок для листа: один на сцену, за хвилиною — щоб на тому самому листі він не стрибав.
  *  Живе тут, а не в екрані: у `src/ui/*` оператор остачі заборонений тестом «никаких процентов». */
 export const studiedLine = (minute: number): string => STUDIED_LINES[Math.abs(minute) % STUDIED_LINES.length];
+
+/** Кадри якорів (M24): файл лежить у `public/img/anchors/<id>.webp` — збирає його
+ *  `npx tsx tools/optimize-images.ts` із папки `images/`. `focus` — object-position кадру: коли
+ *  головне в сцені не по центру, зміщуємо, щоб його було видно на вузькому листі (рішення користувача 26.09).
+ *  Немає ключа — немає кадру: лист лишається текстовим, кадру-дефолта в грі немає. */
+export const SHOTS = shotsJson as Record<string, { focus?: string }>;
+export const shotFor = (sceneId: string): { src: string; focus: string } | null => {
+  const s = SHOTS[sceneId];
+  return s ? { src: `./img/anchors/${sceneId}.webp`, focus: s.focus ?? '50% 42%' } : null;
+};

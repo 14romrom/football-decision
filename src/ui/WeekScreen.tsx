@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { LootItem, WeekOffer, WeekPick, WeekScene, WeekSceneOption } from '../engine/week';
 import { LootSheet } from './LootSheet';
 import { VOICE_ATTRS, sceneFor, sceneOptionsFor } from '../engine/week';
+import { shotFor } from '../content';
 import { VOICE_LABEL } from '../engine/voices';
 import { ATTRIBUTE_LABEL, type Attribute, type Player, type VoiceKey } from '../engine/types';
 import { Doodles } from './doodles';
@@ -162,12 +163,24 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
     );
   };
 
-  /** Лист-якір (week.ts:anchorScene): той самий лист сцени, тільки до першого дня і без справи над ним. */
+  /** Лист-якір (week.ts:anchorScene): той самий лист сцени, тільки до першого дня і без справи над ним.
+   *  M24 (26.09, макет «Лист якоря»): рамка, ярлик і все інше — як у матчі, нових елементів немає.
+   *  Якір упізнається двома речами: кадром на всю площу листа (коли файл є) і червоним підписом
+   *  капітеллю перед текстом — тим самим прийомом, що «ТІЛО — …» під логотипом на титулі. */
   const anchorSheet = (scene: WeekScene, chosen?: WeekSceneOption) => {
     const visible = sceneOptionsFor(scene, sees);
+    const shot = shotFor(scene.id);
     return (
-      <div className="moment nb-sheet"><div className="scene">
-        <span className="minute-tab">{scene.tab ?? 'ПІСЛЯ ТРЕНУВАННЯ'}</span>
+      <div className={`moment nb-sheet${shot ? ' shot' : ''}`}>
+        {shot && (
+          <div className="shot-plate">
+            <img src={shot.src} alt="" decoding="async" style={{ objectPosition: shot.focus }} />
+          </div>
+        )}
+        <div className="scene">
+        {/* Ярлик як у матчі, тільки замість хвилини — місце і місяць (M24). */}
+        <span className="minute-tab">{scene.tab ?? 'ПІСЛЯ ТРЕНУВАННЯ'}{month && <i className="link-mark"> · {month}</i>}</span>
+        {scene.head && <div className="head-line"><b>{scene.head}</b></div>}
         <p className="setup">{scene.setup}</p>
         {chosen ? (
           <>
@@ -282,7 +295,9 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
         )}
 
         {phase.p === 'anchor' && (
-          <section className="nb-day"><h3>{phase.scene.head ?? 'Після матчу'}<small>сцена</small></h3>{anchorSheet(phase.scene, phase.chosen)}</section>
+          /* Заголовок рукою над листом прибрано (M24): підпис якоря тепер усередині листа, червоною
+             капітеллю, і два заголовки поспіль читалися як помилка. */
+          <section className="nb-day nb-day-anchor">{anchorSheet(phase.scene, phase.chosen)}</section>
         )}
         {days.map((offers, d) => {
           if (phase.p === 'anchor') return <section key={d} className="nb-day"><h3>{DAY[d] ?? `День ${d + 1}`}</h3><div className="nb-empty" /></section>;

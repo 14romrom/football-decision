@@ -39,7 +39,11 @@
             "apply": {
               "corner": true,
               "fanHype": 4,
-              "stamina": -2
+              "stamina": -2,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -177,7 +181,11 @@
             "apply": {
               "fanHype": 8,
               "stamina": -2,
-              "duelWon": true
+              "duelWon": true,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -296,7 +304,11 @@
               "duelWon": true,
               "corner": true,
               "fanHype": 6,
-              "stamina": -2
+              "stamina": -2,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -855,7 +867,11 @@
             "apply": {
               "corner": true,
               "fanHype": 10,
-              "coachTrust": -2
+              "coachTrust": -2,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -1543,7 +1559,11 @@
             "recap": "і влетів просто під підкат.",
             "apply": {
               "duelWon": true,
-              "stamina": -2
+              "stamina": -2,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -2409,7 +2429,11 @@
             "recap": "і втримав м’яч у чужому штрафному.",
             "apply": {
               "corner": true,
-              "coachTrust": 4
+              "coachTrust": 4,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "cost": {
@@ -2579,7 +2603,11 @@
             "recap": "і заробив кутовий у компенсований.",
             "apply": {
               "corner": true,
-              "fanHype": 6
+              "fanHype": 6,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -3411,7 +3439,11 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "coachTrust": 4
+              "coachTrust": 4,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -5542,7 +5574,11 @@
               "corner": true,
               "fanHype": 8,
               "coachTrust": 5,
-              "composure": 4
+              "composure": 4,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "cost": {
@@ -8809,7 +8845,11 @@
             "recap": "і заробив штрафний, граючи сам.",
             "apply": {
               "fanHype": 4,
-              "stamina": -2
+              "stamina": -2,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -9815,7 +9855,11 @@
             "recap": "і виманив у нього другу жовту.",
             "apply": {
               "coachTrust": 4,
-              "fanHype": 6
+              "fanHype": 6,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "fail": {
@@ -12515,7 +12559,11 @@
             "recap": "і виграв темп ціною фолу на собі.",
             "apply": {
               "fanHype": 6,
-              "stamina": -2
+              "stamina": -2,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "fanHype": 1
+              }
             }
           },
           "fail": {
@@ -14277,7 +14325,11 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "coachTrust": 4
+              "coachTrust": 4,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "cost": {
@@ -26147,7 +26199,11 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 7,
-              "fanHype": 3
+              "fanHype": 3,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "cost": {
@@ -26585,7 +26641,11 @@
               "duelWon": true,
               "coachTrust": 4,
               "fanHype": 7,
-              "stamina": -2
+              "stamina": -2,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "fail": {
@@ -26698,7 +26758,11 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 6,
-              "fanHype": 3
+              "fanHype": 3,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "cost": {
@@ -27564,7 +27628,11 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 6,
-              "fanHype": 4
+              "fanHype": 4,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "cost": {
@@ -30167,7 +30235,11 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 6,
-              "fanHype": 3
+              "fanHype": 3,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "cost": {
@@ -30564,7 +30636,11 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 5,
-              "fanHype": 3
+              "fanHype": 3,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "cost": {
@@ -31288,7 +31364,11 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 6,
-              "fanHype": 4
+              "fanHype": 4,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "cost": {
@@ -37064,7 +37144,11 @@
               "duelWon": true,
               "coachTrust": 4,
               "fanHype": 6,
-              "stamina": -2
+              "stamina": -2,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "fail": {
@@ -37348,7 +37432,11 @@
               "duelWon": true,
               "coachTrust": 4,
               "fanHype": 7,
-              "stamina": -2
+              "stamina": -2,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "coachTrust": 1
+              }
             }
           },
           "fail": {

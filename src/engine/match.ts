@@ -1,7 +1,7 @@
 // Машина состояний матча: расписание эпизодов, лента между ними, применение
 // исходов и сборка итога. React сюда не заглядывает — UI только вызывает функции.
 
-import { BALANCE, studiedStep, COMPOSURE_CALM, MOMENTUM_BY_BOLDNESS, MOMENTUM_BY_TIER, MOMENTUM_SPEND } from './balance';
+import { BALANCE, studiedStep, TOP_LEAGUE_BOLD, COMPOSURE_CALM, MOMENTUM_BY_BOLDNESS, MOMENTUM_BY_TIER, MOMENTUM_SPEND } from './balance';
 import { attrMod } from './context';
 import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
 import { pickFeedLine, type FeedKind } from './feed';
@@ -123,7 +123,7 @@ function byStrength(e: Episode, strength?: string): number {
   return (strength && e.weightBy?.strength?.[strength]) || 1;
 }
 
-function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = [], strength?: string): string[] {
+function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = [], strength?: string, league?: string): string[] {
   const m = BALANCE.match;
   const memory = toMemory(recent);
   const families = familyAges(memory, episodes);
@@ -148,8 +148,19 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
     if (defenseSlots.has(i)) continue;
     if (episodes.some((e) => e.phase === 'attack' && !e.followUpOnly && fitsMinute(e, schedule[i]))) attackSlots.add(i);
   }
+  // Квота вищої ліги (M27.4): слоты, которые достаются сценам «мы андердоги» (`requires.league: "top"`).
+  // Без неё тема второго сезона зависела от броска — в двух матчах из десяти таких сцен не было вовсе.
+  const topSlots = new Set<number>();
+  if (league === 'top') {
+    for (const i of order) {
+      if (topSlots.size >= m.minTopLeague) break;
+      if (defenseSlots.has(i) || attackSlots.has(i)) continue;
+      if (episodes.some((e) => e.requires?.league === 'top' && !e.followUpOnly && fitsMinute(e, schedule[i]))) topSlots.add(i);
+    }
+  }
   const phaseOk = (e: Episode, index: number) =>
-    defenseSlots.has(index) ? e.phase === 'defense' : attackSlots.has(index) ? e.phase === 'attack' : true;
+    topSlots.has(index) ? e.requires?.league === 'top'
+    : defenseSlots.has(index) ? e.phase === 'defense' : attackSlots.has(index) ? e.phase === 'attack' : true;
 
   // Реактивные эпизоды заранее не планируются — они всплывают по флагам (см. pickEpisode).
   const slots = schedule
@@ -297,7 +308,7 @@ export function createMatch(
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: carryover.tutorial && carryover.tutorial.plan.length === schedule.length && carryover.tutorial.plan.every((id) => episodes.some((e) => e.id === id))
       ? [...carryover.tutorial.plan]
-      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds, conditions.strength)],
+      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds, conditions.strength, conditions.league)],
     ...(benchCall.length ? { onBench: true, fromBench: true } : {}),
     ...(carryover.tutorial ? { tutorial: carryover.tutorial } : {}),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
@@ -807,9 +818,13 @@ export function applyChoice(
   const spend = MOMENTUM_SPEND ? used : 0;
   // Кураж за ризик: чистий ісход на ризику заводить сильніше, ніж чистий на «упевнено» (MOMENTUM_BY_BOLDNESS).
   const boldness = res.tier === 'clean' ? MOMENTUM_BY_BOLDNESS[res.position] : 0;
+  // Нагорода за ризик у вищій лізі (M27.3): чистий ісход на ризику нагорі заводить сильніше і дорожче коштує
+  // в очах тренера — інакше ліга просто в'язка, і вигідно не ризикувати зовсім.
+  const topBold = session.conditions.league === 'top' && res.tier === 'clean' && res.position !== 'controlled'
+    ? TOP_LEAGUE_BOLD : null;
   // Провал Спокою не збиває кураж — спокійний не панікує (COMPOSURE_CALM); катастрофа — як у всіх.
   const byTier = res.tier === 'fail' && option.attribute === 'composure' ? COMPOSURE_CALM.momentumOnFail : MOMENTUM_BY_TIER[res.tier];
-  state.momentum = clamp(state.momentum - spend + byTier + boldness, -3, 3);
+  state.momentum = clamp(state.momentum - spend + byTier + boldness + (topBold?.momentum ?? 0), -3, 3);
 
   // Трибуны реагируют на смелость сами по себе, до того как ясен результат.
   addHype(session, BALANCE.systemic.boldnessHype[res.position]);
@@ -827,6 +842,9 @@ export function applyChoice(
     if (bold && good) addTrust(state, k.pressBoldTrust);
     if (!bold) addTrust(state, k.pressTimidTrust);
   }
+
+  // Нагорода за ризик у вищій лізі (M27.3): тренер андердога цінує те, що ти створив момент.
+  if (topBold) addTrust(state, topBold.coachTrust);
 
   // Провалившееся эгоистичное решение стоит доверия сверх того, что записано в контенте.
   if (res.tier === 'fail' || res.tier === 'badFail') {

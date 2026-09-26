@@ -322,7 +322,8 @@ export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict 
  *  за таблицу или за протокол. Текст называет причину: игрок должен понять, что именно решило,
  *  иначе агентность невидима. Числа — balance.ts:season. */
 export function seasonVerdict(season: Season, coachTrust: number): Verdict {
-  const k = BALANCE.season;
+  // Вища ліга міряє іншою міркою (M27.3): від клубу, що тільки піднявся, не чекають трійки.
+  const k = season.number >= 2 ? { ...BALANCE.season, ...BALANCE.season.top } : BALANCE.season;
   const row = ourRow(season);
   const p = season.player;
   const avgCoach = p.matches ? p.coachSum / p.matches : 0;

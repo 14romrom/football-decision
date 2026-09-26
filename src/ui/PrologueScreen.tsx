@@ -6,6 +6,7 @@ import { VOICE_LABEL } from '../engine/voices';
 import { LootSheet } from './LootSheet';
 import type { WeekResult } from './WeekScreen';
 import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from '../engine/types';
+import { Film } from './Film';
 
 // Пролог, відпустка, лист травня і фінал — листи оповідача на весь екран (26.09, плейтест на телефоні).
 // Було: зошит із паперу в лінійку, стікери голосів і лист усередині розвороту. Стало: **той самий лист,
@@ -35,11 +36,14 @@ type Props = {
   cold?: boolean;
   /** Фінал: замість листа здобутків — епілог і одна кнопка. */
   epilogue?: { tab: string; text: string[]; sign: string };
+  /** Підпис на плівці (26.09): назва частини ліворуч, номер розвороту праворуч — як маркування кадру
+   *  на титулі. Тільки тут: у матчі така смуга змагалася б із хвилиною і рахунком. */
+  film?: string;
 };
 
 type Phase = { p: 'sheet'; page: number } | { p: 'reply'; option: PrologueOption } | { p: 'summary'; result: WeekResult };
 
-export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕРШОГО МАТЧУ', lootButton = 'На лаву', lootEmpty = 'Три розвороти — і жодної відповіді.', arc = 1, labels = { open: 'Відповісти', pick: 'Обери відповідь', confirm: 'Так і відповісти' }, firstVoice, cold = false, epilogue }: Props) {
+export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕРШОГО МАТЧУ', lootButton = 'На лаву', lootEmpty = 'Три розвороти — і жодної відповіді.', arc = 1, labels = { open: 'Відповісти', pick: 'Обери відповідь', confirm: 'Так і відповісти' }, firstVoice, cold = false, epilogue, film }: Props) {
   // Варіант зі станом арки (Спокій у відпустці): нижче стану — його немає, і гравець про нього не знає.
   const visible = (o: PrologueOption) => ((o as { arcMin?: number }).arcMin ?? 1) <= arc;
   const [i, setI] = useState(0);
@@ -64,6 +68,9 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
   /** Голос відповіді на попередньому розвороті — луна в листі наступного. */
   const previousVoice = (d: number) => { if (d === 0) return firstVoice; const p = picks.find((x) => x.spread === spreads[d - 1]?.id); return p ? spreads[d - 1].options.find((o) => o.id === p.option)?.voice : undefined; };
 
+  /** Маркування кадру по краях (26.09): частина ліворуч, номер розвороту праворуч. */
+  const filmStrip = film ? <Film labels={{ left: [film], right: [`${String(i + 1).padStart(2, '0')} / ${String(spreads.length).padStart(2, '0')}`] }} /> : null;
+
   const spread = spreads[i];
   const shot = spread ? shotFor(spread.id) : null;
   const sheet = spread ? (cold && spread.sheetCold ? spread.sheetCold : sheetFor(spread, previousVoice(i))) : [];
@@ -86,6 +93,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
   if (phase.p === 'summary') {
     return (
       <div className="result story">
+        {filmStrip}
         {epilogue ? (
           <div className="moment"><div className="scene">
             <span className="minute-tab">{epilogue.tab.toUpperCase()}</span>
@@ -105,6 +113,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
     const o = phase.option;
     return (
       <div className="result story">
+        {filmStrip}
         {sheetCard(spread.tab, (
           <>
             <p className={`said voice-${o.voice}`}><b>{VOICE_LABEL[o.voice]}</b><span>{o.say}</span></p>
@@ -122,6 +131,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
 
   return (
     <div className="result story">
+      {filmStrip}
       {sheetCard(spread.tab, (
         <>
           {spread.head && page === 0 && <div className="head-line"><b>{spread.head}</b></div>}

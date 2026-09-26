@@ -11,7 +11,8 @@ describe('глави й кадри якорів', () => {
     for (const c of CHAPTERS) {
       expect(c.title.length, c.id).toBeGreaterThan(3);
       expect(c.line, c.id).not.toContain('!');
-      expect(c.rom, c.id).toBeTruthy();
+      // rom — «Глава I/II» лише в сезонів: у пролога й епілога назва сама і є частиною, другий рядок дублював би її.
+      expect(typeof c.rom, c.id).toBe('string');
     }
   });
 

@@ -31,9 +31,9 @@ export function ChapterCard({ chapter, index, total, onNext }: Props) {
           </div>
         )}
         <div className="chapter-body">
-          <span className="chapter-rom">{chapter.rom}</span>
+          {chapter.rom && <span className="chapter-rom">{chapter.rom}</span>}
           <h1 className="chapter-title">{chapter.title}</h1>
-          <p className="chapter-line"><b className={`voice-${chapter.voice}`}>{VOICE_LABEL[chapter.voice]}</b> — {chapter.line}</p>
+          <p className={`chapter-line voice-${chapter.voice}`}><b>{VOICE_LABEL[chapter.voice]}</b> — {chapter.line}</p>
           <div className="chapter-ladder" aria-label={`${index + 1} з ${total}`}>
             {Array.from({ length: total }, (_, i) => (
               <i key={i} className={i < index ? 'done' : i === index ? 'here' : ''} />

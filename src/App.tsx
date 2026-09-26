@@ -166,7 +166,7 @@ function Game() {
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   // Краї плівки (ui/Film.tsx): на екранах гри; матч малює свої. Дошка, ESPM і стрічка — без рамки, це «чужі» екрани.
-  const film = ['result', 'season', 'posts', 'feed', 'episode', 'roll', 'whistle'].includes(stage.k) ? null : <Film />;
+  const film = ['result', 'season', 'posts', 'feed', 'episode', 'roll', 'whistle', 'prologue', 'vacation', 'may', 'ending'].includes(stage.k) ? null : <Film />;
   const [shown, setShown] = useState<TimelineEvent[]>([]);
   // Новий екран — з верху. Хеш-роутер скидає скрол лише на hashchange, а зміни stage всередині #/play — ні:
   // після ESPM з кнопкою внизу стрічка відкривалась прокрученою на 861 px (плейтест 21.09, Б-1).
@@ -510,6 +510,7 @@ function Game() {
     return (<>{film}
       <PrologueScreen
         spreads={fillNamesDeep(PROLOGUE, ROSTER)}
+        film="Пролог"
         onFinish={(picks: ProloguePick[]) => {
           // Наслідки — по контенту без імен: id ті самі, у флагах і бирках імена не потрібні.
           const before = careerRef.current;
@@ -528,6 +529,7 @@ function Game() {
       <PrologueScreen
         key="may"
         spreads={fillNamesDeep([spread], ROSTER)}
+        film="Травень"
         lootTab="ЩО ЛИШИЛОСЯ"
         lootButton="Далі"
         lootEmpty="Травень минув, і нічого не лишилося."
@@ -557,6 +559,7 @@ function Game() {
       <PrologueScreen
         key="vacation"
         spreads={fillNamesDeep(VACATION, ROSTER)}
+        film="Відпустка"
         lootTab="ДО НОВОГО СЕЗОНУ"
         lootButton="На базу"
         lootEmpty="Три місяці — і жодної відповіді."
@@ -578,6 +581,7 @@ function Game() {
       <PrologueScreen
         key="ending"
         spreads={fillNamesDeep(ENDING.spreads, ROSTER)}
+        film="Останній тиждень"
         lootButton="Далі буде"
         arc={arcStage(career)}
         firstVoice={prologueVoice(career, PROLOGUE)}

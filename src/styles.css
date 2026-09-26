@@ -737,11 +737,10 @@ html.reduce-motion .doodle svg { filter: none; }
 .story { padding-top: 0; }
 .story .moment { margin: 14px -6px 0; }
 .story .moment .scene { padding-bottom: 14px; }
-/* Репліка Реєса в розв’язці: те саме, що голос на листі, тільки без курсиву — це сказав він. */
-.said { display: grid; grid-template-columns: 5.25rem 1fr; gap: 8px; margin: 26px 0 0; font-size: 15px; color: #f0ebe0; }
-.said b { text-align: right; padding-right: 10px; padding-top: 2px; font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 13px; }
-.story .choices .bracket { display: block; margin-top: 3px; font-family: var(--font-text); font-size: 13.5px; font-style: italic; color: var(--muted); }
-.story .choices .origin { margin: 0 6px 0 0; }
+/* Підказка під реплікою — свій клас, не `.bracket`: та в матчі коротка й має `white-space: nowrap`,
+   і довгий рядок вилазив за край листа (плейтест 26.09). */
+.choice-hint { display: block; width: 100%; margin-top: 3px; font-family: var(--font-text); font-size: 13.5px; font-style: italic; color: var(--muted); white-space: normal; }
+.choice-hint .origin { margin: 0 6px 0 0; }
 
 /* Якір — подія на весь екран (26.09, плейтест на телефоні): лист сам по собі, як сцена в матчі, а не
    колонка всередині розвороту зошита. Папір зошита тут не малюється зовсім — тиждень починається далі. */

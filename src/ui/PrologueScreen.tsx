@@ -115,8 +115,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
         {filmStrip}
         {sheetCard(spread.tab, (
           <>
-            <p className={`said voice-${o.voice}`}><b>{VOICE_LABEL[o.voice]}</b><span>{o.say}</span></p>
-            <p className="setup" style={{ paddingTop: 6 }}>{cold && (o as { replyCold?: string }).replyCold ? (o as { replyCold?: string }).replyCold : o.reply}</p>
+            <p className="setup">{cold && (o as { replyCold?: string }).replyCold ? (o as { replyCold?: string }).replyCold : o.reply}</p>
             <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? 'Що далі' : 'Далі'}</button>
           </>
         ), false)}
@@ -148,7 +147,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
                       <span className="choice-num">{k + 1}</span>
                       <span className="choice-text">
                         {o.say}
-                        <span className="bracket"><i className={`origin voice-${o.voice}`}>{VOICE_LABEL[o.voice]}</i> {o.line}</span>
+                        <span className="choice-hint"><i className={`origin voice-${o.voice}`}>{VOICE_LABEL[o.voice]}</i> {o.line}</span>
                         {o.point === 'choice' && open === o.id && (
                           <span className="nb-train" onClick={(e) => e.stopPropagation()}>
                             {VOICE_ATTRS[o.voice].map((a) => (

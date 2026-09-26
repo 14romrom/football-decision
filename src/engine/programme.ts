@@ -2,6 +2,8 @@
 // данных прозой, без чисел, кроме счёта и круглых вех: заметка о Реєсе «під прицілом» и фраза про
 // черту соперника голосом клуба. Ирония сюда не заходит — програмку пишет пресс-служба.
 
+import { FORMATION_BY_STRENGTH, type Strength } from './conditions';
+
 export type ProgrammeInput = {
   /** Тур, который предстоит (1-based). */
   round: number;
@@ -122,6 +124,19 @@ export const TRAIT_NOTE: Record<string, (side: string) => string> = {
   captain: (s) => `Капітан ${s} говорить із суддями за двох.`,
   local: (s) => `Улюбленець трибун ${s} — стадіон за нього.`,
 };
+
+/** Схема соперника в рубрике «Суперник» (M23, 26.09): на поле она рисовалась и ни на что не влияла, а для
+ *  болельщика перед матчем это обычная строка программки. Голосом пресс-службы, без подсказок игроку:
+ *  что означает схема, читатель знает сам. */
+const FORMATION_NOTE: Record<string, string> = {
+  '4-4-2': 'два форварди, дві лінії по чотири',
+  '4-2-3-1': 'два опорних, трійка за форвардом',
+  '4-3-3': 'трійка в центрі, вінгери високо',
+};
+export function formationNote(strength: Strength): string {
+  const f = FORMATION_BY_STRENGTH[strength];
+  return `Схема — ${f}: ${FORMATION_NOTE[f]}.`;
+}
 
 export function traitNote(traits: string[], venue: 'home' | 'away'): string | null {
   const side = venue === 'home' ? 'гостей' : 'господарів';

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Episode, TimelineEvent } from '../engine/types';
-import type { Strength } from '../engine/conditions';
+import { FORMATION_BY_STRENGTH, type Strength } from '../engine/conditions';
 import type { FinaleKind } from '../engine/finale';
 import { motionReduced } from '../telemetry/settings';
 
@@ -31,7 +31,9 @@ type Formation = { x: number; ys: number[] }[];
 const F433: Formation = [{ x: 0.05, ys: [0.5] }, { x: 0.2, ys: [0.2, 0.4, 0.6, 0.8] }, { x: 0.38, ys: [0.3, 0.5, 0.7] }, { x: 0.6, ys: [0.15, 0.5, 0.85] }];
 const F442: Formation = [{ x: 0.05, ys: [0.5] }, { x: 0.2, ys: [0.2, 0.4, 0.6, 0.8] }, { x: 0.4, ys: [0.15, 0.4, 0.6, 0.85] }, { x: 0.6, ys: [0.4, 0.6] }];
 const F4231: Formation = [{ x: 0.05, ys: [0.5] }, { x: 0.2, ys: [0.2, 0.4, 0.6, 0.8] }, { x: 0.35, ys: [0.4, 0.6] }, { x: 0.5, ys: [0.15, 0.5, 0.85] }, { x: 0.64, ys: [0.5] }];
-const THEM_BY_STRENGTH: Record<Strength, Formation> = { weak: F442, even: F4231, strong: F433 };
+// Схема соперника — из conditions (FORMATION_BY_STRENGTH), чтобы поле и програмка не разошлись: тут только геометрия линий.
+const GEOMETRY: Record<string, Formation> = { '4-4-2': F442, '4-2-3-1': F4231, '4-3-3': F433 };
+const themFormation = (s: Strength): Formation => GEOMETRY[FORMATION_BY_STRENGTH[s]] ?? F4231;
 const PHASE_SHIFT: Record<NonNullable<Episode['phase']>, number> = { attack: 0.12, defense: -0.12, transition: 0, setpiece: 0.1 };
 
 const W = 350; const H = 180; const PAD = 10;
@@ -60,7 +62,7 @@ function basePositions(episode: Episode | null, strength: Strength, onBench = fa
   const shift = PHASE_SHIFT[phase];
   const pos: Pos = {};
   formationSpots(F433, false, shift).forEach((s, i) => { pos['u' + i] = s; });
-  formationSpots(THEM_BY_STRENGTH[strength], true, shift).forEach((s, i) => { pos['t' + i] = s; });
+  formationSpots(themFormation(strength), true, shift).forEach((s, i) => { pos['t' + i] = s; });
   pos[SUB] = pos[SELF];
   pos[SELF] = spot;
   let near = 't1'; let best = Infinity;

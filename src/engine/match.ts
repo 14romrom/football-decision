@@ -117,14 +117,21 @@ function familyAges(memory: EpisodeMemory, episodes: Episode[]): Record<string, 
   return ages;
 }
 
-function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = []): string[] {
+/** Вес по силе соперника (M23): перегрузка фланга живёт против низкого блока, выход из-под прессинга —
+ *  против сильных. Чтобы схема соперника значила что-то и в подборе сцен, а не только на поле. */
+function byStrength(e: Episode, strength?: string): number {
+  return (strength && e.weightBy?.strength?.[strength]) || 1;
+}
+
+function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = [], strength?: string): string[] {
   const m = BALANCE.match;
   const memory = toMemory(recent);
   const families = familyAges(memory, episodes);
   // Память на сезон: сыгранное недавно почти не выпадает, пока есть свежее, и медленно возвращается.
   // Семья давит слабее: пенальті вчора — сегодня другой пенальті возможен, но реже.
   const weightOf = (e: Episode) => e.weight * memoryWeight(memory[e.id])
-    * (e.family ? m.familyFloor + (1 - m.familyFloor) * memoryWeight(families[e.family]) : 1);
+    * (e.family ? m.familyFloor + (1 - m.familyFloor) * memoryWeight(families[e.family]) : 1)
+    * byStrength(e, strength);
 
   // Квота обороны: заранее выбираем слоты, в которых будет только защитный эпизод.
   // Плейтест показал, что без квоты матч — сплошные атаки и переходы.
@@ -287,7 +294,7 @@ export function createMatch(
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: carryover.tutorial && carryover.tutorial.plan.length === schedule.length && carryover.tutorial.plan.every((id) => episodes.some((e) => e.id === id))
       ? [...carryover.tutorial.plan]
-      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds)],
+      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds, conditions.strength)],
     ...(benchCall.length ? { onBench: true, fromBench: true } : {}),
     ...(carryover.tutorial ? { tutorial: carryover.tutorial } : {}),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
@@ -618,7 +625,7 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
     && !session.plan.includes(e.id) && !session.usedEpisodeIds.includes(e.id)
     && (planned.phase !== 'defense' || e.phase === 'defense'));
   if (fresh.length > 0) {
-    const pick = rng.weighted(fresh, (e) => e.weight);
+    const pick = rng.weighted(fresh, (e) => e.weight * byStrength(e, session.conditions.strength));
     session.plan[i] = pick.id;
     return withSetup(pick, session, rng);
   }

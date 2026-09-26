@@ -9282,6 +9282,12 @@
     "id": "ep_wing_one_on_one",
     "phase": "attack",
     "weight": 1.0,
+    "weightBy": {
+      "strength": {
+        "weak": 1.5,
+        "strong": 0.7
+      }
+    },
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -15307,6 +15313,12 @@
     "id": "ep_press_bait",
     "phase": "defense",
     "weight": 1,
+    "weightBy": {
+      "strength": {
+        "strong": 1.5,
+        "weak": 0.7
+      }
+    },
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -20758,6 +20770,12 @@
     "family": "press",
     "phase": "defense",
     "weight": 1,
+    "weightBy": {
+      "strength": {
+        "strong": 1.5,
+        "weak": 0.7
+      }
+    },
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -22713,6 +22731,12 @@
     "family": "press",
     "phase": "defense",
     "weight": 0.9,
+    "weightBy": {
+      "strength": {
+        "strong": 1.5,
+        "weak": 0.7
+      }
+    },
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -24259,6 +24283,12 @@
     "family": "wing",
     "phase": "attack",
     "weight": 1,
+    "weightBy": {
+      "strength": {
+        "weak": 1.5,
+        "strong": 0.7
+      }
+    },
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -24942,6 +24972,12 @@
     "family": "wing",
     "phase": "attack",
     "weight": 1,
+    "weightBy": {
+      "strength": {
+        "weak": 1.5,
+        "strong": 0.7
+      }
+    },
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -25166,6 +25202,12 @@
     "family": "press",
     "phase": "transition",
     "weight": 1.1,
+    "weightBy": {
+      "strength": {
+        "strong": 1.5,
+        "weak": 0.7
+      }
+    },
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -27154,6 +27196,12 @@
     "family": "through",
     "phase": "transition",
     "weight": 1.0,
+    "weightBy": {
+      "strength": {
+        "strong": 1.5,
+        "weak": 0.7
+      }
+    },
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -36538,6 +36586,12 @@
     "family": "wing",
     "phase": "attack",
     "weight": 1.3,
+    "weightBy": {
+      "strength": {
+        "weak": 1.5,
+        "strong": 0.7
+      }
+    },
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -37112,6 +37166,12 @@
     "family": "through",
     "phase": "attack",
     "weight": 1.2,
+    "weightBy": {
+      "strength": {
+        "weak": 1.5,
+        "strong": 0.7
+      }
+    },
     "requires": {
       "minMinute": 10,
       "maxMinute": 90

@@ -3,6 +3,7 @@ import { signatureAttrs } from '../engine/conditions';
 import type { Attribute, Player } from '../engine/types';
 import type { Opponent } from '../content';
 import { leagueOf, monthOfRound } from '../engine/season';
+import { formationNote } from '../engine/programme';
 
 // Брифинг перед матчем: условия словами, без чисел. Каждая строка обещает
 // эффект, который потом появится строкой модификатора после броска — это
@@ -101,7 +102,7 @@ export function BriefingScreen({ conditions, opponent, player, round, usName, no
         <div className="prog-rule" />
         <dl className="prog-list">
           <dt>Реєс</dt><dd><b>№10, атакувальний півзахисник.</b> {note}</dd>
-          <dt>Суперник</dt><dd><b>«{opponent.name.nom}»</b> — {opponent.blurb}. {strength}{lastYearLine}{subThere && <> У їхньому складі — {subThere}, торік ваш дублер.</>}{guest && <> {guest}</>}{trait && <> {trait}<span className="prog-warn">увага</span></>}</dd>
+          <dt>Суперник</dt><dd><b>«{opponent.name.nom}»</b> — {opponent.blurb}. {strength} {formationNote(opponent.strength)}{lastYearLine}{subThere && <> У їхньому складі — {subThere}, торік ваш дублер.</>}{guest && <> {guest}</>}{trait && <> {trait}<span className="prog-warn">увага</span></>}</dd>
           <dt>Стадіон</dt><dd><b>{venue.title}.</b> {venue.note}</dd>
           <dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd>
           <dt>Форма</dt><dd><b>{tone.title}.</b> {tone.note}</dd>

@@ -11,6 +11,12 @@ import type { Attribute, Player } from './types';
 export type Venue = 'home' | 'away' | 'neutral';
 export type Strength = 'strong' | 'even' | 'weak';
 export type Instruction = 'hold' | 'press' | 'free' | 'none';
+
+/** Схема соперника — функция силы, один источник на игру (M23, 26.09): поле (`Pitch.tsx` берёт по ней
+ *  геометрию линий) и програмка (`formationNote`) больше не могут разойтись. Отдельной осью условий
+ *  (`when.formation`) не заводим: схема выводится из strength, и такое условие дублировало бы
+ *  `when.strength`, который в сетапах уже работает. */
+export const FORMATION_BY_STRENGTH: Record<Strength, string> = { weak: '4-4-2', even: '4-2-3-1', strong: '4-3-3' };
 export type Weather = 'clear' | 'rain' | 'heat' | 'wind';
 
 export type Tone = {

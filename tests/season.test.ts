@@ -134,6 +134,10 @@ describe('вариации сетапа по ситуации', () => {
     s.nextIndex = s.plan.length - 1;
     s.state.minute = s.schedule[s.nextIndex];
     s.state.scoreThem = 1;
+    // Базовый вступ уже прочитан: withSetup берёт свежий из подходящих (M17.1), и при свежем базовом
+    // он законно может выпасть сам — тогда тест ловил бы не правило, а seed (сломался на M23, когда
+    // пул вырос на 4 эпизода и поток rng сдвинулся). Помечаем базовый виденным — остаётся ситуационный.
+    s.setupSeen.add(ep.setup);
     const shown = pickEpisode(s, rng)!;
     expect(shown.setup).toBe(trailing.text);
     expect(shown.options).toBe(ep.options);   // варианты и исходы — те же, меняется только сцена

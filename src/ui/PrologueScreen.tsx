@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { sheetFor, type PrologueOption, type ProloguePick, type PrologueSpread } from '../engine/prologue';
-import { shotFor } from '../content';
+import { useShot } from './Shot';
 import { VOICE_ATTRS } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
 import { LootSheet } from './LootSheet';
@@ -17,6 +17,8 @@ import { Film } from './Film';
 // Правила, які лишаються: оповідач говорить листом ПЕРЕД вибором (у тижні — після), Реєс тільки
 // відповідає; розворот закінчується розв’язкою, а не паузою; наприкінці — лист здобутків.
 // **Один абзац — один лист**: нова зона контенту завжди відкривається в межах екрана, без скролу.
+// Кадр тримає сцену на всіх листах розвороту, крім останнього: там ідуть варіанти, і разом із кадром
+// вони не влізли б в екран.
 
 type Props = {
   /** Розвороти з іменами ростера. */
@@ -52,6 +54,8 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
   const [attr, setAttr] = useState<Attribute | null>(null);
   const [open, setOpen] = useState<string | null>(null);   // варіант, у якого розкрито вибір атрибута
   const last = i >= spreads.length - 1;
+  // Кадр розвороту: хук — до будь-якого return, бо фази міняються.
+  const { mark, plate } = useShot(spreads[i]?.id);
 
   const choose = (option: PrologueOption) => {
     const spread = spreads[i];
@@ -72,17 +76,12 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
   const filmStrip = film ? <Film labels={{ left: [film], right: [`${String(i + 1).padStart(2, '0')} / ${String(spreads.length).padStart(2, '0')}`] }} /> : null;
 
   const spread = spreads[i];
-  const shot = spread ? shotFor(spread.id) : null;
   const sheet = spread ? (cold && spread.sheetCold ? spread.sheetCold : sheetFor(spread, previousVoice(i))) : [];
 
   /** Лист оповідача: кадр зверху, ярлик на кромці, один абзац — далі або «Далі», або вибір. */
   const sheetCard = (tab: string, body: React.ReactNode, withShot: boolean) => (
-    <div className={`moment${withShot && shot ? ' shot' : ''}`}>
-      {withShot && shot && (
-        <div className="shot-plate">
-          <img src={shot.src} alt="" decoding="async" style={{ objectPosition: shot.focus }} />
-        </div>
-      )}
+    <div className={`moment${withShot ? mark : ''}`}>
+      {withShot && plate}
       <div className="scene">
         <span className="minute-tab">{tab.toUpperCase()}</span>
         {body}
@@ -166,7 +165,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
             </>
           )}
         </>
-      ), page === 0)}
+      ), !lastPage)}
     </div>
   );
 }

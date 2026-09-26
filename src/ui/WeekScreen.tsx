@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { LootItem, WeekOffer, WeekPick, WeekScene, WeekSceneOption } from '../engine/week';
 import { LootSheet } from './LootSheet';
 import { VOICE_ATTRS, sceneFor, sceneOptionsFor } from '../engine/week';
-import { shotFor } from '../content';
+import { useShot } from './Shot';
 import { VOICE_LABEL } from '../engine/voices';
 import { ATTRIBUTE_LABEL, type Attribute, type Player, type VoiceKey } from '../engine/types';
 import { Doodles } from './doodles';
@@ -65,6 +65,8 @@ const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
 export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, anchor, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
   const [phase, setPhase] = useState<Phase>(anchor ? { p: 'anchor', scene: anchor } : { p: 'pick' });
+  // Кадр якоря: хук на верхньому рівні, бо `anchorSheet` викликається лише в одній фазі.
+  const anchorShot = useShot(anchor?.id);
   const [anchorPick, setAnchorPick] = useState<{ id: string; option: string } | undefined>(undefined);
   const [picks, setPicks] = useState<WeekPick[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -169,14 +171,9 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
    *  капітеллю перед текстом — тим самим прийомом, що «ТІЛО — …» під логотипом на титулі. */
   const anchorSheet = (scene: WeekScene, chosen?: WeekSceneOption) => {
     const visible = sceneOptionsFor(scene, sees);
-    const shot = shotFor(scene.id);
     return (
-      <div className={`moment${shot ? ' shot' : ''}`}>
-        {shot && (
-          <div className="shot-plate">
-            <img src={shot.src} alt="" decoding="async" style={{ objectPosition: shot.focus }} />
-          </div>
-        )}
+      <div className={`moment${anchorShot.mark}`}>
+        {anchorShot.plate}
         <div className="scene">
         {/* Ярлик як у матчі, тільки замість хвилини — місце і місяць (M24). */}
         <span className="minute-tab">{scene.tab ?? 'ПІСЛЯ ТРЕНУВАННЯ'}{month && <i className="link-mark"> · {month}</i>}</span>

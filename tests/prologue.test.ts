@@ -108,8 +108,10 @@ describe('finishPrologue', () => {
     const { sheetFor } = await import('../src/engine/prologue');
     const { prologueFlags } = await import('../src/engine/career');
     const call = PROLOGUE.find((s) => s.id === 'call')!;
-    expect(sheetFor(call, 'ego')[0]).not.toBe(sheetFor(call, undefined)[0]);
-    expect(sheetFor(call, 'ego')[0]).toMatch(/через рік/);
+    // Луна живе в листі, де говорить тренер (M24: перші два листи розвороту — клуб і мета, вони спільні).
+    const last = (v?: 'ego' | 'composure') => { const sh = sheetFor(call, v); return sh[sh.length - 1]; };
+    expect(last('ego')).not.toBe(last(undefined));
+    expect(last('ego')).toMatch(/через рік/);
     expect(sheetFor(call, 'composure')).toEqual(call.sheet);
     const base = PROLOGUE.find((s) => s.id === 'base')!;
     for (const v of ['ego', 'team', 'vision'] as const) expect(sheetFor(base, v)[0]).toMatch(/десятого трамвая/);

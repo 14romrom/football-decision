@@ -15,6 +15,8 @@
   "sc_fan_confront": { "focus": "50% 45%" },
   "sc_night_before": { "focus": "50% 45%" },
   "scout": { "focus": "50% 34%" },
+  "call": { "focus": "50% 42%" },
+  "base": { "focus": "50% 45%" },
   "sc_pitch_no_date": { "focus": "50% 55%" },
   "sc_medical": { "focus": "50% 42%" }
 }

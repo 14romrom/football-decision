@@ -370,7 +370,7 @@
   {
     "id": "ep_press_trap",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -451,7 +451,12 @@
             "text": "Ти закриваєш лінію пасу, їм доводиться повертати м’яч воротарю. Тренер схвально киває.",
             "recap": "і змусив їх відіграти назад.",
             "apply": {
-              "coachTrust": 5
+              "coachTrust": 5,
+              "followUp": "ep_keeper_short_build",
+              "followUpElse": {
+                "coachTrust": 2,
+                "composure": 2
+              }
             }
           },
           "cost": {
@@ -1201,7 +1206,7 @@
   {
     "id": "ep_tracking_back",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 35,
       "maxMinute": 90
@@ -3015,7 +3020,7 @@
   {
     "id": "ep_own_box_corner",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -3044,7 +3049,8 @@
               "coachTrust": 5,
               "addFlags": [
                 "keeper_owes"
-              ]
+              ],
+              "fanHype": 3
             }
           },
           "cost": {
@@ -4777,7 +4783,7 @@
   {
     "id": "ep_aerial_midfield",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -5262,7 +5268,7 @@
   {
     "id": "ep_late_defend_corner",
     "phase": "defense",
-    "weight": 1.2,
+    "weight": 0.9,
     "requires": {
       "minMinute": 72,
       "maxMinute": 90
@@ -5288,7 +5294,8 @@
             "recap": "і не дав нападнику стрибнути на кутовому.",
             "apply": {
               "duelWon": true,
-              "coachTrust": 6
+              "coachTrust": 6,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -5995,7 +6002,7 @@
   {
     "id": "ep_last_man",
     "phase": "defense",
-    "weight": 1.1,
+    "weight": 0.8,
     "requires": {
       "minMinute": 20,
       "maxMinute": 90
@@ -6267,7 +6274,7 @@
   {
     "id": "ep_block_shot",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -6358,7 +6365,8 @@
               "coachTrust": 5,
               "addFlags": [
                 "keeper_owes"
-              ]
+              ],
+              "fanHype": 3
             }
           },
           "cost": {
@@ -6538,7 +6546,7 @@
   {
     "id": "ep_mark_playmaker",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 10,
       "maxMinute": 85
@@ -6804,7 +6812,7 @@
   {
     "id": "ep_short_corner_defense",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -6832,7 +6840,12 @@
               "duelWon": true,
               "coachTrust": 6,
               "fanHype": 4,
-              "momentum": 1
+              "momentum": 1,
+              "followUp": "ep_counter_run",
+              "followUpElse": {
+                "fanHype": 2,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -6885,7 +6898,12 @@
             "text": "Ти не купуєшся. Вони катають м’яч удвох, час іде, і зрештою навішують — просто в руки {keeper.dat}. Нудно і правильно.",
             "recap": "і перечекав розіграш кутового.",
             "apply": {
-              "coachTrust": 4
+              "coachTrust": 4,
+              "followUp": "ep_counter_run",
+              "followUpElse": {
+                "composure": 3,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -6939,7 +6957,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 5,
-              "fanHype": 3
+              "fanHype": 6,
+              "composure": 2
             }
           },
           "cost": {
@@ -10976,7 +10995,7 @@
   {
     "id": "ep_press_receiver",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -11220,7 +11239,7 @@
   {
     "id": "ep_last_ditch_chase",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 20,
       "maxMinute": 90
@@ -11314,7 +11333,9 @@
             "recap": "і змусив його поспішити, не пірнаючи в підкат.",
             "apply": {
               "coachTrust": 6,
-              "composure": 3
+              "composure": 3,
+              "duelWon": true,
+              "fanHype": 5
             }
           },
           "cost": {
@@ -11367,7 +11388,8 @@
             "recap": "і попередив {keeper.gen} замість того, щоб бігти самому.",
             "apply": {
               "coachTrust": 4,
-              "composure": 2
+              "composure": 2,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -11439,7 +11461,7 @@
   {
     "id": "ep_cover_beaten_teammate",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -11525,7 +11547,8 @@
             "text": "Ти лишаєшся на місці — {dm} встигає закрити прохід сам, а ти готовий до наступної загрози в своїй зоні.",
             "recap": "і втримав структуру, лишившись у зоні.",
             "apply": {
-              "coachTrust": 4
+              "coachTrust": 4,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -11577,7 +11600,8 @@
             "recap": "і направив {dm.gen} голосом у потрібну зону.",
             "apply": {
               "coachTrust": 4,
-              "composure": 2
+              "composure": 2,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -11712,7 +11736,7 @@
   {
     "id": "ep_wide_duel_open_play",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -11911,7 +11935,7 @@
   {
     "id": "ep_intercept_lane",
     "phase": "defense",
-    "weight": 1.0,
+    "weight": 0.7,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -11992,7 +12016,12 @@
             "text": "Ти лишаєшся на місці, і пас усе одно не проходить — партнер перекриває його ближче. Обережність виправдалась.",
             "recap": "і зберіг позицію, поки пас зірвали інші.",
             "apply": {
-              "coachTrust": 3
+              "coachTrust": 3,
+              "followUp": "ep_progressive_pass",
+              "followUpElse": {
+                "composure": 2,
+                "coachTrust": 2
+              }
             }
           },
           "cost": {
@@ -15167,7 +15196,7 @@
   {
     "id": "ep_offside_trap",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -15271,7 +15300,8 @@
             "recap": "і побіг за нападником замість пастки — і встиг.",
             "apply": {
               "duelWon": true,
-              "coachTrust": 5
+              "coachTrust": 5,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -15327,7 +15357,8 @@
             "recap": "і закрив зону за лінією.",
             "apply": {
               "duelWon": true,
-              "coachTrust": 5
+              "coachTrust": 5,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -15364,7 +15395,7 @@
   {
     "id": "ep_press_bait",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "weightBy": {
       "strength": {
         "strong": 1.5,
@@ -15613,7 +15644,7 @@
   {
     "id": "ep_goal_line",
     "phase": "defense",
-    "weight": 1.1,
+    "weight": 0.8,
     "requires": {
       "minMinute": 70,
       "maxMinute": 90
@@ -15718,7 +15749,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 8,
-              "stamina": -3
+              "stamina": -3,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -20386,7 +20418,7 @@
     "id": "ep_corner_zone_near",
     "family": "corner_defense",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -20448,7 +20480,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 5,
-              "composure": 3
+              "composure": 3,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -20604,7 +20637,7 @@
     "id": "ep_second_ball_edge",
     "family": "corner_defense",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -20783,7 +20816,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 6,
-              "composure": 4
+              "composure": 4,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -20821,7 +20855,7 @@
     "id": "ep_keeper_short_build",
     "family": "press",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "weightBy": {
       "strength": {
         "strong": 1.5,
@@ -21046,7 +21080,7 @@
     "id": "ep_wing_double_team",
     "family": "wing",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -21258,7 +21292,7 @@
     "id": "ep_long_ball_own_box",
     "family": "duel",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -21474,7 +21508,7 @@
     "id": "ep_counter_three_on_two",
     "family": "last_man",
     "phase": "defense",
-    "weight": 1.1,
+    "weight": 0.8,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -21593,7 +21627,8 @@
             "apply": {
               "duelWon": true,
               "coachTrust": 7,
-              "composure": 4
+              "composure": 4,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -21695,7 +21730,7 @@
     "id": "ep_free_kick_in_wall",
     "family": "free_kick",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -21914,7 +21949,7 @@
     "id": "ep_offside_line_break",
     "family": "last_man",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -22030,7 +22065,10 @@
             "apply": {
               "coachTrust": 4,
               "composure": 3,
-              "fanHype": 2
+              "fanHype": 2,
+              "addFlags": [
+                "ref_sympathetic"
+              ]
             }
           },
           "cost": {
@@ -22131,7 +22169,7 @@
     "id": "ep_runner_from_deep",
     "family": "partner",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -22345,7 +22383,7 @@
     "id": "ep_empty_net_cover",
     "family": "last_man",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 20,
       "maxMinute": 90
@@ -22400,8 +22438,7 @@
             "recap": "і врятував порожні ворота з лінії.",
             "apply": {
               "duelWon": true,
-              "coachTrust": 9,
-              "fanHype": 8
+              "coachTrust": 9
             }
           },
           "cost": {
@@ -22566,7 +22603,7 @@
     "id": "ep_striker_back_to_goal",
     "family": "duel",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -23438,7 +23475,7 @@
     "id": "ep_penalty_against_edge",
     "family": "penalty",
     "phase": "defense",
-    "weight": 1,
+    "weight": 0.7,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -37855,6 +37892,807 @@
               "counterAttack": true,
               "coachTrust": -7,
               "fanHype": -3,
+              "composure": -3
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_hold_up_for_runners",
+    "family": "through",
+    "phase": "attack",
+    "weight": 1.3,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90
+    },
+    "setup": "М’яч приходить до тебе спиною до воріт, за тридцять метрів, і повз тебе з двох боків біжать свої: {winger} по бровці, {dm} у центр. Захисник дихає в спину і чекає, коли ти визначишся. Тримати м’яч тут — робота, яку не показують у нарізках.",
+    "setups": [
+      {
+        "when": {
+          "instruction": "press"
+        },
+        "text": "Гегенпресинг зламався об одну передачу, і м’яч прилетів до тебе спиною до воріт. Повз біжать двоє — {winger} по бровці, {dm} у центр, — а їхня лінія ще розвертається. Секунда, поки вони не встигли."
+      },
+      {
+        "when": {
+          "score": "trailing",
+          "minMinute": 70
+        },
+        "text": "Ми програємо, часу мало, і всі вже біжать уперед: {winger} по бровці, {dm} у центр. М’яч у тебе спиною до воріт, захисник впритул. Якщо віддати рано — вони в офсайді; якщо пізно — їх накриють."
+      },
+      {
+        "when": {},
+        "text": "Ти приймаєш спиною до воріт на чужій половині, і повз тебе йдуть двоє: {winger} широко, {dm} усередину. Тримати м’яч спиною — те, за що не плескають, і те, з чого починається половина голів."
+      }
+    ],
+    "options": [
+      {
+        "id": "release_wide_early",
+        "label": "Віддати {winger.dat} одразу, у бровку",
+        "past": "відпускав {winger.gen} у бровку першим дотиком",
+        "attribute": "passing",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": 1,
+        "staminaCost": 4,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "team",
+          "line": "{winger} уже біжить. Найпростіше рішення тут і найшвидше — це одне й те саме."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти відпускаєш у дотик, не розвертаючись: {winger} отримує на швидкості, і фланг перед ним порожній. Простріл із лицьової, {striker} замикає в дотик.",
+            "recap": "і відпустив {winger.gen} у бровку — простріл під замикання {striker.gen}.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 7,
+              "addFlags": [
+                "partner_trusts"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти відпускаєш вчасно, але трохи сильно — {winger} дотягується на самій бровці й вибиває за лицьову. Кутовий наш, ноги цілі, задум правильний.",
+            "recap": "і відпустив {winger.gen} у бровку — м’яч на лицьовій, кутовий.",
+            "apply": {
+              "corner": true,
+              "coachTrust": 4,
+              "fanHype": 3
+            }
+          },
+          "fail": {
+            "text": "Ти віддаєш у бровку, а {winger} у цю секунду вирішує зрізати всередину. М’яч котиться туди, де щойно був він, і зупиняється сам.",
+            "recap": "і відпустив у бровку, коли {winger} уже йшов усередину.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Пас іде в бровку раніше, ніж ти встиг подивитися: там їхній латераль, і він везе м’яч уперед, поки вся наша півзахисна лінія стоїть вище за нього.",
+            "recap": "і відпустив у бровку — перехоплення й контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -3,
+              "composure": -3
+            }
+          }
+        }
+      },
+      {
+        "id": "hold_and_wait_second",
+        "label": "Тримати корпусом — чекати другого",
+        "past": "тримав м’яч корпусом і чекав другого",
+        "attribute": "strength",
+        "basePosition": "risky",
+        "effect": "standard",
+        "difficulty": 1,
+        "staminaCost": 7,
+        "goals": {
+          "team": 2,
+          "personal": 1
+        },
+        "voice": {
+          "who": "body",
+          "line": "Він тисне всією вагою. Три секунди ти витримаєш, і за ці три секунди їх стане менше."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти тримаєш м’яч спиною, приймаєш його вагу на себе — і відпускаєш рівно тоді, коли {dm} уже в русі повз тебе. Пас під ногу, і він виходить у вільний коридор, який відкрився, поки ти терпів.",
+            "recap": "і дотримав м’яч до другого — {dm} пішов у вільний коридор.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 8,
+              "fanHype": 5,
+              "addFlags": [
+                "partner_trusts"
+              ],
+              "followUp": "ep_edge_of_box",
+              "followUpElse": {
+                "fanHype": 3,
+                "composure": 2
+              }
+            }
+          },
+          "cost": {
+            "text": "Ти тримаєш, і тебе зрештою збивають — інакше було не зупинити. Фол на чужій половині, плече горить, а їхня лінія вже розтягнута.",
+            "recap": "і дотримав м’яч до фолу — штрафний на чужій половині.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 5,
+              "fanHype": 4,
+              "stamina": -2
+            }
+          },
+          "fail": {
+            "text": "Ти тримаєш на секунду довше, ніж можна, — і обидва добігли туди, де їх уже чекають. Доводиться відкочувати назад, на {cb.gen}, і починати спочатку.",
+            "recap": "і дотримав м’яч довше, ніж треба, — атаку почали спочатку.",
+            "apply": {
+              "coachTrust": -2,
+              "composure": -2,
+              "stamina": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти тримаєш спиною, і другий заходить збоку — м’яч вибивають у тебе з-під ноги вперед, на їхнього форварда. Ти лишаєшся стояти спиною до гри, у якій уже біжать в інший бік.",
+            "recap": "і не дотримав м’яч — вибили з-під ноги, контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -3,
+              "composure": -4
+            }
+          }
+        }
+      },
+      {
+        "id": "turn_and_drive_center",
+        "label": "Розвернутися і йти в центр самому",
+        "past": "розвертався і йшов у центр сам",
+        "attribute": "dribbling",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 8,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Двоє біжать, щоб ти віддав. А можна не віддавати."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти розвертаєшся через плече, і захисник лишається позаду — він біг за тими двома. Попереду двадцять метрів і жодного тіла: ти доводиш м’яч до дуги і б’єш під дальню стійку.",
+            "recap": "і розвернувся в центр сам — гол з дуги під дальню.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 6,
+              "fanHype": 15
+            }
+          },
+          "cost": {
+            "text": "Розворот виходить, ти йдеш у центр — і тебе зустрічають фолом за мить до штрафного. Штрафний у зручній точці, і трибуни встають раніше, ніж свисток.",
+            "recap": "і пішов у центр сам — фол перед штрафним.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 3,
+              "fanHype": 8,
+              "stamina": -2,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "fanHype": 2
+              }
+            }
+          },
+          "fail": {
+            "text": "Ти розвертаєшся, а він цього й чекав: стоїть щільно, і розворот упирається в його стегно. М’яч виходить в аут, обидва твої партнери дивляться на тебе.",
+            "recap": "і розвернувся в центр — уперся в захисника, аут.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -4,
+              "composure": -3,
+              "addFlags": [
+                "partner_annoyed"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти розвертаєшся в центр, і м’яч забирають одразу — у зоні, де за твоєю спиною немає нікого, бо обидва пішли вперед. Три передачі, і вони вже у нашій третині.",
+            "recap": "і розвернувся в центр — втрата в центрі, контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -8,
+              "fanHype": -3,
+              "composure": -4
+            }
+          }
+        }
+      },
+      {
+        "id": "lay_back_to_dm",
+        "label": "Скинути назад під темп",
+        "past": "скидав назад під темп",
+        "attribute": "first_touch",
+        "basePosition": "controlled",
+        "effect": "limited",
+        "difficulty": -2,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Ніхто не вимагає гола з цієї точки. Віддай назад — і атака лишиться живою."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти скидаєш у дотик назад, і той, хто приймає, бачить усе поле, якого не бачив ти. Перевід на вільний фланг, і атака починається заново — тільки на двадцять метрів вище.",
+            "recap": "і скинув назад під темп — атака пішла з вільного флангу.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 7,
+              "composure": 3
+            }
+          },
+          "cost": {
+            "text": "Скидка виходить трохи за спину, і приймати доводиться в розвороті, під тиском. М’яч наш, але темп загубився, і їхні встигли повернутися всі.",
+            "recap": "і скинув назад — темп загубився, вони повернулися.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 3,
+              "composure": 2
+            }
+          },
+          "fail": {
+            "text": "Ти скидаєш назад, а там нікого: обидва пішли вперед, і за тобою порожньо на двадцять метрів. М’яч котиться в нікуди, і за ним біжать їхні.",
+            "recap": "і скинув назад, де вже нікого не було.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Скидка йде просто на їхнього опорника, який тільки цього й чекав. Він розвертається з м’ячем у центрі, а наша лінія ще біжить уперед, спиною до нього.",
+            "recap": "і скинув назад — просто на їхнього опорника, контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -2,
+              "composure": -3
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_wall_in_box",
+    "family": "edge_shot",
+    "phase": "attack",
+    "weight": 1.3,
+    "requires": {
+      "minMinute": 15,
+      "maxMinute": 90
+    },
+    "setup": "Ти заходиш у штрафний з м’ячем, і {partner} з’являється збоку — на пів кроку попереду, спиною до воріт. Стінка в штрафному триває півтори секунди і закінчується або ударом, або нічим: захисники тут не встигають розвернутися двічі.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "partner_bonded"
+          ]
+        },
+        "text": "Ти заходиш у штрафний, і {partner} уже там, куди ти дивишся, — він з’явився раніше, ніж ти вирішив. Стінка в штрафному триває півтори секунди, і ви обидва знаєте, чим вона має закінчитися."
+      },
+      {
+        "when": {
+          "strength": "strong"
+        },
+        "text": "Штрафний сильнішого суперника: тут щільно, і місця рівно на один дотик. {partner} з’являється збоку, спиною до воріт. Далі або удар, або їхній захисник розвертається — і тоді нічого."
+      },
+      {
+        "when": {},
+        "text": "Ти в штрафному з м’ячем, {partner} відкривається збоку на пів кроку попереду. Стінка тут коштує дорожче, ніж на своїй половині: помилишся — і момент закінчився, не почавшись."
+      }
+    ],
+    "options": [
+      {
+        "id": "wall_and_go",
+        "label": "Стінка — віддати і йти під удар",
+        "past": "грав стінку з {partner.ins} у штрафному",
+        "attribute": "first_touch",
+        "basePosition": "risky",
+        "effect": "standard",
+        "difficulty": 1,
+        "staminaCost": 6,
+        "goals": {
+          "team": 2,
+          "personal": 2
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "Він спиною до воріт і не буде розвертатися. Значить, чекає, що ти підеш далі."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти віддаєш у дотик і рушаєш одразу — {partner} повертає м’яч п’ятою собі за спину, туди, де ти вже є. Перед тобою воротар і чотири метри.",
+            "recap": "і зіграв стінку з {partner.ins} — вийшов на удар у штрафному.",
+            "apply": {
+              "fanHype": 8,
+              "composure": 2,
+              "addFlags": [
+                "partner_trusts"
+              ],
+              "followUp": "fin_shot",
+              "followUpElse": {
+                "keyPass": true,
+                "fanHype": 4
+              }
+            }
+          },
+          "cost": {
+            "text": "Стінка проходить, але повернення виходить під незручну ногу, і замість удару ти встигаєш лише підставити стопу. М’яч летить у захисника, від нього — за лицьову.",
+            "recap": "і зіграв стінку — м’яч від захисника на кутовий.",
+            "apply": {
+              "corner": true,
+              "fanHype": 5,
+              "coachTrust": 3,
+              "followUp": "ep_corner_delivery",
+              "followUpElse": {
+                "fanHype": 2
+              }
+            }
+          },
+          "fail": {
+            "text": "Ти віддаєш і біжиш, а {partner} тримає м’яч на пів секунди довше — рівно настільки, щоб їхній центральний устиг повернутися. Стінка перетворюється на пас у нікуди.",
+            "recap": "і зіграв стінку, яка розсипалася на другому дотику.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Пас у стінку читає їхній опорник — він виходить на нього першим і виносить м’яч через увесь центр. Ми всі в їхньому штрафному, і це тепер наша проблема.",
+            "recap": "і зіграв стінку — пас перехопили в штрафному.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -5,
+              "fanHype": -2,
+              "composure": -3
+            }
+          }
+        }
+      },
+      {
+        "id": "shoot_now_myself",
+        "label": "Не віддавати — бити зараз",
+        "past": "бив сам, не віддаючи",
+        "attribute": "finishing",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 5,
+        "goals": {
+          "team": 0,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Ти в штрафному з м’ячем. Усе інше — деталі."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти б’єш, не піднімаючи голови, — з-під захисника, у ближній кут, туди, куди воротар не чекає удару з такої позиції. Сітка гуде зсередини.",
+            "recap": "і вдарив сам із штрафного — гол у ближній.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 5,
+              "fanHype": 16
+            },
+            "crit": {
+              "text": "Ти б’єш одразу, і м’яч іде туди, куди в цій ситуації не б’є ніхто: під дальню стійку, повз двох захисників і повз воротаря, який рушив на пів кроку не в той бік.",
+              "recap": "і вдарив сам — гол під дальню повз усіх.",
+              "apply": {
+                "goal": true,
+                "coachTrust": 7,
+                "fanHype": 24
+              }
+            }
+          },
+          "cost": {
+            "text": "Удар виходить, але захисник встигає підставити гомілку — м’яч злітає над поперечиною. Трибуни видихають, {partner} розводить руками: він був вільний.",
+            "recap": "і вдарив сам — блок і м’яч над поперечиною.",
+            "apply": {
+              "fanHype": 4,
+              "composure": -2,
+              "addFlags": [
+                "partner_annoyed"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Ти б’єш поспіхом, з-під себе, і м’яч іде в бік кутового прапорця. {partner} стояв вільний за метр від тебе і дивиться на тебе довше, ніж треба.",
+            "recap": "і вдарив сам — мимо, коли поруч був вільний {partner}.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -5,
+              "fanHype": -2,
+              "addFlags": [
+                "partner_annoyed"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Удар зривається з ноги й летить у захисника, а від нього — у поле, де вже нікого з наших. Їхній вінгер приймає м’яч у центрі й біжить у наш бік без опору.",
+            "recap": "і вдарив сам — зріз у захисника й контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -7,
+              "fanHype": -3,
+              "composure": -4,
+              "addFlags": [
+                "partner_annoyed"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "stop_and_wait_box",
+        "label": "Зупинити м’яч і почекати",
+        "past": "зупиняв м’яч у штрафному і чекав",
+        "attribute": "composure",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": -1,
+        "staminaCost": 4,
+        "goals": {
+          "team": 2,
+          "personal": 1
+        },
+        "voice": {
+          "who": "composure",
+          "line": "У штрафному швидше не означає краще. Зупини — і хай вони вирішують першими."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти ставиш підошву на м’яч і завмираєш. Двоє захисників, які летіли в підкат, зупиняються теж — і в цю секунду {striker} відкривається на ближній. Пас у дотик, і він б’є з трьох метрів.",
+            "recap": "і зупинив м’яч у штрафному — пас {striker.dat} на ближню.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
+            }
+          },
+          "cost": {
+            "text": "Ти зупиняєш м’яч, вони теж зупиняються — і другий заходить збоку. Доводиться відкочувати на дугу, під удар {dm.gen}: той б’є, воротар відбиває на кутовий.",
+            "recap": "і зупинив м’яч у штрафному — відкат на дугу, кутовий.",
+            "apply": {
+              "corner": true,
+              "keyPass": true,
+              "coachTrust": 4
+            }
+          },
+          "fail": {
+            "text": "Ти зупиняєш м’яч, і момент зупиняється разом із ним: вони встигають зімкнутися втрьох, а всі наші вже стоять під опікою. Доводиться котити назад.",
+            "recap": "і зупинив м’яч у штрафному — момент зупинився теж.",
+            "apply": {
+              "coachTrust": -3,
+              "fanHype": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти ставиш ногу на м’яч, і саме в цю секунду ззаду приїжджає їхній центральний — не по м’ячу. Свистка немає: арбітр вважає, що ти зупинився сам.",
+            "recap": "і зупинив м’яч у штрафному — відібрали ззаду, свистка немає.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -5,
+              "fanHype": -3,
+              "composure": -4
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "ep_cross_first_time",
+    "family": "wing",
+    "phase": "attack",
+    "weight": 1.3,
+    "requires": {
+      "minMinute": 10,
+      "maxMinute": 90
+    },
+    "setup": "М’яч котиться до тебе в півфланг, і їхня лінія ще відходить спиною до своїх воріт — вони не встигли розвернутися. Подача в дотик зараз застане їх у русі назад; будь-який зайвий дотик — і вони вже стоятимуть обличчям до м’яча.",
+    "setups": [
+      {
+        "when": {
+          "weather": "wind"
+        },
+        "text": "Вітер у спину, м’яч котиться в півфланг, їхня лінія ще відходить спиною. Подача в дотик при такому вітрі або перелетить усіх, або впаде саме туди, куди треба, — і ніхто, включно з тобою, не знає заздалегідь."
+      },
+      {
+        "when": {
+          "flags": [
+            "them_target"
+          ]
+        },
+        "text": "М’яч котиться до тебе в півфланг. У їхній штрафній найвищий — їхній же захисник, і на подачі він виграє все, що летить високо. Лінія ще відходить спиною: низька передача зараз проходить під нею."
+      },
+      {
+        "when": {},
+        "text": "М’яч котиться в півфланг, ти на ходу, а вони ще спиною — відходять до своєї штрафної. Такий момент живе рівно один дотик."
+      }
+    ],
+    "options": [
+      {
+        "id": "whip_it_first_time",
+        "label": "Подати в дотик, поки вони спиною",
+        "past": "подавав у дотик, поки вони відходили",
+        "attribute": "passing",
+        "basePosition": "risky",
+        "effect": "standard",
+        "difficulty": 1,
+        "staminaCost": 5,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "vision",
+          "line": "Вони спиною. Це триває один дотик, і цей дотик — зараз."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти подаєш у дотик, не зупиняючи м’яч, — низом, під лінію, що відходить. {striker} приходить на ближню раніше за свого захисника і замикає з трьох метрів.",
+            "recap": "і подав у дотик під лінію — {striker} замкнув на ближній.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 10
+            }
+          },
+          "cost": {
+            "text": "Подача в дотик виходить трохи високою: {cb} виграє верх, але м’яч від його голови летить на дугу, і там нікого. Кутовий не заробили, зате їхня лінія тепер розтягнута.",
+            "recap": "і подав у дотик — верх виграли, підбір нічий.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 4,
+              "fanHype": 3
+            }
+          },
+          "fail": {
+            "text": "Ти б’єш по м’ячу, що котиться, і подача зрізається з підйому — м’яч летить за лицьову, високо. Стадіон видихає одним звуком, і цей звук не про тебе добре.",
+            "recap": "і подав у дотик — зріз за лицьову.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "fanHype": -3
+            }
+          },
+          "badFail": {
+            "text": "Подача зрізається просто в їхнього латераля, і той б’є одразу вперед, у вільну зону за нашою лінією. Ми всі вище м’яча, і бігти назад доведеться довго.",
+            "recap": "і подав у дотик — зріз на суперника, контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -3,
+              "composure": -3
+            }
+          }
+        }
+      },
+      {
+        "id": "take_a_touch_look",
+        "label": "Один дотик — і подивитися",
+        "past": "робив дотик і дивився",
+        "attribute": "vision",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": 0,
+        "staminaCost": 4,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "vision",
+          "line": "Один дотик коштує пів секунди. Іноді за пів секунди відкривається дальня."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти робиш дотик під себе і встигаєш побачити те, чого не побачив би на ходу: {partner} виходить на дальню, куди ніхто не дивиться. Подача туди, і він скидає під удар {dm.dat}.",
+            "recap": "і зробив дотик — побачив {partner.gen} на дальній.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 7,
+              "fanHype": 4,
+              "addFlags": [
+                "partner_trusts"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Дотик коштує пів секунди, і за ці пів секунди їхня лінія розвертається обличчям до м’яча. Подавати вже нема куди — ти відкочуєш назад, атака починається заново.",
+            "recap": "і зробив дотик — момент закрився, відкат назад.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 3,
+              "composure": 2
+            }
+          },
+          "fail": {
+            "text": "Дотик виходить довгим, м’яч тікає на метр далі, ніж треба, — і подавати доводиться вже під тиском, абияк. М’яч знаходить чужу голову.",
+            "recap": "і зробив дотик — м’яч утік, подача пішла нікому.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Ти дивишся в штрафний, а їхній вінгер дивиться на м’яч: він приходить ззаду, забирає без боротьби й виходить із ним у нашу половину. Ти залишаєшся стояти, дивлячись у порожній штрафний.",
+            "recap": "і зробив дотик — м’яч забрали ззаду, контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -2,
+              "composure": -4
+            }
+          }
+        }
+      },
+      {
+        "id": "cut_inside_shot",
+        "label": "Зрізати всередину під удар",
+        "past": "зрізав усередину під удар",
+        "attribute": "dribbling",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 2,
+        "staminaCost": 7,
+        "goals": {
+          "team": 0,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "Вони всі дивляться в штрафний і чекають подачі. Ніхто не чекає, що ти підеш усередину."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Замість подачі ти зрізаєш усередину — їхній латераль летить блокувати те, чого не буде. Два кроки, і ти б’єш із-за меж штрафного в дальню дев’ятку.",
+            "recap": "і зрізав усередину — гол у дальню дев’ятку.",
+            "apply": {
+              "goal": true,
+              "coachTrust": 6,
+              "fanHype": 18
+            }
+          },
+          "cost": {
+            "text": "Ти зрізаєш усередину, і другий захисник зустрічає тебе фолом — інакше було не зупинити. Штрафний біля дуги, і трибуни вже підводяться.",
+            "recap": "і зрізав усередину — фол біля дуги.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 3,
+              "fanHype": 8,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "fanHype": 3
+              }
+            }
+          },
+          "fail": {
+            "text": "Ти зрізаєш усередину, а він не купується — стоїть і забирає м’яч ногою, без стику. У штрафному тим часом троє наших підняли руки і дивляться на тебе.",
+            "recap": "і зрізав усередину — м’яч забрали без стику.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -5,
+              "composure": -3,
+              "addFlags": [
+                "partner_annoyed"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти зрізаєш у центр, і м’яч вибивають одразу вперед — у зону, з якої ти щойно пішов. Їхній вінгер приймає його на швидкості, і за ним нікого.",
+            "recap": "і зрізав усередину — втрата й контратака з твоєї зони.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -7,
+              "fanHype": -3,
+              "composure": -4
+            }
+          }
+        }
+      },
+      {
+        "id": "pull_back_to_edge",
+        "label": "Відкотити на дугу, під удар {dm.dat}",
+        "past": "відкочував на дугу під удар {dm.gen}",
+        "attribute": "passing",
+        "basePosition": "controlled",
+        "effect": "limited",
+        "difficulty": -2,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "team",
+          "line": "{dm} уже розганяється до дуги. Йому туди й треба."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти відкочуєш низом на дугу, і {dm} б’є з ходу, без обробки. Воротар відбиває перед собою, у натовп, і там уже всі — і наші, і їхні.",
+            "recap": "і відкотив на дугу — удар {dm.gen} і відскок у натовп.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 6,
+              "followUp": "ep_rebound_follow_up",
+              "followUpElse": {
+                "corner": true,
+                "fanHype": 3
+              }
+            }
+          },
+          "cost": {
+            "text": "Відкат виходить під незручну ногу: {dm} б’є з розвороту, високо. М’яч над поперечиною, зате їхня лінія тепер знає, що в нас є удар із дуги.",
+            "recap": "і відкотив на дугу — удар {dm.gen} над поперечиною.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 4,
+              "composure": 2
+            }
+          },
+          "fail": {
+            "text": "Ти відкочуєш на дугу, а там уже їхній опорник: він приймає м’яч спокійно, як подарунок, і котить його вбік. Атака закінчилася твоїм правильним рішенням.",
+            "recap": "і відкотив на дугу — там уже був їхній опорник.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "composure": -2
+            }
+          },
+          "badFail": {
+            "text": "Відкат іде м’яко й повільно, і їхній опорник виходить на нього на швидкості. Він забирає м’яч і віддає вперед одним дотиком — у зону, яку ми залишили всі разом.",
+            "recap": "і відкотив на дугу — перехоплення й контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6,
+              "fanHype": -2,
               "composure": -3
             }
           }

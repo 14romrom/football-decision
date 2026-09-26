@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { LootItem, WeekOffer, WeekPick, WeekScene, WeekSceneOption } from '../engine/week';
 import { LootSheet } from './LootSheet';
 import { VOICE_ATTRS, sceneFor, sceneOptionsFor } from '../engine/week';
@@ -67,6 +67,16 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
   const [phase, setPhase] = useState<Phase>(anchor ? { p: 'anchor', scene: anchor } : { p: 'pick' });
   // Кадр якоря: хук на верхньому рівні, бо `anchorSheet` викликається лише в одній фазі.
   const anchorShot = useShot(anchor?.id);
+
+  // Нова зона контенту має бути видно без скролу (правило 26.09): лист вечора вписаний у свій день,
+  // і на третьому дні він опинявся нижче екрана. Зошит лишається, але екран сам приходить до листа.
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const openSheet = phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'summary';
+  useEffect(() => {
+    if (!openSheet || !sheetRef.current) return;
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    sheetRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+  }, [openSheet, phase.p, day]);
   const [anchorPick, setAnchorPick] = useState<{ id: string; option: string } | undefined>(undefined);
   const [picks, setPicks] = useState<WeekPick[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -224,7 +234,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
       const { scene, chosen } = phase;
       const visible = sceneOptionsFor(scene, sees);
       return (
-        <div className="moment nb-sheet"><div className="scene">
+        <div className="moment nb-sheet" ref={sheetRef}><div className="scene">
           <span className="minute-tab">{DAY[d].toUpperCase()} · ПІЗНО</span>
           <p className="setup">{scene.setup}</p>
           {chosen ? (
@@ -264,7 +274,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
       );
     }
     return (
-      <div className="moment nb-sheet"><div className="scene">
+      <div className="moment nb-sheet" ref={sheetRef}><div className="scene">
         <span className="minute-tab">{DAY[d].toUpperCase()} · ВЕЧІР</span>
         <p className="setup">{out.text}</p>
         <p className={`nb-aside voice-${offer.activity.voice}`}><b>{voice}</b>{out.effect.note}</p>
@@ -293,7 +303,6 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
 
   return (
     <div className="result week">
-      <div className="card-minute">тиждень між матчами{month ? ` · ${month}` : ''}</div>
       <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'summary' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>

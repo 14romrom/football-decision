@@ -5,7 +5,7 @@ import { VOICE_ATTRS } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
 import { LootSheet } from './LootSheet';
 import type { WeekResult } from './WeekScreen';
-import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from '../engine/types';
+import type { VoiceKey } from '../engine/types';
 import { Film } from './Film';
 
 // Пролог, відпустка, лист травня і фінал — листи оповідача на весь екран (26.09, плейтест на телефоні).
@@ -51,17 +51,15 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
   const [i, setI] = useState(0);
   const [phase, setPhase] = useState<Phase>({ p: 'sheet', page: 0 });
   const [picks, setPicks] = useState<ProloguePick[]>([]);
-  const [attr, setAttr] = useState<Attribute | null>(null);
-  const [open, setOpen] = useState<string | null>(null);   // варіант, у якого розкрито вибір атрибута
   const last = i >= spreads.length - 1;
   // Кадр розвороту: хук — до будь-якого return, бо фази міняються.
   const { mark, plate } = useShot(spreads[i]?.id);
 
   const choose = (option: PrologueOption) => {
     const spread = spreads[i];
-    const pick: ProloguePick = { spread: spread.id, option: option.id, ...(option.point ? { attr: attr ?? VOICE_ATTRS[option.voice][0] } : {}) };
+    const attrs = VOICE_ATTRS[option.voice];
+    const pick: ProloguePick = { spread: spread.id, option: option.id, ...(option.point ? { attr: attrs[Math.floor(Math.random() * attrs.length)] } : {}) };
     setPicks([...picks, pick]);
-    setAttr(null); setOpen(null);
     // Розворот закінчується розв’язкою — реакцією співрозмовника і фактом «що далі», — а не паузою.
     setPhase({ p: 'reply', option });
   };
@@ -143,18 +141,11 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
               <ol className="choices">
                 {options.map((o, k) => (
                   <li key={o.id}>
-                    <button className={`choice choice-insight voice-${o.voice}`} onClick={() => (o.point === 'choice' && open !== o.id ? setOpen(o.id) : choose(o))}>
+                    <button className={`choice choice-insight voice-${o.voice}`} onClick={() => choose(o)}>
                       <span className="choice-num">{k + 1}</span>
                       <span className="choice-text">
                         {o.say}
                         <span className="choice-hint"><i className={`origin voice-${o.voice}`}>{VOICE_LABEL[o.voice]}</i> {o.line}</span>
-                        {o.point === 'choice' && open === o.id && (
-                          <span className="nb-train" onClick={(e) => e.stopPropagation()}>
-                            {VOICE_ATTRS[o.voice].map((a) => (
-                              <em key={a} className={(attr ?? VOICE_ATTRS[o.voice][0]) === a ? 'on' : ''} onClick={() => { setAttr(a); choose(o); }}>{ATTRIBUTE_LABEL[a]}</em>
-                            ))}
-                          </span>
-                        )}
                       </span>
                       <span className="choice-go" aria-hidden="true">›</span>
                     </button>

@@ -588,6 +588,8 @@ html.reduce-motion .doodle svg { filter: none; }
 /* Откуда вариант: «відкрив Бачення» / «з тижня» — связь кнопки с голосом или неделей, не с удачей. */
 .origin { display: inline-block; margin-left: 8px; font-style: normal; font-weight: 600; font-size: 11px; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,0.08); vertical-align: middle; }
 .origin.origin-week { color: var(--accent); }
+/* «Вивчили» (M27.1): варіант, який уже приносив чисті ісходи, — суперник його знає, складність вища. */
+.origin.origin-studied { color: var(--bad); }
 .origin.voice-vision { color: #c9a5ff; } .origin.voice-instinct { color: #ffd166; } .origin.voice-body { color: #ff8a8a; }
 .origin.voice-composure { color: #8fb8ff; } .origin.voice-ego { color: #f0a35e; } .origin.voice-team { color: #6ee7a0; }
 .option-insight { border-left: 3px solid #444b5c; }

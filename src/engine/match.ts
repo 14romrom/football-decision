@@ -1,7 +1,7 @@
 // Машина состояний матча: расписание эпизодов, лента между ними, применение
 // исходов и сборка итога. React сюда не заглядывает — UI только вызывает функции.
 
-import { BALANCE, COMPOSURE_CALM, MOMENTUM_BY_BOLDNESS, MOMENTUM_BY_TIER, MOMENTUM_SPEND } from './balance';
+import { BALANCE, studiedStep, COMPOSURE_CALM, MOMENTUM_BY_BOLDNESS, MOMENTUM_BY_TIER, MOMENTUM_SPEND } from './balance';
 import { attrMod } from './context';
 import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
 import { pickFeedLine, type FeedKind } from './feed';
@@ -191,6 +191,8 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
  *  каждого матча, и травма/карточка прошлого матча начинают следующий с недостачей.
  *  См. engine/career.ts:consumeStartPenalty — там же и обоснование чисел. */
 export type Carryover = {
+  /** «Тебе вивчили» (M27.1): лічильники чистих ісходів за варіантом із `career.optionCleans`. */
+  studied?: Record<string, number>;
   coachTrust?: number; staminaPenalty?: number; coachTrustPenalty?: number;
   /** Флаги-последствия из прошлого матча (career.ts:carriedFlags) — партнёр помнит пас,
    *  тренер — фланг. Реактивный эпизод скажет «ще минулого матчу», см. fillTrigger. */
@@ -261,6 +263,7 @@ export function createMatch(
     stamina: clamp(start.stamina - (carryover.staminaPenalty ?? 0) + (carryover.startDelta?.stamina ?? 0), 0, 100),
     composureNow: clamp(start.composure + (carryover.startDelta?.composure ?? 0), 0, 100),
     ...(carryover.arc ? { arc: carryover.arc } : {}),
+    ...(carryover.studied ? { studied: carryover.studied } : {}),
     coachTrust: clamp((carryover.coachTrust ?? BALANCE.coachTrustStart) - (carryover.coachTrustPenalty ?? 0), 0, 100),
     // Трибуни пам'ятають: база — настрій з минулого матчу, поле (дім/виїзд) додає своє поверх.
     fanHype: clamp(start.fanHype - BALANCE.fanHypeStart + (carryover.fanHype ?? BALANCE.fanHypeStart) + (carryover.startDelta?.fanHype ?? 0), 0, 100),
@@ -680,7 +683,20 @@ export function availableOptions(episode: Episode, state: MatchState, player?: P
     if (r.flags && !r.flags.every((f) => state.flags.includes(f))) return false;
     if (r.notFlags && r.notFlags.some((f) => state.flags.includes(f))) return false;
     return true;
-  });
+  }).map((o) => withStudied(episode, o, state));
+}
+
+/** Скільки разів цей варіант давав чистий ісход за кар'єру (з `career.optionCleans` через `state.studied`). */
+export function studiedCleans(episode: Episode, option: EpisodeOption, state: MatchState): number {
+  return state.studied?.[episode.id + '/' + option.id] ?? 0;
+}
+
+/** «Тебе вивчили» (M27.1): варіант, який уже приносив чисті ісходи, стає складнішим — одне місце на всю
+ *  гру, тож кнопка (`cleanTarget`) і кидок (`resolveOption`) бачать ту саму складність. Форма риску
+ *  не змінюється: рішення не небезпечніше, воно важче. */
+function withStudied(episode: Episode, option: EpisodeOption, state: MatchState): EpisodeOption {
+  const step = studiedStep(studiedCleans(episode, option, state));
+  return step > 0 ? { ...option, difficulty: (option.difficulty ?? 0) + step, studied: step } : option;
 }
 
 /** Что сильные голоса заметили в сцене — строки над вариантами (см. EpisodeOption.insight). */
@@ -780,6 +796,10 @@ export function applyChoice(
   if (res.tier === 'clean') {
     state.cleanBy = { ...(state.cleanBy ?? {}) };
     state.cleanBy[option.attribute] = (state.cleanBy[option.attribute] ?? 0) + 1;
+    // «Тебе вивчили» (M27.1): чистий ісход цим варіантом запам'ятовується і робить його складнішим далі.
+    const key = episode.id + '/' + option.id;
+    state.cleanOptions = { ...(state.cleanOptions ?? {}) };
+    state.cleanOptions[key] = (state.cleanOptions[key] ?? 0) + 1;
   }
   // Кураж витрачається на кидок, у який він щось дав (MOMENTUM_SPEND): крок до нуля з будь-якого боку.
   const cm = BALANCE.contextMod;

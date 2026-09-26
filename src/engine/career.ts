@@ -65,6 +65,10 @@ export type Career = {
    *  Кожні BALANCE.growth.useToPoint дають +1 очко назавжди — лічильник не обнуляється,
    *  щоб «ще два до пункту» можна було показати на картці. */
   useCounts?: Partial<Record<Attribute, number>>;
+  /** «Тебе вивчили» (M27.1): скільки чистих ісходів дав кожен варіант за кар'єру, ключ
+   *  `<episodeId>/<optionId>`. Кожні STUDIED.perStep піднімають його складність (balance.ts:studiedStep);
+   *  між сезонами не обнуляється — суперники змінюються, звички ні. */
+  optionCleans?: Record<string, number>;
   /** Лист травня (M19.2) вже показано — щоб не повторювався при поверненні в меню. */
   mayDone?: boolean;
   /** Травм за текущий сезон — не больше BALANCE.injury.maxPerSeason (match.ts понижает до knock). */
@@ -306,6 +310,8 @@ export type StartPenalty = {
   facts: CarryFacts;
   /** Стан арки на цей матч (M13) — репліки, сетапи й свисток читають його через state.arc. */
   arc?: ArcStage;
+  /** «Тебе вивчили» (M27.1) — лічильники з career.optionCleans у state.studied. */
+  studied?: Record<string, number>;
   staminaPenalty: number; coachTrustPenalty: number; note?: string;
   /** Матч з лави: епізоди лише після bench.entryMinute, ноги свіжі. */
   fromBench?: boolean;
@@ -358,6 +364,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
       facts: { sentOff: career.pendingSentOff, yellows: !career.pendingSentOff && career.careerYellows >= 3, injured: staminaPenalty > 0, outOfForm: flags.some((f) => f.flag === 'out_of_form') },
       staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career), ...tiboFlags(career), ...prologueFlags(career), ...agentFlags(career)], fromBench: !!career.benched,
       arc: arcStage(career),
+      studied: career.optionCleans,
       attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,
     },
   };
@@ -402,6 +409,9 @@ export function applyMatchToCareer(
     xp,
     level,
     useCounts: growth.useCounts,
+    // «Тебе вивчили» (M27.1): чисті ісходи цього матчу за варіантами лягають у лічильник кар'єри.
+    optionCleans: Object.entries(state.cleanOptions ?? {}).reduce<Record<string, number>>(
+      (acc, [k, n]) => ({ ...acc, [k]: (acc[k] ?? 0) + n }), { ...(career.optionCleans ?? {}) }),
     attrPoints: growth.attrPoints,
     // Уровни выключены (BALANCE.growth.levels): опыт и уровень считаются, очков не дают.
     unspentPoints: (career.unspentPoints ?? 0) + (BALANCE.growth.levels ? level - career.level : 0),

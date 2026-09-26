@@ -283,6 +283,7 @@ function Game() {
         startDelta: penalty.startDelta,
         voiceStreak: penalty.voiceStreak, voiceMute: penalty.voiceMute, injuriesSeason: consumedCareer.injuriesSeason,
         arc: penalty.arc,
+        studied: penalty.studied,
         // Перший матч кар’єри — чотири фіксовані сцени з підказками (M12); далі план як завжди.
         ...(consumedCareer.matchesPlayed === 0 ? { tutorial: FIRST_MATCH_TUTORIAL } : {}),
       },

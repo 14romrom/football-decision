@@ -12,6 +12,7 @@ import endingJson from './ending.json';
 import firstmatchJson from './firstmatch.json';
 import agentJson from './agent.json';
 import espmJson from './espm.json';
+import studiedJson from './studied.json';
 import { fillNamesDeep, type Roster, type TeamRoster, type NameForms } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
@@ -96,3 +97,11 @@ export const FIRST_MATCH_TUTORIAL: Tutorial = {
 export const AGENT = agentJson as AgentContent;
 /** Колонки ESPM про Реєса за станом арки (engine/espm.ts:playerColumn). */
 export const ESPM_COLUMNS = espmJson as { column: Record<string, EspmColumn[]> };
+
+/** «Тебе вивчили» (M27.1): що Бачення помічає, коли на листі є варіант, який суперник уже знає.
+ *  Наблюдение, не совет — как строки insight; без «!» (тест). */
+export const STUDIED_LINES = studiedJson as string[];
+
+/** Рядок для листа: один на сцену, за хвилиною — щоб на тому самому листі він не стрибав.
+ *  Живе тут, а не в екрані: у `src/ui/*` оператор остачі заборонений тестом «никаких процентов». */
+export const studiedLine = (minute: number): string => STUDIED_LINES[Math.abs(minute) % STUDIED_LINES.length];

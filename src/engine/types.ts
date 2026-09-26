@@ -114,6 +114,12 @@ export type VoiceTrace = {
 export type MatchState = {
   /** Чисті ісходи за атрибутом у цьому матчі (M18.4): з них росте картка — `career.useCounts`. */
   cleanBy?: Partial<Record<Attribute, number>>;
+  /** Чисті ісходи за варіантом у цьому матчі (M27.1), ключ `<episodeId>/<optionId>`: з них росте
+   *  `career.optionCleans` — «тебе вивчили». */
+  cleanOptions?: Record<string, number>;
+  /** Скільки чистих ісходів цей варіант дав за кар’єру (принесено з `career.optionCleans`):
+   *  `availableOptions` робить вивчений варіант складнішим. Порожньо в прогоні й тестах. */
+  studied?: Record<string, number>;
   minute: number;
   scoreUs: number;
   scoreThem: number;
@@ -177,6 +183,9 @@ export type Outcome = {
 };
 
 export type EpisodeOption = {
+  /** Проставляется движком (`availableOptions`), не контентом: на сколько подняла складність
+   *  «изученность» варианта (M27.1). Нужен для чипа «вивчили» на кнопке. */
+  studied?: number;
   id: string;
   label: string;
   /** Тот же поступок в прошедшем времени: «пошёл в обводку». Для пересказа. */

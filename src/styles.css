@@ -515,7 +515,9 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .nb-empty { height: 56px; }
 /* Лист вечора — лист моменту, вписаний під день; зошит навколо гасне (як стрічка під листом у матчі). */
 .nb-book.dimmed::after { content: ''; position: absolute; inset: 0; background: rgba(16,16,20,.5); z-index: 1; pointer-events: none; }
-.nb-sheet { position: relative; z-index: 2; margin: 6px -6px 12px -36px; }
+/* Лист оповідача виходить за поля зошита на всю ширину екрана (26.09, плейтест на телефоні:
+   у колонці 291 px з 375 кадр і текст стискалися, і сцена читалася як врізка, а не як подія). */
+.nb-sheet, .moment.nb-sheet { position: relative; z-index: 2; margin: 6px -14px 12px -62px; }
 .nb-sheet .scene { padding-bottom: 2px; }
 .nb-intro { position: relative; z-index: 1; margin: 2px 0 10px 44px; font-family: var(--font-hand); font-size: 16px; color: var(--pen); }
 .nb-aside { margin: -4px 0 10px; font-size: 14px; color: var(--muted); font-style: italic; }
@@ -729,6 +731,12 @@ html.reduce-motion .doodle svg { filter: none; }
 .chapter-ladder i.done { background: #5a4a44; }
 .chapter-ladder i.here { background: var(--bad); width: 40px; }
 
+/* Якір — подія на весь екран (26.09, плейтест на телефоні): лист сам по собі, як сцена в матчі, а не
+   колонка всередині розвороту зошита. Папір зошита тут не малюється зовсім — тиждень починається далі. */
+.week-anchor { padding-top: 20px; }
+.week-anchor .moment { margin: 14px -6px 0; }
+.week-anchor .moment .scene { padding-bottom: 14px; }
+
 /* Лист якоря (M24, 26.09, макет «Лист якоря»): рамка, ярлик, голоси й варіанти — ті самі, що в матчі;
    нових елементів інтерфейсу немає. Якір упізнається кадром на всю площу листа і червоним підписом
    капітеллю перед текстом — тим самим прийомом, що «ТІЛО — …» під логотипом на титулі.
@@ -739,14 +747,17 @@ html.reduce-motion .doodle svg { filter: none; }
 .head-line + .setup { padding-top: 10px; }
 /* Кадр тримає лист, текст лягає поверх нижньої частини; ярлик лишається темним, як у матчі —
    під ним кадр притемнений градієнтом, тому читається. `focus` кадру — у content/shots.json. */
-.moment.shot .shot-plate { position: absolute; inset: 0; }
+/* Кадр — верхня частина листа, а не підкладка під увесь текст: інакше на телефоні букви лягали просто
+   на картинку (плейтест 26.09). Висота йде за відступом сцени, і текст починається вже на папері. */
+.moment.shot .shot-plate { position: absolute; left: 0; right: 0; top: 0; height: calc(56vw + 74px); }
+@media (min-width: 520px) { .moment.shot .shot-plate { height: 354px; } }
 .moment.shot .shot-plate img { display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(0.8) contrast(1.02) brightness(0.88); }
-.moment.shot .shot-plate::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,11,13,0.42) 0%, rgba(11,11,13,0.12) 20%, rgba(11,11,13,0.86) 56%, rgba(11,11,13,0.98) 100%); }
-.moment.shot .scene { position: relative; z-index: 1; padding-top: 190px; }
-.moment.shot .setup { text-shadow: 0 1px 14px rgba(0,0,0,0.9); }
+.moment.shot .shot-plate::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,11,13,0.4) 0%, rgba(11,11,13,0.06) 26%, rgba(22,22,26,0.55) 62%, rgba(22,22,26,0.94) 86%, #16161a 100%); }
+.moment.shot .scene { position: relative; z-index: 1; padding-top: calc(56vw + 26px); }
+.moment.shot .setup, .moment.shot .head-line b { text-shadow: 0 1px 14px rgba(0,0,0,0.9); }
 .moment.shot .nb-chosen, .moment.shot .nb-aside { position: relative; z-index: 1; }
 .nb-day-anchor { padding-top: 8px; }
-@media (max-width: 420px) { .moment.shot .scene { padding-top: 150px; } }
+@media (min-width: 520px) { .moment.shot .scene { padding-top: 306px; } }
 @media (prefers-reduced-motion: reduce) { .moment.shot .shot-plate img { transition: none; } }
 
 .tape.dimmed .tape-line { color: var(--muted); } .tape.dimmed .tape-line.age-2, .tape.dimmed .tape-line.age-3 { color: var(--faint); }

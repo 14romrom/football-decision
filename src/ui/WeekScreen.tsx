@@ -171,7 +171,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
     const visible = sceneOptionsFor(scene, sees);
     const shot = shotFor(scene.id);
     return (
-      <div className={`moment nb-sheet${shot ? ' shot' : ''}`}>
+      <div className={`moment${shot ? ' shot' : ''}`}>
         {shot && (
           <div className="shot-plate">
             <img src={shot.src} alt="" decoding="async" style={{ objectPosition: shot.focus }} />
@@ -282,10 +282,22 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
     return <button className="primary menu-primary" onClick={confirmDay}>{selected ? 'Так і зробити' : offers.length ? 'Нічого не робити сьогодні' : 'Далі'}</button>;
   })();
 
+  // Якір — подія на весь екран (26.09, плейтест на телефоні: усередині зошита лист стискався в
+  // вузьку колонку, і кадр губився). Той самий принцип, що сцена в матчі: лист сам по собі, без паперу
+  // навколо. Зошит починається далі, з першого дня.
+  if (phase.p === 'anchor') {
+    return (
+      <div className="result week week-anchor">
+        <div className="card-minute">тиждень між матчами{month ? ` · ${month}` : ''}</div>
+        {anchorSheet(phase.scene, phase.chosen)}
+      </div>
+    );
+  }
+
   return (
     <div className="result week">
       <div className="card-minute">тиждень між матчами{month ? ` · ${month}` : ''}</div>
-      <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'summary' || phase.p === 'anchor' ? 'dimmed' : ''}`}>
+      <div className={`nb-book ${phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'summary' ? 'dimmed' : ''}`}>
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
@@ -294,13 +306,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
           <div className="nb-coach"><b>Тренер</b>Місто закрите. База, відео, психолог. Місто почекає.</div>
         )}
 
-        {phase.p === 'anchor' && (
-          /* Заголовок рукою над листом прибрано (M24): підпис якоря тепер усередині листа, червоною
-             капітеллю, і два заголовки поспіль читалися як помилка. */
-          <section className="nb-day nb-day-anchor">{anchorSheet(phase.scene, phase.chosen)}</section>
-        )}
         {days.map((offers, d) => {
-          if (phase.p === 'anchor') return <section key={d} className="nb-day"><h3>{DAY[d] ?? `День ${d + 1}`}</h3><div className="nb-empty" /></section>;
           if (phase.p === 'summary' || d < day) return doneDay(d, true);
           if (d > day) return <section key={d} className="nb-day"><h3>{DAY[d] ?? `День ${d + 1}`}</h3><div className="nb-empty" /></section>;
 

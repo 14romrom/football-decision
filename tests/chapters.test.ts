@@ -25,7 +25,7 @@ describe('глави й кадри якорів', () => {
   it('кадри прив’язані до реальних сцен або до майбутніх сцен M28', () => {
     const scenes = new Set(WEEK_SCENES.map((s) => s.id));
     // Чотири кадри намальовані наперед — до сцен медогляду (M28), яких у контенті ще немає.
-    const planned = new Set(['sc_night_before', 'sc_first_injury', 'sc_pitch_no_date', 'sc_medical']);
+    const planned = new Set(['sc_night_before', 'sc_pitch_no_date', 'sc_medical', 'scout']);
     for (const id of Object.keys(SHOTS)) {
       expect(scenes.has(id) || planned.has(id), `кадр ${id} нікуди не веде`).toBe(true);
     }

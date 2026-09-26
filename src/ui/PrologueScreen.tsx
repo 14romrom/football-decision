@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { sheetFor, type PrologueOption, type ProloguePick, type PrologueSpread } from '../engine/prologue';
+import { shotFor } from '../content';
 import { VOICE_ATTRS } from '../engine/week';
 import { VOICE_LABEL } from '../engine/voices';
 import { LootSheet } from './LootSheet';
@@ -122,7 +123,13 @@ export function PrologueScreen({ spreads, onFinish, onNext, header = 'тижде
             return (
               <section key={s.id} className="nb-day">
                 <h3>{s.title}</h3>
-                <div className="moment nb-sheet"><div className="scene">
+                <div className={`moment nb-sheet${shotFor(s.id) ? ' shot' : ''}`}>
+                  {shotFor(s.id) && (
+                    <div className="shot-plate">
+                      <img src={shotFor(s.id)!.src} alt="" decoding="async" style={{ objectPosition: shotFor(s.id)!.focus }} />
+                    </div>
+                  )}
+                  <div className="scene">
                   <span className="minute-tab">{s.tab.toUpperCase()}</span>
                   {(cold && s.sheetCold ? s.sheetCold : sheetFor(s, previousVoice(d))).map((t, k) => <p key={k} className="setup">{t}</p>)}
                   <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'pick' })}>{labels.open}</button>

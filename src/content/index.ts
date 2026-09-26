@@ -109,7 +109,7 @@ export const STUDIED_LINES = studiedJson as string[];
  *  Живе тут, а не в екрані: у `src/ui/*` оператор остачі заборонений тестом «никаких процентов». */
 export const studiedLine = (minute: number): string => STUDIED_LINES[Math.abs(minute) % STUDIED_LINES.length];
 
-/** Кадри якорів (M24): файл лежить у `public/img/anchors/<id>.webp` — збирає його
+/** Кадри листів оповідача (M24): файл лежить у `public/img/scenes/<id>.webp` — збирає його
  *  `npx tsx tools/optimize-images.ts` із папки `images/`. `focus` — object-position кадру: коли
  *  головне в сцені не по центру, зміщуємо, щоб його було видно на вузькому листі (рішення користувача 26.09).
  *  Немає ключа — немає кадру: лист лишається текстовим, кадру-дефолта в грі немає. */
@@ -119,5 +119,5 @@ export const CHAPTERS = chaptersJson as Chapter[];
 
 export const shotFor = (sceneId: string): { src: string; focus: string } | null => {
   const s = SHOTS[sceneId];
-  return s ? { src: `./img/anchors/${sceneId}.webp`, focus: s.focus ?? '50% 42%' } : null;
+  return s ? { src: `./img/scenes/${sceneId}.webp`, focus: s.focus ?? '50% 42%' } : null;
 };

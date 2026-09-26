@@ -14,7 +14,7 @@
   "sc_agent_call": { "focus": "50% 40%" },
   "sc_fan_confront": { "focus": "50% 45%" },
   "sc_night_before": { "focus": "50% 45%" },
-  "sc_first_injury": { "focus": "50% 30%" },
+  "scout": { "focus": "50% 34%" },
   "sc_pitch_no_date": { "focus": "50% 55%" },
   "sc_medical": { "focus": "50% 42%" }
 }

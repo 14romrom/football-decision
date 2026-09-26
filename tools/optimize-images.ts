@@ -1,4 +1,5 @@
-// Кадры якорей: из `images/` (что рисует пользователь) в `public/img/anchors/<id>.webp` (что едет в сборку).
+// Кадры листов рассказчика: из `images/` (что рисует пользователь) в `public/img/scenes/<id>.webp`.
+// Ключ — id сцены недели (`sc_*`) или разворота пролога/отпуска/финала (`scout`, `medical`…).
 // APK работает офлайн, догрузить картинку сетью нельзя, поэтому вес имеет значение: 18 кадров в JPEG —
 // почти 12 МБ, в webp — около 2 МБ при той же ширине. Ширина 1152 — как в исходниках: лист на телефоне
 // уже, но кадр режется по центру и на планшете не мылится.
@@ -9,14 +10,14 @@ import { basename, extname, join } from 'node:path';
 import sharp from 'sharp';
 
 const SRC = 'images';
-const OUT = 'public/img/anchors';
+const OUT = 'public/img/scenes';
 const WIDTH = 1152;
 const QUALITY = 72;
 
 /** Кадры сцен, которых в коде ещё нет (M28): имя файла → id будущей сцены. */
 const RENAME: Record<string, string> = {
   'Ночь, 0320 (M28)': 'sc_night_before',
-  'первая травма пролог': 'sc_first_injury',
+  'первая травма пролог': 'scout',
   'осознание повторной травмы (лето после первого сезона)': 'sc_pitch_no_date',
   'провальный медосмотр после травмы': 'sc_medical',
 };

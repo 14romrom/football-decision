@@ -731,6 +731,17 @@ html.reduce-motion .doodle svg { filter: none; }
 .chapter-ladder i.done { background: #5a4a44; }
 .chapter-ladder i.here { background: var(--bad); width: 40px; }
 
+/* Листи оповідача (пролог, відпустка, травень, фінал) — на весь екран, без паперу зошита (26.09).
+   Той самий лист, що в матчі: плівка по краях лишається, бо вона єдина на всіх екранах гри. */
+.story { padding-top: 20px; }
+.story .moment { margin: 14px -6px 0; }
+.story .moment .scene { padding-bottom: 14px; }
+/* Репліка Реєса в розв’язці: те саме, що голос на листі, тільки без курсиву — це сказав він. */
+.said { display: grid; grid-template-columns: 5.25rem 1fr; gap: 8px; margin: 26px 0 0; font-size: 15px; color: #f0ebe0; }
+.said b { text-align: right; padding-right: 10px; padding-top: 2px; font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 13px; }
+.story .choices .bracket { display: block; margin-top: 3px; font-family: var(--font-text); font-size: 13.5px; font-style: italic; color: var(--muted); }
+.story .choices .origin { margin: 0 6px 0 0; }
+
 /* Якір — подія на весь екран (26.09, плейтест на телефоні): лист сам по собі, як сцена в матчі, а не
    колонка всередині розвороту зошита. Папір зошита тут не малюється зовсім — тиждень починається далі. */
 .week-anchor { padding-top: 20px; }

@@ -288,7 +288,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
   if (phase.p === 'anchor') {
     return (
       <div className="result week week-anchor">
-        <div className="card-minute">тиждень між матчами{month ? ` · ${month}` : ''}</div>
+        {/* Шапки тут немає: ярлик листа вже каже і сцену, і місяць (26.09, зауваження користувача). */}
         {anchorSheet(phase.scene, phase.chosen)}
       </div>
     );

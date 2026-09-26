@@ -528,7 +528,6 @@ function Game() {
       <PrologueScreen
         key="may"
         spreads={fillNamesDeep([spread], ROSTER)}
-        header="травень · після останнього туру"
         lootTab="ЩО ЛИШИЛОСЯ"
         lootButton="Далі"
         lootEmpty="Травень минув, і нічого не лишилося."
@@ -558,7 +557,6 @@ function Game() {
       <PrologueScreen
         key="vacation"
         spreads={fillNamesDeep(VACATION, ROSTER)}
-        header="відпустка · червень — серпень"
         lootTab="ДО НОВОГО СЕЗОНУ"
         lootButton="На базу"
         lootEmpty="Три місяці — і жодної відповіді."
@@ -580,7 +578,6 @@ function Game() {
       <PrologueScreen
         key="ending"
         spreads={fillNamesDeep(ENDING.spreads, ROSTER)}
-        header="останній тиждень · травень — червень"
         lootButton="Далі буде"
         arc={arcStage(career)}
         firstVoice={prologueVoice(career, PROLOGUE)}

@@ -71,6 +71,9 @@ export type Career = {
   optionCleans?: Record<string, number>;
   /** Лист травня (M19.2) вже показано — щоб не повторювався при поверненні в меню. */
   mayDone?: boolean;
+  /** Розділювачі глав (M24), які вже показано: 'prologue' | 'season1' | 'season2' | 'epilogue'.
+   *  Глава відкривається раз — при поверненні в меню розворот не повторюється. */
+  chaptersSeen?: string[];
   /** Травм за текущий сезон — не больше BALANCE.injury.maxPerSeason (match.ts понижает до knock). */
   injuriesSeason?: number;
   /** Сколько недель подряд голос предлагал дела, а игрок не брал (week.ts:neglect). На третьей

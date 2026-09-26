@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING } from './content';
+import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING, CHAPTERS } from './content';
 import { adContext, pickAds, playerColumn } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick, anchorScene } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
+import { ChapterCard } from './ui/ChapterCard';
 import { PrologueScreen } from './ui/PrologueScreen';
 import { finishPrologue, prologuePending, type ProloguePick } from './engine/prologue';
 import { finishVacation, vacationPending } from './engine/vacation';
@@ -98,7 +99,12 @@ type Stage =
   | { k: 'ending' }
   // Сцена агента (M12): після вердикту «трансфер», перед новим сезоном.
   | { k: 'agent'; mode: 'winter' | 'summer'; leveledFrom: number; leveledTo: number }
+  // Розділювач глави (M24): пролог, перший сезон, другий сезон, епілог — маленький титул перед главою.
+  | { k: 'chapter'; id: string; then: 'prologue' | 'briefing' | 'ending' }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
+
+/** Розворот глави (M24) показується раз за кар’єру. */
+const seenChapter = (career: Career, id: string): boolean => (career.chaptersSeen ?? []).includes(id);
 
 type Pending =
   | { kind: 'episode'; episode: Episode; minute: number; link: boolean }
@@ -126,6 +132,8 @@ function Game() {
   // career — состояние для UI (уровень/опыт на экранах) и ref для чтения из колбэков
   // без устаревших замыканий, тот же приём, что и sessionRef/rngRef.
   const careerRef = useRef<Career>(readCareer());
+  /** Дані брифінгу, коли перед ним показуємо розворот глави (M24). */
+  const briefingCarry = useRef<CarryFacts | null>(null);
   const [career, setCareer] = useState<Career>(careerRef.current);
   const setCareerBoth = useCallback((c: Career) => { careerRef.current = c; writeCareer(c); setCareer(c); }, []);
   // Дублер пішов після відпустки (M15): ім’я в ростері — за кар’єрою, для всіх, хто читає ROSTER.
@@ -292,7 +300,13 @@ function Game() {
     sessionRef.current = session;
     setShown([]);
     // Нотатки тижня і прологу зберігаються з плейсхолдерами ({dm}, {sub}) — імена підставляються тут, під ростер матчу.
-    setStage({ k: 'briefing', carry: penalty.facts });
+    // Розділювач глави (M24) перед першим матчем сезону: глава = сезон, показується раз.
+    const chapterId = seasonRef.current.number >= 2 ? 'season2' : 'season1';
+    const first = seasonRef.current.round === 0;
+    setStage(first && !seenChapter(careerRef.current, chapterId)
+      ? { k: 'chapter', id: chapterId, then: 'briefing' }
+      : { k: 'briefing', carry: penalty.facts });
+    briefingCarry.current = penalty.facts;
   }, [setCareerBoth, setSeasonBoth]);
 
   const newSeason = useCallback(() => {
@@ -461,12 +475,36 @@ function Game() {
   useEffect(() => {
     if (stage.k !== 'menu') return;
     // Нова кар’єра починається з прологу (M12): три розвороти зошита до першого матчу.
-    if (prologuePending(career)) { setStage({ k: 'prologue' }); return; }
+    if (prologuePending(career)) {
+      // Перед прологом — розворот глави (M24), один раз за кар’єру.
+      setStage(seenChapter(career, 'prologue') ? { k: 'prologue' } : { k: 'chapter', id: 'prologue', then: 'prologue' });
+      return;
+    }
     const w = pendingWeek();
     if (w) setStage({ k: 'week', days: w.days, locked: w.locked, leveledFrom: career.level, leveledTo: career.level });
   }, [stage.k, career, pendingWeek, buildPosts]);
 
   if (stage.k === 'menu' && (prologuePending(career) || pendingWeek())) return null;
+
+  // Розділювач глави (M24): маленький титул перед прологом, кожним сезоном і епілогом.
+  if (stage.k === 'chapter') {
+    const i = CHAPTERS.findIndex((c) => c.id === stage.id);
+    const chapter = CHAPTERS[i] ?? CHAPTERS[0];
+    return (<>{film}
+      <ChapterCard
+        chapter={chapter}
+        index={Math.max(0, i)}
+        total={CHAPTERS.length}
+        onNext={() => {
+          const seen = [...(careerRef.current.chaptersSeen ?? []), chapter.id];
+          setCareerBoth({ ...careerRef.current, chaptersSeen: seen });
+          if (stage.then === 'prologue') setStage({ k: 'prologue' });
+          else if (stage.then === 'ending') setStage({ k: 'ending' });
+          else setStage({ k: 'briefing', carry: briefingCarry.current ?? { sentOff: false, yellows: false, injured: false, outOfForm: false } });
+        }}
+      />
+    </>);
+  }
 
   if (stage.k === 'prologue') {
     return (<>{film}
@@ -705,7 +743,10 @@ function Game() {
           }
           // «Дзвонить агент» — не нагорода, а розвилка: спершу сцена, новий сезон — з неї.
           if (vacationPending(careerRef.current, season.number, over)) { setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
-          if (endingPending(careerRef.current, season.number, over)) { setStage({ k: 'ending' }); return; }
+          if (endingPending(careerRef.current, season.number, over)) {
+            setStage(seenChapter(careerRef.current, 'epilogue') ? { k: 'ending' } : { k: 'chapter', id: 'epilogue', then: 'ending' });
+            return;
+          }
           const mode = agentPending(careerRef.current, season, over ? seasonVerdict(season, career.coachTrust) : undefined);
           if (mode) { setStage({ k: 'agent', mode, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' });

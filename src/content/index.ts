@@ -14,12 +14,14 @@ import agentJson from './agent.json';
 import espmJson from './espm.json';
 import studiedJson from './studied.json';
 import shotsJson from './shots.json';
+import chaptersJson from './chapters.json';
 import { fillNamesDeep, type Roster, type TeamRoster, type NameForms } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
 import type { Episode, FlagRule, Player } from '../engine/types';
 import type { Rng } from '../engine/rng';
 import type { Activity, WeekScene } from '../engine/week';
+import type { Chapter } from '../ui/ChapterCard';
 import type { AdRule } from '../engine/espm';
 import type { PrologueSpread } from '../engine/prologue';
 import type { VacationSpread } from '../engine/vacation';
@@ -112,6 +114,9 @@ export const studiedLine = (minute: number): string => STUDIED_LINES[Math.abs(mi
  *  головне в сцені не по центру, зміщуємо, щоб його було видно на вузькому листі (рішення користувача 26.09).
  *  Немає ключа — немає кадру: лист лишається текстовим, кадру-дефолта в грі немає. */
 export const SHOTS = shotsJson as Record<string, { focus?: string }>;
+/** Глави (M24): чотири розвороти за сезонами — пролог, перший, другий, епілог. */
+export const CHAPTERS = chaptersJson as Chapter[];
+
 export const shotFor = (sceneId: string): { src: string; focus: string } | null => {
   const s = SHOTS[sceneId];
   return s ? { src: `./img/anchors/${sceneId}.webp`, focus: s.focus ?? '50% 42%' } : null;

@@ -14,13 +14,6 @@ const OUT = 'public/img/scenes';
 const WIDTH = 1152;
 const QUALITY = 72;
 
-/** Кадры сцен, которых в коде ещё нет (M28): имя файла → id будущей сцены. */
-const RENAME: Record<string, string> = {
-  'Ночь, 0320 (M28)': 'sc_night_before',
-  'первая травма пролог': 'scout',
-  'осознание повторной травмы (лето после первого сезона)': 'sc_pitch_no_date',
-  'провальный медосмотр после травмы': 'sc_medical',
-};
 
 const force = process.argv.includes('--force');
 if (!existsSync(SRC)) { console.error(`нет папки ${SRC}`); process.exit(1); }
@@ -31,7 +24,7 @@ let done = 0, skipped = 0, before = 0, after = 0;
 
 for (const file of files) {
   const stem = basename(file, extname(file));
-  const id = RENAME[stem] ?? stem;
+  const id = stem;
   const src = join(SRC, file);
   const out = join(OUT, id + '.webp');
   const srcStat = statSync(src);

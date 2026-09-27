@@ -20,5 +20,10 @@
   "sc_pitch_no_date": { "focus": "50% 55%" },
   "sc_medical": { "focus": "50% 42%" },
   "sc_pitch_again": { "focus": "50% 45%" },
-  "epilogue": { "focus": "50% 50%" }
+  "epilogue": { "focus": "50% 45%" },
+  "trip": { "focus": "50% 45%" },
+  "return": { "focus": "50% 45%" },
+  "interview": { "focus": "50% 45%" },
+  "tram": { "focus": "50% 45%" },
+  "sc_boots_box": { "focus": "50% 45%" }
 }

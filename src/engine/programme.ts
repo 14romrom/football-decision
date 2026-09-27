@@ -3,6 +3,7 @@
 // черту соперника голосом клуба. Ирония сюда не заходит — програмку пишет пресс-служба.
 
 import { FORMATION_BY_STRENGTH, type Strength } from './conditions';
+import { coachGrip } from './career';
 
 export type ProgrammeInput = {
   /** Тур, который предстоит (1-based). */
@@ -88,6 +89,11 @@ function coachLine(i: ProgrammeInput): string {
   if (i.benched) return 'У заявці, починає на лаві.';
   if (i.coachTrust >= 70) return 'Тренер сумнівів не має.';
   if (i.coachTrust >= 45) return 'Тренер придивляється.';
+  // Хватка тренера (26.09): гравець має бачити, що саме змінилося і чому — інакше «автобус» і чужі
+  // стандарти читаються як випадковість. Голос той самий, прес-служби: факт, без оцінки.
+  const grip = coachGrip(i.coachTrust);
+  if (grip.noSetPieces) return 'Тренер, кажуть, дав останнє попередження: стандарти цього разу б’є інший.';
+  if (grip.hold) return 'Тренер придивляється пильніше, ніж хотілося б: установка на матч — від оборони.';
   return 'Тренер, кажуть, дав останнє попередження.';
 }
 

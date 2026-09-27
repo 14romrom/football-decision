@@ -297,12 +297,23 @@ export function nextMatchFanHype(endingHype: number): number {
  *  в основі сідають, коли довіра на свисток впала нижче demoteTrust і в матчі не було гола чи асиста.
  *  Довіра — до регресії: тренер вирішує по гарячих слідах, а поки сидиш, вона відходить до середнього —
  *  тренер остигає, і лава не стає вироком. */
-export function benchAfterMatch(benched: boolean, endingTrust: number, summary: MatchSummary): boolean {
-  const b = BALANCE.bench;
-  // Тести передають порожній підсумок — без статистики дій немає, трибуни мовчать.
-  const actions = (summary.stats?.goals ?? 0) + (summary.stats?.assists ?? 0);
-  if (benched) return !(endingTrust >= b.exitTrust || actions >= 1 || (summary.fanRating ?? 0) >= b.exitFan);
-  return endingTrust < b.demoteTrust && actions === 0;
+export function benchAfterMatch(): boolean {
+  // Лава — сцена прологу, і тільки вона (рішення користувача 26.09). Після першого матчу гравець
+  // у старті за будь-якого результату: механіка забирала п'ять рішень із дев'яти, не даючи натомість
+  // нічого нового, і вийти з неї можна було майже тільки перечекавши (`tools/bench-rate.ts`: серії по
+  // 3–5 матчів, у гіршому випадку 9 із 10). Наслідок низької довіри тепер — хватка тренера (coachGrip).
+  return false;
+}
+
+/** Хватка тренера (26.09, питання користувача «для чого нам лава?»): низька довіра міняє матч, а не
+ *  забирає його. Лава відбирала п'ять рішень із дев'яти, не даючи натомість нічого нового, і вийти з неї
+ *  можна було майже тільки перечекавши — за чотири рішення з лави ні гола, ні довіри 55 не набрати
+ *  (замір `tools/bench-rate.ts`: серії по 3–5 матчів, у гіршому випадку 8 із 10). Тепер замість посадки:
+ *  тренер нав'язує «автобус» і знімає зі стандартів — гравець грає ті самі дев'ять рішень, але в тіснішій
+ *  грі, і з неї видно, як виходити. */
+export function coachGrip(coachTrust: number): { hold: boolean; noSetPieces: boolean } {
+  const g = BALANCE.grip;
+  return { hold: coachTrust < g.holdTrust, noSetPieces: coachTrust < g.setPiecesTrust };
 }
 
 /** Що переноситься в матч із минулого — для програмки (прес-служба скаже це своїми словами, без «тренер не забув»). */
@@ -358,7 +369,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   next.carriedFlags = (career.carriedFlags ?? [])
     .filter((f) => f.after && f.after > 0)
     .map((f) => ({ ...f, after: f.after! - 1 }));
-  if (career.benched) note = [note, 'Починаєш на лаві: тренер випустить у другому таймі. Вийти з неї — довірою, голом або трибунами.'].filter(Boolean).join(' ');
+  if (career.benched) note = [note, 'Починаєш на лаві: тренер випустить у другому таймі.'].filter(Boolean).join(' ');
   if (prep?.notes?.length) note = [note, ...prep.notes].filter(Boolean).join(' ');
   next.nextMatch = undefined;
   return {
@@ -421,7 +432,7 @@ export function applyMatchToCareer(
     injuriesSeason: (career.injuriesSeason ?? 0) + (state.flags.includes('injured') ? 1 : 0),
     coachTrust: nextMatchCoachTrust(state.coachTrust),
     fanHype: nextMatchFanHype(state.fanHype),
-    benched: benchAfterMatch(!!career.benched, state.coachTrust, summary),
+    benched: benchAfterMatch(),
     partnerBond: (career.partnerBond ?? 0) + (state.people?.partner ?? 0),
     matchesPlayed: career.matchesPlayed + 1,
     agentEcho: undefined,

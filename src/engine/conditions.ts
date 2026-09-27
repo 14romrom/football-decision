@@ -30,6 +30,8 @@ export type MatchConditions = {
   venue: Venue;
   opponentKey: string;
   strength: Strength;
+  /** Хватка тренера (26.09): стандарти б'є інший — епізоди штрафних і кутових у атаці не плануються. */
+  noSetPieces?: boolean;
   instruction: Instruction;
   weather: Weather;
   tone: Tone;

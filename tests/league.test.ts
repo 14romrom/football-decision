@@ -1,5 +1,6 @@
 // Заход A (17.09): таблица сезона, персонаж по имени, характеристики соперника, вес голосов.
 import { describe, it, expect } from 'vitest';
+import { BALANCE } from '../src/engine/balance';
 import { makeRng } from '../src/engine/rng';
 import {
   createSeason, isSeasonOver, makeFixtures, ourFixture, ourRow, recordRound, seasonVerdict, SEASON_ROUNDS, standings, US,
@@ -73,7 +74,7 @@ describe('сезон: расписание и таблица', () => {
     expect(isSeasonOver(season)).toBe(true);
     expect(ourFixture(season)).toBeNull();
     expect(ourRow(season).position).toBe(1);
-    expect(seasonVerdict(season, 70).kind).toBe('transfer');
+    expect(seasonVerdict(season, BALANCE.season.transferTrust).kind).toBe('transfer');
     // Первое место, тренер не в восторге — но 20 голов и трибуны 8: агент дзвонить за протокол (M9).
     expect(seasonVerdict(season, 45).kind).toBe('transfer');
     expect(seasonVerdict(season, 30).kind).toBe('extend');  // тренер выгоняет, но 20 голов и трибуны защищают контракт
@@ -84,14 +85,14 @@ describe('сезон: расписание и таблица', () => {
       dull = recordRound(dull, { scoreUs: 3, scoreThem: 0, goals: 0, assists: 0, coachRating: 8, fanRating: 6, scorers: ['Мораес'] }, strengths, makeRng(100 + i));
     }
     expect(ourRow(dull).position).toBe(1);
-    expect(seasonVerdict(dull, 70).kind).toBe('bench');
+    expect(seasonVerdict(dull, BALANCE.season.transferTrust).kind).toBe('bench');
     // …а с тёплыми трибунами — обычный трансфер за таблицу / продовження при прохладном тренере.
     let plain = createSeason(7, keys);
     for (let i = 0; i < SEASON_ROUNDS; i++) {
       plain = recordRound(plain, { scoreUs: 3, scoreThem: 0, goals: 0, assists: 0, coachRating: 8, fanRating: 7.5, scorers: ['Мораес'] }, strengths, makeRng(100 + i));
     }
-    expect(seasonVerdict(plain, 70).kind).toBe('transfer');
-    expect(seasonVerdict(plain, 45).kind).toBe('extend');
+    expect(seasonVerdict(plain, BALANCE.season.transferTrust).kind).toBe('transfer');
+    expect(seasonVerdict(plain, BALANCE.season.benchTrust).kind).toBe('extend');   // рівно на порозі тренер ще не садить
 
     let bad = createSeason(8, keys);
     for (let i = 0; i < SEASON_ROUNDS; i++) {

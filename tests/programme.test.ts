@@ -18,7 +18,10 @@ describe('програмка', () => {
     expect(programmeNote({ ...base, round: 1, last: null, weekActivities: [] })).toMatch(/^Дебютує в сезоні\. Тренер придивляється\./);
     expect(programmeNote({ ...base, scoringStreak: 3 })).toContain('Третій матч поспіль із результативною дією.');
     expect(programmeNote({ ...base, matchesPlayed: 9 })).toContain('Десятий матч за клуб.');
-    expect(programmeNote({ ...base, coachTrust: 30 })).toContain('останнє попередження');
+    // Хватка тренера (26.09) замінила посадку на лаву: низька довіра — установка від оборони,
+    // зовсім низька — ще й чужі стандарти. Рядок має називати причину, а не просто лякати.
+    expect(programmeNote({ ...base, coachTrust: 30 })).toContain('від оборони');
+    expect(programmeNote({ ...base, coachTrust: 20 })).toContain('стандарти');
     expect(programmeNote({ ...base, coachTrust: 80 })).toContain('Тренер сумнівів не має.');
   });
   it('черта соперника — одна фраза, сторона по полю; все десять черт покрыты', () => {

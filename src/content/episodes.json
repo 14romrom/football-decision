@@ -370,7 +370,7 @@
   {
     "id": "ep_press_trap",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -452,11 +452,7 @@
             "recap": "і змусив їх відіграти назад.",
             "apply": {
               "coachTrust": 5,
-              "followUp": "ep_keeper_short_build",
-              "followUpElse": {
-                "coachTrust": 2,
-                "composure": 2
-              }
+              "composure": 2
             }
           },
           "cost": {
@@ -1206,7 +1202,7 @@
   {
     "id": "ep_tracking_back",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 35,
       "maxMinute": 90
@@ -3020,7 +3016,7 @@
   {
     "id": "ep_own_box_corner",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -4783,7 +4779,7 @@
   {
     "id": "ep_aerial_midfield",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -6274,7 +6270,7 @@
   {
     "id": "ep_block_shot",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -6546,7 +6542,7 @@
   {
     "id": "ep_mark_playmaker",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 10,
       "maxMinute": 85
@@ -6812,7 +6808,7 @@
   {
     "id": "ep_short_corner_defense",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -6826,7 +6822,7 @@
         "attribute": "pace",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -1,
         "staminaCost": 6,
         "goals": {
           "team": 3,
@@ -6899,11 +6895,7 @@
             "recap": "і перечекав розіграш кутового.",
             "apply": {
               "coachTrust": 4,
-              "followUp": "ep_counter_run",
-              "followUpElse": {
-                "composure": 3,
-                "coachTrust": 2
-              }
+              "composure": 3
             }
           },
           "cost": {
@@ -6944,7 +6936,7 @@
         "attribute": "strength",
         "basePosition": "risky",
         "effect": "limited",
-        "difficulty": -1,
+        "difficulty": -2,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -10995,7 +10987,7 @@
   {
     "id": "ep_press_receiver",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -11239,7 +11231,7 @@
   {
     "id": "ep_last_ditch_chase",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 20,
       "maxMinute": 90
@@ -11461,7 +11453,7 @@
   {
     "id": "ep_cover_beaten_teammate",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -11736,7 +11728,7 @@
   {
     "id": "ep_wide_duel_open_play",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -11935,7 +11927,7 @@
   {
     "id": "ep_intercept_lane",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -12017,11 +12009,7 @@
             "recap": "і зберіг позицію, поки пас зірвали інші.",
             "apply": {
               "coachTrust": 3,
-              "followUp": "ep_progressive_pass",
-              "followUpElse": {
-                "composure": 2,
-                "coachTrust": 2
-              }
+              "composure": 2
             }
           },
           "cost": {
@@ -14354,11 +14342,7 @@
             "apply": {
               "keyPass": true,
               "corner": true,
-              "coachTrust": 4,
-              "followUp": "ep_corner_delivery",
-              "followUpElse": {
-                "coachTrust": 1
-              }
+              "coachTrust": 4
             }
           },
           "cost": {
@@ -15196,7 +15180,7 @@
   {
     "id": "ep_offside_trap",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 15,
       "maxMinute": 90
@@ -15395,7 +15379,7 @@
   {
     "id": "ep_press_bait",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "weightBy": {
       "strength": {
         "strong": 1.5,
@@ -20418,7 +20402,7 @@
     "id": "ep_corner_zone_near",
     "family": "corner_defense",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -20637,7 +20621,7 @@
     "id": "ep_second_ball_edge",
     "family": "corner_defense",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -20855,7 +20839,7 @@
     "id": "ep_keeper_short_build",
     "family": "press",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "weightBy": {
       "strength": {
         "strong": 1.5,
@@ -21080,7 +21064,7 @@
     "id": "ep_wing_double_team",
     "family": "wing",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -21292,7 +21276,7 @@
     "id": "ep_long_ball_own_box",
     "family": "duel",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 0,
       "maxMinute": 90
@@ -21730,7 +21714,7 @@
     "id": "ep_free_kick_in_wall",
     "family": "free_kick",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -21949,7 +21933,7 @@
     "id": "ep_offside_line_break",
     "family": "last_man",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -22169,7 +22153,7 @@
     "id": "ep_runner_from_deep",
     "family": "partner",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -22383,7 +22367,7 @@
     "id": "ep_empty_net_cover",
     "family": "last_man",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 20,
       "maxMinute": 90
@@ -22603,7 +22587,7 @@
     "id": "ep_striker_back_to_goal",
     "family": "duel",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 5,
       "maxMinute": 90
@@ -23475,7 +23459,7 @@
     "id": "ep_penalty_against_edge",
     "family": "penalty",
     "phase": "defense",
-    "weight": 0.7,
+    "weight": 0.85,
     "requires": {
       "minMinute": 10,
       "maxMinute": 90
@@ -26795,11 +26779,7 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 6,
-              "fanHype": 3,
-              "followUp": "ep_corner_delivery",
-              "followUpElse": {
-                "coachTrust": 1
-              }
+              "fanHype": 3
             }
           },
           "cost": {
@@ -27665,11 +27645,7 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 6,
-              "fanHype": 4,
-              "followUp": "ep_corner_delivery",
-              "followUpElse": {
-                "coachTrust": 1
-              }
+              "fanHype": 4
             }
           },
           "cost": {
@@ -30272,11 +30248,7 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 6,
-              "fanHype": 3,
-              "followUp": "ep_corner_delivery",
-              "followUpElse": {
-                "coachTrust": 1
-              }
+              "fanHype": 3
             }
           },
           "cost": {
@@ -30673,11 +30645,7 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 5,
-              "fanHype": 3,
-              "followUp": "ep_corner_delivery",
-              "followUpElse": {
-                "coachTrust": 1
-              }
+              "fanHype": 3
             }
           },
           "cost": {
@@ -31401,11 +31369,7 @@
               "keyPass": true,
               "corner": true,
               "coachTrust": 6,
-              "fanHype": 4,
-              "followUp": "ep_corner_delivery",
-              "followUpElse": {
-                "coachTrust": 1
-              }
+              "fanHype": 4
             }
           },
           "cost": {

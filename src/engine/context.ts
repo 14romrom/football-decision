@@ -73,14 +73,14 @@ export function computeContext(
 
   if (state.momentum !== 0) {
     const m = Math.max(c.momentumMin, Math.min(c.momentumMax, state.momentum));
-    mods.push({ label: m > 0 ? 'кураж' : 'провали тиснуть', value: m, source: 'player', short: m > 0 ? 'кураж' : 'провали' });
+    mods.push({ label: m > 0 ? 'кураж' : 'куражу немає', value: m, source: 'player', short: m > 0 ? 'кураж' : 'без куражу' });
   }
 
   // Попередній момент провалився — наступне рішення важче (тестер 17.09: «−1 після невдачі»).
   // Спокій не тягне минулий провал у наступне рішення (COMPOSURE_CALM).
   const lastTier = [...state.log].reverse().find((e) => e.kind === 'episode')?.tier;
   const calm = COMPOSURE_CALM.ignoresAfterFail && option.attribute === 'composure';
-  if ((lastTier === 'fail' || lastTier === 'badFail') && !calm) mods.push({ label: 'після провалу', value: c.afterFail, source: 'player', short: 'провал' });
+  if ((lastTier === 'fail' || lastTier === 'badFail') && !calm) mods.push({ label: 'після провалу', value: c.afterFail, source: 'player', short: 'після провалу' });
 
   if (state.minute > 80) {
     if (state.composureNow >= 70) mods.push({ label: 'спокійний у кінцівці', value: c.composureLateGood, source: 'player', short: 'кінцівка' });

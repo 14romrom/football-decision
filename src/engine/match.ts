@@ -245,7 +245,12 @@ export function createMatch(
 ): MatchSession {
   // Ліга (M17): епізоди «тільки вища ліга» в другій не існують — інакше сим і тести другої ліги їх би бачили.
   const league = conditions.league ?? 'second';
-  const episodes = fillNamesDeep(rawEpisodes.filter((e) => !e.requires?.league || e.requires.league === league), roster);
+  // Хватка тренера: стандарти в атаці б'є інший, тож ці сцени просто не трапляються (сцен «за тебе б'є
+  // інший» у контенті немає — і не треба: гравець бачить це рядком у програмці).
+  const setPiecesOff = conditions?.noSetPieces === true;
+  const episodes = fillNamesDeep(rawEpisodes.filter((e) =>
+    (!e.requires?.league || e.requires.league === league)
+    && !(setPiecesOff && (e.family === 'free_kick' || e.family === 'corner_attack') && e.phase !== 'defense')), roster);
   const rules = fillNamesDeep(flagRules, roster);
   const start = startResources(conditions);
   // Флаги про конкретного соперника (keeper_read) доживают только до матча с тем же клубом.

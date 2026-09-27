@@ -36,7 +36,7 @@ import {
 import { buildEntry, type Entry } from './engine/entry';
 import { EntryCard } from './ui/EntryCard';
 import {
-  applyMatchToCareer, arcStage, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
+  applyMatchToCareer, arcStage, coachGrip, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
   metLastYear, type Career, type CarryFacts,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
@@ -251,7 +251,15 @@ function Game() {
     const rng = makeRng(seed);
     // Условия матча — по сиду и расписанию сезона, тонус — из истории этого устройства.
     const fixture = ourFixture(seasonRef.current) ?? undefined;
-    const conditions = { ...generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)), fixture), league: seasonRef.current.number >= 2 ? 'top' as const : 'second' as const };
+    // Хватка тренера (26.09): при низькій довірі він нав'язує «автобус» і знімає зі стандартів —
+    // замість посадки на лаву. Гравець грає всі дев'ять рішень, але в тіснішій грі.
+    const grip = coachGrip(careerRef.current.coachTrust);
+    const conditions = {
+      ...generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)), fixture),
+      league: seasonRef.current.number >= 2 ? 'top' as const : 'second' as const,
+      ...(grip.hold ? { instruction: 'hold' as const } : {}),
+      ...(grip.noSetPieces ? { noSetPieces: true } : {}),
+    };
 
     // Перенос из карьеры: травма/карточка прошлого матча бьют по старту этого,
     // доверие тренера продолжается (с регрессией), а не сбрасывается на 55.
@@ -311,8 +319,9 @@ function Game() {
 
   const newSeason = useCallback(() => {
     const prev = seasonRef.current;
-    // Вердикт «лава» — не текст: новий сезон починаєш із лави (career.benched), поки не вийдеш із неї.
-    const benched = seasonVerdict(prev, careerRef.current.coachTrust).kind === 'bench';
+    // Вердикт «лава» лишається текстом підсумку, але сезон із лави не починається (26.09): лава — сцена
+    // прологу. Наслідок низької довіри — хватка тренера (coachGrip), а не відсторонення від гри.
+    const benched = false;
     // Регламент підвищення (M14): з нами йдуть ті, хто вище; нові клуби — з тих, кого в першому сезоні не було.
     const promo = promotion(prev);
     // Вища ліга: клуби вищої ліги; якщо місць більше, ніж їх, — добираємо з тих, кого в першому сезоні не було.

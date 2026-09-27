@@ -7,22 +7,27 @@ import { resolveOption } from '../src/engine/resolve';
 import { EPISODES_RAW, FLAG_RULES, PLAYER, ROSTER } from '../src/content';
 import { neutralConditions } from '../src/engine/conditions';
 import { BALANCE } from '../src/engine/balance';
-import { applyMatchToCareer, benchAfterMatch, defaultCareer, consumeStartPenalty, nextMatchFanHype } from '../src/engine/career';
+import { applyMatchToCareer, benchAfterMatch, coachGrip, defaultCareer, consumeStartPenalty, nextMatchFanHype } from '../src/engine/career';
 import type { MatchSummary } from '../src/engine/match';
 
 const summary = (goals: number, assists: number, fanRating: number): MatchSummary =>
   ({ fanRating, coachRating: 5, stats: { goals, assists, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 } } as unknown as MatchSummary);
 
 describe('лава запасних', () => {
-  it('з лави виходять довірою, результативною дією або трибунами; в основі сідають за довіру без дій', () => {
-    const b = BALANCE.bench;
-    expect(benchAfterMatch(true, b.exitTrust, summary(0, 0, 5))).toBe(false);
-    expect(benchAfterMatch(true, 10, summary(0, 1, 5))).toBe(false);
-    expect(benchAfterMatch(true, 10, summary(0, 0, b.exitFan))).toBe(false);
-    expect(benchAfterMatch(true, 10, summary(0, 0, 5))).toBe(true);
-    expect(benchAfterMatch(false, b.demoteTrust - 1, summary(0, 0, 8))).toBe(true);
-    expect(benchAfterMatch(false, b.demoteTrust - 1, summary(1, 0, 5))).toBe(false);
-    expect(benchAfterMatch(false, b.demoteTrust, summary(0, 0, 5))).toBe(false);
+  // Лава — сцена прологу, і тільки вона (рішення користувача 26.09): після першого матчу гравець у старті
+  // за будь-якого результату. Наслідок низької довіри — хватка тренера (coachGrip), а не відсторонення.
+  it('після матчу лави більше немає — за будь-якого результату', () => {
+    expect(benchAfterMatch()).toBe(false);
+    const career = { ...defaultCareer(), benched: true, coachTrust: 10 };
+    const state = { coachTrust: 10, fanHype: 40, flags: [], marks: {}, voices: { counts: { ego: 0, team: 0, composure: 0, vision: 0, instinct: 0, body: 0 }, streak: { who: null, count: 0 } } } as unknown as Parameters<typeof applyMatchToCareer>[1];
+    const after = applyMatchToCareer(career, state, summary(0, 0, 4), false);
+    expect(after.benched).toBe(false);
+  });
+
+  it('хватка тренера замінює посадку: низька довіра — автобус, зовсім низька — ще й чужі стандарти', () => {
+    expect(coachGrip(70)).toEqual({ hold: false, noSetPieces: false });
+    expect(coachGrip(BALANCE.grip.holdTrust - 1).hold).toBe(true);
+    expect(coachGrip(BALANCE.grip.setPiecesTrust - 1)).toEqual({ hold: true, noSetPieces: true });
   });
 
   it('матч з лави: команда грає перший тайм без тебе, епізоди лише після виходу, ноги свіжі', () => {
@@ -55,13 +60,14 @@ describe('лава запасних', () => {
     expect(finishMatch(s, rng).summary.scoreUs).toBeGreaterThanOrEqual(0);
   });
 
-  it('вердикт «лава» доїжджає до старту матчу запискою, а карʼєра тримає прапорець до виходу', () => {
+  it('лава прологу доїжджає до старту матчу запискою і знімається після нього', () => {
     const benched = { ...defaultCareer(), benched: true };
     const { penalty } = consumeStartPenalty(benched);
     expect(penalty.fromBench).toBe(true);
     expect(penalty.note).toMatch(/лаві/);
     const state = { coachTrust: 20, fanHype: 50, flags: [], marks: {}, voices: { counts: { ego: 0, team: 0, composure: 0, vision: 0, instinct: 0, body: 0 }, streak: { who: null, count: 0 } } } as unknown as Parameters<typeof applyMatchToCareer>[1];
-    expect(applyMatchToCareer(benched, state, summary(0, 0, 5), false).benched).toBe(true);
+    // За будь-якого результату: і після невдалого матчу, і після гола гравець виходить у старті.
+    expect(applyMatchToCareer(benched, state, summary(0, 0, 5), false).benched).toBe(false);
     expect(applyMatchToCareer(benched, state, summary(1, 0, 5), false).benched).toBe(false);
   });
 });

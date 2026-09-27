@@ -36,7 +36,7 @@ export function modIcon(label: string, source?: string): ReactNode {
   if (l.startsWith('свіжість')) return Icon.battery(false);
   if (l.startsWith('ноги')) return Icon.battery(true);
   if (l.startsWith('кураж')) return Icon.flame();
-  if (l.startsWith('провали')) return Icon.down();
+  if (l.startsWith('куражу немає') || l.startsWith('без куражу')) return Icon.down();
   if (l.startsWith('після провалу')) return Icon.down();
   if (l.includes('нерви') || l.startsWith('спокійний')) return Icon.pulse();
   if (l.startsWith('жовта')) return Icon.card();

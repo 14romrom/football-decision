@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { createSeason, recordRound, secondSeasonVerdict, SEASON_ROUNDS, type OurResult } from '../src/engine/season';
 import { endingPending, endingSpreads, finishEnding, partnerBonded, prologueVoice } from '../src/engine/ending';
 import { defaultCareer } from '../src/engine/career';
-import { ENDING, OPPONENTS, OPPONENT_KEYS, PROLOGUE, ROSTER } from '../src/content';
+import { ENDING, ESPM_COLUMNS, OPPONENTS, OPPONENT_KEYS, PROLOGUE, ROSTER } from '../src/content';
 import { fillNamesDeep } from '../src/engine/names';
 import { makeRng } from '../src/engine/rng';
 import { BALANCE } from '../src/engine/balance';
@@ -46,6 +46,11 @@ describe('останній дзвінок', () => {
     for (const v of Object.values(team.sheetBy ?? {})) expect(v![0]).toContain('віддали');
     expect(endingSpreads(ENDING, 'shot')[0].sheet[0]).toContain('агент');
     expect(endingSpreads(ENDING, undefined)).toBe(ENDING.spreads);
+    // M28: журналіст знімає своє слово, а не каже «Ясно», — і слово це справді було в колонці стану арки 1.
+    const calm = ENDING.spreads.find((s) => s.id === 'interview')!.options.find((o) => o.id === 'int_calm')!;
+    expect(calm.reply).toMatch(/кришталев/);
+    expect(calm.reply).not.toContain('«Ясно»');
+    expect(ESPM_COLUMNS.column['1'].some((c) => /кришталев/i.test(c.title + c.text))).toBe(true);
   });
 
   it('вердикт другого сезону — «Дзвонить скаут» завжди; фінал чекає після другого сезону', () => {

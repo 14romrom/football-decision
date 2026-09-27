@@ -33,6 +33,9 @@ export type Career = {
   /** Дублер пішов після першого сезону (M15) — ім’я в ростері підміняється (content:syncRoster); клуб, куди пішов. */
   subLeft?: boolean;
   subClub?: string;
+  /** Що {oldsub} знає про липневу травму (M28): він єдиний свідок на газоні, і в другому сезоні проти його
+   *  клубу це вирішує, б’є він у коліно чи ні. Ставить відпустка (vacation.ts:finishVacation). */
+  larsson?: 'knows' | 'silent' | 'lied' | 'unsure' | 'none';
   /** Минулий сезон (M14): рахунки з кожним суперником — «зустрічалися торік» у програмці, постах і сетапах. */
   lastSeason?: { number: number; position: number; results: Record<string, { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[]> };
   /** Несгоревшие жёлтые за карьеру; на третьей — тренер начинает следующий матч настороже. */

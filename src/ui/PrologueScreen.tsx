@@ -54,6 +54,9 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
   const last = i >= spreads.length - 1;
   // Кадр розвороту: хук — до будь-якого return, бо фази міняються.
   const { mark, plate } = useShot(spreads[i]?.id);
+  // Останній кадр історії (M28): фото газону, яке Тібо надіслав без підпису. Живе під id `epilogue`
+  // і з'явиться само, щойно файл покладено, — як і всі інші кадри.
+  const epi = useShot(epilogue ? 'epilogue' : undefined);
 
   const choose = (option: PrologueOption) => {
     const spread = spreads[i];
@@ -92,7 +95,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
       <div className="result story">
         {filmStrip}
         {epilogue ? (
-          <div className="moment"><div className="scene">
+          <div className={`moment${epi.mark}`}>{epi.plate}<div className="scene">
             <span className="minute-tab">{epilogue.tab.toUpperCase()}</span>
             {epilogue.text.map((t, k) => <p key={k} className="setup" style={k ? { paddingTop: 0 } : undefined}>{t}</p>)}
             <p className="nb-aside"><b>{epilogue.sign}</b></p>

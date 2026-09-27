@@ -286,13 +286,14 @@ export function secondSeasonVerdict(season: Season, coachTrust: number): Verdict
   const p = season.player;
   const stats = `${p.goals} голів і ${p.assists} передач`;
   const table = row.position === 1 ? 'Чемпіон вищої ліги' : `${row.position}-е місце у вищій лізі`;
-  const tail = base.kind === 'bench' ? ' Тренер хотів би посадити на лаву. Не встигне.' : base.kind === 'transfer' ? ' Тренер каже «скатертиною» — і, здається, це щиро.' : ' Тренер підписав би ще на рік. Не доведеться.';
+  const tail = base.kind === 'bench' ? ' Тренер хотів би тримати тебе в шорах іще рік. Не встигне.' : base.kind === 'transfer' ? ' Тренер каже «скатертиною» — і, здається, це щиро.' : ' Тренер підписав би ще на рік. Не доведеться.';
   return { kind: 'transfer', title: 'Дзвонить скаут', text: `${table}, ${stats} за сезон. Дзвонить той самий скаут, що два роки тому питав про ногу, — тепер із клубу, який грає в Лізі чемпіонів. Про ногу не питає.${tail}` };
 }
 
 /** Кінець першого сезону (M15): дзвінок агента безумовний — вихід у вищу лігу помітили. Таблиця й тренер
- *  вирішують формулювання (за таблицю / за протокол / «помітили»), а вердикт тренера й трибун (лава) лишається
- *  своїм рядком: з лави наступний сезон усе одно починаєш. Сам зрив — у відпустці (engine/vacation.ts). */
+ *  вирішують формулювання (за таблицю / за протокол / «помітили»), а вердикт тренера й трибун лишається
+ *  своїм рядком: недовіра переїжджає в новий сезон хваткою тренера (career.ts:coachGrip), не лавою.
+ *  Сам зрив — у відпустці (engine/vacation.ts). */
 export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict {
   const base = seasonVerdict(season, coachTrust);
   const k = BALANCE.season;
@@ -313,7 +314,7 @@ export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict 
   } else {
     text = `${row.position}-е місце, ${stats}. ${how} помітили ті, хто дивиться не таблицю, а поле: клуб із вищої ліги дзвонить — не через цифри, а тому, що бачив тебе. Медогляд у липні.`;
   }
-  if (base.kind === 'bench') text += ' А наступний сезон усе одно починаєш з лави: ' + (base.text.includes('свист') ? 'трибуни свистіли, і президент це чув.' : 'тренер не дивиться в очі.');
+  if (base.kind === 'bench') text += ' А новий сезон починаєш під наглядом: ' + (base.text.includes('свист') ? 'трибуни свистіли, і президент це чув.' : 'тренер не дивиться в очі.');
   return { kind: 'transfer', title: 'Дзвонить агент', text };
 }
 
@@ -337,7 +338,7 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
     return {
       kind: 'bench',
       title: 'Розмова в кабінеті',
-      text: `${row.position}-е місце, ${stats}. Тренер задоволений, трибуни — ні: свист після кожного пасу назад дійшов до президента. Наступний сезон починаєш з лави, «щоб зняти напругу».`,
+      text: `${row.position}-е місце, ${stats}. Тренер задоволений, трибуни — ні: свист після кожного пасу назад дійшов до президента. Новий сезон починаєш під наглядом: установка від оборони, «щоб зняти напругу».`,
     };
   }
   if (row.position <= k.transferPosition && coachTrust >= k.transferTrust) {
@@ -370,7 +371,7 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
     return {
       kind: 'bench',
       title: 'Розмова в кабінеті',
-      text: `${row.position}-е місце, ${stats}, і ${why}: наступний сезон починаєш з лави. Дублер уже знає.`,
+      text: `${row.position}-е місце, ${stats}, і ${why}: новий сезон починаєш під наглядом — установка від оборони, стандарти б’є інший. Дублер уже знає.`,
     };
   }
   return {

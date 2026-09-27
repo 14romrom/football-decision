@@ -34,7 +34,7 @@ describe('відпустка', () => {
     expect(text).not.toMatch(/%|ймовірн/i);
   });
 
-  it('кінець першого сезону: дзвінок безумовний, лава — окремим рядком', () => {
+  it('кінець першого сезону: дзвінок безумовний, недовіра — окремим рядком', () => {
     const won = full([3, 0], 8, 8, 1);
     expect(firstSeasonVerdict(won, 80).kind).toBe('transfer');
     expect(firstSeasonVerdict(won, 80).text).toMatch(/вже влітку|за протоколом/);
@@ -42,7 +42,8 @@ describe('відпустка', () => {
     const v = firstSeasonVerdict(dull, 30);
     expect(v.kind).toBe('transfer');
     expect(v.text).toMatch(/за регламентом/);
-    expect(v.text).toMatch(/з лави/);
+    // Лава по ходу сезону прибрана (26.09): недовіра переїжджає в новий сезон хваткою тренера.
+    expect(v.text).toMatch(/під наглядом/);
     expect(agentPending(defaultCareer(), won, v)).toBeNull();
     expect(vacationPending(defaultCareer(), 1, true)).toBe(true);
     expect(vacationPending(defaultCareer(), 2, true)).toBe(false);

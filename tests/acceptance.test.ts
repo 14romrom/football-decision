@@ -146,7 +146,7 @@ describe('правило «никаких процентов» (п. 1 и п. 13 
   // Экран /stats — единственное исключение: там процент долей выборов живых
   // тестеров и есть предмет измерения, а не подсказка игроку.
   const GAMEPLAY_UI = [
-    'MatchScreen', 'EpisodeCard', 'RollView', 'BoardScreen', 'DeltaScreen', 'DebugPanel', 'BriefingScreen', 'PlayerCard',
+    'MatchScreen', 'EpisodeCard', 'RollView', 'BoardScreen', 'DeltaScreen', 'DebugPanel', 'PrematchScreen', 'MatchdayScreen', 'PlayerCard',
     'SeasonScreen', 'LevelUpScreen', 'WhistleCard', 'WeekScreen', 'PrologueScreen', 'AgentScene', 'LootSheet', 'Spotlight', 'EntryCard',
   ];
 

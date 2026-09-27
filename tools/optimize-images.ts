@@ -19,7 +19,9 @@ const force = process.argv.includes('--force');
 if (!existsSync(SRC)) { console.error(`нет папки ${SRC}`); process.exit(1); }
 mkdirSync(OUT, { recursive: true });
 
-const files = readdirSync(SRC).filter((f) => /\.(jpe?g|png|webp)$/i.test(f) && statSync(join(SRC, f)).isFile());
+// Підкладки матчдея (27.09) — не кадри сцен: вони йдуть на весь екран і збираються окремим проходом.
+const isBackdrop = (f: string) => f.startsWith('programme_');
+const files = readdirSync(SRC).filter((f) => /\.(jpe?g|png|webp)$/i.test(f) && !isBackdrop(f) && statSync(join(SRC, f)).isFile());
 let done = 0, skipped = 0, before = 0, after = 0;
 
 for (const file of files) {
@@ -40,6 +42,23 @@ for (const file of files) {
   done++;
   const kb = (n: number) => (n / 1024).toFixed(0) + ' КБ';
   console.log(`${id.padEnd(24)} ${kb(srcStat.size).padStart(8)} → ${kb(info.size).padStart(8)}`);
+}
+
+// Підкладки матчдея: `images/programme_home.jpg` і `programme_away.jpg` → `public/img/<id>.webp`.
+// Вертикальний кадр на весь екран, тому ширина більша за кадри сцен: 1240 вистачає і на планшет.
+const BACKDROP_OUT = 'public/img';
+const BACKDROP_WIDTH = 1240;
+for (const file of readdirSync(SRC).filter((f) => isBackdrop(f) && /\.(jpe?g|png|webp)$/i.test(f))) {
+  const id = basename(file, extname(file));
+  const src = join(SRC, file);
+  const out = join(BACKDROP_OUT, id + '.webp');
+  const srcStat = statSync(src);
+  before += srcStat.size;
+  if (!force && existsSync(out) && statSync(out).mtimeMs >= srcStat.mtimeMs) { after += statSync(out).size; skipped++; continue; }
+  const info = await sharp(src).resize({ width: BACKDROP_WIDTH, withoutEnlargement: true }).webp({ quality: 74 }).toFile(out);
+  after += info.size;
+  done++;
+  console.log(`підкладка ${id.padEnd(20)} ${(info.size / 1024).toFixed(0).padStart(4)} КБ`);
 }
 
 // Аватари стрічки (27.09): `images/avatars/<хендл без @>.png` → `public/img/avatars/<хендл>.webp`.

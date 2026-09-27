@@ -1034,8 +1034,7 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 /* Кнопка наступного кроку прилипає до низу (плейтест 20.09: під довгим зошитом чи листом її доводилось шукати скролом).
    Контейнери листа й зошита — overflow: clip, не hidden: hidden робить їх scroll-контейнером і sticky ламається.
    Тінь угору — замість градієнта-підкладки: текст під кнопкою гасне, а не обрізається. */
-.menu-primary, .nb-sheet-btn, .de-next, .whistle-go, .prog-cta { position: sticky; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 3; box-shadow: 0 -16px 18px -8px rgba(11,11,13,.85); }
-.prog-cta { box-shadow: 0 -16px 18px -8px rgba(217,211,196,.9); }
+.menu-primary, .nb-sheet-btn, .de-next, .whistle-go { position: sticky; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 3; box-shadow: 0 -16px 18px -8px rgba(11,11,13,.85); }
 .menu .rows a.row { text-decoration: none; display: flex; align-items: center; }
 
 /* ——— экран матча, правки 19.09 (макет «Екран матчу: було / стало») ——— */
@@ -1097,24 +1096,56 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 /* ——— програмка матчу (ui/BriefingScreen.tsx, макет «Брифинг як програмка», 19.09) ———
    Лист кремовой бумаги с зерном и лёгким наклоном — единственный светлый экран в игре, в паузе между
    тёмным меню и тёмным полем. Тон официальный; ирония — голосам и стрічці. */
-.briefing { max-width: 560px; margin: 0 auto; padding: 1.2rem 0.6rem 2rem; }
-.prog {
-  position: relative; padding: 14px 16px 12px; background-color: #d9d3c4; color: #1b1a17; border-radius: 2px; transform: rotate(-0.5deg);
-  box-shadow: 0 10px 28px rgba(0,0,0,0.6);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .18 0 0 0 0 .14 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.prog::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: repeating-linear-gradient(90deg, #6b3a2a 0 14px, transparent 14px 20px); opacity: 0.55; }
-.prog-goal { font-family: var(--font-caps); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #8a2e1c; margin: -2px 0 6px; }
-.prog-top { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #6b665a; margin: 4px 0; }
-.prog-title { margin: 0; font-family: var(--font-caps); font-weight: 600; font-size: 26px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.05; color: #1b1a17; }
-.prog-title small { display: block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; font-weight: 400; text-transform: uppercase; color: #6b665a; margin-top: 4px; }
-.prog-rule { border-top: 2px solid #1b1a17; border-bottom: 1px solid #a8a293; height: 3px; margin: 8px 0 10px; }
-.prog-list { margin: 0; display: grid; grid-template-columns: 5.4rem 1fr; gap: 8px 10px; font-size: 13.5px; line-height: 1.45; }
-.prog-list dt { font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11.5px; color: #6b3a2a; padding-top: 2px; }
-.prog-list dd { margin: 0; } .prog-list dd b { font-weight: 600; }
-.prog-warn { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em; border: 1px solid #6b3a2a; color: #6b3a2a; padding: 0 5px; margin-left: 4px; vertical-align: 1px; }
-.prog-quote { grid-column: 1 / -1; margin: 2px 0 0; padding: 8px 10px; border-left: 3px solid #1b1a17; font-size: 14.5px; font-style: italic; background: rgba(27,26,23,0.05); }
-.prog-quote b { font-style: normal; font-family: var(--font-caps); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11.5px; color: #6b3a2a; display: block; margin-bottom: 2px; }
-.prog-link { color: #6b3a2a; text-decoration: underline; text-underline-offset: 2px; }
-.prog-foot { margin: 12px 0 0; padding-top: 6px; border-top: 1px solid #a8a293; display: flex; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8478; }
-.prog-cta { display: block; width: 100%; margin: 18px 0 0; padding: 13px; font-size: 15px; }
+
+/* Матчдей (27.09, макет «Матчдей Вальмари»): афіша на весь екран замість кремового листа з рубриками.
+   Підкладка — фото стадіону (дім/виїзд), поверх неї друк: растр, зерно, приводочні хрести, рамка по
+   полю аркуша і водяний знак MATCHDAY за назвами. Ярлики home/away стоять на лівому полі, як службові
+   позначки друкаря поза набором, — назви від них не зсуваються всередині себе і лишаються головними.
+   Екран малює власну перфорацію по краях (Film з App тут вимкнено), бо картинка йде під самі краї. */
+.matchday { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
+.md-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; display: block; }
+.md-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,11,13,.72) 0 10%, rgba(11,11,13,.10) 30%, rgba(11,11,13,.28) 46%, rgba(11,11,13,.90) 72%, #0b0b0d 93%); }
+/* Растр і зерно одним шаром: два псевдоелементи замість двох дивів. */
+.md-print { position: absolute; inset: 0; pointer-events: none; opacity: .30; mix-blend-mode: multiply;
+  background-image: radial-gradient(circle at 1px 1px, #000 1px, transparent 1.4px); background-size: 3px 3px; }
+.md-print::after { content: ''; position: absolute; inset: 0; opacity: .22;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 2px), repeating-linear-gradient(90deg, rgba(0,0,0,.05) 0 1px, transparent 1px 3px); }
+/* Водяний знак стоїть за назвами, а не на відсотку висоти: інакше на високому екрані він від'їжджає
+   вгору й читається як окремий напис (перевірка 27.09). */
+.md-clubs { position: relative; }
+.md-mark { position: absolute; left: -14px; right: -14px; top: -30px; font-family: var(--font-caps); font-weight: 700; text-transform: uppercase;
+  font-size: 72px; line-height: .8; letter-spacing: -.035em; color: rgba(243,239,228,.09); white-space: nowrap; pointer-events: none; }
+.md-frame { position: absolute; inset: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(14px + env(safe-area-inset-bottom, 0px)); border: 1px solid rgba(222,216,200,.28); pointer-events: none; }
+.md-cross { position: absolute; width: 11px; height: 11px; opacity: .5; pointer-events: none;
+  background: linear-gradient(#ded8c8,#ded8c8) center/100% 1px no-repeat, linear-gradient(#ded8c8,#ded8c8) center/1px 100% no-repeat; }
+.md-cross.tl { top: calc(9px + env(safe-area-inset-top, 0px)); left: 9px; }
+.md-cross.tr { top: calc(9px + env(safe-area-inset-top, 0px)); right: 9px; }
+.md-cross.bl { bottom: calc(9px + env(safe-area-inset-bottom, 0px)); left: 9px; }
+.md-cross.br { bottom: calc(9px + env(safe-area-inset-bottom, 0px)); right: 9px; }
+.md-body { position: absolute; inset: 0; display: flex; flex-direction: column; max-width: 620px; margin: 0 auto;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 20px calc(16px + env(safe-area-inset-bottom, 0px)); }
+.md-spacer { flex: 1; }
+.md-plate { display: inline-block; background: var(--bad); color: #f3efe4; font-family: var(--font-caps); font-weight: 500;
+  letter-spacing: .2em; text-transform: uppercase; font-size: 10px; padding: 5px 10px 4px; }
+.md-club { position: relative; padding-left: 24px; margin-bottom: 12px; }
+.md-role { position: absolute; left: 0; top: 0; bottom: 0; display: flex; align-items: center;
+  writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: 8px;
+  letter-spacing: .26em; text-transform: uppercase; color: rgba(222,216,200,.45); }
+.md-name { font-family: var(--font-caps); font-weight: 700; text-transform: uppercase; line-height: .86; letter-spacing: -.012em;
+  font-size: 43px; color: #f3efe4; text-shadow: 0 2px 22px rgba(0,0,0,.9); }
+.md-name.long { font-size: 34px; }
+.md-guest { display: inline-block; background: #f3efe4; color: #12110d; padding: 6px 10px 8px; text-shadow: none; }
+.md-bar { margin-top: 4px; background: #0d0d0f; border-left: 3px solid var(--bad); padding: 8px 10px;
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: #cfc8b8; }
+.md-cta { display: block; width: 100%; margin-top: 14px; padding: 13px; font-size: 15px; }
+@media (max-width: 360px) { .md-name { font-size: 38px; } .md-name.long { font-size: 30px; } }
+
+/* Екран Реєса перед матчем: поки успадкована верстка брифінга, свій макет — наступним кроком. */
+.prematch { max-width: 560px; margin: 0 auto; }
+.pm-top { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+.pm-quote { border-left: 3px solid var(--bad); padding: 2px 0 2px 14px; margin-bottom: 18px; }
+.pm-quote b { display: block; font-family: var(--font-caps); font-weight: 500; letter-spacing: .09em; text-transform: uppercase; font-size: 12px; color: var(--bad); margin-bottom: 6px; }
+.pm-said { margin: 0 0 6px; font-size: 16px; font-style: italic; }
+.pm-means { margin: 0; color: var(--muted); font-size: 14px; }
+.pm-list { margin-bottom: 1rem; }
+

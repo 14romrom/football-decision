@@ -24,7 +24,8 @@ import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } fro
 import { PostsScreen } from './ui/PostsScreen';
 import { fillNames, opponentTraits } from './engine/names';
 import { BALANCE } from './engine/balance';
-import { BriefingScreen } from './ui/BriefingScreen';
+import { PrematchScreen } from './ui/PrematchScreen';
+import { MatchdayScreen } from './ui/MatchdayScreen';
 import { PlayerCard } from './ui/PlayerCard';
 import { LevelUpScreen } from './ui/LevelUpScreen';
 import { makeRng, type Rng } from './engine/rng';
@@ -77,6 +78,7 @@ import { DebugPanel } from './ui/DebugPanel';
 type Stage =
   | { k: 'menu' }
   | { k: 'briefing'; carry: CarryFacts }
+  | { k: 'matchday' }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number; link: boolean }
   | { k: 'roll'; episode: Episode; minute: number; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string; chained?: boolean }
@@ -665,22 +667,36 @@ function Game() {
     return (
       <>
         {film}
-        <BriefingScreen
+        <PrematchScreen
           conditions={session.conditions}
           opponent={OPPONENTS[session.conditions.opponentKey]}
           player={session.player}
-
           round={season.round + 1}
-          seasonNumber={season.number}
-          promotion={career.promotion}
+          note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}
+          trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
           lastYear={metLastYear(career, session.conditions.opponentKey)}
           subThere={!!career.subLeft && career.subClub === session.conditions.opponentKey ? ROSTER.us.players.oldsub?.nom ?? null : null}
           guest={hunterRound(season.number, season.round + 1) ? HUNTER.programme : null}
-          playoff={playoffPending(season)}
           coachExtra={coachGoalWord(season.number, season.round + 1, season.round > 0 ? ourRow(season).position : 6, SEASON_ROUNDS)}
+          onNext={() => setStage({ k: 'matchday' })}
+        />
+        <DebugPanel session={session} />
+      </>
+    );
+  }
+
+  if (stage.k === 'matchday') {
+    const session = sessionRef.current!;
+    return (
+      <>
+        {film}
+        <MatchdayScreen
+          conditions={session.conditions}
+          opponent={OPPONENTS[session.conditions.opponentKey]}
           usName={ROSTER.us.name.nom}
-          note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}
-          trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
+          round={season.round + 1}
+          seasonNumber={season.number}
+          playoff={playoffPending(season)}
           onStart={kickoff}
           onBench={!!session.onBench}
         />

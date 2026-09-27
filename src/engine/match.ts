@@ -543,6 +543,15 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
 /** Подстановка следа решения в реактивный эпизод: {trigger.past}, {trigger.minute},
  *  {trigger.when} — «на 34-й» или «ще минулого матчу», если флаг принесён из прошлого
  *  матча; {trigger.When} — то же с большой буквы для начала предложения. */
+/** Що саме буде наступним рішенням у ланцюжку — підпис на кнопці «Далі → …» (ui/RollView).
+ *  Кожна ланка з `apply.followUp` має тут ім'я (тест у chain.test.ts); без імені кнопка каже
+ *  просто «Далі» — плейтест 27.09: кутовий імені не мав, і виходило «Далі → далі». */
+export const CHAIN_NEXT: Record<string, string> = {
+  fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний',
+  ep_rebound_follow_up: 'добивання', ep_corner_delivery: 'подача з кутового', ep_counter_run: 'контратака',
+  ep_between_lines: 'м’яч між лініями', ep_progressive_pass: 'пас уперед', ep_edge_of_box: 'на межі штрафного',
+};
+
 /** Мітка приходить із тижня, прологу або відпустки, де імена ще не підставлені (плейтест 27.09:
  *  «перепросив перед {partner.ins}» лягло в сетап сирим). Підставляємо ростером цього матчу перед
  *  тим, як текст піде в {trigger.past}: старі збереження теж лагодяться. */

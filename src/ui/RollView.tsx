@@ -22,7 +22,10 @@ import { motionReduced, readSettings, vibrate } from '../telemetry/settings';
 type Props = {
   option: EpisodeOption; res: Resolution; flavor?: string; flavorVoice?: string; badges?: ResultBadge[];
   /** Цепочка сработала: куда ведёт сцена — подпись на кнопке. */
+  /** Ім'я наступної ланки для підпису кнопки; без імені кнопка каже просто «Далі». */
   continues?: string;
+  /** Ланцюжок триває (наступне рішення на цій же хвилині) — навіть якщо імені ланки немає. */
+  chained?: boolean;
   onNext: () => void;
   /** Штамп вердикта появился — поле разыгрывает розв’язку (App → Pitch). */
   onVerdict?: () => void;
@@ -61,7 +64,7 @@ const FLAVOR_CLASS: Record<string, string> = {
   'ТРЕНЕР': 'say-coach', 'ТРИБУНИ': 'say-fans',
 };
 
-export function RollView({ option, res, flavor, flavorVoice, badges, continues, onNext, onVerdict, hint }: Props) {
+export function RollView({ option, res, flavor, flavorVoice, badges, continues, chained = false, onNext, onVerdict, hint }: Props) {
   const formulaRef = useRef<HTMLDivElement>(null);
   const verdictRef = useRef<HTMLDivElement>(null);
   const [hintOpen, setHintOpen] = useState(true);
@@ -183,8 +186,8 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
                 ))}
               </ul>
             )}
-            {continues && <p className="continues">Момент триває — наступне рішення на цій же хвилині.</p>}
-            <button className="primary de-next" onClick={onNext}>{continues ? `Далі → ${continues}` : 'Граємо далі'}</button>
+            {(chained || continues) && <p className="continues">Момент триває — наступне рішення на цій же хвилині.</p>}
+            <button className="primary de-next" onClick={onNext}>{continues ? `Далі → ${continues}` : chained ? 'Далі' : 'Граємо далі'}</button>
           </div>
         )}
         </div>

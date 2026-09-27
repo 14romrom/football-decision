@@ -1,7 +1,7 @@
 // Заход B: цепочки решений (followUp), условные опции, скрытое чтение воротаря, память по семьям.
 import { describe, it, expect } from 'vitest';
 import { makeRng } from '../src/engine/rng';
-import { applyChoice, availableOptions, createMatch, nextEpisode } from '../src/engine/match';
+import { applyChoice, availableOptions, CHAIN_NEXT, createMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
 import { computeContext } from '../src/engine/context';
 import { neutralConditions } from '../src/engine/conditions';
@@ -239,6 +239,16 @@ describe('плейсхолдеры с цифрой и строки ленты', 
         applyChoice(s, next.episode, opt, resolveOption(s.state, s.player, opt, next.episode.phase, rng), rng);
       }
       for (const e of s.state.log) expect(e.text, `seed ${seed}: ${e.text}`).not.toMatch(/[{}]/);
+    }
+  });
+});
+
+describe('підпис кнопки ланцюжка', () => {
+  it('у кожної ланки є ім’я: кнопка каже «Далі → удар», а не «Далі → далі» (плейтест 27.09)', () => {
+    const targets = new Set(EPISODES_RAW.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).map((out) => out?.apply?.followUp).filter((x): x is string => !!x))));
+    for (const id of targets) {
+      expect(CHAIN_NEXT[id], `ланка ${id} без імені`).toBeTruthy();
+      expect(CHAIN_NEXT[id], id).not.toBe('далі');
     }
   });
 });

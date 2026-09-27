@@ -30,7 +30,7 @@ import { LevelUpScreen } from './ui/LevelUpScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
 import {
-  advanceTo, applyChoice, createMatch, finishMatch, nextEpisode, sceneInsights,
+  advanceTo, applyChoice, CHAIN_NEXT, createMatch, finishMatch, nextEpisode, sceneInsights,
   type MatchSession, type MatchSummary,
 } from './engine/match';
 import { buildEntry, type Entry } from './engine/entry';
@@ -79,7 +79,7 @@ type Stage =
   | { k: 'briefing'; carry: CarryFacts }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number; link: boolean }
-  | { k: 'roll'; episode: Episode; minute: number; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string }
+  | { k: 'roll'; episode: Episode; minute: number; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string; chained?: boolean }
   // Фінальний свисток (M10, 20.09): лист оповідача на полі, потім кнопка «Перейти в роздягальню» → дошка.
   | { k: 'whistle'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
   // Вихід із лави (21.09): лист без кубика на хвилині виходу — сетап, голоси, «Вийти на поле».
@@ -112,9 +112,6 @@ type Pending =
   | { kind: 'result'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career };
 
 /** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
-const CHAIN_NEXT: Record<string, string> = {
-  fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний', ep_rebound_follow_up: 'добивання',
-};
 
 /** Пауза на событие ленты: гол должен успеть прозвучать, проходной момент — нет. */
 function delayFor(e: TimelineEvent): number {
@@ -473,8 +470,9 @@ function Game() {
     // Исход применяется сразу: реплика после броска должна знать счёт и минуту
     // уже с учётом этого исхода. В ленту события попадают по кнопке «Далі».
     const { events } = applyChoice(session, stage.episode, option, res, rng, FLAVOR);
-    const continues = session.pendingFollowUp ? CHAIN_NEXT[session.pendingFollowUp] ?? 'далі' : undefined;
-    setStage({ k: 'roll', episode: stage.episode, minute: stage.minute, option, res, events, continues });
+    const continues = session.pendingFollowUp ? CHAIN_NEXT[session.pendingFollowUp] : undefined;
+    const chained = !!session.pendingFollowUp;
+    setStage({ k: 'roll', episode: stage.episode, minute: stage.minute, option, res, events, continues, chained });
   }, [stage]);
 
   const afterRoll = useCallback(() => {
@@ -907,6 +905,7 @@ function Game() {
             flavorVoice={stage.events.find((e) => e.kind === 'episode')?.flavorVoice}
             badges={stage.events.find((e) => e.kind === 'episode')?.badges}
             continues={stage.continues}
+            chained={stage.chained}
             hint={hintFor(stage.episode.id)}
             onNext={afterRoll}
             onVerdict={() => setFinale((f) => ({ kind: finaleFor(stage.episode, stage.option, stage.res, stage.events), id: (f?.id ?? 0) + 1 }))}

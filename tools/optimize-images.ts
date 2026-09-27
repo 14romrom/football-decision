@@ -26,7 +26,7 @@ const force = process.argv.includes('--force');
 if (!existsSync(SRC)) { console.error(`нет папки ${SRC}`); process.exit(1); }
 mkdirSync(OUT, { recursive: true });
 
-const files = readdirSync(SRC).filter((f) => /\.(jpe?g|png|webp)$/i.test(f));
+const files = readdirSync(SRC).filter((f) => /\.(jpe?g|png|webp)$/i.test(f) && statSync(join(SRC, f)).isFile());
 let done = 0, skipped = 0, before = 0, after = 0;
 
 for (const file of files) {
@@ -47,6 +47,29 @@ for (const file of files) {
   done++;
   const kb = (n: number) => (n / 1024).toFixed(0) + ' КБ';
   console.log(`${id.padEnd(24)} ${kb(srcStat.size).padStart(8)} → ${kb(info.size).padStart(8)}`);
+}
+
+// Аватари стрічки (27.09): `images/avatars/<хендл без @>.png` → `public/img/avatars/<хендл>.webp`.
+// Кружок 40 CSS px, на телефоні з трійною щільністю це 120 — тому 128 і якість вища, ніж у кадрів:
+// картинка дрібна, артефакти на обличчі видно одразу. Немає файлу — літера на кольоровому колі
+// (ui/PostsScreen.tsx:Avatar), тому аватарки можна робити частинами.
+const AV_SRC = join(SRC, 'avatars');
+const AV_OUT = 'public/img/avatars';
+const AV_WIDTH = 128;
+if (existsSync(AV_SRC)) {
+  mkdirSync(AV_OUT, { recursive: true });
+  for (const file of readdirSync(AV_SRC).filter((f) => /\.(jpe?g|png|webp)$/i.test(f))) {
+    const id = basename(file, extname(file)).replace(/^@/, '');
+    const src = join(AV_SRC, file);
+    const out = join(AV_OUT, id + '.webp');
+    const srcStat = statSync(src);
+    before += srcStat.size;
+    if (!force && existsSync(out) && statSync(out).mtimeMs >= srcStat.mtimeMs) { after += statSync(out).size; skipped++; continue; }
+    const info = await sharp(src).resize({ width: AV_WIDTH, height: AV_WIDTH, fit: 'cover' }).webp({ quality: 82 }).toFile(out);
+    after += info.size;
+    done++;
+    console.log(`avatar ${id.padEnd(24)} ${(info.size / 1024).toFixed(0).padStart(4)} КБ`);
+  }
 }
 
 const mb = (n: number) => (n / 1024 / 1024).toFixed(1) + ' МБ';

@@ -1799,7 +1799,7 @@
           ],
           "note": "Позичив гроші партнерові: зараз — вдячність, за три тури — розмова."
         },
-        "followUp": "sc_quarrel_partner"
+        "followUp": "sc_debt_reminder"
       },
       {
         "id": "gift",

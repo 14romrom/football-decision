@@ -432,7 +432,7 @@ export function whenTextFor(after: number): string {
 /** Неделя записывается всегда — и с выбором, и без, — чтобы после перезагрузки не искать её заново. */
 export function recordWeek(
   career: Career, c: WeekContext, offered: Activity[], chosen: Activity[],
-  extra: { outcomes?: string[]; scene?: { id: string; option: string } } = {},
+  extra: { outcomes?: string[]; scene?: { id: string; option: string }; scenes?: { id: string; option: string }[] } = {},
 ): Career {
   return { ...career, weekLog: [...(career.weekLog ?? []), { season: c.season, round: c.round, chosen: chosen.map((a) => a.id), offered: offered.map((a) => a.id), ...extra }] };
 }
@@ -469,6 +469,9 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
   const choices: WeekChoice[] = [];
   const chosen: Activity[] = [];
   const outcomes: string[] = [];
+  // Сцен за тиждень може бути дві: вечірня від справи і якір. Обидві йдуть у пам'ять (27.09) —
+  // інакше та, яку перезаписали, приходить ще раз у вигляді, якого гравець уже не впізнає.
+  const played: { id: string; option: string }[] = [];
   let scene: { id: string; option: string } | undefined;
   for (const p of picks) {
     const offer = days[p.day]?.find((o) => o.activity.id === p.activityId);
@@ -481,6 +484,7 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
       const opt = sc?.options.find((o) => o.id === p.scene!.option);
       if (sc && opt) {
         scene = p.scene;
+        played.push(p.scene);
         choices.push({ activity: { id: `${sc.id}:${opt.id}`, voice: opt.insight?.who ?? offer.activity.voice, title: sc.id, line: '', effect: opt.effect } });
       }
     }
@@ -489,12 +493,12 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
   if (anchor) {
     const sc = scenes.find((s) => s.id === anchor.id);
     const opt = sc?.options.find((o) => o.id === anchor.option);
-    if (sc && opt) { scene = anchor; choices.unshift({ activity: { id: `${sc.id}:${opt.id}`, voice: opt.insight?.who ?? 'team', title: sc.id, line: '', effect: opt.effect } }); }
+    if (sc && opt) { scene = scene ?? anchor; played.push(anchor); choices.unshift({ activity: { id: `${sc.id}:${opt.id}`, voice: opt.insight?.who ?? 'team', title: sc.id, line: '', effect: opt.effect } }); }
   }
   const offeredVoices = days.flat().map((o) => o.activity.voice);
   const { career: withNeglect, penalties } = neglectPenalties(career, offeredVoices, choices.map((x) => x.activity.voice));
   const { career: after, tags, loot } = applyWeek(withNeglect, [...choices, ...penalties.map((activity) => ({ activity }))]);
-  return { career: recordWeek(after, c, days.flat().map((o) => o.activity), chosen, { outcomes, ...(scene ? { scene } : {}) }), tags, loot };
+  return { career: recordWeek(after, c, days.flat().map((o) => o.activity), chosen, { outcomes, ...(scene ? { scene } : {}), ...(played.length ? { scenes: played } : {}) }), tags, loot };
 }
 
 /** Сцени-якорі (21.09, після звірки з STORY.md: тури 6–9 обох сезонів не мали жодної гарантованої події). Замість
@@ -549,7 +553,8 @@ export function anchorScene(seasonNumber: number, round: number, career: Career,
 /** Варианты сцены, которые видит игрок: с подсказкой — только когда голос бачить. */
 /** Сцены, которые карьера уже видела (weekLog.scene, все сезоны). */
 export function seenScenes(career: Career): Set<string> {
-  return new Set((career.weekLog ?? []).map((e) => e.scene?.id).filter((id): id is string => !!id));
+  // `scene` — перша сцена тижня, `scenes` — усі (з 27.09): якір і вечірня від справи можуть бути в одному тижні.
+  return new Set((career.weekLog ?? []).flatMap((e) => [e.scene?.id, ...(e.scenes ?? []).map((x) => x.id)]).filter((id): id is string => !!id));
 }
 
 /** Сцена-продолжение для исхода: одна на неделю и **без дословных повторов** — виденную в карьере

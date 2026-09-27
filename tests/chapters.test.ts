@@ -1,7 +1,7 @@
 // Розділювачі глав (M24): чотири глави за сезонами — пролог, перший сезон, другий сезон, епілог.
 // Кожна відкривається раз за кар'єру; відсотків проходження немає — це правило проєкту.
 import { describe, it, expect } from 'vitest';
-import { CHAPTERS, SHOTS, shotFor } from '../src/content';
+import { CHAPTERS, SHOTS, VACATION, shotFor } from '../src/content';
 import { WEEK_SCENES } from '../src/content';
 import { ANCHOR_SCENES } from '../src/engine/week';
 
@@ -26,7 +26,8 @@ describe('глави й кадри якорів', () => {
   it('кадри прив’язані до реальних сцен, розворотів або до майбутніх сцен M28', () => {
     const scenes = new Set(WEEK_SCENES.map((s) => s.id));
     // Розвороти прологу (scout / call / base) і кадри, намальовані наперед до сцен медогляду (M28).
-    const planned = new Set(['sc_night_before', 'sc_pitch_no_date', 'sc_medical', 'scout', 'call', 'base']);
+    // Розвороти прологу і відпустки — теж адреси кадрів (VACATION: газон, ніч, медогляд).
+    const planned = new Set(['scout', 'call', 'base', ...VACATION.map((s) => s.id)]);
     for (const id of Object.keys(SHOTS)) {
       expect(scenes.has(id) || planned.has(id), `кадр ${id} нікуди не веде`).toBe(true);
     }

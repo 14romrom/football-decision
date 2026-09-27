@@ -527,7 +527,7 @@ function Game() {
         onFinish={(picks: ProloguePick[]) => {
           // Наслідки — по контенту без імен: id ті самі, у флагах і бирках імена не потрібні.
           const before = careerRef.current;
-          const { career: after, loot } = finishPrologue(before, PROLOGUE, picks);
+          const { career: after, loot } = finishPrologue(before, fillNamesDeep(PROLOGUE, ROSTER), picks);
           setCareerBoth(after);
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
@@ -550,7 +550,7 @@ function Game() {
         arc={arcStage(career)}
         onFinish={(picks: ProloguePick[]) => {
           const before = careerRef.current;
-          const option = spread.options.find((o) => o.id === picks[0]?.option);
+          const option = fillNamesDeep(spread, ROSTER).options.find((o) => o.id === picks[0]?.option);
           const { career: applied, loot } = applyWeek(before, option ? [{ activity: { id: `${spread.id}:${option.id}`, voice: option.voice, title: spread.title, line: '', effect: option.effect } }] : []);
           const after = { ...applied, mayDone: true };
           setCareerBoth(after);
@@ -580,7 +580,7 @@ function Game() {
         arc={arcStage(career)}
         onFinish={(picks: ProloguePick[]) => {
           const before = careerRef.current;
-          const { career: after, loot } = finishVacation(before, VACATION, picks, promotion(seasonRef.current), seasonRef.current.number);
+          const { career: after, loot } = finishVacation(before, fillNamesDeep(VACATION, ROSTER), picks, promotion(seasonRef.current), seasonRef.current.number);
           setCareerBoth(after);
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
@@ -603,7 +603,7 @@ function Game() {
         labels={{ open: 'Вирішити', pick: 'Обери, як попрощатися', confirm: 'Так і зробити' }}
         onFinish={(picks: ProloguePick[]) => {
           const before = careerRef.current;
-          const { career: after } = finishEnding(before, ENDING.spreads, picks, seasonRef.current.number);
+          const { career: after } = finishEnding(before, fillNamesDeep(ENDING.spreads, ROSTER), picks, seasonRef.current.number);
           setCareerBoth(after);
           return { loot: [], before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
@@ -815,21 +815,28 @@ function Game() {
     const { leveledFrom, leveledTo } = stage;
     const ctx = weekContext(sn, careerRef.current, ourRow(sn).position)!;
     const player = effectivePlayer(PLAYER, careerRef.current);
+    // Імена підставляємо один раз і тим самим об'єктом і показуємо, і застосовуємо: інакше в кар'єру
+    // лягає мітка з сирим плейсхолдером, і реактивна сцена показує «{partner.ins}» (плейтест 27.09).
+    const days = fillNamesDeep(fillMarket(stage.days, sn, careerRef.current, ROSTER.us.name.gen), roster);
+    const scenes = fillNamesDeep(WEEK_SCENES, roster);
+    // Якір рахуємо тут і додаємо до «вже бачених» на цей тиждень: та сама сцена не може прийти двічі —
+    // спершу якорем, потім увечері від справи (плейтест 27.09, сцена Ларссона).
+    const anchor = anchorScene(sn.number, sn.round, careerRef.current, scenes);
+    const seenNow = new Set([...seenScenes(careerRef.current), ...(anchor ? [anchor.id] : [])]);
     return (<>{film}
       <WeekScreen
         key={sn.number + ':' + sn.round}
-        days={fillNamesDeep(fillMarket(stage.days, sn, careerRef.current, ROSTER.us.name.gen), roster)}
-        scenes={fillNamesDeep(WEEK_SCENES, roster)}
-        anchor={anchorScene(sn.number, sn.round, careerRef.current, fillNamesDeep(WEEK_SCENES, roster))}
+        days={days}
+        scenes={scenes}
+        anchor={anchor}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
         locked={stage.locked}
         month={sn.round === WINTER_BREAK_AFTER ? 'зимова перерва · січень' : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
-        seen={seenScenes(careerRef.current)}
+        seen={seenNow}
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[], anchor?: { id: string; option: string }) => {
-          // Применяем по исходным (без имён) делам и сценам: эффекты те же, id те же.
           const before = careerRef.current;
-          const { career: after, loot } = finishWeek(before, ctx, stage.days, picks, WEEK_SCENES, anchor);
+          const { career: after, loot } = finishWeek(before, ctx, days, picks, scenes, anchor);
           setCareerBoth(after);
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}

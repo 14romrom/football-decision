@@ -18,5 +18,6 @@
   "call": { "focus": "50% 42%" },
   "base": { "focus": "50% 45%" },
   "sc_pitch_no_date": { "focus": "50% 55%" },
-  "sc_medical": { "focus": "50% 42%" }
+  "sc_medical": { "focus": "50% 42%" },
+  "sc_pitch_again": { "focus": "50% 45%" }
 }

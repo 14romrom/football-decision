@@ -543,6 +543,13 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
 /** Подстановка следа решения в реактивный эпизод: {trigger.past}, {trigger.minute},
  *  {trigger.when} — «на 34-й» или «ще минулого матчу», если флаг принесён из прошлого
  *  матча; {trigger.When} — то же с большой буквы для начала предложения. */
+/** Мітка приходить із тижня, прологу або відпустки, де імена ще не підставлені (плейтест 27.09:
+ *  «перепросив перед {partner.ins}» лягло в сетап сирим). Підставляємо ростером цього матчу перед
+ *  тим, як текст піде в {trigger.past}: старі збереження теж лагодяться. */
+export function fillMarkNames<M extends { past: string; whenText?: string }>(mark: M, roster: Roster): M {
+  return { ...mark, past: fillNames(mark.past, roster), ...(mark.whenText ? { whenText: fillNames(mark.whenText, roster) } : {}) };
+}
+
 export function fillTrigger<T>(value: T, mark: { minute: number; past: string; previousMatch?: boolean; whenText?: string }): T {
   if (typeof value === 'string') {
     const when = mark.whenText ?? (mark.previousMatch ? 'ще минулого матчу' : 'на ' + mark.minute + '-й');
@@ -586,7 +593,7 @@ function pickReactive(session: MatchSession, rng: Rng): Episode | null {
   if (planned?.phase === 'defense' && chosen.phase !== 'defense') return null;
   const mark = state.marks[chosen.requires!.flags![0]] ?? { minute: state.minute, past: 'зробив свій хід' };
   session.reactiveUsed += 1;
-  return withSetup(fillTrigger(chosen, mark), session, rng);
+  return withSetup(fillTrigger(chosen, fillMarkNames(mark, session.roster)), session, rng);
 }
 
 /** Вариант сетапа под ситуацию. Було «найконкретніше правило»: у дощ завжди дощовий текст, і та сама сцена
@@ -666,7 +673,7 @@ export function nextEpisode(
   if (session.pendingFollowUp) {
     const link = session.episodes.find((e) => e.id === session.pendingFollowUp)!;
     session.pendingFollowUp = null;
-    const filled = session.chainMark ? fillTrigger(link, session.chainMark) : link;
+    const filled = session.chainMark ? fillTrigger(link, fillMarkNames(session.chainMark, session.roster)) : link;
     return { episode: withSetup(filled, session, rng), minute, events: [] };
   }
   const events = advanceTo(session, minute, rng);

@@ -2,7 +2,7 @@
 // эффекты читаются через голоса и брифинг следующего матча.
 import { describe, it, expect } from 'vitest';
 import { makeRng } from '../src/engine/rng';
-import { createMatch, fillTrigger } from '../src/engine/match';
+import { createMatch, fillMarkNames, fillTrigger } from '../src/engine/match';
 import { neutralConditions } from '../src/engine/conditions';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, POINT_VALUE, type Career } from '../src/engine/career';
 import { createSeason, ourRow, recordRound, type Season } from '../src/engine/season';
@@ -10,7 +10,7 @@ import { voiceSees } from '../src/engine/voices';
 import { attrMod } from '../src/engine/attr';
 import { BALANCE } from '../src/engine/balance';
 import {
-  applyWeek, coachLocksCity, matchesActivity, offerWeek, recordWeek, VOICE_ORDER, weekContext, weekPending,
+  applyWeek, coachLocksCity, matchesActivity, offerWeek, recordWeek, seenScenes, VOICE_ORDER, weekContext, weekPending,
   type Activity, type WeekContext,
 } from '../src/engine/week';
 import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, OPPONENT_KEYS } from '../src/content';
@@ -333,5 +333,19 @@ describe('QA 17.09, вторая волна', () => {
     expect(BALANCE.growth.levels).toBe(false);
     const c = applyMatchToCareer({ ...defaultCareer(), xp: 200, level: 4 }, emptyState(), { coachRating: 8, fanRating: 8, stats: { goals: 0, assists: 0, keyPasses: 0, losses: 0, duelsWon: 0, fouls: 0 } } as unknown as MatchSummary, false);
     expect(c.unspentPoints).toBe(0);
+  });
+});
+
+describe('пам’ять і мітки тижня (плейтест 27.09)', () => {
+  it('мітка з тижня доїжджає до реактивного епізоду з іменами, а не з {partner.ins}', () => {
+    const mark = { minute: 0, past: 'перепросив перед {partner.ins} першим', whenText: 'ще минулого тижня' };
+    const filled = fillMarkNames(mark, ROSTER);
+    expect(filled.past).not.toMatch(/[{}]/);
+    expect(fillTrigger('Він пам’ятає, як ти {trigger.past} {trigger.when}.', filled)).not.toMatch(/[{}]/);
+  });
+
+  it('за тиждень може бути дві сцени — якір і вечірня; пам’ятаються обидві', () => {
+    const career = { ...defaultCareer(), weekLog: [{ season: 1, round: 3, chosen: [], offered: [], scene: { id: 'sc_anchor', option: 'a' }, scenes: [{ id: 'sc_evening', option: 'b' }, { id: 'sc_anchor', option: 'a' }] }] };
+    expect(seenScenes(career)).toEqual(new Set(['sc_anchor', 'sc_evening']));
   });
 });

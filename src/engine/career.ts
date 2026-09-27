@@ -36,6 +36,10 @@ export type Career = {
   /** Що {oldsub} знає про липневу травму (M28): він єдиний свідок на газоні, і в другому сезоні проти його
    *  клубу це вирішує, б’є він у коліно чи ні. Ставить відпустка (vacation.ts:finishVacation). */
   larsson?: 'knows' | 'silent' | 'lied' | 'unsure' | 'none';
+  /** Що агент на трибуні побачив навесні S2 (M28): віддачу чи удар за себе (`rx_top_agent_in_stands`).
+   *  Кульмінація йде за рішенням, а не за результатом: від цього залежить, **хто** дзвонить у фіналі —
+   *  клуб («бачили, як ви віддали») чи агент із вітриною. Ставить applyMatchToCareer. */
+  scoutSaw?: 'shot' | 'team';
   /** Минулий сезон (M14): рахунки з кожним суперником — «зустрічалися торік» у програмці, постах і сетапах. */
   lastSeason?: { number: number; position: number; results: Record<string, { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[]> };
   /** Несгоревшие жёлтые за карьеру; на третьей — тренер начинает следующий матч настороже. */
@@ -105,6 +109,21 @@ export function arcStage(career: Career): ArcStage {
   if (career.matchesPlayed >= a.ownFrom && warm) return 3;
   if (career.matchesPlayed >= a.noticedFrom) return 2;
   return 1;
+}
+
+/** Хто знає про липневу ніч (M28, 27.09). Приз за мовчання — не цифра, а приватність: покликав фізіо —
+ *  про паркан знає клуб, і база говорить; дійшов сам — не знає ніхто, і ніхто не лізе з питаннями.
+ *  `saw` — Ларссон бачив травму (усе, крім «дійшов сам»): другий сезон проти його клубу це пам’ятає.
+ *  `denied` — Реєс сам собі сказав «старе коліно» (не став перевіряти на газоні або збрехав Ларссону)
+ *  і тримається цієї версії, поки хтось не покаже, що шов ні до чого. */
+export function nightKnowledge(career: Career): { rumor: boolean; secret: boolean; saw: boolean; denied: boolean } {
+  const l = career.larsson;
+  return {
+    rumor: l === 'knows' || l === 'unsure',
+    secret: l === 'none',
+    saw: !!l && l !== 'none',
+    denied: career.vacation?.sc_pitch_no_date === 'clue_sure' || l === 'lied',
+  };
 }
 
 /** Суперник був у минулому сезоні (M14): для програмки, постів і флагу матчу `met_last_year`. */
@@ -444,6 +463,11 @@ export function applyMatchToCareer(
   for (const [voice, count] of Object.entries(state.voices.counts) as [VoiceKey, number][]) {
     next.voiceCounts[voice] += count;
   }
+  // Кульмінація через рішення (M28): агент на трибуні бачив або удар за себе, або віддачу — фінальний
+  // дзвінок у ending.json іде саме з цього, а не з рахунку. «Не дивитися» — теж не вітрина.
+  const stands = (state.log ?? []).find((e) => e.kind === 'episode' && e.episodeId === 'rx_top_agent_in_stands');
+  if (stands) next.scoutSaw = stands.optionId === 'play_for_him' ? 'shot' : 'team';
+
   if (state.flags.includes('sent_off')) next.pendingSentOff = true;
   else if (state.flags.includes('booked')) next.careerYellows = career.careerYellows + 1;
   if (state.flags.includes('injured')) next.injuredMatches = Math.max(career.injuredMatches, 1);

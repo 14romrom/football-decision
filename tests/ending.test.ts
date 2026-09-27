@@ -1,7 +1,7 @@
 // Останній дзвінок (M16, 21.09): після другого сезону — фінал без варіанта лишитися; рими до прологу.
 import { describe, it, expect } from 'vitest';
 import { createSeason, recordRound, secondSeasonVerdict, SEASON_ROUNDS, type OurResult } from '../src/engine/season';
-import { endingPending, finishEnding, partnerBonded, prologueVoice } from '../src/engine/ending';
+import { endingPending, endingSpreads, finishEnding, partnerBonded, prologueVoice } from '../src/engine/ending';
 import { defaultCareer } from '../src/engine/career';
 import { ENDING, OPPONENTS, OPPONENT_KEYS, PROLOGUE, ROSTER } from '../src/content';
 import { fillNamesDeep } from '../src/engine/names';
@@ -21,7 +21,11 @@ function full(score: [number, number], number = 2) {
 describe('останній дзвінок', () => {
   it('контент: три розвороти по 4 стікери, епілог; лист дзвінка має варіант на кожен голос прологу; без назв клубів', () => {
     expect(ENDING.spreads.map((s) => s.id)).toEqual(['call', 'interview', 'tram']);
-    for (const s of ENDING.spreads) { expect(s.options.length).toBe(4); for (const o of s.options) expect(o.reply.length).toBeGreaterThan(40); }
+    // M28: у «трамваї» п’ятий варіант — жовті бутси, які не беруть із собою, а чистять і лишають у шафці.
+    for (const s of ENDING.spreads) { expect(s.options.length, s.id).toBe(s.id === 'tram' ? 5 : 4); for (const o of s.options) expect(o.reply.length).toBeGreaterThan(40); }
+    expect(ENDING.spreads.find((s) => s.id === 'tram')!.options.find((o) => o.id === 'tram_boots')!.mark).toContain('лишив');
+    // Фінал про них мовчить: епілог жодним рядком не повертається до бутсів.
+    expect(JSON.stringify(ENDING.epilogue)).not.toMatch(/бутс/i);
     const call = ENDING.spreads[0];
     for (const v of ['ego', 'body', 'vision', 'instinct']) expect(call.sheetBy?.[v as 'ego'], v).toBeTruthy();
     expect(call.options.find((o) => o.id === 'call_team')!.replyCold).toBeTruthy();
@@ -29,6 +33,19 @@ describe('останній дзвінок', () => {
     for (const k of Object.keys(OPPONENTS)) expect(text).not.toContain(OPPONENTS[k].name.nom);
     expect(text).not.toMatch(/\{[a-z]|%/);
     expect(ENDING.epilogue.sign).toContain('Далі буде');
+    // M28, фінал розімкнено: чотири рими-повернення прибрані (52-га, «розминайся», нога, «Решта — ваша справа»),
+    // останній кадр — фото газону від Тібо без підпису.
+    const epi = ENDING.epilogue.text.join(' ');
+    for (const back of ['п’ятдесят другій', 'Розминайся', 'Нога тримає', 'Решта — ваша справа']) expect(epi, back).not.toContain(back);
+    expect(ENDING.epilogue.text[ENDING.epilogue.text.length - 1]).toContain('фото');
+    // Кульмінація через рішення: хто дзвонить — клуб, який бачив передачу, чи агент із вітриною.
+    expect(Object.keys(ENDING.scoutLead!).sort()).toEqual(['shot', 'team']);
+    const team = endingSpreads(ENDING, 'team')[0];
+    expect(team.sheet[0]).toContain('віддали');
+    expect(team.sheet.length).toBe(ENDING.spreads[0].sheet.length + 1);
+    for (const v of Object.values(team.sheetBy ?? {})) expect(v![0]).toContain('віддали');
+    expect(endingSpreads(ENDING, 'shot')[0].sheet[0]).toContain('агент');
+    expect(endingSpreads(ENDING, undefined)).toBe(ENDING.spreads);
   });
 
   it('вердикт другого сезону — «Дзвонить скаут» завжди; фінал чекає після другого сезону', () => {

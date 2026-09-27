@@ -32696,8 +32696,7 @@
             "recap": "і закрив щілину між лініями, як просив тренер.",
             "apply": {
               "coachTrust": 6,
-              "fanHype": 3,
-              "coachTrust": 6
+              "fanHype": 3
             }
           },
           "cost": {
@@ -32858,7 +32857,6 @@
               "coachTrust": 5,
               "fanHype": 3,
               "foul": true,
-              "coachTrust": 5,
               "composure": 3
             }
           },
@@ -34121,8 +34119,7 @@
               "coachTrust": 5,
               "fanHype": 3,
               "keyPass": true,
-              "duelWon": true,
-              "coachTrust": 5
+              "duelWon": true
             }
           },
           "cost": {
@@ -34321,8 +34318,7 @@
             "apply": {
               "coachTrust": 5,
               "fanHype": 3,
-              "duelWon": true,
-              "coachTrust": 5
+              "duelWon": true
             }
           },
           "cost": {
@@ -34698,6 +34694,80 @@
             }
           }
         }
+      },
+      {
+        "id": "knee_between_us",
+        "label": "Прийняти на ту ногу — при ньому",
+        "past": "прийняв на ту ногу при {oldsub.ins}",
+        "attribute": "first_touch",
+        "basePosition": "controlled",
+        "effect": "limited",
+        "difficulty": 1,
+        "staminaCost": 4,
+        "goals": {
+          "team": 1,
+          "personal": 0
+        },
+        "requires": {
+          "flags": [
+            "larsson_saw"
+          ]
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Він єдиний, хто знає, скільки це коштувало. Хай дивиться."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти приймаєш на ту саму ногу і розвертаєшся через неї. {oldsub} у стик не йде — на пів секунди, але не йде. Не з жалю: він один на цьому полі знає, що там було в липні, і сам вирішує, що з цим робити.",
+            "recap": "і {oldsub} на пів секунди не пішов у стик.",
+            "apply": {
+              "coachTrust": 3,
+              "fanHype": 2,
+              "momentum": 1,
+              "addFlags": [
+                "larsson_respect"
+              ],
+              "removeFlags": [
+                "sub_there_again"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Ти приймаєш на ту ногу, і він усе-таки йде — плечем, чесно, як ходив на тренуваннях. М’яч у аут. Підводячись, він каже два слова, яких ніхто, крім тебе, не чує: «Тримає?»",
+            "recap": "і почув від нього два слова про ногу.",
+            "apply": {
+              "coachTrust": 1,
+              "addFlags": [
+                "larsson_respect"
+              ],
+              "removeFlags": [
+                "sub_there_again"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Прийом важкий: нога є, впевненості в ній немає. {oldsub} забирає м’яч без стику — просто дочекався, поки ти вирішиш, чи можна на неї стати.",
+            "recap": "і завозився, поки вирішував, чи можна на неї стати.",
+            "apply": {
+              "coachTrust": -2,
+              "removeFlags": [
+                "sub_there_again"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ти ставиш вагу на ту ногу, вона відповідає тим самим «тягне» — на пів секунди, але цього вистачає. {oldsub} забирає м’яч і не дивиться на тебе. Це найгірше: він не дивиться, бо зрозумів.",
+            "recap": "і вона знову сказала «тягне» — при ньому.",
+            "apply": {
+              "counterAttack": true,
+              "coachTrust": -3,
+              "removeFlags": [
+                "sub_there_again"
+              ]
+            }
+          }
+        }
       }
     ]
   },
@@ -34760,8 +34830,7 @@
             "apply": {
               "coachTrust": 6,
               "fanHype": 3,
-              "duelWon": true,
-              "coachTrust": 6
+              "duelWon": true
             }
           },
           "cost": {
@@ -34962,7 +35031,6 @@
               "coachTrust": 7,
               "fanHype": 3,
               "duelWon": true,
-              "coachTrust": 7,
               "composure": 2
             }
           },
@@ -35084,7 +35152,6 @@
               "addFlags": [
                 "booked"
               ],
-              "coachTrust": 5,
               "duelWon": true
             }
           },
@@ -35142,8 +35209,7 @@
             "apply": {
               "coachTrust": 5,
               "fanHype": 9,
-              "duelWon": true,
-              "coachTrust": 5
+              "duelWon": true
             }
           },
           "cost": {
@@ -36059,7 +36125,6 @@
               "coachTrust": 6,
               "fanHype": 3,
               "duelWon": true,
-              "coachTrust": 6,
               "keyPass": true
             }
           },
@@ -36569,7 +36634,6 @@
             "recap": "і дочекався — зірка сама віддала футболку.",
             "apply": {
               "coachTrust": 5,
-              "fanHype": 4,
               "fanHype": 4,
               "composure": 4
             }

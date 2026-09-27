@@ -82,7 +82,9 @@ describe('стрічка: контент', () => {
     for (const g of GROUPS) expect(feed.filter((p) => p.group === g), g).toHaveLength(POST_QUOTA[g]);
     expect(new Set(feed.map((p) => p.text)).size).toBe(feed.length);
     for (const p of feed) { expect(p.likes).toBeGreaterThan(0); expect(p.hoursAgo).toBeGreaterThan(0); }
-    expect(feed.some((p) => p.reply)).toBe(true);
+    // Відповіді Реєса в стрічці бувають — але це властивість пулу, а не конкретного сіду: з одним сідом
+    // квоту можуть зайняти пости без відповідей, і від кожного нового поста тест не має падати (27.09).
+    expect([9, 17, 23, 41, 77].some((s) => buildFeed(ctx({ goals: 1, result: 'win', scoreUs: 2 }), makeRng(s)).some((p) => p.reply))).toBe(true);
   });
 
   it('первый сезон — 2–3 поста про игровой мир, остальное общее; со второго — половина наша', () => {

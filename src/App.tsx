@@ -8,7 +8,7 @@ import { ChapterCard } from './ui/ChapterCard';
 import { PrologueScreen } from './ui/PrologueScreen';
 import { finishPrologue, prologuePending, type ProloguePick } from './engine/prologue';
 import { finishVacation, vacationPending } from './engine/vacation';
-import { endingPending, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
+import { endingPending, endingSpreads, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
 import { HUNTER, hunterRound } from './engine/programme';
 import { maySpread } from './engine/may';
 /** Тур другого сезону (0-based, після зими), у якому агент сидить на трибуні (rx_top_agent_in_stands). */
@@ -37,7 +37,7 @@ import { buildEntry, type Entry } from './engine/entry';
 import { EntryCard } from './ui/EntryCard';
 import {
   applyMatchToCareer, arcStage, coachGrip, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
-  metLastYear, type Career, type CarryFacts,
+  metLastYear, nightKnowledge, type Career, type CarryFacts,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
@@ -279,6 +279,10 @@ function Game() {
           ...(metLastYear(consumedCareer, conditions.opponentKey) ? [{ flag: 'met_last_year', mark: { minute: 0, episodeId: 'season', optionId: 'met', past: 'грали з ними торік' } }] : []),
           // Колишній дублер у їхній формі (M15): сетапи й репліки знають, хто дихав у спину торік.
           ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey ? [{ flag: 'sub_there', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: 'грав проти колишнього дублера' } }] : []),
+          // Єдиний свідок липневої ночі (M28): він бачив, як тебе знімали з газону, — тільки в матчах із його
+          // клубом і тільки якщо ти не дійшов сам. Знання міняє не стик, а розмову: варіант `knee_between_us`.
+          ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey && nightKnowledge(consumedCareer).saw
+            ? [{ flag: 'larsson_saw', mark: { minute: 0, episodeId: 'season', optionId: 'night', past: 'грав проти єдиного свідка тієї ночі' } }] : []),
           // Другий матч із його клубом (M17): Ларссон виходить з їхньої лави — реактивна сцена rx_top_larsson_from_bench.
           ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey && seasonRef.current.played.some((f) => (f.home === US && f.away === consumedCareer.subClub) || (f.away === US && f.home === consumedCareer.subClub))
             ? [{ flag: 'sub_there_again', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: 'грав проти колишнього дублера вдруге' } }] : []),
@@ -589,7 +593,7 @@ function Game() {
     return (<>{film}
       <PrologueScreen
         key="ending"
-        spreads={fillNamesDeep(ENDING.spreads, ROSTER)}
+        spreads={fillNamesDeep(endingSpreads(ENDING, career.scoutSaw), ROSTER)}
         film="Останній тиждень"
         lootButton="Далі буде"
         arc={arcStage(career)}

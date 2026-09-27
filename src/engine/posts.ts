@@ -8,7 +8,7 @@
 import postsJson from '../content/posts.json';
 import { pickFresh } from './flavor';
 import type { Rng } from './rng';
-import { peopleFlags, type Career, arcStage, metLastYear } from './career';
+import { peopleFlags, type Career, arcStage, metLastYear, nightKnowledge } from './career';
 import type { Season } from './season';
 import { standings, US, type MomentRef } from './season';
 import type { VoiceKey } from './types';
@@ -125,7 +125,10 @@ export function buildPostContext(
     coachTrust: career.coachTrust,
     injured: career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock'),
     // Підвищення (M14): `promoted_earned` / `promoted_scandal` на весь другий сезон; `met_last_year` — суперник із минулого сезону.
-    flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag), ...(career.promotion ? ['promoted_' + career.promotion] : []), ...(career.subLeft ? ['sub_left'] : [])],
+    // M28: про липневу ніч база говорить тільки тоді, коли її бачив хтось із клубу (фізіо, лікар) —
+    // `night_rumor`; «дійшов сам» дає тишу (`night_secret`), і це весь приз за мовчання.
+    flags: [...(career.carriedFlags ?? []).filter((f) => !(f.after && f.after > 0)).map((f) => f.flag), ...peopleFlags(career).map((f) => f.flag), ...(career.promotion ? ['promoted_' + career.promotion] : []), ...(career.subLeft ? ['sub_left'] : []),
+      ...(() => { const n = nightKnowledge(career); return [...(n.rumor ? ['night_rumor'] : []), ...(n.secret ? ['night_secret'] : []), ...(n.denied ? ['knee_denied'] : [])]; })()],
     nextStrength: next?.strength ?? null, nextFlags: [...(next?.traits.map((t) => 'them_' + t) ?? []), ...(next && metLastYear(career, next.opponentKey) ? ['met_last_year'] : []), ...(next && career.subLeft && career.subClub === next.opponentKey ? ['sub_there'] : [])], nextVenue: next?.venue ?? null,
     leaderLost: lostBy(leader.club), bottomWon: wonBy(bottom.club),
     voice, hasScored: season.player.goals + season.player.assists > 0,

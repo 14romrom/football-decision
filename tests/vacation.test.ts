@@ -3,8 +3,9 @@ import { describe, it, expect } from 'vitest';
 import { createSeason, firstSeasonVerdict, promotion, recordRound, SEASON_ROUNDS, type OurResult } from '../src/engine/season';
 import { finishVacation, vacationPending } from '../src/engine/vacation';
 import { agentPending } from '../src/engine/agent';
-import { defaultCareer, consumeStartPenalty } from '../src/engine/career';
-import { OPPONENTS, OPPONENT_KEYS, ROSTER, VACATION, syncRoster } from '../src/content';
+import { defaultCareer, consumeStartPenalty, nightKnowledge, type Career } from '../src/engine/career';
+import { EPISODES_RAW, OPPONENTS, OPPONENT_KEYS, ROSTER, VACATION, WEEK_SCENES, syncRoster } from '../src/content';
+import { ANCHOR_SCENES } from '../src/engine/week';
 import { fillNamesDeep } from '../src/engine/names';
 import { makeRng } from '../src/engine/rng';
 
@@ -85,6 +86,38 @@ describe('відпустка', () => {
     // Другий сезон після відпустки — літній дзвінок, фінальний.
     const sn2 = { ...sn, number: 2 };
     expect(agentPending(heavy.career, sn2, { kind: 'transfer', title: '', text: '' })).toBe('summer');
+  });
+
+  it('хто знає про ту ніч (M28): фізіо — це база, «дійшов сам» — тиша, «не дивитися» — версія «старе коліно»', () => {
+    const c = (larsson: Career['larsson'], clue?: string) => ({ ...defaultCareer(), larsson, ...(clue ? { vacation: { sc_pitch_no_date: clue } } : {}) });
+    // Покликав фізіо — травму бачив клуб, і до вівторка про паркан знає вся база.
+    expect(nightKnowledge(c('knows')).rumor).toBe(true);
+    expect(nightKnowledge(c('unsure')).rumor).toBe(true);
+    // Попросив мовчати або збрехав — Ларссон знає, клуб ні; дійшов сам — не знає ніхто.
+    expect(nightKnowledge(c('silent')).rumor).toBe(false);
+    expect(nightKnowledge(c('silent')).saw).toBe(true);
+    expect(nightKnowledge(c('none')).secret).toBe(true);
+    expect(nightKnowledge(c('none')).saw).toBe(false);
+    // Версія «старе коліно» — або не став перевіряти на газоні, або сказав її Ларссону.
+    expect(nightKnowledge(c('lied')).denied).toBe(true);
+    expect(nightKnowledge(c('none', 'clue_sure')).denied).toBe(true);
+    expect(nightKnowledge(c('none', 'clue_grass')).denied).toBe(false);
+    // Три сцени другого сезону взаємно виключні: гравець бачить рівно одну.
+    const scenes = (career: Career) => ['sc_knee_rumor', 'sc_knee_denied', 'sc_knee_quiet']
+      .filter((id) => ANCHOR_SCENES.find((a) => a.scene === id)!.when!(career));
+    expect(scenes(c('knows'))).toEqual(['sc_knee_rumor']);
+    expect(scenes(c('none'))).toEqual(['sc_knee_quiet']);
+    expect(scenes(c('lied'))).toEqual(['sc_knee_denied']);
+    expect(scenes(c('none', 'clue_sure'))).toEqual(['sc_knee_denied']);
+    for (const id of ['sc_knee_rumor', 'sc_knee_denied', 'sc_knee_quiet']) {
+      const scene = WEEK_SCENES.find((s) => s.id === id)!;
+      expect(scene.options.length, id).toBe(4);
+      expect(scene.head, id).toBeTruthy();
+    }
+    // Знання міняє розмову, а не стик: варіант у матчі проти його клубу відкривають флагом.
+    const ep = EPISODES_RAW.find((x) => x.id === 'rx_top_larsson_from_bench')!;
+    expect(ep.options.find((o) => o.id === 'knee_between_us')!.requires!.flags).toEqual(['larsson_saw']);
+    expect(ep.options.filter((o) => !o.requires).length).toBeGreaterThanOrEqual(3);
   });
 
   it('syncRoster: дублер підміняється на місці і повертається', () => {

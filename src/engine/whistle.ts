@@ -42,6 +42,9 @@ export type WhistleWhen = {
   subbedOff?: boolean;
   /** Стикові (M19): один матч за вихід — свисток тут важить більше за будь-який тур. */
   playoff?: boolean;
+  /** Єдиний свідок (M28): на полі був той, хто бачив липневу ніч, — після свистка вони говорять
+   *  не про коліно, і саме це й треба сказати листом (флаг матчу `larsson_saw`). */
+  witness?: boolean;
 };
 export type WhistleRule = { kind: WhistleKind; when?: WhistleWhen; lines: string[] };
 
@@ -76,6 +79,7 @@ export function whistleContext(state: MatchState, summary: MatchSummary, cond: M
     ...(sentOff ? { sentOff } : {}),
     ...(subbedOff ? { subbedOff } : {}),
     ...(playoff ? { playoff } : {}),
+    ...(state.flags.includes('larsson_saw') ? { witness: true } : {}),
     ...(top ? { top } : {}),
     ...(arc ? { arc } : {}),
   };

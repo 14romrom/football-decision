@@ -181,6 +181,8 @@ describe('вариации сетапа и флаги (сезон)', () => {
       'met_last_year', 'sub_there',
       // M17: ставить App — другий матч із клубом Ларссона, агент на трибуні навесні S2.
       'sub_there_again', 'agent_in_stands',
+      // M28: єдиний свідок липневої ночі — ставить App у матчах із клубом Ларссона (career.larsson).
+      'larsson_saw',
       // M15: ставить відпустка (engine/vacation.ts) — літо без передсезонки.
       'out_of_form',
       // M18: тебе замінили по ходу матчу (match.ts:subOffNow) — ісходи ep_subbed_off ставлять цей флаг.

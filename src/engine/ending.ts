@@ -15,7 +15,25 @@ import { BALANCE } from './balance';
 
 export type EndingOption = PrologueOption & { arcMin?: number; /** Партнер без дуету — прощання холодніше. */ replyCold?: string };
 export type EndingSpread = Omit<PrologueSpread, 'options'> & { options: EndingOption[] };
-export type EndingContent = { spreads: EndingSpread[]; epilogue: { tab: string; text: string[]; sign: string } };
+export type EndingContent = {
+  spreads: EndingSpread[];
+  epilogue: { tab: string; text: string[]; sign: string };
+  /** Перший абзац листа дзвінка (M28): хто дзвонить — клуб, який бачив передачу, чи агент із вітриною
+   *  (career.scoutSaw). Дописується до всіх варіантів листа, бо `sheetBy` уже зайнятий голосом прологу. */
+  scoutLead?: Record<'team' | 'shot', string>;
+};
+
+/** Лист дзвінка з рядком про те, кого привело твоє рішення навесні (M28). Без `scoutSaw` — як було. */
+export function endingSpreads(content: EndingContent, scoutSaw: 'team' | 'shot' | undefined): EndingSpread[] {
+  const lead = scoutSaw && content.scoutLead?.[scoutSaw];
+  if (!lead) return content.spreads;
+  return content.spreads.map((s) => (s.id !== 'call' ? s : {
+    ...s,
+    sheet: [lead, ...s.sheet],
+    ...(s.sheetBy ? { sheetBy: Object.fromEntries(Object.entries(s.sheetBy).map(([v, pages]) => [v, [lead, ...(pages ?? [])]])) as typeof s.sheetBy } : {}),
+    ...(s.sheetCold ? { sheetCold: [lead, ...s.sheetCold] } : {}),
+  }));
+}
 export type EndingPick = { spread: string; option: string };
 
 /** Фінал — після другого сезону, коли той закінчено; варіанту лишитися немає. */

@@ -8,7 +8,7 @@
 // Чистая логика; контент — content/activities.json; экран — ui/WeekScreen.tsx (тонкий).
 
 import { BALANCE } from './balance';
-import { arcStage, clampTrust, peopleFlags, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
+import { arcStage, clampTrust, nightKnowledge, peopleFlags, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
 import { WINTER_BREAK_AFTER, type Season } from './season';
 import type { Rng } from './rng';
 import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
@@ -520,8 +520,18 @@ export const ANCHOR_SCENES: { seasonNumber?: number; round?: number; byRound?: n
   { seasonNumber: 2, round: 1, scene: 'sc_top_first_week' },      // та сама база, інший календар
   { seasonNumber: 2, round: 8, scene: 'sc_tibo_next_year' },      // Тібо питає, чи будеш наступного року
   { seasonNumber: 1, byRound: 3, scene: 'sc_sub_talk' },          // дублер робить твій фінт краще
+  // Жовті бутси (M28): коробка зі скотчем у другій половині першого сезону — щоб улика на газоні
+  // спиралася на прожите, а у фіналі було що почистити й лишити в шафці. Раніше за скаута: скаут
+  // тягне в наступний сезон, коробка закриває цей.
+  { seasonNumber: 1, byRound: 6, scene: 'sc_boots_box' },
   { seasonNumber: 1, byRound: 8, scene: 'sc_agent_call' },        // скаут буде на трибуні
   { arcMin: 3, scene: 'sc_tibo_newbie' },                          // Реєс по цей бік жарту про мафію
+  // Липнева ніч у другому сезоні (M28): база говорить тільки тоді, коли її бачив клубний фізіо;
+  // «дійшов сам» дає тишу — і тоді сцена про те, як носити це самому. Версію «старе коліно»
+  // ламає не людина, а палець фізіо на першому тесті сезону. Три входи, взаємно виключні.
+  { seasonNumber: 2, byRound: 3, scene: 'sc_knee_rumor', when: (c) => nightKnowledge(c).rumor },
+  { seasonNumber: 2, byRound: 2, scene: 'sc_knee_denied', when: (c) => nightKnowledge(c).denied },
+  { seasonNumber: 2, byRound: 4, scene: 'sc_knee_quiet', when: (c) => nightKnowledge(c).secret && !nightKnowledge(c).denied },
   { seasonNumber: 2, byRound: 3, scene: 'sc_fan_confront' },      // тридцять людей біля воріт бази
 ];
 export function anchorScene(seasonNumber: number, round: number, career: Career, scenes: WeekScene[]): WeekScene | undefined {

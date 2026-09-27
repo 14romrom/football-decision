@@ -123,7 +123,12 @@ function byStrength(e: Episode, strength?: string): number {
   return (strength && e.weightBy?.strength?.[strength]) || 1;
 }
 
-function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = [], strength?: string, league?: string): string[] {
+/** Хватка тренера (M27.7): призначені стандарти б'є інший, тож ці сцени не плануються. З пулу їх не
+ *  прибираємо — туди ведуть ланцюжки з інших сцен («фол на межі штрафного -> штрафний»), і зароблений
+ *  тобою стандарт ти б'єш сам. Гравець бачить причину рядком у програмці. */
+const setPieceOfPlayer = (e: Episode) => (e.family === 'free_kick' || e.family === 'corner_attack') && e.phase !== 'defense';
+
+function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = [], strength?: string, league?: string, noSetPieces = false): string[] {
   const m = BALANCE.match;
   const memory = toMemory(recent);
   const families = familyAges(memory, episodes);
@@ -166,7 +171,8 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
   const slots = schedule
     .map((minute, index) => ({
       index,
-      candidates: episodes.filter((e) => !isReactive(e) && !e.followUpOnly && fitsMinute(e, minute) && phaseOk(e, index)),
+      candidates: episodes.filter((e) => !isReactive(e) && !e.followUpOnly && fitsMinute(e, minute) && phaseOk(e, index)
+        && !(noSetPieces && setPieceOfPlayer(e))),
     }))
     .sort((a, b) => a.candidates.length - b.candidates.length);
 
@@ -245,12 +251,7 @@ export function createMatch(
 ): MatchSession {
   // Ліга (M17): епізоди «тільки вища ліга» в другій не існують — інакше сим і тести другої ліги їх би бачили.
   const league = conditions.league ?? 'second';
-  // Хватка тренера: стандарти в атаці б'є інший, тож ці сцени просто не трапляються (сцен «за тебе б'є
-  // інший» у контенті немає — і не треба: гравець бачить це рядком у програмці).
-  const setPiecesOff = conditions?.noSetPieces === true;
-  const episodes = fillNamesDeep(rawEpisodes.filter((e) =>
-    (!e.requires?.league || e.requires.league === league)
-    && !(setPiecesOff && (e.family === 'free_kick' || e.family === 'corner_attack') && e.phase !== 'defense')), roster);
+  const episodes = fillNamesDeep(rawEpisodes.filter((e) => !e.requires?.league || e.requires.league === league), roster);
   const rules = fillNamesDeep(flagRules, roster);
   const start = startResources(conditions);
   // Флаги про конкретного соперника (keeper_read) доживают только до матча с тем же клубом.
@@ -313,7 +314,7 @@ export function createMatch(
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: carryover.tutorial && carryover.tutorial.plan.length === schedule.length && carryover.tutorial.plan.every((id) => episodes.some((e) => e.id === id))
       ? [...carryover.tutorial.plan]
-      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds, conditions.strength, conditions.league)],
+      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds, conditions.strength, conditions.league, conditions.noSetPieces === true)],
     ...(benchCall.length ? { onBench: true, fromBench: true } : {}),
     ...(carryover.tutorial ? { tutorial: carryover.tutorial } : {}),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
@@ -641,6 +642,7 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
   // хуже, чем нарушить раскладку; квоту обороны при этом сохраняем.
   const fresh = episodes.filter((e) =>
     !isReactive(e) && !e.followUpOnly && e.weight > 0 && !blocked(e) && fitsMinute(e, session.schedule[i])
+    && !(session.conditions.noSetPieces === true && setPieceOfPlayer(e))
     && !session.plan.includes(e.id) && !session.usedEpisodeIds.includes(e.id)
     && (planned.phase !== 'defense' || e.phase === 'defense'));
   if (fresh.length > 0) {

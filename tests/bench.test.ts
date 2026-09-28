@@ -7,7 +7,7 @@ import { resolveOption } from '../src/engine/resolve';
 import { EPISODES_RAW, FLAG_RULES, PLAYER, ROSTER } from '../src/content';
 import { neutralConditions } from '../src/engine/conditions';
 import { BALANCE } from '../src/engine/balance';
-import { applyMatchToCareer, benchAfterMatch, coachGrip, defaultCareer, consumeStartPenalty, nextMatchFanHype } from '../src/engine/career';
+import { applyMatchToCareer, benchAfterMatch, coachGrip, consumeStartPenalty, defaultCareer, nextMatchFanHype } from '../src/engine/career';
 import type { MatchSummary } from '../src/engine/match';
 
 const summary = (goals: number, assists: number, fanRating: number): MatchSummary =>
@@ -22,6 +22,15 @@ describe('лава запасних', () => {
     const state = { coachTrust: 10, fanHype: 40, flags: [], marks: {}, voices: { counts: { ego: 0, team: 0, composure: 0, vision: 0, instinct: 0, body: 0 }, streak: { who: null, count: 0 } } } as unknown as Parameters<typeof applyMatchToCareer>[1];
     const after = applyMatchToCareer(career, state, summary(0, 0, 4), false);
     expect(after.benched).toBe(false);
+  });
+
+  it('лава списується на старті матчу, а не після свистка — недограний матч її не лишає', () => {
+    // 28.09: гравець побачив «У заявці, починає на лаві» на другому турі. Мітку знімав лише
+    // applyMatchToCareer, тож перезавантаження під час матчу лишало її в кар'єрі назавжди.
+    const { penalty, career } = consumeStartPenalty({ ...defaultCareer(), benched: true });
+    expect(penalty.fromBench).toBe(true);
+    expect(career.benched).toBe(false);
+    expect(consumeStartPenalty(career).penalty.fromBench).toBe(false);
   });
 
   it('хватка тренера замінює посадку: низька довіра — автобус, зовсім низька — ще й чужі стандарти', () => {

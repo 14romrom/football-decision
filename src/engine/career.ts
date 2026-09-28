@@ -394,7 +394,12 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   next.carriedFlags = (career.carriedFlags ?? [])
     .filter((f) => f.after && f.after > 0)
     .map((f) => ({ ...f, after: f.after! - 1 }));
+  // Лава — така сама одноразова мітка, як червона, жовті й травма: споживається тут, а не після
+  // фінального свистка (28.09, питання користувача «чому „починає на лаві“ на другому турі»). Матч
+  // можна не догравати — перезавантажити сторінку, закрити вкладку, — і тоді мітка, яку знімав лише
+  // `applyMatchToCareer`, жила в кар'єрі вічно й вилазила на екран перед кожним матчем.
   if (career.benched) note = [note, 'Починаєш на лаві: тренер випустить у другому таймі.'].filter(Boolean).join(' ');
+  next.benched = false;
   if (prep?.notes?.length) note = [note, ...prep.notes].filter(Boolean).join(' ');
   next.nextMatch = undefined;
   return {

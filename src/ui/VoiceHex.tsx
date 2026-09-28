@@ -29,6 +29,12 @@ const AXES: { who: VoiceKey; angle: number }[] = [
   { who: 'vision', angle: 330 },
 ];
 
+/** Шкала осей і полос картки: кільця через два модифікатори, зовнішнє — не менше восьми.
+ *  Жёстко 8 нельзя: потолок мода 12 (ATTR_MOD.max), к концу второго сезона фигура упёрлась бы в край. */
+export function modScale(top: number): number {
+  return Math.max(8, Math.ceil(top / 2) * 2);
+}
+
 function point(angle: number, f: number): [number, number] {
   const r = (angle * Math.PI) / 180;
   return [CX + R * f * Math.sin(r), CY - R * f * Math.cos(r)];
@@ -40,8 +46,7 @@ function ring(f: number): string {
 
 export function VoiceHex({ player }: { player: Player }) {
   const mods = AXES.map((a) => ({ ...a, mod: voiceMod(a.who, player) }));
-  const top = Math.max(...mods.map((m) => m.mod));
-  const scale = Math.max(8, Math.ceil(top / 2) * 2);
+  const scale = modScale(Math.max(...mods.map((m) => m.mod)));
   const rings: number[] = [];
   for (let step = 2; step <= scale; step += 2) rings.push(step / scale);
 

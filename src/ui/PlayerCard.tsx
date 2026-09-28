@@ -1,13 +1,13 @@
 import { ATTRIBUTE_LABEL, type Attribute, type Player, type VoiceKey } from '../engine/types';
 import { attrMod } from '../engine/context';
 import { signatureAttrs } from '../engine/conditions';
-import { effectivePlayer, POINT_VALUE, type Career } from '../engine/career';
+import { effectivePlayer, type Career } from '../engine/career';
 import { VOICE_LABEL, voiceSees } from '../engine/voices';
 import { BALANCE } from '../engine/balance';
 import type { Season } from '../engine/season';
 import { dominantCareerVoice } from '../engine/week';
 import { Sticker, voiceMod } from './Sticker';
-import { VoiceHex } from './VoiceHex';
+import { modScale, VoiceHex } from './VoiceHex';
 import { VOICES } from './voices-text';
 
 // Лист персонажа (28.09, макет «Картка: було / стало»): стикер → шестикутник голосів → характеристики,
@@ -67,6 +67,8 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
   const dominant = career ? dominantCareerVoice(career) : null;
 
   const heard = VOICES.reduce((sum, v) => sum + (career?.voiceCounts?.[v.who] ?? 0), 0);
+  // Одна шкала на фигуру и на полосы: у самого сильного голоса полоса до края, у молчащего — пустая.
+  const scale = modScale(Math.max(...VOICES.map((v) => voiceMod(v.who, effective))));
   // Порядок — по гучності: згори той голос, який зараз вирішує. Ряди всередині голосу — так само.
   const groups = VOICES.map((v) => {
     const wants = v.who === 'ego' || v.who === 'team' ? wantsState(v.who, career?.voiceCounts) : null;
@@ -88,6 +90,7 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
 
       <VoiceHex player={effective} />
       <p className="hex-note">Шість голосів в одних одиницях. Пунктир — кільце <i>«бачить»</i>.</p>
+      <p className="rows-note">У рядку: <b className="m">що атрибут додає до кидка</b> і <b className="d">▲ наскільки виріс від дебюту</b>.</p>
 
       {groups.map((g, i) => (
         <section key={g.who} className={`vg voice-${g.who}`}>
@@ -106,10 +109,12 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
           </details>
           <div className="vg-rows">
             {g.attrs.map((a) => {
-              const value = permanent.attrs[a];
-              const grown = (career?.attrPoints[a] ?? 0) * POINT_VALUE;
-              const mod = attrMod(effective.attrs[a]);
+              // Всё в модификаторах: очко роста = ровно +1 к моду (POINT_VALUE = ATTR_MOD.step), а сырое
+              // значение 45..99 не участвует ни в одном решении игрока — оно ушло с карточки 28.09.
+              const grown = career?.attrPoints[a] ?? 0;
               const steady = attrMod(permanent.attrs[a]);
+              const mod = attrMod(effective.attrs[a]);
+              const debut = Math.max(0, steady - grown);
               const trained = career?.training?.[a] ?? 0;
               return (
                 <div key={a} className={`arow ${signature.includes(a) ? 'hi' : weakest.includes(a) ? 'dim' : ''}`}>
@@ -122,12 +127,12 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
                       </i>
                     )}
                   </span>
-                  <span className="arow-bar">
-                    <span className="arow-base" style={{ width: `${value}%` }} />
-                    {grown > 0 && <span className="arow-grown" style={{ left: `${value - grown}%`, width: `${grown}%` }} />}
+                  {/* Полоса в шкале шестикутника, риски через два мода: ряды и фигура меряют одним. */}
+                  <span className="arow-bar" style={{ backgroundSize: `${(2 / scale) * 100}% 100%` }}>
+                    <span className="arow-base" style={{ width: `${(debut / scale) * 100}%` }} />
+                    {grown > 0 && <span className="arow-grown" style={{ left: `${(debut / scale) * 100}%`, width: `${(grown / scale) * 100}%` }} />}
                   </span>
-                  <span className="arow-v">{value}</span>
-                  <span className={`arow-d ${grown > 0 ? '' : 'zero'}`}>{grown > 0 ? `+${grown}` : '—'}</span>
+                  <span className="arow-d">{grown > 0 ? `▲${grown}` : ''}</span>
                   <span className="arow-m">
                     +{mod}
                     {mod !== steady && <b className="arow-week" title="цього тижня">{mod > steady ? '↑' : '↓'}</b>}

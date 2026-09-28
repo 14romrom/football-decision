@@ -471,12 +471,6 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .zone-clean { background: #6ee7a0; }
 .scorebar-mark { position: absolute; top: -5px; width: 4px; height: 28px; margin-left: -2px; background: var(--ink); border-radius: 2px; box-shadow: 0 0 0 2px var(--bg); }
 
-/* ——— источники поправок: кубик / ти / поле ——— */
-.chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 13px; margin: 0 3px; color: var(--ink); }
-.chip-dice { background: var(--dim); }
-.chip-you { background: rgba(111, 208, 140, 0.22); }
-.chip-field { background: rgba(122, 167, 255, 0.22); }
-.chip.neg { background: rgba(217, 83, 79, 0.22); }
 .scorebar-parts { position: relative; height: 6px; margin-bottom: 3px; }
 .scorebar-parts .part { position: absolute; top: 0; height: 6px; border-radius: 3px; }
 .part-dice { background: #6b7280; }
@@ -891,14 +885,12 @@ html.reduce-motion .doodle svg { filter: none; }
 }
 .dice-zone-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; flex-grow: 1; }
-.chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); }
-.chip.pos { color: var(--v-ego); } .chip.pos span { color: var(--accent); }
-.chip.neg { color: var(--bad-soft); } .chip.neg span { color: var(--bad-soft); }
+.chip.pos span { color: var(--accent); }
+.chip.neg { background: rgba(217, 83, 79, 0.22); } .chip.neg span { color: var(--bad-soft); }
 .chip.src-field { border-color: rgba(143, 184, 255, 0.35); }
 .chip-insight.voice-vision { color: var(--v-vision); } .chip-insight.voice-instinct { color: var(--v-instinct); }
 .chip-insight.voice-body { color: var(--v-body); } .chip-insight.voice-composure { color: var(--v-composure); }
 .chip-insight.voice-ego { color: var(--v-ego); } .chip-insight.voice-team { color: var(--v-team); }
-.chip-none { color: var(--faint); }
 .stamina { display: inline-flex; align-items: center; gap: 2px; color: var(--muted); }
 .stamina svg { margin-right: 4px; }
 .stamina i { width: 7px; height: 8px; background: var(--line); }
@@ -1049,7 +1041,14 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .idc-name { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; line-height: 1.2;
   font-family: var(--font-caps); font-weight: 600; font-size: 19px; letter-spacing: .06em; text-transform: uppercase; }
 .idc.empty .idc-name { font-weight: 500; font-size: 16px; color: var(--muted); }
-.chip { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em; color: var(--muted); border: 1px solid var(--line-2); border-radius: 3px; padding: 1px 6px; font-weight: 400; font-style: normal; white-space: nowrap; }
+/* Чип — одно правило (28.09; до этого их было три, и живой вид собирался из всех сразу: геометрия из
+   одного, шрифт из другого, поля из третьего). Порядок сохранён: правило стоит после модификаторов
+   цвета, поэтому `.chip.pos` / `.chip.neg` / `.chip-insight` перебивают его специфичностью, а не местом. */
+.chip { display: inline-flex; align-items: center; gap: 4px; margin: 0 3px; padding: 1px 6px;
+  border: 1px solid var(--line-2); border-radius: 3px; white-space: nowrap;
+  font-family: var(--font-mono); font-weight: 400; font-style: normal; font-size: 10.5px; letter-spacing: .04em;
+  color: var(--muted); }
+.chip-none { color: var(--faint); }
 .idf { margin: 6px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; }
 .idf dt { color: var(--muted); } .idf dd { margin: 0; font-family: var(--font-mono); font-size: 12.5px; }
 .idm { display: block; margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--line-2); font-style: italic; color: var(--muted); font-size: 13.5px; line-height: 1.45; }

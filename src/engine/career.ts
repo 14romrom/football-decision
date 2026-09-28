@@ -240,10 +240,14 @@ export function effectivePlayer(base: Player, career: Career, matchBonus?: Parti
   return { ...base, attrs };
 }
 
-/** Голоса, которые питает атрибут (зеркало voices.ts:voiceSees / voiceAudible). */
+/** Голос, который питает атрибут — тот же, что на картке (ui/voices-text.ts). Витривалості тут не было,
+ *  хотя voiceSees её видит: экран уровня молчал о том, что Тіло с ней начнёт бачити. Удар и пас ведут
+ *  к Его и Команді: change у них всегда null — они не бачать силою атрибута (voices.ts:voiceSeesNow),
+ *  но назвать голос, который за атрибутом стоит, экран обязан так же, как картка. */
 const VOICE_OF: Partial<Record<Attribute, VoiceKey>> = {
   vision: 'vision', positioning: 'vision', dribbling: 'instinct', first_touch: 'instinct',
-  pace: 'body', strength: 'body', composure: 'composure',
+  pace: 'body', stamina: 'body', strength: 'body', composure: 'composure',
+  finishing: 'ego', passing: 'team',
 };
 
 export type PointEffect = {

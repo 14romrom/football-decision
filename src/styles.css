@@ -348,13 +348,6 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .ev-badges { display: inline-flex; gap: 0.2rem; margin-right: 0.35rem; }
 .badge-sm { padding: 0; background: none; border-radius: 0; font-size: 1em; }
 
-/* карточка персонажа: уровень и опыт */
-.level-block { margin: 0 0 1.1rem; }
-.level-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem; }
-.level-badge { font-weight: 700; font-size: 1.1em; }
-.xp-track { display: block; height: 6px; margin-top: 0.2rem; }
-.xp-fill { background: var(--hype); }
-.attr-bonus { color: #6ee7a0; font-weight: 700; }
 
 /* тренировка и левел-ап: сетка атрибутов-кнопок */
 .training, .levelup { max-width: 560px; margin: 0 auto; padding: 1.2rem 1rem 2rem; }
@@ -512,9 +505,6 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .banner-badFail { background: var(--bad); color: #fff; }
 .line { font-size: 16px; line-height: 1.5; margin: 0 0 10px; }
 .line-second { color: var(--muted); font-style: italic; }
-.voice-name { font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.voice-name.src-player { color: var(--accent); }
-.voice-name.src-field { color: var(--hype); font-style: normal; }
 .voice-tag { color: var(--muted); }
 .modline { font-size: 13px; color: var(--muted); line-height: 1.7; margin: 8px 0 12px; }
 .modchip.src-player { color: var(--accent); }
@@ -535,15 +525,6 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .train-attr em.voice-vision { color: var(--v-vision); } .train-attr em.voice-instinct { color: var(--v-instinct); }
 .train-attr em.voice-body { color: var(--v-body); } .train-attr em.voice-composure { color: var(--v-composure); }
 
-/* Карточка игрока — удостоверение (Disco Elysium): шапка с полями, девиз голоса, голоси, метрики. */
-.id-card { display: grid; grid-template-columns: 1fr auto; gap: 8px 20px; align-items: start; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel); margin-bottom: 1rem; }
-.id-card h1 { margin: 0; font-size: 24px; line-height: 1.15; }
-/* На 375px имя из двух слов ломалось на две строки рядом с полями — имя на всю ширину, поля ниже. */
-@media (max-width: 420px) { .id-card { grid-template-columns: 1fr; gap: 6px; } .id-fields { align-self: start; } }
-.id-fields { margin: 0; display: grid; grid-template-columns: auto auto; gap: 2px 12px; font-size: 13px; align-self: center; }
-.id-fields dt { color: var(--muted); }
-.id-fields dd { margin: 0; font-family: var(--font-mono); font-size: 12.5px; }
-.id-motto { grid-column: 1 / -1; margin: 6px 0 0; padding-top: 8px; border-top: 1px solid var(--line-2); font-style: italic; color: var(--muted); }
 /* Ярлык состояния голоса — общий для заголовка группы и подвала картки. */
 .voice-state { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--muted); white-space: nowrap; }
 .voice-state.state-sees { background: rgba(127, 207, 154, 0.15); color: var(--accent); }
@@ -1018,8 +999,14 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .build { margin: 12px 0 0; font-size: 12.5px; color: var(--muted); }
 
 /* Экраны титула без картинки: слоты, налаштування, про гру — в структуре брифинга (.conditions). */
+/* Службові екрани (слоти, налаштування, «Про гру») — 28.09 переведені в тему: заголовок капітеллю
+   з лінією під ним, як шапки на картці й на екрані перед матчем; підзаголовки тим самим `.sect`,
+   що вже був у налаштуваннях. До цього тут жила Lora жирним — від того меню читалося як інша гра. */
 .plain-screen { max-width: 560px; margin: 0 auto; padding-top: 24px; min-height: calc(100dvh - 120px); display: flex; flex-direction: column; }
-.plain-screen h1 { font-size: 22px; margin: 0 0 6px; }
+.plain-screen h1 { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  font-family: var(--font-caps); font-weight: 600; font-size: 21px; letter-spacing: .08em; text-transform: uppercase; }
+.plain-screen h2, .sect { margin: 18px 0 6px; font-family: var(--font-caps); font-weight: 500; font-size: 12px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .plain-screen > .muted { margin-bottom: 14px; }
 .plain-screen .conditions { margin: 0 0 6px; }
 .sheet { margin-top: auto; padding: 14px 14px 12px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px; display: grid; gap: 8px; }
@@ -1033,7 +1020,6 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .about-rules li { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
 .about-refs { margin: 16px 0 0; color: var(--muted); font-size: 14px; font-style: italic; }
 .eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
-.sect { margin: 18px 0 6px; font-family: var(--font-caps); font-weight: 500; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .set { display: flex; justify-content: space-between; align-items: center; min-height: 52px; border-bottom: 1px solid var(--line); gap: 12px; }
 .set .l { font-size: 15.5px; color: var(--ink); } .set .l small { display: block; font-size: 12.5px; color: var(--muted); }
 .set .v { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
@@ -1050,17 +1036,19 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 /* Налаштування возвращены к 42de5db по решению пользователя (19.09); хеш сборки там — mono, как было. */
 .settings .build { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
 
-/* Слот = удостоверение (макет «було / стало» v2, 19.09): шапка картки гравця, чип состояния, пунктирный бланк для пустого. */
+/* Слот — корінець кар'єри (19.09, макет «було / стало» v2; 28.09 підтягнутий до нової картки):
+   ім'я капітеллю, як на плашці стікера, поля моноширинним, чип стану, пунктирний бланк для порожнього. */
 .slot-list { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 8px; }
 .slot-list li { margin: 0; }
-.idc { display: block; width: 100%; text-align: left; padding: 12px 14px 10px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel); color: var(--ink); font: inherit; }
+.idc { display: block; width: 100%; text-align: left; padding: 12px 14px 10px; border: 1px solid var(--line-2); border-radius: 2px; background: var(--panel); color: var(--ink); font: inherit; }
 .idc.now { border-color: #4a463c; }
 .idc.empty { background: transparent; border-style: dashed; color: var(--muted); }
 .idc:hover { border-color: var(--muted); }
 .idc:active { background: var(--panel-2); }
 .idc:focus-visible { outline: none; box-shadow: inset 3px 0 0 var(--ink); }
-.idc-name { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 19px; font-weight: 600; line-height: 1.2; }
-.idc.empty .idc-name { font-size: 16px; font-weight: 400; }
+.idc-name { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; line-height: 1.2;
+  font-family: var(--font-caps); font-weight: 600; font-size: 19px; letter-spacing: .06em; text-transform: uppercase; }
+.idc.empty .idc-name { font-weight: 500; font-size: 16px; color: var(--muted); }
 .chip { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em; color: var(--muted); border: 1px solid var(--line-2); border-radius: 3px; padding: 1px 6px; font-weight: 400; font-style: normal; white-space: nowrap; }
 .idf { margin: 6px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 13px; }
 .idf dt { color: var(--muted); } .idf dd { margin: 0; font-family: var(--font-mono); font-size: 12.5px; }

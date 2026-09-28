@@ -69,8 +69,10 @@ describe('career: эффективный игрок', () => {
     expect(pointEffect(PLAYER, defaultCareer(), 'pace')).toMatchObject({ modFrom: 2, modTo: 3, voice: { who: 'body', change: 'sees' } });
     // бачення поля 61 (+4) → 65 (+5): Бачення и так бачить — голос есть, change нет.
     expect(pointEffect(PLAYER, defaultCareer(), 'vision')).toMatchObject({ modFrom: 4, modTo: 5, voice: { who: 'vision', change: null } });
-    // удар не питает голос.
-    expect(pointEffect(PLAYER, defaultCareer(), 'finishing').voice).toBeUndefined();
+    // витривалість 54 (+2) → 58 (+3): Тіло бачить і по ній — VOICE_OF мовчав про це до 28.09.
+    expect(pointEffect(PLAYER, defaultCareer(), 'stamina')).toMatchObject({ voice: { who: 'body', change: 'sees' } });
+    // удар веде до Его, як на картці, але пункт його не розбудить: Его і Команда бачать за станом матчу.
+    expect(pointEffect(PLAYER, defaultCareer(), 'finishing')).toMatchObject({ voice: { who: 'ego', change: null } });
     // Второе очко в уже потраченный атрибут считает от текущего, не от базы.
     const spent = { ...defaultCareer(), attrPoints: { composure: 1 } };
     expect(pointEffect(PLAYER, spent, 'composure')).toMatchObject({ from: 56, to: 60, modFrom: 2, modTo: 3, voice: { change: 'sees' } });

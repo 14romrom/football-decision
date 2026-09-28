@@ -103,10 +103,10 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                 <span className="choice-text">
                   {o.label}
                   {/* Обидві межі кидка, а не одна (28.09): ціль чистого — скільки треба набрати,
-                      зрив — на яких кубиках усе піде не так. До цього видно було тільки ціль, і гравець
+                      катастрофа — на яких кубиках усе піде не так. До цього видно було тільки ціль, і гравець
                       добудовував правило сам («катастрофа — це коли випала одиниця»). */}
                   <span className={`bracket risk-${ctx.position}`}>
-                    [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)} · зрив {catastropheBand(ctx.position, ctx.attrMod)}{chain ? ` → ${chain}` : ''}]
+                    [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)} · катастрофа {catastropheBand(ctx.position, ctx.attrMod)}{chain ? ` → ${chain}` : ''}]
                     {origin && <i className={`origin${o.studied ? ' origin-studied' : ''}`}>{origin}</i>}
                   </span>
                 </span>

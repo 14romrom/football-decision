@@ -5,7 +5,7 @@ import { VOICE_LABEL, voiceAudible } from '../engine/voices';
 import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
 import { availableOptions, sceneInsights } from '../engine/match';
-import { POSITION_LABEL } from '../engine/resolve';
+import { catastropheBand, POSITION_LABEL } from '../engine/resolve';
 import { studiedLine } from '../content';
 import { cleanTarget } from '../engine/balance';
 
@@ -102,8 +102,11 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                 <span className="choice-num">{i + 1}</span>
                 <span className="choice-text">
                   {o.label}
+                  {/* Обидві межі кидка, а не одна (28.09): ціль чистого — скільки треба набрати,
+                      зрив — на яких кубиках усе піде не так. До цього видно було тільки ціль, і гравець
+                      добудовував правило сам («катастрофа — це коли випала одиниця»). */}
                   <span className={`bracket risk-${ctx.position}`}>
-                    [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)}{chain ? ` → ${chain}` : ''}]
+                    [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)} · зрив {catastropheBand(ctx.position, ctx.attrMod)}{chain ? ` → ${chain}` : ''}]
                     {origin && <i className={`origin${o.studied ? ' origin-studied' : ''}`}>{origin}</i>}
                   </span>
                 </span>

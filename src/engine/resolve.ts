@@ -1,16 +1,22 @@
 // Единственный бросок в игре: 2d10 + модификатор атрибута + контекст.
 // Функция чистая — rng приходит аргументом, поэтому её можно прогнать миллион раз.
 
-import { CATASTROPHE_BAND, CRIT_SUCCESS, THRESHOLDS, cleanTarget } from './balance';
+import { CATASTROPHE_BAND, CATASTROPHE_MASTER, CRIT_SUCCESS, THRESHOLDS, cleanTarget } from './balance';
 import { computeContext } from './context';
 import type { ApplyEffect, Episode, EpisodeOption, FlagRule, MatchState, Outcome, Player, Position, Resolution, ResultBadge, Tier } from './types';
 import type { Rng } from './rng';
 import { neutralConditions, type MatchConditions } from './conditions';
 
+/** Полоса зриву: форма ризику задає ціну сміливості, майстерність викуповує одну грань
+ *  (balance.ts:CATASTROPHE_MASTER). Контекст — погода, втома, суперник — її не рухає: він уже рухає
+ *  саму форму ризику. Цю ж цифру гравець бачить на кнопці поруч із ціллю. */
+export const catastropheBand = (position: Position, attrMod = 0): number =>
+  Math.max(0, CATASTROPHE_BAND[position] - (attrMod >= CATASTROPHE_MASTER.masterMod ? CATASTROPHE_MASTER.buyOut : 0));
+
 /** Ярус исхода. Катастрофа и критический успех — по сырым кубикам, остальное — по score.
  *  Складність двигает оба порога, полосу катастрофы — нет: трудное действие не становится опаснее. */
-export function tierFor(position: Position, rawRoll: number, score: number, difficulty = 0): Tier {
-  if (rawRoll <= CATASTROPHE_BAND[position]) return 'badFail';
+export function tierFor(position: Position, rawRoll: number, score: number, difficulty = 0, attrMod = 0): Tier {
+  if (rawRoll <= catastropheBand(position, attrMod)) return 'badFail';
   if (rawRoll >= CRIT_SUCCESS) return 'clean';
   const t = THRESHOLDS[position];
   if (score <= t.fail + difficulty) return 'fail';
@@ -36,7 +42,7 @@ export function resolveOption(
     : [Math.max(1, Math.min(10, Math.ceil(rawRoll / 2))), Math.max(1, Math.min(10, Math.floor(rawRoll / 2)))];
   const totalScore = rawRoll + ctx.flat;
   const difficulty = option.difficulty ?? 0;
-  const tier = tierFor(ctx.position, rawRoll, totalScore, difficulty);
+  const tier = tierFor(ctx.position, rawRoll, totalScore, difficulty, ctx.attrMod);
   return {
     rawRoll,
     dice,
@@ -50,7 +56,7 @@ export function resolveOption(
     difficulty,
     target: cleanTarget(ctx.position, difficulty),
     tier,
-    critical: rawRoll <= CATASTROPHE_BAND[ctx.position] ? 'fail' : rawRoll >= CRIT_SUCCESS ? 'success' : null,
+    critical: rawRoll <= catastropheBand(ctx.position, ctx.attrMod) ? 'fail' : rawRoll >= CRIT_SUCCESS ? 'success' : null,
   };
 }
 

@@ -86,7 +86,7 @@ describe('канва в геймплеї (звірка зі STORY.md, 21.09)', (
     expect(coachGoalWord(2, 8, 5, 10)).toBeNull();
     expect(coachGoalWord(1, 7, 5, 10)).toMatch(/одне місце/);
     expect(coachGoalWord(1, 10, 5, 10)).toMatch(/Один матч/);
-    expect(coachGoalWord(1, 8, 2, 10)).toMatch(/Ми в двійці/);
+    expect(coachGoalWord(1, 8, 2, 10)).toMatch(/Ми в перших двох/);
   });
   it('свисток знає вищу лігу; фінал: рими в листі третього розвороту, холодний варіант без квитків', async () => {
     const { pickWhistleLine } = await import('../src/engine/whistle');

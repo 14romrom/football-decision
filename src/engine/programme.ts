@@ -112,8 +112,8 @@ export function coachGoalWord(seasonNumber: number, round: number, position: num
   if (round > rounds) return 'І ще: «Таблиця закінчилася. Лишився один матч, і в ньому немає другого шансу».';
   const left = rounds - round + 1;
   const tail = left <= 1 ? 'Один матч.' : left === 2 ? 'Два тури.' : `${left} тури.`;
-  if (position <= 2) return left <= 1 ? 'І ще: «Ми в двійці. До свистка це нічого не означає».' : `І ще: «Ми в двійці. ${tail} Не відпускати».`;
-  if (position <= 4) return `І ще: «Стики нікому не потрібні — ні їм, ні нам. ${tail} Двійка ще поруч».`;
+  if (position <= 2) return left <= 1 ? 'І ще: «Ми в перших двох. До свистка це нічого не означає».' : `І ще: «Ми в перших двох. ${tail} Не відпускати».`;
+  if (position <= 4) return `І ще: «Стики нікому не потрібні — ні їм, ні нам. ${tail} Перші двоє поруч».`;
   return `І ще: «Нам треба одне місце. Одне. ${tail} Я не прошу — я кажу».`;
 }
 

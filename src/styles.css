@@ -1104,7 +1104,12 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
    Екран малює власну перфорацію по краях (Film з App тут вимкнено), бо картинка йде під самі краї. */
 .matchday { position: fixed; inset: 0; overflow: hidden; background: var(--bg); }
 .md-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; display: block; }
-.md-scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,11,13,.72) 0 10%, rgba(11,11,13,.10) 30%, rgba(11,11,13,.28) 46%, rgba(11,11,13,.90) 72%, #0b0b0d 93%); }
+/* Затемнення йде за текстом, а не за низом екрана (28.09, після переносу блоку в центр): темно під
+   плашкою, світло на закаті, щільна смуга під назвами й деталями, і знову легше внизу — інакше нижня
+   половина кадру глухне в чорному, а заради неї фото й ставили. */
+.md-scrim { position: absolute; inset: 0; background: linear-gradient(180deg,
+  rgba(11,11,13,.70) 0%, rgba(11,11,13,.12) 22%, rgba(11,11,13,.26) 38%,
+  rgba(11,11,13,.74) 50%, rgba(11,11,13,.74) 70%, rgba(11,11,13,.38) 84%, rgba(11,11,13,.62) 100%); }
 /* Растр і зерно одним шаром: два псевдоелементи замість двох дивів. */
 .md-print { position: absolute; inset: 0; pointer-events: none; opacity: .30; mix-blend-mode: multiply;
   background-image: radial-gradient(circle at 1px 1px, #000 1px, transparent 1.4px); background-size: 3px 3px; }
@@ -1113,7 +1118,7 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 /* Водяний знак стоїть за назвами, а не на відсотку висоти: інакше на високому екрані він від'їжджає
    вгору й читається як окремий напис (перевірка 27.09). */
 .md-clubs { position: relative; }
-.md-mark { position: absolute; left: -14px; right: -14px; top: -30px; font-family: var(--font-caps); font-weight: 700; text-transform: uppercase;
+.md-mark { position: absolute; left: -14px; right: -14px; top: -18px; font-family: var(--font-caps); font-weight: 700; text-transform: uppercase;
   font-size: 72px; line-height: .8; letter-spacing: -.035em; color: rgba(243,239,228,.09); white-space: nowrap; pointer-events: none; }
 .md-frame { position: absolute; inset: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(14px + env(safe-area-inset-bottom, 0px)); border: 1px solid rgba(222,216,200,.28); pointer-events: none; }
 .md-cross { position: absolute; width: 11px; height: 11px; opacity: .5; pointer-events: none;
@@ -1124,7 +1129,10 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 .md-cross.br { bottom: calc(9px + env(safe-area-inset-bottom, 0px)); right: 9px; }
 .md-body { position: absolute; inset: 0; display: flex; flex-direction: column; max-width: 620px; margin: 0 auto;
   padding: calc(18px + env(safe-area-inset-top, 0px)) 20px calc(16px + env(safe-area-inset-bottom, 0px)); }
+/* Дві розпірки тримають назви по центру висоти. Нижня трохи важча: плашка ліги зверху коротша за
+   кнопку знизу, і з рівними вагами блок сідає вище за геометричний центр (перевірка 28.09). */
 .md-spacer { flex: 1; }
+.md-spacer.md-below { flex: 1.15; }
 .md-plate { display: inline-block; background: var(--bad); color: #f3efe4; font-family: var(--font-caps); font-weight: 500;
   letter-spacing: .2em; text-transform: uppercase; font-size: 10px; padding: 5px 10px 4px; }
 .md-club { position: relative; padding-left: 24px; margin-bottom: 12px; }

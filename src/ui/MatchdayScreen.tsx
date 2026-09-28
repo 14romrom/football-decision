@@ -66,6 +66,10 @@ export function MatchdayScreen({ conditions, opponent, usName, round, seasonNumb
         </div>
 
         <div className="md-bar">{matchDay(round)} · {matchTime(conditions.venue)} · стадіон «{stadium}» · {weather}</div>
+
+        {/* Назви, водяний знак і смуга стоять посередині висоти: дві розпірки навколо них. Кнопка
+            лишається внизу — до неї дотягується палець, і вона не частина афіші (рішення 28.09). */}
+        <div className="md-spacer md-below" />
         <button className="primary md-cta" onClick={onStart}>{onBench ? 'На лаву' : 'Вийти на поле'}</button>
       </div>
     </div>

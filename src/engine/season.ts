@@ -81,10 +81,10 @@ export const LEAGUE_SIZE = 6;
 // сезон декларується (на відміну від мети Реєса): вихід — перша трійка. Не потрапили — скандал із договірними
 // матчами: нагору йде стільки команд, яке місце у «Вальмари», але з нами в наступну лігу переходять максимум
 // двоє інших (PROMOTED_WITH) — інакше «нова ліга» була б старою.
-export type League = { name: string; nameGen: string; short: string };
+export type League = { name: string; nameGen: string; nameLoc: string; short: string };
 export const LEAGUES: Record<number, League> = {
-  1: { name: 'Друга ліга', nameGen: 'другої ліги', short: 'друга' },
-  2: { name: 'Вища ліга', nameGen: 'вищої ліги', short: 'вища' },
+  1: { name: 'Друга ліга', nameGen: 'другої ліги', nameLoc: 'другій лізі', short: 'друга' },
+  2: { name: 'Вища ліга', nameGen: 'вищої ліги', nameLoc: 'вищій лізі', short: 'вища' },
 };
 export const leagueOf = (seasonNumber: number): League => LEAGUES[Math.min(seasonNumber, 2)];
 /** Прямо нагору — двоє; третє місце грає стикові з четвертим, переможець іде третім (M19). */

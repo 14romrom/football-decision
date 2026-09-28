@@ -30,7 +30,8 @@ type Props = {
 
 const fmt = (n: number) => n.toFixed(1).replace('.', ',');
 
-function Banner({ ad, dark }: { ad: AdRule; dark?: boolean }) {
+/** Рекламный блок страницы — общий с профилем игрока (ui/EspmProfile.tsx): формат один и тот же. */
+export function Banner({ ad, dark }: { ad: AdRule; dark?: boolean }) {
   return (
     <div className="espm-ad">
       <div className="espm-ad-tag">Реклама</div>

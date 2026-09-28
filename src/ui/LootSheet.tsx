@@ -26,7 +26,8 @@ type Props = {
   onNext: () => void;
 };
 
-const ATTR_VOICES: VoiceKey[] = ['vision', 'instinct', 'body', 'composure'];
+// Шість голосів, як на картці (28.09): удар пішов Его, пас — Команді, голосів без атрибута не лишилось.
+const ATTR_VOICES: VoiceKey[] = ['vision', 'instinct', 'body', 'composure', 'ego', 'team'];
 const BOX_LABEL: Record<VoiceKey, string> = { vision: 'Бачення', instinct: 'Інстинкт', body: 'Тіло', composure: 'Спокій', ego: 'Его', team: 'Команда' };
 /** Дві літери в кружечку: голос, або людина, або «+1» для пункту назавжди. */
 function badge(item: LootItem): { text: string; cls: string } {

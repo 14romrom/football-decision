@@ -15,7 +15,10 @@ const POSITION_LABEL: Record<Player['position'], string> = {
   AM: 'атакувальний півзахисник', CM: 'центральний півзахисник', ST: 'нападник', LW: 'лівий вінгер',
 };
 const BOX_LABEL: Record<VoiceKey, string> = { vision: 'Бач', instinct: 'Інст', body: 'Тіло', composure: 'Спокій', ego: 'Его', team: 'Ком' };
-const ATTR_VOICES: VoiceKey[] = ['vision', 'instinct', 'body', 'composure'];
+/** Шесть боксов, а не четыре (28.09): удар ушёл Его, пас — Команді, и голосов без атрибута не осталось
+ *  (ui/voices-text.ts). Заливка — только у тех, кто `voiceSees`: Его і Команда бачать за станом матчу,
+ *  не за силою атрибута, тому їхні бокси не заливаються ніколи. */
+const ATTR_VOICES: VoiceKey[] = ['vision', 'instinct', 'body', 'composure', 'ego', 'team'];
 
 /** Модификатор голоса — сильнейший из его атрибутов (так же voiceSees смотрит на лучший). */
 export function voiceMod(who: VoiceKey, player: Player): number {
@@ -37,10 +40,12 @@ type Props = {
   /** Доминантный голос карьеры — его реплика под плашкой; null — «голос ще не визначився». */
   dominant?: VoiceKey | null;
   compact?: boolean;
+  /** Шапка картки: без боксов, «кого слухаєш» и полей — ниже это говорят шестикутник и профіль ESPM. */
+  brief?: boolean;
   onOpen?: () => void;
 };
 
-export function Sticker({ player, career, season, club, dominant, compact, onOpen }: Props) {
+export function Sticker({ player, career, season, club, dominant, compact, brief, onOpen }: Props) {
   const row = season && season.round > 0 ? ourRow(season) : null;
   const heard = listenedVoice(career?.voiceCounts);
   const about = dominant ? VOICES.find((v) => v.who === dominant) : null;
@@ -79,15 +84,19 @@ export function Sticker({ player, career, season, club, dominant, compact, onOpe
       {about
         ? <p className={`stk-motto voice-${dominant}`}><b>{VOICE_LABEL[dominant!]}</b> — {about.about}</p>
         : <p className="stk-motto muted">Голос ще не визначився — послухай когось кілька разів.</p>}
-      {boxes}
-      <p className={`stk-sig ${heard ? `voice-${heard.who}` : 'muted'}`}>
-        {heard ? <>+ {VOICE_LABEL[heard.who]}<small>голос, який слухаєш: {heard.n} із {heard.total} {plural(heard.total, 'разу', 'разів', 'разів')}</small></> : <>+ ?<small>голос, який слухаєш, — після першого матчу</small></>}
-      </p>
-      <dl className="stk-fields">
-        <div><dt>Матчів</dt><dd>{career?.matchesPlayed ?? 0}</dd></div>
-        <div><dt>Сезон</dt><dd>{season ? `${season.number}, тур ${Math.min(season.round + 1, SEASON_ROUNDS)}` : '—'}</dd></div>
-        <div><dt>Місце</dt><dd>{row ? `${row.position}-е` : '—'}</dd></div>
-      </dl>
+      {brief ? null : boxes}
+      {brief ? null : (
+        <p className={`stk-sig ${heard ? `voice-${heard.who}` : 'muted'}`}>
+          {heard ? <>+ {VOICE_LABEL[heard.who]}<small>голос, який слухаєш: {heard.n} із {heard.total} {plural(heard.total, 'разу', 'разів', 'разів')}</small></> : <>+ ?<small>голос, який слухаєш, — після першого матчу</small></>}
+        </p>
+      )}
+      {brief ? null : (
+        <dl className="stk-fields">
+          <div><dt>Матчів</dt><dd>{career?.matchesPlayed ?? 0}</dd></div>
+          <div><dt>Сезон</dt><dd>{season ? `${season.number}, тур ${Math.min(season.round + 1, SEASON_ROUNDS)}` : '—'}</dd></div>
+          <div><dt>Місце</dt><dd>{row ? `${row.position}-е` : '—'}</dd></div>
+        </dl>
+      )}
     </header>
   );
 }

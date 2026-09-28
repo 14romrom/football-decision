@@ -12,6 +12,7 @@ import { pickFresh } from './flavor';
 import type { Rng } from './rng';
 import { PLAYOFF_SPOTS, playoffPending, playoffWon, promotion, PROMOTION_SPOTS, standings, SEASON_ROUNDS, US, type OurResult, type Season } from './season';
 import type { MatchResult } from './conditions';
+import type { Attribute } from './types';
 
 export type ClubName = { nom: string; gen: string };
 
@@ -26,6 +27,24 @@ export type EspmColumn = { kicker: string; title: string; text: string };
 export function playerColumn(columns: Record<string, EspmColumn[]>, arc: number, rng: Rng, seen: Set<string>): EspmColumn | undefined {
   const pool = (columns[String(arc)] ?? []).map((c) => ({ ...c, weight: 1 }));
   return pickFresh(pool, seen, rng);
+}
+
+/** Ярлик редакції на профілі гравця (28.09): видання називає тебе тим, чим ти робиш чисті ісходи
+ *  (`career.useCounts` — реальний лічильник M18.4, той самий, що дає очки росту). Це не рейтинг і не
+ *  сила: ярлик міняється разом із грою, і поставило його видання, а не клуб. Групи усереднюються —
+ *  інакше «плеймейкер» з двох атрибутів завжди перебивав би «бомбардира» з одного. */
+export function pressLabel(uses: Partial<Record<Attribute, number>> | undefined): { label: string; why: string } {
+  const u = (a: Attribute) => uses?.[a] ?? 0;
+  const total = (Object.values(uses ?? {}) as number[]).reduce((s, n) => s + n, 0);
+  if (total < 6) return { label: 'Новий у лізі', why: 'поки що рядок у протоколі' };
+  const kinds = [
+    { label: 'Бомбардир', why: 'б’є сам і влучає', n: u('finishing') },
+    { label: 'Плеймейкер', why: 'віддає і бачить поле', n: (u('passing') + u('vision')) / 2 },
+    { label: 'Технар', why: 'проходить і приймає', n: (u('dribbling') + u('first_touch')) / 2 },
+    { label: 'Робоча конячка', why: 'виграє те, що виграється ногами', n: (u('pace') + u('strength') + u('stamina')) / 3 },
+    { label: 'Холодна голова', why: 'не поспішає і стоїть там, де треба', n: (u('composure') + u('positioning')) / 2 },
+  ];
+  return kinds.reduce((a, b) => (b.n > a.n ? b : a));
 }
 
 const plural = (n: number, one: string, few: string, many: string) =>

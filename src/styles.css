@@ -246,21 +246,80 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .tag.attr.strong { border-color: #6ee7a0; color: #6ee7a0; opacity: 1; }
 .tag.attr.weak { opacity: 0.5; }
 
-/* лист персонажа */
+/* ——— лист персонажа (ui/PlayerCard.tsx, 28.09, макет «Картка: було / стало») ———
+   Стикер → шестикутник голосів → характеристики групами за голосами → підвал із розшифровкою.
+   Групи «Техніка / Фізика / Голова» і дві таблиці статистики звідси пішли: перші стали голосами,
+   другі — профілем на ESPM. Полоса товща за колишні 6 px і показує ріст: сіре — те, з чим приїхав,
+   зелене — що наросло від дебюту. */
 .player-card { max-width: 560px; margin: 0 auto; padding: 1.2rem 1rem 2rem; }
 .player-card header { margin-bottom: 1rem; }
 .player-card h1 { margin: 0.2rem 0 0.2rem; }
 .attr-group h2 { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55; margin: 1.1rem 0 0.4rem; }
-.attr-row { display: grid; grid-template-columns: 9rem 1fr 3.6rem 2.4rem; gap: 0.6rem; align-items: center; padding: 0.3rem 0; }
-.attr-row.signature .attr-name, .attr-row.signature .attr-mod { color: #6ee7a0; }
-.attr-row.weak .attr-name, .attr-row.weak .attr-mod { opacity: 0.55; }
-.attr-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
-.attr-fill { display: block; height: 100%; background: rgba(255,255,255,0.55); }
-.attr-row.signature .attr-fill { background: #6ee7a0; }
-.attr-value { text-align: right; opacity: 0.7; font-family: var(--font-mono); font-size: 13px; }
-.attr-mod { text-align: right; font-weight: 500; font-family: var(--font-mono); font-size: 13px; }
-.attr-mod.zero { opacity: 0.4; }
 .card-summary { margin: 1.4rem 0; line-height: 1.5; }
+
+.hex { display: block; width: 100%; max-width: 340px; height: auto; margin: 2px auto 0; }
+.hex-ring { fill: none; stroke: #232329; stroke-width: 1; }
+.hex-ring.hex-edge { stroke: #34343b; }
+.hex-sees { fill: none; stroke: #4d5a4f; stroke-width: 1; stroke-dasharray: 3 4; }
+.hex-axis { stroke: #232329; stroke-width: 1; }
+.hex-shape { fill: rgba(230,225,214,0.10); stroke: #cfc9bc; stroke-width: 1.5; stroke-linejoin: round; }
+.hex-name { font-family: var(--font-caps); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; fill: var(--muted); }
+.hex-mod { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+.voice-ego .hex-dot, .voice-ego .hex-name { fill: var(--v-ego); }
+.voice-team .hex-dot, .voice-team .hex-name { fill: var(--v-team); }
+.voice-vision .hex-dot, .voice-vision .hex-name { fill: var(--v-vision); }
+.voice-instinct .hex-dot, .voice-instinct .hex-name { fill: var(--v-instinct); }
+.voice-body .hex-dot, .voice-body .hex-name { fill: var(--v-body); }
+.voice-composure .hex-dot, .voice-composure .hex-name { fill: var(--v-composure); }
+.hex-note { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); text-align: center; }
+.hex-note i { font-style: normal; color: var(--ink); }
+
+/* Группа голоса: заголовок с состоянием, под ним ряды атрибутов. Описание голоса читают один раз —
+   оно в <details>; ряды живут снаружи, иначе свёрнутый голос прятал бы и характеристики. */
+.vg { border-top: 1px solid var(--line); padding: 9px 0 8px; }
+.vg summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.vg summary::-webkit-details-marker { display: none; }
+.vg summary::marker { content: ''; }
+.vg summary:focus-visible { outline: 1px solid var(--hype); outline-offset: 3px; }
+.vg-name { font-family: var(--font-caps); font-weight: 500; font-size: 14.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.vg.voice-ego .vg-name { color: var(--v-ego); } .vg.voice-team .vg-name { color: var(--v-team); }
+.vg.voice-vision .vg-name { color: var(--v-vision); } .vg.voice-instinct .vg-name { color: var(--v-instinct); }
+.vg.voice-body .vg-name { color: var(--v-body); } .vg.voice-composure .vg-name { color: var(--v-composure); }
+.vg-spacer { flex: 1; }
+.vg-more { font-family: var(--font-mono); font-size: 11px; color: var(--faint); }
+.vg-d[open] .vg-more { color: var(--muted); }
+.vg-about { margin: 7px 0 2px; font-size: 13.5px; color: #bdb8ab; }
+.vg-about .muted { font-size: inherit; }
+.vg-rows { margin-top: 7px; display: grid; gap: 2px; }
+.arow { display: grid; grid-template-columns: 7.6rem 1fr 2.3rem 2.3rem 2.1rem; gap: 0.5rem; align-items: center; }
+.arow-name { font-size: 13.5px; }
+.arow.dim .arow-name, .arow.dim .arow-m { color: var(--faint); }
+.arow-train { display: inline-flex; gap: 2px; margin-left: 5px; vertical-align: middle; }
+.arow-train b { width: 4px; height: 4px; border-radius: 50%; background: var(--dim); }
+.arow-train b.on { background: var(--muted); }
+.arow-bar { position: relative; height: 9px; background: #1a1a1f; overflow: hidden; }
+.arow-base { position: absolute; top: 0; bottom: 0; left: 0; background: #4e4b44; }
+.arow.hi .arow-base { background: #6d6a5f; }
+.arow-grown { position: absolute; top: 0; bottom: 0; background: var(--accent); opacity: 0.85; }
+.arow-v, .arow-d, .arow-m { font-family: var(--font-mono); font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; }
+.arow-d { color: var(--accent); font-size: 11.5px; }
+.arow-d.zero { color: var(--dim); }
+.arow-m { color: #bdb8ab; }
+.arow-week { font-weight: 400; color: var(--warn); margin-left: 1px; }
+
+/* Ссылка на профиль ESPM — красный логотип издания прямо на кнопке: за цифрами идёшь на чужой сайт. */
+.espm-link { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  margin-top: 16px; padding: 11px 12px; text-align: left; font-size: 14px; border-radius: 0; }
+.espm-link b { font-family: var(--site-font, 'Roboto Condensed', 'Arial Narrow', sans-serif); font-weight: 800; font-style: italic;
+  background: #d00; color: #fff; padding: 1px 6px; margin-right: 2px; }
+
+/* Подвал картки: что значат бачить / чутно / мовчить / сперечається. Читают редко, ищут здесь. */
+.card-legend { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: auto 1fr; gap: 7px 10px; align-items: baseline; }
+.card-legend dt { margin: 0; }
+.card-legend dd { margin: 0; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+.card-legend .voice-state { font-size: 11.5px; padding: 1px 7px; }
+.card-legend .legend-tail { grid-column: 1 / -1; margin-top: 2px; color: var(--faint); }
 
 .crit-note { margin: -0.3rem 0 0.6rem; font-size: 0.85em; opacity: 0.6; }
 
@@ -355,6 +414,24 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .espm-pay .gate span { font-family: var(--site-font); font-weight: 700; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; padding: 7px 12px; background: #d00; color: #fff; }
 .espm-pay .gate span::before { content: 'ESPM+ · '; }
 /* Реклама — абсурд в форматах настоящей: банер, «вам сподобається», оголошення (content/ads.json). */
+/* ——— профіль гравця (ui/EspmProfile.tsx, 28.09): друга сторінка того самого сайту ———
+   Шапка з портретом і ярликом редакції, свої таблиці й форма. Верстка сайта та сама, що в таблиці:
+   Roboto Condensed, червоний тільки в логотипі й кикерах. */
+.espm-crumbs { padding: 8px 12px 0; margin: 0; font-size: 11.5px; color: #777; }
+.espm-phead { display: grid; grid-template-columns: 76px 1fr; gap: 12px; padding: 8px 12px 10px; align-items: start; }
+.espm-phead img { width: 76px; height: 96px; object-fit: cover; border: 1px solid #ddd; }
+.espm-phead h1 { margin: 2px 0 4px; font-family: var(--site-font); font-weight: 800; font-size: 25px; line-height: 1; color: #111; }
+.espm-pmeta { margin: 0; font-size: 12.5px; color: #444; }
+.espm-label { display: inline-block; margin-top: 7px; background: #111; color: #fff; font-family: var(--site-font); font-weight: 700;
+  font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; }
+.espm-label-why { display: block; margin-top: 4px; font-size: 11.5px; color: #666; }
+.espm-note { margin: 6px 0 0; font-size: 11.5px; color: #777; }
+.espm-own td:first-child, .espm-own th:first-child { color: #111; text-align: left; white-space: nowrap; }
+.espm-own tr.us td:nth-child(2)::after { content: none; }
+.espm-form { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 2px; }
+.espm-form span { font-family: var(--site-font); font-weight: 700; font-size: 11.5px; color: #fff; background: #777; padding: 2px 6px; }
+.espm-form span.w { background: #1e7a45; } .espm-form span.l { background: #9c3b2a; } .espm-form span.d { background: #8a8a8a; }
+
 .espm-ad { margin: 14px 12px 0; }
 .espm-ad-tag { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: #999; margin-bottom: 4px; }
 .espm-banner { border: 1px solid #ddd; padding: 12px 12px 10px; background: #fafafa; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
@@ -462,22 +539,10 @@ button.primary:disabled { opacity: 0.45; cursor: default; }
 .id-fields dt { color: var(--muted); }
 .id-fields dd { margin: 0; font-family: var(--font-mono); font-size: 12.5px; }
 .id-motto { grid-column: 1 / -1; margin: 6px 0 0; padding-top: 8px; border-top: 1px solid var(--line-2); font-style: italic; color: var(--muted); }
-.voices-block h2, .stats-block h2 { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55; margin: 1.1rem 0 0.5rem; }
-.voice-row { padding: 6px 0 6px 12px; border-left: 2px solid var(--dim); margin-bottom: 8px; }
-.voice-row.voice-ego { border-color: var(--v-ego); } .voice-row.voice-team { border-color: var(--v-team); }
-.voice-row.voice-composure { border-color: var(--v-composure); } .voice-row.voice-vision { border-color: var(--v-vision); }
-.voice-row.voice-instinct { border-color: var(--v-instinct); } .voice-row.voice-body { border-color: var(--v-body); }
-.voice-row.state-silent { opacity: 0.6; }
-.voice-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.voice-state { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--muted); }
+/* Ярлык состояния голоса — общий для заголовка группы и подвала картки. */
+.voice-state { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--muted); white-space: nowrap; }
 .voice-state.state-sees { background: rgba(127, 207, 154, 0.15); color: var(--accent); }
 .voice-state.state-heard { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
-.voice-about { margin: 2px 0 0; font-size: 14px; }
-.voice-meta { margin: 2px 0 0; font-size: 12px; }
-.stats-grid { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; font-size: 14px; }
-.stats-grid dt { color: var(--muted); }
-.stats-grid dd { margin: 0; font-family: var(--font-mono); font-size: 13px; }
-.stats-block .xp-track { display: block; margin-top: 8px; }
 
 /* ——— тиждень = зошит Реєса (ui/WeekScreen.tsx, 19.09, макет «Тиждень у зошиті» А v2) ———
    Зошит у лінійку з червоним полем і дірочками від кілець — єдиний особистий предмет серед екранів.
@@ -568,12 +633,13 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .loot-text small { display: block; font-size: 12.5px; color: var(--muted); font-style: italic; margin-top: 1px; }
 .loot-bar { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; } .loot-bar b { width: 12px; height: 8px; border: 1px solid #5a5648; border-radius: 2px; } .loot-bar b.f { background: var(--accent); border-color: var(--accent); }
 .loot-arr { font-family: var(--font-mono); font-size: 13px; color: var(--muted); } .loot-arr.up { color: var(--accent); } .loot-arr.down { color: var(--bad-soft); } .loot-arr.gold { color: #e8c46a; }
-.loot-card { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0 4px; opacity: 0; animation: lootRise .5s ease-out forwards; animation-delay: calc(var(--i) * .4s + .4s); }
+.loot-card { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 10px 0 4px; opacity: 0; animation: lootRise .5s ease-out forwards; animation-delay: calc(var(--i) * .4s + .4s); }
 .loot-cap { grid-column: 1 / -1; margin: 0 0 2px; font-family: var(--font-caps); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .loot-box { border: 1px solid #3a3a42; padding: 6px 4px; text-align: center; font-family: var(--font-caps); font-size: 11.5px; letter-spacing: .04em; color: var(--muted); }
 .loot-box b { display: block; font-family: var(--font-mono); font-size: 14px; color: var(--ink); margin-top: 2px; }
 .loot-box.up { color: var(--ink); box-shadow: inset 0 0 0 1px currentColor, 0 0 14px rgba(232,196,106,.35); border-color: currentColor; }
 .loot-box.up.voice-vision { color: var(--v-vision); } .loot-box.up.voice-instinct { color: var(--v-instinct); } .loot-box.up.voice-body { color: var(--v-body); } .loot-box.up.voice-composure { color: var(--v-composure); }
+.loot-box.up.voice-ego { color: var(--v-ego); } .loot-box.up.voice-team { color: var(--v-team); }
 .loot-box.up b { color: #fff; } .loot-box.up b::after { content: ' ▲'; color: #e8c46a; font-size: 11px; }
 @keyframes lootRise { to { opacity: 1; transform: none; } }
 html.reduce-motion .loot li, html.reduce-motion .loot-count, html.reduce-motion .loot-card { animation: none; opacity: 1; transform: none; }
@@ -1009,7 +1075,7 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .stk-motto.voice-ego b { color: var(--v-ego); } .stk-motto.voice-team b { color: var(--v-team); } .stk-motto.voice-vision b { color: var(--v-vision); }
 .stk-motto.voice-instinct b { color: var(--v-instinct); } .stk-motto.voice-body b { color: var(--v-body); } .stk-motto.voice-composure b { color: var(--v-composure); }
 /* Четыре бокса — четыре атрибутных голоса; заливка у тех, что «бачать» (voiceSees). */
-.stk-boxes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 8px 0; }
+.stk-boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin: 14px 4px 0; }
 .stk-box { text-align: center; display: grid; gap: 4px; }
 .stk-box b { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 30px; line-height: 1.15; color: var(--ink); padding: 4px 0; border: 1px solid transparent; }
 .stk-box.on b { background: var(--cream); color: #141413; }
@@ -1026,7 +1092,7 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .stk-compact:focus-visible { outline: none; box-shadow: inset 3px 0 0 var(--ink); }
 .stk-compact .stk-frame { width: 78px; margin: 0; box-shadow: none; }
 .stk-compact .stk-band { margin: 0; width: auto; text-align: left; font-size: 17px; padding: 3px 8px 2px; }
-.stk-compact .stk-boxes { grid-template-columns: repeat(4, 34px); gap: 6px; margin: 8px 0 0; }
+.stk-compact .stk-boxes { grid-template-columns: repeat(6, 1fr); gap: 5px; margin: 8px 0 0; }
 .stk-compact .stk-box b { font-size: 18px; padding: 2px 0; } .stk-compact .stk-box i { font-size: 9.5px; }
 .menu { padding-top: 24px; }
 .menu-fixture { margin: 18px 0 6px; }

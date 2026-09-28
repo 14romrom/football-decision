@@ -7,7 +7,8 @@ import { voiceSees } from '../src/engine/voices';
 import { neutralConditions } from '../src/engine/conditions';
 import { BALANCE, cleanTarget } from '../src/engine/balance';
 import { EPISODES, EPISODES_RAW, FLAG_RULES, PLAYER, ROSTER } from '../src/content';
-import type { MatchState, Player, VoiceKey } from '../src/engine/types';
+import type { Attribute, MatchState, Player, VoiceKey } from '../src/engine/types';
+import { VOICES } from '../src/ui/voices-text';
 
 const state = (over: Partial<MatchState> = {}): MatchState => ({
   minute: 30, scoreUs: 0, scoreThem: 0, stamina: 55, composureNow: 60, coachTrust: 55, fanHype: 45, momentum: 0,
@@ -20,6 +21,35 @@ const flat = (v: number): Player => ({ ...PLAYER, attrs: Object.fromEntries(Obje
 const withAttr = (p: Player, attr: keyof Player['attrs'], v: number): Player => ({ ...p, attrs: { ...p.attrs, [attr]: v } });
 
 const insightEpisodes = EPISODES.filter((e) => e.options.some((o) => o.insight));
+
+describe('голоси і атрибути (картка не бреше)', () => {
+  // Картка групує характеристики за голосами (ui/voices-text.ts). Два правила, які тримають її чесною:
+  // у кожного голосу є атрибут, у кожного атрибута рівно один голос — і цей голос справді говорить на
+  // варіантах цього атрибута (інакше картка обіцяє Его, а на кнопці Команда).
+  const owners = new Map<Attribute, VoiceKey>();
+  for (const v of VOICES) for (const a of v.attrs) owners.set(a, v.who);
+
+  it('у кожного голосу є атрибут, у кожного атрибута — один голос', () => {
+    for (const v of VOICES) expect(v.attrs.length, v.who).toBeGreaterThan(0);
+    const all = Object.keys(PLAYER.attrs) as Attribute[];
+    for (const a of all) expect(owners.get(a), a).toBeTruthy();
+    expect(VOICES.flatMap((v) => v.attrs).length).toBe(all.length);
+  });
+
+  it('голос атрибута — один із двох, що найчастіше говорять на його варіантах', () => {
+    for (const [attr, who] of owners) {
+      const counts = new Map<string, number>();
+      for (const e of EPISODES_RAW) {
+        for (const o of e.options) {
+          if (o.attribute !== attr || !o.voice) continue;
+          counts.set(o.voice.who, (counts.get(o.voice.who) ?? 0) + 1);
+        }
+      }
+      const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([w]) => w);
+      expect(top, `${attr}: на картці ${who}, у контенті ${top.join(', ')}`).toContain(who);
+    }
+  });
+});
 
 describe('голос бачить', () => {
   it('видит только сильный атрибут, и только атрибутные голоса', () => {

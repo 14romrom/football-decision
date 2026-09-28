@@ -27,6 +27,7 @@ import { BALANCE } from './engine/balance';
 import { PrematchScreen } from './ui/PrematchScreen';
 import { MatchdayScreen } from './ui/MatchdayScreen';
 import { PlayerCard } from './ui/PlayerCard';
+import { EspmProfile } from './ui/EspmProfile';
 import { LevelUpScreen } from './ui/LevelUpScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
@@ -733,7 +734,7 @@ function Game() {
     if (stage.card) {
       return (
         <PlayerCard
-          player={PLAYER} career={stage.after} season={season} history={readHistory()} club={ROSTER.us.name.nom}
+          player={PLAYER} career={stage.after} season={season} club={ROSTER.us.name.nom}
           onBack={() => setStage({ ...stage, card: false })}
         />
       );
@@ -968,10 +969,29 @@ export function App() {
     return (<>
       <Film />
       <PlayerCard
-        player={PLAYER} career={readCareer()} season={readSeason()} history={readHistory()} club={ROSTER.us.name.nom}
+        player={PLAYER} career={readCareer()} season={readSeason()} club={ROSTER.us.name.nom}
+        onEspm={() => { location.hash = '#/espm'; }}
         onBack={() => { location.hash = '#/play'; }}
       />
     </>);
+  }
+  // Профіль на ESPM — друга сторінка того самого сайту, що таблиця; те, що знає місто, а не Реєс.
+  // Плівки тут немає, як і на таблиці й стрічці: «чужі» екрани (Film.tsx).
+  if (route.startsWith('#/espm')) {
+    const career = readCareer();
+    const season = readSeason();
+    // Реклама і колонка — по сиду сезона и тура, как на таблице: перезагрузка их не перекидывает.
+    const seed = (season?.seed ?? 0) + (season?.round ?? 0) * 6007;
+    const column = playerColumn(ESPM_COLUMNS.column, arcStage(career), makeRng(seed + 11), new Set(recentPosts()));
+    return (
+      <EspmProfile
+        player={PLAYER} career={career} season={season} history={readHistory()}
+        club={ROSTER.us.name.nom} clubGen={ROSTER.us.name.gen}
+        ads={pickAds(ADS, adContext(season ?? createSeason(seed, OPPONENT_KEYS.second), career.coachTrust), new Set(recentPosts()), makeRng(seed + 17))}
+        column={column ? fillNamesDeep(column, ROSTER) : undefined}
+        onBack={() => { location.hash = '#/player'; }}
+      />
+    );
   }
   // Слот карьеры (telemetry/slots.ts): Game держит карьеру и сезон в refs, прочитанных при монтировании,
   // поэтому смена слота на титуле — это смена key, а не setState внутри.

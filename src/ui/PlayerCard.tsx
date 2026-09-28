@@ -90,7 +90,9 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
 
       <VoiceHex player={effective} />
       <p className="hex-note">Шість голосів в одних одиницях. Пунктир — кільце <i>«бачить»</i>.</p>
-      <p className="rows-note">У рядку: <b className="m">що атрибут додає до кидка</b> і <b className="d">▲ наскільки виріс від дебюту</b>.</p>
+      {/* Одне число в рядку (рішення користувача 28.09): два плюси поруч плуталися навіть у різних
+          формах. Ріст лишився тим, чим він і є, — зеленим куском полоси; риски через два моди дають міру. */}
+      <p className="rows-note">Число в рамці — <b className="m">що атрибут додає до кидка</b>. Зелене на полосі — <b className="d">що наросло від дебюту</b>.</p>
 
       {groups.map((g, i) => (
         <section key={g.who} className={`vg voice-${g.who}`}>
@@ -128,11 +130,13 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
                     )}
                   </span>
                   {/* Полоса в шкале шестикутника, риски через два мода: ряды и фигура меряют одним. */}
-                  <span className="arow-bar" style={{ backgroundSize: `${(2 / scale) * 100}% 100%` }}>
+                  <span
+                    className="arow-bar" style={{ backgroundSize: `${(2 / scale) * 100}% 100%` }}
+                    title={grown > 0 ? `від дебюту +${grown}` : undefined}
+                  >
                     <span className="arow-base" style={{ width: `${(debut / scale) * 100}%` }} />
                     {grown > 0 && <span className="arow-grown" style={{ left: `${(debut / scale) * 100}%`, width: `${(grown / scale) * 100}%` }} />}
                   </span>
-                  <span className="arow-d">{grown > 0 ? `▲${grown}` : ''}</span>
                   <span className="arow-m">
                     +{mod}
                     {mod !== steady && <b className="arow-week" title="цього тижня">{mod > steady ? '↑' : '↓'}</b>}

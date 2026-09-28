@@ -1,72 +1,109 @@
 import type { MatchConditions } from '../engine/conditions';
-import { signatureAttrs } from '../engine/conditions';
-import type { Player } from '../engine/types';
+import type { Player, VoiceKey } from '../engine/types';
+import type { Career } from '../engine/career';
+import type { Season } from '../engine/season';
 import type { Opponent } from '../content';
-import { monthOfRound } from '../engine/season';
-import { ATTR_GEN, INSTRUCTION, WEATHER, toneLines } from './prematch-text';
+import { SEASON_ROUNDS, monthOfRound } from '../engine/season';
+import { Sticker } from './Sticker';
+import { INSTRUCTION, WEATHER, toneLines } from './prematch-text';
+import { plural } from './pluralize';
 
-// Екран Реєса перед матчем (27.09): усе, що пояснює гравцеві його рішення, — тут, а не в програмці.
-// Правило поділу: **програмка друкує те, що знає місто; цей екран — те, що знає Реєс.** Установка
-// тренера з наслідком, форма й утома, стан після минулого туру, що зроблять погода й чужий стадіон,
-// і пам'ять про суперника: торішні рахунки, колишній дублер у їхній формі.
+// Екран перед матчем (28.09, макет «Екран перед матчем», варіант А «Роздягальня»): один аркуш замість
+// двох — меню кар'єри і брифінг злилися. Було: меню з карткою і турами, потім окремий екран зі станом.
 //
-// Це перший крок переносу (макет матчдея, 27.09): верстка поки успадкована від брифінга — темні рядки
-// «ярлик / текст». Наступний крок — свій макет екрана; тексти й порядок блоків уже фінальні.
+// Порядок читання: **кого і де граєш → що сказав тренер → стан одним поглядом → дрібна проза**.
+// Плитки форми, поля й погоди — єдине місце, де це видно, не вчитуючись: у рядках усе важило однаково
+// і тому пролистувалося.
+//
+// **Що не дублюється з матчдеєм** (рішення 28.09): день і час лишилися тільки на афіші — Реєс квитка не
+// купує. Суперник і «де граєш» навмисно є на обох: на цьому екрані це рішення, на афіші — те саме очима.
+// Погода є на обох за правилом «факт / наслідок»: на афіші слово, тут — що воно зробить із силами.
+//
+// **Суперник і пам'ять — різні блоки**: риса суперника і його склад (Хантер) — довідка, торішні рахунки
+// й колишній дублер — те, що пам'ятає Реєс. Склеєні в один абзац вони читалися так, ніби Хантер і є той
+// молодий захисник (плейтест 28.09).
 
 type Props = {
   conditions: MatchConditions;
   opponent: Opponent;
   player: Player;
+  career: Career;
+  season: Season;
+  /** Тур (1-based) і місце в таблиці — положення в сезоні, якого на афіші немає. */
   round: number;
-  /** Заметка про Реєса прозою (engine/programme.ts) — поки лишається як була. */
+  position: number | null;
+  points: number | null;
+  /** Домінантний голос кар'єри — репліка під карткою (той самий стікер, що в меню). */
+  dominant: VoiceKey | null;
+  /** Стан прозою (engine/programme.ts: programmeNote) — минулий матч, серія, тиждень, статус у тренера. */
   note: string;
   /** Риса суперника голосом клубу. */
   trait: string | null;
-  /** Торішні рахунки з цим суперником — пам'ять Реєса, не довідка міста. */
+  /** Іменний гравець у складі суперника (programme.ts:HUNTER). */
+  guest?: string | null;
+  /** Торішні рахунки з цим суперником. */
   lastYear?: { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[] | null;
   /** Колишній дублер у складі суперника. */
   subThere?: string | null;
-  /** Іменний гравець у складі суперника (programme.ts:HUNTER): суха довідка зі складу — Реєс не реагує,
-   *  бо не знає обличчя; знає гравець. Після переїзду програмки в афішу жарт живе тут. */
-  guest?: string | null;
   /** Слово тренера про мету клубу (programme.ts:coachGoalWord). */
   coachExtra?: string | null;
-  onNext: () => void;
+  onCard: () => void;
+  onStart: () => void;
 };
 
-export function PrematchScreen({ conditions, opponent, player, round, note, trait, lastYear, subThere, guest, coachExtra, onNext }: Props) {
+export function PrematchScreen({
+  conditions, opponent, player, career, season, round, position, points, dominant,
+  note, trait, guest, lastYear, subThere, coachExtra, onCard, onStart,
+}: Props) {
   const instr = INSTRUCTION[conditions.instruction === 'none' ? 'free' : conditions.instruction];
   const tone = toneLines(conditions);
   const weather = WEATHER[conditions.weather];
-  const sig = signatureAttrs(player).map((a) => ATTR_GEN[a]);
-  const venue = conditions.venue === 'home'
-    ? `Вдома. Трибуни знають тебе і чекають ${sig[0]} та ${sig[1]}.`
-    : 'Виїзд. Чужий стадіон: свист замість підтримки, а в кінцівці — особливо.';
-  const lastYearLine = lastYear?.length
-    ? `Торік: ${lastYear.map((r) => `${r.scoreUs}:${r.scoreThem} ${r.venue === 'home' ? 'вдома' : 'на виїзді'}`).join(', ')}.`
-    : '';
-  const memory = [lastYearLine, subThere ? `У їхній формі — ${subThere}, торік ваш дублер.` : '', trait ?? ''].filter(Boolean).join(' ');
+  const home = conditions.venue === 'home';
+
+  // Плитки: коротке слово згори, наслідок під ним. Довгі пояснення лишаються прозою нижче.
+  const tiles: { label: string; value: string; note: string }[] = [
+    { label: 'Форма', value: tone.title, note: tone.note.split('.')[0] + '.' },
+    { label: 'Поле', value: home ? 'Вдома' : 'Виїзд', note: home ? 'Трибуни за тебе.' : 'Свист замість підтримки.' },
+    { label: 'Погода', value: weather.title, note: weather.note },
+  ];
+
+  const about = [trait, guest].filter(Boolean).join(' ');
+  const memory = [
+    lastYear?.length ? `Торік: ${lastYear.map((r) => `${r.scoreUs}:${r.scoreThem} ${r.venue === 'home' ? 'вдома' : 'на виїзді'}`).join(', ')}.` : '',
+    subThere ? `У їхній формі — ${subThere}, торік ваш дублер.` : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className="prematch plain-screen">
-      <div className="pm-top">Тур {round} · {monthOfRound(round)} · «{opponent.name.nom}»</div>
+    <div className="prematch">
+      <div className="pm-head">
+        <span>Тур <b>{round}</b> з {SEASON_ROUNDS} · {monthOfRound(round)}</span>
+        {position !== null && <span>{position}-е місце · {points} {plural(points ?? 0, 'очко', 'очки', 'очок')}</span>}
+      </div>
+      <h1 className="pm-fixture">«{opponent.name.nom}»<small>{home ? 'Вдома' : 'На виїзді'}</small></h1>
 
-      <div className="pm-quote">
+      <Sticker compact player={player} career={career} season={season} dominant={dominant} onOpen={onCard} />
+
+      <div className="pm-coach">
         <b>Установка: {instr.title.toLowerCase()}</b>
         <p className="pm-said">{instr.quote}</p>
         <p className="pm-means">{instr.note}{coachExtra ? ` ${coachExtra}` : ''}</p>
       </div>
 
-      <dl className="conditions pm-list">
-        <div><dt>Форма</dt><dd><b>{tone.title}.</b> {tone.note}</dd></div>
-        <div><dt>Поле</dt><dd>{venue}</dd></div>
-        <div><dt>Погода</dt><dd><b>{weather.title}.</b> {weather.note}</dd></div>
-        <div><dt>Стан</dt><dd>{note}</dd></div>
-        {memory && <div><dt>Пам’ять</dt><dd>{memory}</dd></div>}
-        {guest && <div><dt>Їхній склад</dt><dd>{guest}</dd></div>}
+      <dl className="pm-tiles">
+        {tiles.map((t) => (
+          <div key={t.label} className="pm-tile">
+            <dt>{t.label}</dt>
+            <dd>{t.value}</dd>
+            <p>{t.note}</p>
+          </div>
+        ))}
       </dl>
 
-      <button className="primary menu-primary" onClick={onNext}>Далі</button>
+      <p className="pm-prose"><b>Стан</b>{note}</p>
+      {about && <p className="pm-prose"><b>Суперник</b>{about}</p>}
+      {memory && <p className="pm-prose"><b>Пам’ять</b>{memory}</p>}
+
+      <button className="primary menu-primary pm-cta" onClick={onStart}>До матчу</button>
     </div>
   );
 }

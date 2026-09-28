@@ -38,7 +38,7 @@ import { buildEntry, type Entry } from './engine/entry';
 import { EntryCard } from './ui/EntryCard';
 import {
   applyMatchToCareer, arcStage, coachGrip, consumeStartPenalty, effectivePlayer, spendPoint, xpForMatch,
-  metLastYear, nightKnowledge, type Career, type CarryFacts,
+  metLastYear, nightKnowledge, type Career,
 } from './engine/career';
 import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
@@ -52,7 +52,6 @@ import { AgentScene } from './ui/AgentScene';
 import { agentPending, resolveAgent, type AgentChoice } from './engine/agent';
 import { TitleScreen } from './ui/TitleScreen';
 import { Sticker } from './ui/Sticker';
-import { plural } from './ui/pluralize';
 import { SlotsScreen } from './ui/SlotsScreen';
 import { SettingsScreen } from './ui/SettingsScreen';
 import { AboutScreen } from './ui/AboutScreen';
@@ -77,7 +76,6 @@ import { DebugPanel } from './ui/DebugPanel';
 
 type Stage =
   | { k: 'menu' }
-  | { k: 'briefing'; carry: CarryFacts }
   | { k: 'matchday' }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number; link: boolean }
@@ -102,7 +100,7 @@ type Stage =
   // Сцена агента (M12): після вердикту «трансфер», перед новим сезоном.
   | { k: 'agent'; mode: 'winter' | 'summer'; leveledFrom: number; leveledTo: number }
   // Розділювач глави (M24): пролог, перший сезон, другий сезон, епілог — маленький титул перед главою.
-  | { k: 'chapter'; id: string; then: 'prologue' | 'briefing' | 'ending' }
+  | { k: 'chapter'; id: string; then: 'prologue' | 'matchday' | 'ending' }
   | { k: 'levelup'; fromLevel: number; toLevel: number };
 
 /** Розворот глави (M24) показується раз за кар’єру. */
@@ -132,7 +130,6 @@ function Game() {
   // без устаревших замыканий, тот же приём, что и sessionRef/rngRef.
   const careerRef = useRef<Career>(readCareer());
   /** Дані брифінгу, коли перед ним показуємо розворот глави (M24). */
-  const briefingCarry = useRef<CarryFacts | null>(null);
   const [career, setCareer] = useState<Career>(careerRef.current);
   const setCareerBoth = useCallback((c: Career) => { careerRef.current = c; writeCareer(c); setCareer(c); }, []);
   // Дублер пішов після відпустки (M15): ім’я в ростері — за кар’єрою, для всіх, хто читає ROSTER.
@@ -160,7 +157,6 @@ function Game() {
       coachTrust: c.coachTrust, matchesPlayed: c.matchesPlayed, benched: c.benched, arc: arcStage(c), agentEcho: c.agentEcho,
     };
   };
-  const clubName = useCallback((key: string) => (key === US ? ROSTER.us.name.nom : OPPONENTS[key]?.name.nom ?? key), []);
   const clubForms = useCallback((key: string) => (key === US ? ROSTER.us.name : OPPONENTS[key]?.name ?? { nom: key, gen: key }), []);
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
@@ -240,25 +236,37 @@ function Game() {
     setStage({ k: 'feed' });
   }, [setCareerBoth]);
 
-  const start = useCallback(() => {
-    // ?seed= воспроизводит конкретный матч, но только первый: иначе «Ще матч»
-    // раз за разом даёт ту же игру, и кажется, что эпизодов всего десять.
-    const params = new URLSearchParams(location.search);
-    const fromUrl = Number(params.get('seed'));
-    const seed = Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : Math.floor(Math.random() * 1e9);
-    if (params.has('seed')) history.replaceState(null, '', location.pathname + location.hash);
-    const rng = makeRng(seed);
-    // Условия матча — по сиду и расписанию сезона, тонус — из истории этого устройства.
+  /** Сід матчу: сезон і тур. Один і той самий до натискання «До матчу» і після — екран перед матчем
+   *  показує ті самі умови, з якими матч потім створюється. */
+  const matchSeed = (s: Season) => s.seed + (s.round + 1) * 7919;
+
+  /** Умови матчу з готового rng: `generateConditions` — перший, хто з нього читає, тому однаковий сід
+   *  дає однакові умови і на екрані, і в матчі. Хватка тренера (26.09) додається поверх. */
+  const buildConditions = useCallback((rng: Rng) => {
     const fixture = ourFixture(seasonRef.current) ?? undefined;
-    // Хватка тренера (26.09): при низькій довірі він нав'язує «автобус» і знімає зі стандартів —
-    // замість посадки на лаву. Гравець грає всі дев'ять рішень, але в тіснішій грі.
     const grip = coachGrip(careerRef.current.coachTrust);
-    const conditions = {
+    return {
       ...generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)), fixture),
       league: seasonRef.current.number >= 2 ? 'top' as const : 'second' as const,
       ...(grip.hold ? { instruction: 'hold' as const } : {}),
       ...(grip.noSetPieces ? { noSetPieces: true } : {}),
     };
+  }, []);
+
+  const start = useCallback(() => {
+    // ?seed= воспроизводит конкретный матч, но только первый: иначе «Ще матч»
+    // раз за разом даёт ту же игру, и кажется, что эпизодов всего десять.
+    const params = new URLSearchParams(location.search);
+    const fromUrl = Number(params.get('seed'));
+    // Сід матчу — від сезону й туру (28.09): умови треба показати ще до натискання «До матчу», тому вони
+    // мають бути ті самі до і після. Заразом зникає дрібний експлойт: перезавантаження більше не
+    // перекидає погоду й установку.
+    const seed = Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl : matchSeed(seasonRef.current);
+    if (params.has('seed')) history.replaceState(null, '', location.pathname + location.hash);
+    const rng = makeRng(seed);
+    // Условия матча — по сиду и расписанию сезона, тонус — из истории этого устройства; та сама функція
+    // малює їх на екрані перед матчем (generateConditions — перший споживач цього ж потоку rng).
+    const conditions = buildConditions(rng);
 
     // Перенос из карьеры: травма/карточка прошлого матча бьют по старту этого,
     // доверие тренера продолжается (с регрессией), а не сбрасывается на 55.
@@ -315,9 +323,8 @@ function Game() {
     const chapterId = seasonRef.current.number >= 2 ? 'season2' : 'season1';
     const first = seasonRef.current.round === 0;
     setStage(first && !seenChapter(careerRef.current, chapterId)
-      ? { k: 'chapter', id: chapterId, then: 'briefing' }
-      : { k: 'briefing', carry: penalty.facts });
-    briefingCarry.current = penalty.facts;
+      ? { k: 'chapter', id: chapterId, then: 'matchday' }
+      : { k: 'matchday' });
   }, [setCareerBoth, setSeasonBoth]);
 
   const newSeason = useCallback(() => {
@@ -513,7 +520,7 @@ function Game() {
           setCareerBoth({ ...careerRef.current, chaptersSeen: seen });
           if (stage.then === 'prologue') setStage({ k: 'prologue' });
           else if (stage.then === 'ending') setStage({ k: 'ending' });
-          else setStage({ k: 'briefing', carry: briefingCarry.current ?? { sentOff: false, yellows: false, injured: false, outOfForm: false } });
+          else setStage({ k: 'matchday' });
         }}
       />
     </>);
@@ -636,51 +643,47 @@ function Game() {
 
   if (stage.k === 'menu') {
     const fixture = ourFixture(season);
-    const row = ourRow(season);
-    return (
-      // Меню кар’єри (19.09, макет «Картка гравця»): компактный стикер сверху — тап открывает картку;
-      // абзац-объяснение ушёл, остались тур, соперник и «До матчу».
-      <div className="menu">
-        {film}
-        <Sticker compact player={effectivePlayer(PLAYER, career)} career={career} season={season} dominant={dominantCareerVoice(career)} onOpen={() => { location.hash = '#/player'; }} />
-        {fixture ? (
-          <p className="season-line menu-fixture">
-            <b>Тур {fixture.round + 1} з {SEASON_ROUNDS}.</b> «{clubName(fixture.opponentKey)}», {fixture.venue === 'home' ? 'вдома' : 'на виїзді'}.
-            {season.round > 0 && ` ${row.position}-е місце, ${row.points} ${plural(row.points, 'очко', 'очки', 'очок')}.`}
-          </p>
-        ) : (
+    if (!fixture) {
+      return (
+        <div className="menu">
+          {film}
+          <Sticker compact player={effectivePlayer(PLAYER, career)} career={career} season={season} dominant={dominantCareerVoice(career)} onOpen={() => { location.hash = '#/player'; }} />
           <p className="season-line menu-fixture"><b>Сезон {season.number} завершено.</b></p>
-        )}
-        {fixture
-          ? <button className="primary menu-primary" onClick={start}>До матчу</button>
-          : <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>}
-        {/* «Розподіл виборів» — инструмент тестеров, живёт в Налаштування → Тестерам (19.09). */}
-        <ul className="rows">
-          <li><a className="row" href="#/">Головна</a></li>
-        </ul>
-      </div>
-    );
-  }
-
-  if (stage.k === 'briefing') {
-    const session = sessionRef.current!;
+          <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>
+          <ul className="rows"><li><a className="row" href="#/">Головна</a></li></ul>
+        </div>
+      );
+    }
+    // Екран перед матчем (28.09): меню і брифінг — один аркуш. Умови рахуються тут, із того самого сіда,
+    // з яким матч потім створиться, а наслідки минулого туру читаються без споживання (consumeStartPenalty
+    // чистий: кар'єру міняє лише той виклик, що в `start`).
+    const conditions = buildConditions(makeRng(matchSeed(season)));
+    const { penalty } = consumeStartPenalty(career);
+    const roster = rosterFor(conditions.opponentKey, makeRng(matchSeed(season)));
+    const opponent = OPPONENTS[conditions.opponentKey];
+    const row = season.round > 0 ? ourRow(season) : null;
     return (
       <>
         {film}
         <PrematchScreen
-          conditions={session.conditions}
-          opponent={OPPONENTS[session.conditions.opponentKey]}
-          player={session.player}
-          round={season.round + 1}
-          note={fillNames(programmeNote({ ...programmeInput(season, career, session.conditions), carry: stage.carry }), session.roster)}
-          trait={traitNote(Object.values(OPPONENTS[session.conditions.opponentKey].players).map((p) => p.trait).filter((t): t is string => !!t), session.conditions.venue === 'away' ? 'away' : 'home')}
-          lastYear={metLastYear(career, session.conditions.opponentKey)}
-          subThere={!!career.subLeft && career.subClub === session.conditions.opponentKey ? ROSTER.us.players.oldsub?.nom ?? null : null}
-          guest={hunterRound(season.number, season.round + 1) ? HUNTER.programme : null}
-          coachExtra={coachGoalWord(season.number, season.round + 1, season.round > 0 ? ourRow(season).position : 6, SEASON_ROUNDS)}
-          onNext={() => setStage({ k: 'matchday' })}
+          conditions={conditions}
+          opponent={opponent}
+          player={effectivePlayer(PLAYER, career, penalty.attrBonus)}
+          career={career}
+          season={season}
+          round={fixture.round + 1}
+          position={row ? row.position : null}
+          points={row ? row.points : null}
+          dominant={dominantCareerVoice(career)}
+          note={fillNames(programmeNote({ ...programmeInput(season, career, conditions), carry: penalty.facts }), roster)}
+          trait={traitNote(Object.values(opponent.players).map((p) => p.trait).filter((t): t is string => !!t), conditions.venue === 'away' ? 'away' : 'home')}
+          guest={hunterRound(season.number, fixture.round + 1) ? HUNTER.programme : null}
+          lastYear={metLastYear(career, conditions.opponentKey)}
+          subThere={!!career.subLeft && career.subClub === conditions.opponentKey ? ROSTER.us.players.oldsub?.nom ?? null : null}
+          coachExtra={coachGoalWord(season.number, fixture.round + 1, row ? row.position : 6, SEASON_ROUNDS)}
+          onCard={() => { location.hash = '#/player'; }}
+          onStart={start}
         />
-        <DebugPanel session={session} />
       </>
     );
   }

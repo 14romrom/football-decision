@@ -1148,12 +1148,37 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 .md-cta { display: block; width: 100%; margin-top: 14px; padding: 13px; font-size: 15px; }
 @media (max-width: 360px) { .md-name { font-size: 38px; } .md-name.long { font-size: 30px; } }
 
-/* Екран Реєса перед матчем: поки успадкована верстка брифінга, свій макет — наступним кроком. */
-.prematch { max-width: 560px; margin: 0 auto; }
-.pm-top { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
-.pm-quote { border-left: 3px solid var(--bad); padding: 2px 0 2px 14px; margin-bottom: 18px; }
-.pm-quote b { display: block; font-family: var(--font-caps); font-weight: 500; letter-spacing: .09em; text-transform: uppercase; font-size: 12px; color: var(--bad); margin-bottom: 6px; }
-.pm-said { margin: 0 0 6px; font-size: 16px; font-style: italic; }
-.pm-means { margin: 0; color: var(--muted); font-size: 14px; }
-.pm-list { margin-bottom: 1rem; }
+/* Екран перед матчем (28.09, макет «Екран перед матчем», варіант А): меню кар'єри і брифінг злилися в
+   один аркуш. Картка натискається — про це каже шеврон із підписом у стікері; далі установка цитатою,
+   плитки стану одним поглядом і дрібна проза. */
+.prematch { max-width: 560px; margin: 0 auto; padding: 0.4rem 0 2rem; }
+.pm-head { display: flex; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.pm-head b { color: var(--ink); font-weight: 500; }
+.pm-fixture { margin: 10px 0 0; font-family: var(--font-caps); font-weight: 600; text-transform: uppercase;
+  font-size: 23px; letter-spacing: .01em; line-height: 1.05; }
+.pm-fixture small { display: block; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .12em;
+  color: var(--muted); font-weight: 400; margin-top: 5px; }
+.prematch .stk-compact { margin: 14px 0 0; background: var(--panel); border: 1px solid var(--line-2); }
+.prematch .stk-compact:hover { border-color: #4a463c; }
+/* Афорданс картки (28.09): шеврон із підписом «картка» — її відкривають рідко, тому вона має сказати
+   про себе сама, без здогадок. */
+.stk-compact::after { content: '› картка'; position: absolute; right: 12px; bottom: 10px;
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.stk-compact { position: relative; }
+.pm-coach { margin: 16px 0 0; border-left: 3px solid var(--bad); padding: 2px 0 2px 13px; }
+.pm-coach b { display: block; font-family: var(--font-caps); font-weight: 500; letter-spacing: .09em;
+  text-transform: uppercase; font-size: 11.5px; color: var(--bad); margin-bottom: 5px; }
+.pm-said { margin: 0 0 5px; font-size: 16px; font-style: italic; }
+.pm-means { margin: 0; color: var(--muted); font-size: 13.5px; }
+.pm-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0 0; }
+.pm-tile { border: 1px solid var(--line); background: var(--panel-2); padding: 8px 9px; }
+.pm-tile dt { font-family: var(--font-mono); font-size: 8px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+.pm-tile dd { margin: 4px 0 0; font-family: var(--font-caps); font-weight: 500; letter-spacing: .04em;
+  text-transform: uppercase; font-size: 13px; }
+.pm-tile p { margin: 3px 0 0; font-size: 11.5px; line-height: 1.35; color: var(--muted); }
+.pm-prose { margin: 14px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.pm-prose b { color: var(--ink); font-family: var(--font-caps); font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; font-size: 11px; margin-right: 6px; }
+.pm-cta { margin-top: 20px; }
 

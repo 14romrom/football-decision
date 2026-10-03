@@ -381,3 +381,38 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
   };
 }
 
+
+/** Наступний сезон із попереднього: склад ліги за регламентом підвищення, пам'ять про торішні
+ *  рахунки, холодніші трибуни після скандального підвищення. Жило в App.tsx; винесено сюди (M34.2),
+ *  щоб перемотка кар'єри (engine/autoplay.ts) котила сезон тим самим кодом, що й гра. */
+export function nextSeasonFrom(
+  prev: Season, career: { fanHype?: number; lastSeason?: unknown },
+  seed: number, secondKeys: string[], topKeys: string[],
+): { season: Season; career: Record<string, unknown> } {
+  const promo = promotion(prev);
+  const keep = promo?.with ?? [];
+  const rest = secondKeys.filter((k) => !prev.clubs.includes(k));
+  const pool = prev.number === 1 ? [...keep, ...topKeys, ...rest] : [...topKeys, ...secondKeys];
+  const season = createSeason(seed, pool, prev.number + 1, keep, keep[0] ? { club: keep[0], round: 2 } : undefined);
+
+  const results: Record<string, { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[]> = {};
+  for (const m of prev.played) {
+    if (m.home !== US && m.away !== US) continue;
+    const key = m.home === US ? m.away : m.home;
+    (results[key] ??= []).push(m.home === US
+      ? { scoreUs: m.homeGoals, scoreThem: m.awayGoals, venue: 'home' }
+      : { scoreUs: m.awayGoals, scoreThem: m.homeGoals, venue: 'away' });
+  }
+  const lastSeason = { number: prev.number, position: ourRow(prev).position, results };
+  const fanHype = promo?.kind === 'scandal'
+    ? Math.min(career.fanHype ?? BALANCE.fanHypeStart, BALANCE.fanHypeStart - BALANCE.scandalHypeDrop)
+    : career.fanHype;
+  return {
+    season,
+    career: {
+      ...(career as Record<string, unknown>), injuriesSeason: 0, benched: false, lastSeason,
+      ...(promo ? { promotion: promo.kind } : {}),
+      ...(fanHype !== undefined ? { fanHype } : {}),
+    },
+  };
+}

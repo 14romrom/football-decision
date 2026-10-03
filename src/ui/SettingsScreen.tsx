@@ -3,6 +3,8 @@ import { readSettings, writeSettings, type Settings } from '../telemetry/setting
 import { readSlotSummary, resetSlot } from '../telemetry/saves';
 import { activeSlot } from '../telemetry/slots';
 import { exportLogs } from '../telemetry/log';
+import { fastForward, type FastForwardResult } from '../telemetry/fastforward';
+import type { AutoTarget } from '../engine/autoplay';
 import { slotLine } from './TitleScreen';
 
 // Налаштування (19.09): три группы — кидок, екран, тестерам. Звука в игре нет — строки нет.
@@ -28,6 +30,9 @@ function Toggle({ on, onChange, name }: { on: boolean; onChange: (v: boolean) =>
 export function SettingsScreen({ onBack, onWiped }: Props) {
   const [s, setS] = useState<Settings>(() => readSettings());
   const [confirmWipe, setConfirmWipe] = useState(false);
+  const [confirmWind, setConfirmWind] = useState(false);
+  const [wound, setWound] = useState<FastForwardResult | null>(null);
+  const wind = (target: AutoTarget) => { setConfirmWind(false); setWound(fastForward(target)); };
   const slot = readSlotSummary(activeSlot());
   const set = (patch: Partial<Settings>) => { const next = { ...s, ...patch }; setS(next); writeSettings(next); };
   const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
@@ -70,6 +75,38 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         <span className="l">Розподіл виборів<small>Які варіанти обирають у кожній сцені</small></span>
         <span className="v">›</span>
       </a>
+
+      {/* Перемотка (M34.2): щоб перевірити відпустку, не треба грати десять турів руками. Кар'єра
+          доігрується тим самим рушієм і випадковими рішеннями — стан виходить справжній, з пам'яттю
+          тижня й флагами, а не синтезований. Перед перемоткою сама стає контрольна точка. */}
+      {!wound && (
+        <button className="set set-btn" onClick={() => setConfirmWind(true)}>
+          <span className="l">Перемотати кар’єру<small>Доіграти за гравця до ключової події</small></span>
+          <span className="v">›</span>
+        </button>
+      )}
+      {confirmWind && !wound && (
+        <div className="sheet" role="dialog" aria-label="Перемотати">
+          <p>
+            Гра доіграє за тебе — випадковими рішеннями, тим самим рушієм, що й у грі. Кар’єра вийде
+            справжня: з пам’яттю тижня, флагами й людьми, тільки прожита не тобою. Поточний стан слота
+            збережеться в контрольну точку, щоб можна було повернутися.
+          </p>
+          <button className="danger-btn" onClick={() => wind({ kind: 'vacation' })}>До відпустки (кінець першого сезону)</button>
+          <button className="danger-btn" onClick={() => wind({ kind: 'ending' })}>До фіналу (кінець другого)</button>
+          <button className="danger-btn" onClick={() => wind({ kind: 'rounds', n: 1 })}>На один тур уперед</button>
+          <button className="ghost" onClick={() => setConfirmWind(false)}>Не треба</button>
+        </div>
+      )}
+      {wound && (
+        <div className="sheet" role="status">
+          <p>
+            Доіграно турів: {wound.played}.{wound.vacationAuto && ' Відпустку теж пройдено навмання — у другому сезоні це видно по тому, хто що знає.'}
+            {' '}Повернутися до стану перед перемоткою — у меню гри, «Повернутися до збереження».
+          </p>
+          <button className="danger-btn" onClick={onWiped}>На головну</button>
+        </div>
+      )}
       {!slot.empty && !confirmWipe && (
         <button className="set set-btn danger" onClick={() => setConfirmWipe(true)}>
           <span className="l">Стерти кар’єру<small>Слот {slot.slot + 1} · {slotLine(slot)}</small></span>

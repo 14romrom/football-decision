@@ -254,7 +254,7 @@ describe('сцена після свистка', () => {
       expect(session.state.log.some((e) => e.kind === 'fulltime'), `seed ${seed}`).toBe(true);
       // Після свистка гра не триває: жодної події стрічки після рядка «фінальний свисток».
       const at = session.state.log.findIndex((e) => e.kind === 'fulltime');
-      expect(session.state.log.slice(at + 1).filter((e) => e.kind === 'goal' || e.kind === 'filler'), `seed ${seed}`).toEqual([]);
+      expect(session.state.log.slice(at + 1).filter((e) => e.kind === 'goalUs' || e.kind === 'goalThem' || e.kind === 'filler'), `seed ${seed}`).toEqual([]);
       // Оцінки за матч пораховані на свистку, а не після сцени.
       const summary = finishMatch(session, rng).summary;
       expect(summary.coachRating, `seed ${seed}`).toBe(session.ratings!.coachRating);

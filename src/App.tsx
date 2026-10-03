@@ -58,7 +58,7 @@ import { SettingsScreen } from './ui/SettingsScreen';
 import { AboutScreen } from './ui/AboutScreen';
 import { readSlotSummary } from './telemetry/saves';
 import {
-  createSeason, firstSeasonVerdict, secondSeasonVerdict, isSeasonOver, monthOfRound, ourFixture, ourRow, playoffPending, promotion, recordPlayoff, recordRound, seasonVerdict, SEASON_ROUNDS, US, WINTER_BREAK_AFTER, withPlayoff, type Season,
+  createSeason, firstSeasonVerdict, secondSeasonVerdict, isSeasonOver, monthOfRound, nextSeasonFrom, ourFixture, ourRow, playoffPending, promotion, recordPlayoff, recordRound, seasonVerdict, SEASON_ROUNDS, US, WINTER_BREAK_AFTER, withPlayoff, type Season,
 } from './engine/season';
 import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
@@ -344,31 +344,12 @@ function Game() {
   }, [setCareerBoth, setSeasonBoth]);
 
   const newSeason = useCallback(() => {
-    const prev = seasonRef.current;
-    // Вердикт «лава» лишається текстом підсумку, але сезон із лави не починається (26.09): лава — сцена
-    // прологу. Наслідок низької довіри — хватка тренера (coachGrip), а не відсторонення від гри.
-    const benched = false;
-    // Регламент підвищення (M14): з нами йдуть ті, хто вище; нові клуби — з тих, кого в першому сезоні не було.
-    const promo = promotion(prev);
-    // Вища ліга: клуби вищої ліги; якщо місць більше, ніж їх, — добираємо з тих, кого в першому сезоні не було.
-    const keep = promo?.with ?? [];
-    const rest = OPPONENT_KEYS.second.filter((k) => !prev.clubs.includes(k));
-    const pool = prev.number === 1 ? [...keep, ...OPPONENT_KEYS.top, ...rest] : [...OPPONENT_KEYS.top, ...OPPONENT_KEYS.second];
-    // Матч із клубом колишнього дублера — на 3-й тур (season.ts:pinFixture), щоб сцена з Ларссоном не потрапила на «не в формі».
-    setSeasonBoth(createSeason(Math.floor(Math.random() * 1e9), pool, prev.number + 1, keep, keep[0] ? { club: keep[0], round: 2 } : undefined));
-    const c = careerRef.current;
-    // Рахунки минулого сезону з кожним суперником — «зустрічалися торік» (програмка, пости, флаг матчу).
-    const results: NonNullable<Career['lastSeason']>['results'] = {};
-    for (const m of prev.played) {
-      if (m.home !== US && m.away !== US) continue;
-      const key = m.home === US ? m.away : m.home;
-      (results[key] ??= []).push(m.home === US ? { scoreUs: m.homeGoals, scoreThem: m.awayGoals, venue: 'home' } : { scoreUs: m.awayGoals, scoreThem: m.homeGoals, venue: 'away' });
-    }
-    const lastSeason = { number: prev.number, position: ourRow(prev).position, results };
-    // Скандальне підвищення — трибуни не вірять, що ми тут по праву: старт сезону холодніший (рішення 21.09).
-    const fanHype = promo?.kind === 'scandal' ? Math.min(c.fanHype ?? BALANCE.fanHypeStart, BALANCE.fanHypeStart - BALANCE.scandalHypeDrop) : c.fanHype;
-    setCareerBoth({ ...c, injuriesSeason: 0, benched, lastSeason, ...(promo ? { promotion: promo.kind } : {}), ...(fanHype !== undefined ? { fanHype } : {}) });   // лимит травм — на сезон
-  }, [setSeasonBoth]);
+    // Склад ліги, пам'ять про торішні рахунки й холодніші трибуни після скандального підвищення —
+    // в engine/season.ts: тим самим кодом котить сезон перемотка кар'єри (engine/autoplay.ts).
+    const rolled = nextSeasonFrom(seasonRef.current, careerRef.current, Math.floor(Math.random() * 1e9), OPPONENT_KEYS.second, OPPONENT_KEYS.top);
+    setSeasonBoth(rolled.season);
+    setCareerBoth(rolled.career as Career);
+  }, [setSeasonBoth, setCareerBoth]);
 
   /** Стрічка по текущему состоянию сезона: посты с именами следующего соперника. quota — сколько
    *  и каких групп; seedSalt — соль сида на случай второго вызова за тур. */

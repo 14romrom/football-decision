@@ -37,6 +37,11 @@ export type MatchSession = {
   /** След предыдущего звена — для {trigger.past} в тексте следующего. */
   chainMark: { minute: number; past: string } | null;
   state: MatchState;
+  /** Свисток уже пролунав (M36): стрічка дійшла до 90-ї, оцінки матчу зафіксовані. Далі може бути
+   *  тільки сцена після свистка, і її наслідки йдуть у кар’єру, а не в оцінки за матч. */
+  whistled?: boolean;
+  ratings?: { coachRating: number; fanRating: number };
+  afterWhistleUsed?: boolean;
   schedule: number[];
   /** Эпизод на каждый слот, подобранный заранее. См. planEpisodes. */
   plan: string[];
@@ -76,6 +81,8 @@ function addTrust(state: MatchState, delta: number) {
 }
 
 const isReactive = (e: Episode) => (e.requires?.flags?.length ?? 0) > 0;
+/** Сцена після свистка (M36) не планується і не підміняє слот: їй місце тільки після 90-ї. */
+const inPlay = (e: Episode) => !isReactive(e) && !e.followUpOnly && !e.afterWhistle;
 
 /** Подходит ли эпизод по времени. Флаги динамические и здесь не учитываются. */
 function fitsMinute(e: Episode, minute: number): boolean {
@@ -144,14 +151,14 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
   const order = schedule.map((_, i) => i).sort(() => rng.next() - 0.5);
   for (const i of order) {
     if (defenseSlots.size >= m.minDefense) break;
-    if (episodes.some((e) => e.phase === 'defense' && fitsMinute(e, schedule[i]))) defenseSlots.add(i);
+    if (episodes.some((e) => e.phase === 'defense' && inPlay(e) && fitsMinute(e, schedule[i]))) defenseSlots.add(i);
   }
   // Квота атаки — симметрично: слоты, где будет только атакующий эпизод (BALANCE.match.minAttack).
   const attackSlots = new Set<number>();
   for (const i of order) {
     if (attackSlots.size >= m.minAttack) break;
     if (defenseSlots.has(i)) continue;
-    if (episodes.some((e) => e.phase === 'attack' && !e.followUpOnly && fitsMinute(e, schedule[i]))) attackSlots.add(i);
+    if (episodes.some((e) => e.phase === 'attack' && inPlay(e) && fitsMinute(e, schedule[i]))) attackSlots.add(i);
   }
   // Квота вищої ліги (M27.4): слоты, которые достаются сценам «мы андердоги» (`requires.league: "top"`).
   // Без неё тема второго сезона зависела от броска — в двух матчах из десяти таких сцен не было вовсе.
@@ -160,7 +167,7 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
     for (const i of order) {
       if (topSlots.size >= m.minTopLeague) break;
       if (defenseSlots.has(i) || attackSlots.has(i)) continue;
-      if (episodes.some((e) => e.requires?.league === 'top' && !e.followUpOnly && fitsMinute(e, schedule[i]))) topSlots.add(i);
+      if (episodes.some((e) => e.requires?.league === 'top' && inPlay(e) && fitsMinute(e, schedule[i]))) topSlots.add(i);
     }
   }
   const phaseOk = (e: Episode, index: number) =>
@@ -171,7 +178,7 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
   const slots = schedule
     .map((minute, index) => ({
       index,
-      candidates: episodes.filter((e) => !isReactive(e) && !e.followUpOnly && fitsMinute(e, minute) && phaseOk(e, index)
+      candidates: episodes.filter((e) => inPlay(e) && fitsMinute(e, minute) && phaseOk(e, index)
         && !(noSetPieces && setPieceOfPlayer(e))),
     }))
     .sort((a, b) => a.candidates.length - b.candidates.length);
@@ -587,7 +594,7 @@ function pickReactive(session: MatchSession, rng: Rng): Episode | null {
   const state = session.state;
   const minute = session.schedule[i];
   const pool = session.episodes.filter((e) =>
-    isReactive(e) && !e.followUpOnly && fitsMinute(e, minute) && !session.usedEpisodeIds.includes(e.id)
+    isReactive(e) && !e.followUpOnly && !e.afterWhistle && fitsMinute(e, minute) && !session.usedEpisodeIds.includes(e.id)
     && e.requires!.flags!.every((f) => state.flags.includes(f))
     && !(e.requires?.notFlags?.some((f) => state.flags.includes(f)) ?? false));
   if (pool.length === 0) return null;
@@ -657,7 +664,7 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
   // Менять не с чем — берём свежий эпизод вне плана. Играть «тягнути час» при 0:1
   // хуже, чем нарушить раскладку; квоту обороны при этом сохраняем.
   const fresh = episodes.filter((e) =>
-    !isReactive(e) && !e.followUpOnly && e.weight > 0 && !blocked(e) && fitsMinute(e, session.schedule[i])
+    inPlay(e) && e.weight > 0 && !blocked(e) && fitsMinute(e, session.schedule[i])
     && !(session.conditions.noSetPieces === true && setPieceOfPlayer(e))
     && !session.plan.includes(e.id) && !session.usedEpisodeIds.includes(e.id)
     && (planned.phase !== 'defense' || e.phase === 'defense'));
@@ -669,11 +676,56 @@ export function pickEpisode(session: MatchSession, rng: Rng): Episode | null {
   return withSetup(planned, session, rng);   // совсем нечем — играем как есть, матч важнее чистоты условия
 }
 
+/** Сцена після фінального свистка (M36): коли слоти скінчилися, спершу свисток — стрічка догравзає
+ *  до 90-ї, звучить сирена, оцінки за матч фіксуються, — і тільки потім сцена. Так обмін футболками
+ *  не ламає гру: до цього він стояв слотом на 85-й, після нього матч ще грався, і лідер суперника
+ *  дограв без футболки. Наслідки такої сцени йдуть у кар’єру (coachTrust/fanHype переносяться станом),
+ *  але не в оцінки тренера й трибун за матч: вони вже пораховані на свистку. */
+function afterWhistleEpisode(session: MatchSession, rng: Rng): Episode | null {
+  if (session.afterWhistleUsed) return null;
+  const state = session.state;
+  const pool = session.episodes.filter((e) => e.afterWhistle && e.weight > 0
+    && !session.usedEpisodeIds.includes(e.id)
+    && (!e.requires?.league || e.requires.league === session.conditions.league)
+    && (e.requires?.flags ?? []).every((f) => state.flags.includes(f))
+    && !(e.requires?.notFlags ?? []).some((f) => state.flags.includes(f)));
+  session.afterWhistleUsed = true;
+  if (pool.length === 0) return null;
+  const chosen = rng.weighted(pool, (e) => e.weight * memoryWeight(session.memory[e.id]));
+  return memoryWeight(session.memory[chosen.id]) < 1 && !rng.chance(memoryWeight(session.memory[chosen.id]))
+    ? null : withSetup(chosen, session, rng);
+}
+
+/** Фінальний свисток: стрічка до 90-ї, сирена, оцінки за матч. Відокремлено від finishMatch (M36),
+ *  бо між свистком і роздягальнею може бути ще одна сцена. */
+function blowWhistle(session: MatchSession, rng: Rng): TimelineEvent[] {
+  if (session.whistled) return [];
+  const state = session.state;
+  const before = state.log.length;
+  advanceTo(session, 90, rng);
+  state.log.push({
+    minute: 90,
+    kind: 'fulltime',
+    text: 'Фінальний свисток. «' + session.roster.us.name.nom + '» — «' + session.roster.them.name.nom + '» '
+      + state.scoreUs + ':' + state.scoreThem + '.',
+  });
+  session.whistled = true;
+  session.ratings = computeRatings(state, session.conditions);
+  return state.log.slice(before);
+}
+
 /** Следующий эпизод: сначала лента до его минуты, потом сам эпизод. */
 export function nextEpisode(
   session: MatchSession, rng: Rng,
 ): { episode: Episode; minute: number; events: TimelineEvent[] } | null {
-  if (session.nextIndex >= session.schedule.length) return null;
+  if (session.nextIndex >= session.schedule.length) {
+    // Рішень у грі більше немає — але після свистка може бути сцена (M36). Спершу шукаємо її і лише
+    // потім свистимо: інакше при порожньому пулі стрічка дограла б у нікуди, повз виклик finishMatch.
+    if (session.pendingFollowUp || session.state.flags.includes('sent_off') || session.state.flags.includes('subbed_off')) return null;
+    const episode = afterWhistleEpisode(session, rng);
+    if (!episode) return null;
+    return { episode, minute: 90, events: blowWhistle(session, rng) };
+  }
   // Вилучення і заміна (22.09): рішень більше немає — finishMatch дограє стрічку до 90-ї без тебе,
   // свисток знає, звідки ти це дивився (whistle: sentOff / subbedOff).
   if (!session.pendingFollowUp && (session.state.flags.includes('sent_off') || session.state.flags.includes('subbed_off'))) return null;
@@ -994,16 +1046,11 @@ export function computeRatings(
 export function finishMatch(session: MatchSession, rng: Rng): { events: TimelineEvent[]; summary: MatchSummary } {
   const state = session.state;
   const before = state.log.length;
-  advanceTo(session, 90, rng);
-  state.log.push({
-    minute: 90,
-    kind: 'fulltime',
-    text: 'Фінальний свисток. «' + session.roster.us.name.nom + '» — «' + session.roster.them.name.nom + '» '
-      + state.scoreUs + ':' + state.scoreThem + '.',
-  });
+  // Свисток міг уже пролунати — перед сценою після нього (M36); тоді тут порожньо, а оцінки взяті звідти.
+  blowWhistle(session, rng);
   session.finished = true;
 
-  const { coachRating, fanRating } = computeRatings(state, session.conditions);
+  const { coachRating, fanRating } = session.ratings ?? computeRatings(state, session.conditions);
   const points = state.scoreUs > state.scoreThem ? 3 : state.scoreUs === state.scoreThem ? 1 : 0;
 
   const summary: MatchSummary = {

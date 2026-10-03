@@ -4,6 +4,7 @@ import { makeRng } from '../src/engine/rng';
 import { applyChoice, availableOptions, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
 import { EPISODES, PLAYER, ROSTER } from '../src/content';
+import { neutralConditions } from '../src/engine/conditions';
 import { BALANCE } from '../src/engine/balance';
 
 const seeds = (n: number, from = 5000) => Array.from({ length: n }, (_, i) => from + i);
@@ -216,5 +217,48 @@ describe('состав матча (после первого плейтеста)
     // по минутам не даёт третьему матчу быть целиком свежим — дальше снижает только рост пула.
     expect(second1 / total).toBeLessThan(0.1);
     expect(third12 / total).toBeLessThan(0.4);
+  });
+});
+
+// Обмін футболками (M36, 03.10, скарга тестера: «подія починається до кінця матчу — лідер суперника
+// далі грає голим?»). Сцена після свистка не планується в матч узагалі: вона приходить, коли слоти
+// скінчилися, свисток уже пролунав і стрічка дійшла до 90-ї. Після неї рішень більше немає.
+describe('сцена після свистка', () => {
+  const top = { ...neutralConditions(), league: 'top' as const };
+
+  it('не потрапляє в план матчу і грається тільки після фінального свистка', () => {
+    let seen = 0;
+    for (const seed of seeds(120, 31000)) {
+      const rng = makeRng(seed);
+      const session = createMatch(`aw-${seed}`, seed, PLAYER, rng, EPISODES, ROSTER, top);
+      const after = EPISODES.filter((e) => e.afterWhistle).map((e) => e.id);
+      expect(after.length).toBeGreaterThan(0);
+      for (const id of after) expect(session.plan, `seed ${seed}`).not.toContain(id);
+
+      const played: { id: string; minute: number; afterWhistle: boolean }[] = [];
+      for (;;) {
+        const next = nextEpisode(session, rng);
+        if (!next) break;
+        const options = availableOptions(next.episode, session.state, session.player);
+        const option = options[rng.int(0, options.length - 1)];
+        const res = resolveOption(session.state, session.player, option, next.episode.phase, rng);
+        applyChoice(session, next.episode, option, res, rng);
+        played.push({ id: next.episode.id, minute: next.minute, afterWhistle: !!next.episode.afterWhistle });
+      }
+      const idx = played.findIndex((p) => p.afterWhistle);
+      if (idx === -1) continue;
+      seen++;
+      // Вона остання, вона на 90-й, і свисток у стрічці стоїть перед нею.
+      expect(idx, `seed ${seed}`).toBe(played.length - 1);
+      expect(played[idx].minute, `seed ${seed}`).toBe(90);
+      expect(session.state.log.some((e) => e.kind === 'fulltime'), `seed ${seed}`).toBe(true);
+      // Після свистка гра не триває: жодної події стрічки після рядка «фінальний свисток».
+      const at = session.state.log.findIndex((e) => e.kind === 'fulltime');
+      expect(session.state.log.slice(at + 1).filter((e) => e.kind === 'goal' || e.kind === 'filler'), `seed ${seed}`).toEqual([]);
+      // Оцінки за матч пораховані на свистку, а не після сцени.
+      const summary = finishMatch(session, rng).summary;
+      expect(summary.coachRating, `seed ${seed}`).toBe(session.ratings!.coachRating);
+    }
+    expect(seen, 'сцена після свистка має випадати у вищій лізі').toBeGreaterThan(0);
   });
 });

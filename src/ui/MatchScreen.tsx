@@ -42,16 +42,6 @@ function stateMods(episode: Episode, state: MatchState, player: Player, conditio
   return [...seen.values()];
 }
 
-function Meter({ label, value, tone }: { label: string; value: number; tone?: string }) {
-  const n = Math.round(Math.max(0, Math.min(100, value)) / 20);
-  return (
-    <span className={`meter ${tone ?? ''}`} title={label}>
-      <span className="meter-label">{label}</span>
-      {[0, 1, 2, 3, 4].map((i) => <i key={i} className={i < n ? 'on' : ''} />)}
-    </span>
-  );
-}
-
 export function MatchScreen({
   state, roster, shown, waiting, onSkip, episode, pitchEpisode, sheetMinute, onBench, player, conditions, flagRules, hideDiceZone, finale, sheet, children,
 }: {
@@ -107,10 +97,6 @@ export function MatchScreen({
         <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench} />
         <div className="score-overlay">
           <span className="score-line">{clock}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
-          <span className="meters">
-            <Meter label="тренер" value={state.coachTrust} tone={state.coachTrust < 30 ? 'low' : ''} />
-            <Meter label="трибуни" value={state.fanHype} tone="hype" />
-          </span>
         </div>
         <div className={`stamina-bar ${staminaTone}`} title={`сили ${Math.round(stamina)}`} aria-hidden="true">
           <b>сили</b><i style={{ width: `${stamina}%` }} />

@@ -747,13 +747,6 @@ html.reduce-motion .doodle svg { filter: none; }
   background: rgba(11,11,13,0.65); padding: 3px 7px;
 }
 .score-line b { color: #fff; font-weight: 500; }
-.meters { display: flex; gap: 10px; }
-.meter { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; letter-spacing: 0.06em; color: #b3ae9f; }
-.meter-label { margin-right: 4px; }
-.meter i { width: 7px; height: 7px; background: var(--line); }
-.meter i.on { background: var(--accent); }
-.meter.hype i.on { background: var(--hype); }
-.meter.low i.on { background: var(--bad); }
 
 .tape { position: relative; padding: 6px 12px 0; }
 .tape-shade { position: absolute; left: 0; right: 0; top: 0; height: 40px; pointer-events: none;

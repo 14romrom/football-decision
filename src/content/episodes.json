@@ -779,7 +779,7 @@
         "attribute": "pace",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -1,
         "staminaCost": 8,
         "goals": {
           "team": 2,
@@ -2362,7 +2362,7 @@
         "attribute": "strength",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": -2,
         "staminaCost": 9,
         "goals": {
           "team": 1,
@@ -3774,8 +3774,8 @@
         "attribute": "dribbling",
         "basePosition": "desperate",
         "effect": "standard",
-        "difficulty": 2,
-        "staminaCost": 10,
+        "difficulty": 0,
+        "staminaCost": 9,
         "goals": {
           "team": 1,
           "personal": 2
@@ -7674,7 +7674,7 @@
         "attribute": "pace",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 0,
         "staminaCost": 9,
         "goals": {
           "team": 2,
@@ -11221,7 +11221,7 @@
         "attribute": "positioning",
         "basePosition": "desperate",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": -2,
         "staminaCost": 6,
         "goals": {
           "team": 3,
@@ -11269,7 +11269,7 @@
             "apply": {
               "foul": true,
               "concede": true,
-              "coachTrust": -15,
+              "coachTrust": -10,
               "fanHype": -8,
               "addFlags": [
                 "sent_off"
@@ -13538,7 +13538,7 @@
         "attribute": "dribbling",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 0,
         "staminaCost": 8,
         "goals": {
           "team": 1,
@@ -13599,7 +13599,7 @@
         "attribute": "vision",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -1,
         "staminaCost": 5,
         "goals": {
           "team": 2,
@@ -14242,7 +14242,7 @@
         "attribute": "pace",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -1,
         "staminaCost": 9,
         "goals": {
           "team": 1,
@@ -14621,7 +14621,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 0,
         "staminaCost": 9,
         "goals": {
           "team": 0,
@@ -16029,7 +16029,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 3,
+        "difficulty": 1,
         "staminaCost": 6,
         "goals": {
           "team": 1,
@@ -16251,7 +16251,7 @@
         "attribute": "strength",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -2,
         "staminaCost": 8,
         "goals": {
           "team": 3,
@@ -16366,7 +16366,7 @@
         "attribute": "positioning",
         "basePosition": "risky",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": -1,
         "staminaCost": 8,
         "goals": {
           "team": 1,
@@ -17088,7 +17088,7 @@
         "attribute": "dribbling",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 0,
         "staminaCost": 9,
         "goals": {
           "team": 1,
@@ -17978,7 +17978,7 @@
         "attribute": "stamina",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": -1,
         "staminaCost": 9,
         "goals": {
           "team": 1,
@@ -19551,7 +19551,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 0,
         "staminaCost": 5,
         "goals": {
           "team": 1,
@@ -22422,7 +22422,7 @@
         "attribute": "pace",
         "basePosition": "desperate",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": -1,
         "staminaCost": 6,
         "goals": {
           "team": 2,
@@ -23019,7 +23019,7 @@
         "attribute": "pace",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": -1,
         "staminaCost": 8,
         "goals": {
           "team": 3,
@@ -23080,7 +23080,7 @@
         "attribute": "strength",
         "basePosition": "desperate",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -2,
         "staminaCost": 6,
         "goals": {
           "team": 3,
@@ -24619,7 +24619,7 @@
         "attribute": "vision",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 0,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -25104,7 +25104,7 @@
         "attribute": "dribbling",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 0,
         "staminaCost": 7,
         "goals": {
           "team": 1,
@@ -25422,7 +25422,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 0,
         "staminaCost": 4,
         "goals": {
           "team": 1,
@@ -28338,7 +28338,7 @@
         "id": "shield_and_wait_whistle",
         "label": "Прикрити корпусом — і чекати свистка",
         "past": "тримав м’яч корпусом під стик, чекаючи свистка",
-        "attribute": "strength",
+        "attribute": "stamina",
         "basePosition": "controlled",
         "effect": "limited",
         "difficulty": -1,
@@ -28401,7 +28401,7 @@
         "attribute": "dribbling",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 0,
         "staminaCost": 8,
         "goals": {
           "team": 2,
@@ -30247,7 +30247,7 @@
         "attribute": "strength",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -2,
         "staminaCost": 6,
         "goals": {
           "team": 2,
@@ -30325,7 +30325,7 @@
         "attribute": "dribbling",
         "basePosition": "desperate",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": -1,
         "staminaCost": 7,
         "goals": {
           "team": 1,
@@ -31007,7 +31007,7 @@
         "attribute": "strength",
         "basePosition": "desperate",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -2,
         "staminaCost": 5,
         "goals": {
           "team": 2,
@@ -32006,7 +32006,7 @@
         "attribute": "finishing",
         "basePosition": "desperate",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 0,
         "staminaCost": 8,
         "goals": {
           "team": 1,
@@ -38584,10 +38584,10 @@
         "id": "hold_and_wait_second",
         "label": "Тримати корпусом — чекати другого",
         "past": "тримав м’яч корпусом і чекав другого",
-        "attribute": "strength",
+        "attribute": "stamina",
         "basePosition": "risky",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": -2,
         "staminaCost": 7,
         "goals": {
           "team": 2,

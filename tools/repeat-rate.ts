@@ -8,7 +8,7 @@
 import { makeRng } from '../src/engine/rng';
 import { applyChoice, availableOptions, createMatch, finishMatch, nextEpisode } from '../src/engine/match';
 import { resolveOption } from '../src/engine/resolve';
-import { EPISODES_RAW, OPPONENTS, OPPONENT_KEYS, PLAYER, rosterFor } from '../src/content';
+import { EPISODES_RAW, OPPONENTS, PLAYER, rosterFor } from '../src/content';
 import { generateConditions } from '../src/engine/conditions';
 import { BALANCE } from '../src/engine/balance';
 import type { Episode } from '../src/engine/types';

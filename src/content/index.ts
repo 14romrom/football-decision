@@ -12,7 +12,6 @@ import endingJson from './ending.json';
 import firstmatchJson from './firstmatch.json';
 import agentJson from './agent.json';
 import espmJson from './espm.json';
-import studiedJson from './studied.json';
 import shotsJson from './shots.json';
 import chaptersJson from './chapters.json';
 import { fillNamesDeep, type Roster, type TeamRoster, type NameForms } from '../engine/names';
@@ -100,14 +99,6 @@ export const FIRST_MATCH_TUTORIAL: Tutorial = {
 export const AGENT = agentJson as AgentContent;
 /** Колонки ESPM про Реєса за станом арки (engine/espm.ts:playerColumn). */
 export const ESPM_COLUMNS = espmJson as { column: Record<string, EspmColumn[]> };
-
-/** «Тебе вивчили» (M27.1): що Бачення помічає, коли на листі є варіант, який суперник уже знає.
- *  Наблюдение, не совет — как строки insight; без «!» (тест). */
-export const STUDIED_LINES = studiedJson as string[];
-
-/** Рядок для листа: один на сцену, за хвилиною — щоб на тому самому листі він не стрибав.
- *  Живе тут, а не в екрані: у `src/ui/*` оператор остачі заборонений тестом «никаких процентов». */
-export const studiedLine = (minute: number): string => STUDIED_LINES[Math.abs(minute) % STUDIED_LINES.length];
 
 /** Кадри листів оповідача (M24): файл лежить у `public/img/scenes/<id>.webp` — збирає його
  *  `npx tsx tools/optimize-images.ts` із папки `images/`. `focus` — object-position кадру: коли

@@ -39,7 +39,7 @@ for (let s = 0; s < N; s++) {
     const session = createMatch(`b-${seed}-${season.round}`, seed + season.round, player, rng, EPISODES_RAW, ROSTER, conditions, [], FLAG_RULES, {
       coachTrust: career.coachTrust, fanHype: career.fanHype, fromBench: benched,
       staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
-      arc: penalty.arc, studied: penalty.studied,
+      arc: penalty.arc,
     });
     for (;;) {
       const next = nextEpisode(session, rng);

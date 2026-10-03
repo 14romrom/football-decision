@@ -6,7 +6,6 @@ import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
 import { availableOptions, sceneInsights } from '../engine/match';
 import { catastropheBand, POSITION_LABEL } from '../engine/resolve';
-import { studiedLine } from '../content';
 import { cleanTarget } from '../engine/balance';
 
 // Сцена как диалог (макет А2, 19.09): сетап — строка ленты, голоса говорят до вариантов
@@ -59,10 +58,6 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
     said.add(o.voice.who);
     return [o.voice];
   });
-  // «Тебе вивчили» (M27.1): если на листе есть вариант, который соперник уже знает, Бачення говорит
-  // почему — иначе поднятая складність читается как невезение. Строка одна на лист, выбор по минуте.
-  const studiedHere = options.some((o) => o.studied);
-  const studiedSays = studiedHere ? studiedLine(minute) : null;
 
   return (
     // Лист момента (макет «Екран матчу: було / стало», кадр «стало+ зі знаком», 19.09): три зоны —
@@ -70,11 +65,8 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
     <div className="scene">
       <span className="minute-tab">{minute}′{link && <i className="link-mark"> · продовження</i>}</span>
       <p className="setup">{episode.setup}</p>
-      {(insights.length > 0 || lines.length > 0 || studiedSays) && (
+      {(insights.length > 0 || lines.length > 0) && (
         <div className="voices" ref={voicesRef}>
-          {studiedSays && (
-            <p className="say voice-vision"><b>{VOICE_LABEL.vision}</b><span>{studiedSays}</span></p>
-          )}
           {insights.map((v) => (
             <p key={'i' + v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b><span>{v.line}</span></p>
           ))}
@@ -90,10 +82,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
           // вариант перестал быть надёжным.
           const ctx = computeContext(state, player, o, episode.phase, conditions, flagRules);
           const chain = chainHint(o);
-          // «Вивчили» (M27.1) важнее прочих бирок: складність на кнопке уже поднята, и игрок должен
-          // видеть причину, иначе прочитает это как невезение.
-          const origin = o.studied ? 'вивчили'
-            : o.insight ? `відкрив ${VOICE_LABEL[o.insight.who]}`
+          const origin = o.insight ? `відкрив ${VOICE_LABEL[o.insight.who]}`
             : o.requires?.flags?.some((f) => f.startsWith('week_')) ? 'з тижня'
             : o.requires?.flags?.includes('keeper_read') ? 'по підказці' : null;
           return (
@@ -107,7 +96,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                       добудовував правило сам («катастрофа — це коли випала одиниця»). */}
                   <span className={`bracket risk-${ctx.position}`}>
                     [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)} · катастрофа {catastropheBand(ctx.position, ctx.attrMod)}{chain ? ` → ${chain}` : ''}]
-                    {origin && <i className={`origin${o.studied ? ' origin-studied' : ''}`}>{origin}</i>}
+                    {origin && <i className="origin">{origin}</i>}
                   </span>
                 </span>
                 <span className="choice-go" aria-hidden="true">›</span>

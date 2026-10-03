@@ -61,18 +61,26 @@ for (const file of readdirSync(SRC).filter((f) => isBackdrop(f) && /\.(jpe?g|png
   console.log(`підкладка ${id.padEnd(20)} ${(info.size / 1024).toFixed(0).padStart(4)} КБ`);
 }
 
-// Аватари стрічки (27.09): `images/avatars/<хендл без @>.png` → `public/img/avatars/<хендл>.webp`.
+// Аватари стрічки (27.09): `<хендл без @>.(png|jpg|webp)` → `public/img/avatars/<хендл>.webp`.
 // Кружок 40 CSS px, на телефоні з трійною щільністю це 120 — тому 128 і якість вища, ніж у кадрів:
 // картинка дрібна, артефакти на обличчі видно одразу. Немає файлу — літера на кольоровому колі
 // (ui/PostsScreen.tsx:Avatar), тому аватарки можна робити частинами.
-const AV_SRC = join(SRC, 'avatars');
+// Папок кілька, бо малюються вони партіями й лежать там, куди їх поклали: фото — в `y_avatars`,
+// логотипи — в `y_avatars/png` (поруч лежать svg-джерела, їх скрипт не бере: все одно растр у 128 px).
+// Один хендл у двох папках — перемагає перша в списку.
+const AV_DIRS = ['avatars', 'y_avatars', join('y_avatars', 'png')].map((d) => join(SRC, d));
 const AV_OUT = 'public/img/avatars';
 const AV_WIDTH = 128;
-if (existsSync(AV_SRC)) {
-  mkdirSync(AV_OUT, { recursive: true });
-  for (const file of readdirSync(AV_SRC).filter((f) => /\.(jpe?g|png|webp)$/i.test(f))) {
-    const id = basename(file, extname(file)).replace(/^@/, '');
-    const src = join(AV_SRC, file);
+{
+  const sources = new Map<string, string>();
+  for (const dir of AV_DIRS.filter(existsSync)) {
+    for (const file of readdirSync(dir).filter((f) => /\.(jpe?g|png|webp)$/i.test(f))) {
+      const id = basename(file, extname(file)).replace(/^@/, '');
+      if (!sources.has(id)) sources.set(id, join(dir, file));
+    }
+  }
+  if (sources.size > 0) mkdirSync(AV_OUT, { recursive: true });
+  for (const [id, src] of sources) {
     const out = join(AV_OUT, id + '.webp');
     const srcStat = statSync(src);
     before += srcStat.size;

@@ -580,7 +580,7 @@ function Game() {
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => {
-          if (vacationPending(careerRef.current, season.number, true)) { setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
+          if (vacationPending(careerRef.current, season.number, true)) { takeShot('auto', 'відпустка між сезонами'); setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           const mode = agentPending(careerRef.current, season, seasonVerdict(season, career.coachTrust));
           if (mode) { setStage({ k: 'agent', mode, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           newSeason(); setStage({ k: 'menu' });
@@ -789,8 +789,11 @@ function Game() {
             setStage({ k: 'may', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return;
           }
           // «Дзвонить агент» — не нагорода, а розвилка: спершу сцена, новий сезон — з неї.
-          if (vacationPending(careerRef.current, season.number, over)) { setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
+          // Автоточка (M34) перед обома розвилками, які гравець захоче пройти інакше: відпустка з
+          // медоглядом і останній тиждень. Інакше другу гілку видно тільки новою кар'єрою на 20 матчів.
+          if (vacationPending(careerRef.current, season.number, over)) { takeShot('auto', 'відпустка між сезонами'); setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           if (endingPending(careerRef.current, season.number, over)) {
+            takeShot('auto', 'останній тиждень');
             setStage(seenChapter(careerRef.current, 'epilogue') ? { k: 'ending' } : { k: 'chapter', id: 'epilogue', then: 'ending' });
             return;
           }

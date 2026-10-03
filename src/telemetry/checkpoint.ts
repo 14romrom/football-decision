@@ -7,14 +7,16 @@
 //     минулого туру (consumeStartPenalty у start): мандраж, флаги, «не в формі» зникли б, а матч
 //     довелося б грати заново — уже чистим. Знімок робиться перед стартом і скидається, коли матч
 //     записано в сезон.
-//   `save` — контрольна точка гравця: зберігається руками з меню і автоматично на кінці сезону й
-//     перед фіналом, щоб відпустку й фінал можна було пройти іншою гілкою, не стираючи слот.
+//   `save` — контрольна точка гравця: зберігається руками з меню.
+//   `auto` — та сама точка, але її ставить гра перед розвилкою, яку захочеться пройти інакше:
+//     відпустка між сезонами й останній тиждень. Окремо від `save`, щоб автоматика не затирала
+//     те, що людина зберегла сама.
 //
 // Знімок живе в межах свого слота (slots.ts): у кожної кар'єри свої контрольні точки.
 
 import { SLOT_BASES, slotKey } from './slots';
 
-export type ShotName = 'prematch' | 'save';
+export type ShotName = 'prematch' | 'save' | 'auto';
 export type Shot = { at: number; label: string; data: Record<string, string | null> };
 
 const BASES = Object.values(SLOT_BASES);
@@ -40,8 +42,15 @@ export function readShot(name: ShotName): Shot | null {
   }
 }
 
-/** Повернути слот у знятий стан. Знімок після цього не потрібен — і зникає, щоб меню не пропонувало
- *  повернутися вдруге туди, де ти вже стоїш. Повертає true, якщо було що повертати. */
+/** Покласти готовий знімок під іншим ім'ям: «зберегти» під час матчу має зберегти стан **до** матчу,
+ *  а не той, з якого вже з'їдено наслідки минулого туру. */
+export function putShot(name: ShotName, shot: Shot): void {
+  try { localStorage.setItem(shotKey(name), JSON.stringify(shot)); } catch { /* приватний режим */ }
+}
+
+/** Повернути слот у знятий стан. Повертає true, якщо було що повертати.
+ *  `prematch` одноразовий — повернулися й забули. Точки гравця лишаються: заради того вони й є, щоб ту
+ *  саму розвилку можна було пройти ще раз іншою гілкою, не ставлячи точку щоразу наново. */
 export function restoreShot(name: ShotName): boolean {
   const shot = readShot(name);
   if (!shot) return false;
@@ -51,7 +60,7 @@ export function restoreShot(name: ShotName): boolean {
       if (value === null || value === undefined) localStorage.removeItem(slotKey(base));
       else localStorage.setItem(slotKey(base), value);
     }
-    localStorage.removeItem(shotKey(name));
+    if (name === 'prematch') localStorage.removeItem(shotKey(name));
     return true;
   } catch {
     return false;

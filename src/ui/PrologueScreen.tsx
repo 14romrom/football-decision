@@ -138,7 +138,13 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
           {!lastPage && (
             <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'sheet', page: page + 1 })}>Далі</button>
           )}
-          {lastPage && (
+          {/* Лист без вибору (M35): розворот, який нічого не питає, а каже, чим усе скінчилося.
+              Потрібен там, де гравець щойно отримав новину і йому треба її дочитати, а не вирішувати:
+              розв’язка медогляду. Кадр лишається — варіанти за нього не борються. */}
+          {lastPage && options.length === 0 && (
+            <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? 'Що далі' : 'Далі'}</button>
+          )}
+          {lastPage && options.length > 0 && (
             <>
               <div className="hand"><span>{labels.open}</span></div>
               <ol className="choices">
@@ -158,7 +164,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
             </>
           )}
         </>
-      ), !lastPage)}
+      ), !lastPage || options.length === 0)}
     </div>
   );
 }

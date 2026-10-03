@@ -20,18 +20,32 @@ function full(score: [number, number], coach = 6, fan = 6, goals = 0) {
 }
 
 describe('відпустка', () => {
-  it('контент: шість розворотів, у кожному 4–5 варіантів, свідок дає тяжкість, Спокій тільки зі стану 2', () => {
-    expect(VACATION.map((s) => s.id)).toEqual(['trip', 'sc_pitch_no_date', 'sc_night_before', 'sc_pitch_again', 'sc_medical', 'return']);
+  it('контент: порядок лінійний, у кожному розвороті 4–5 варіантів, свідок дає тяжкість, Спокій тільки зі стану 2', () => {
+    // M35 (03.10): ніч іде перед газоном, а не «шість годин тому» після нього — плейтест читав скачок
+    // у часі як три події поспіль (травмувався, поліз через паркан, травмувався ще раз).
+    expect(VACATION.map((s) => s.id)).toEqual(['trip', 'sc_night_before', 'sc_pitch_no_date', 'sc_pitch_again', 'sc_medical', 'sc_window', 'return']);
     for (const s of VACATION) {
+      if (s.id === 'sc_window') continue;   // лист-розв’язка нічого не питає
       expect(s.options.length, s.id).toBeGreaterThanOrEqual(4);
       expect(s.options.length, s.id).toBeLessThanOrEqual(5);
       for (const o of s.options) { expect(o.say.length).toBeGreaterThan(5); expect(o.reply.length).toBeGreaterThan(40); expect(o.effect.note.length).toBeGreaterThan(5); }
     }
+    // Розв’язка названа словами, а не натяком (M35): що з переходом, чому і що буде далі.
+    const window = VACATION.find((s) => s.id === 'sc_window')!;
+    expect(window.options).toEqual([]);
+    const windowText = window.sheet.join(' ');
+    expect(windowText).toMatch(/скасовано/);
+    expect(windowText).toMatch(/три тижні/);
+    expect(windowText).toMatch(/вікн/);
+    expect(windowText).toMatch(/[Мм]ісяць/);
+    // Канон травми (M35): жодних трансплантатів і швів — тут розтягнення, розрив лишився в пролозі.
+    expect(JSON.stringify(VACATION)).not.toMatch(/трансплантат|\bшв[аоу]\b|\bшов\b/);
     // M28: тяжкість і свідок — на листі «знову газон» (що ти сказав {oldsub.dat}), а не на самому огляді.
     const again = VACATION.find((s) => s.id === 'sc_pitch_again')!;
     for (const o of again.options) { expect(o.injury, o.id).toBeTruthy(); expect(o.witness, o.id).toBeTruthy(); }
     expect(new Set(again.options.map((o) => o.witness)).size).toBe(again.options.length);
-    // Улики газону без дати відповідають «тоді чи зараз» і нічого не ламають: у них немає ні травми, ні свідка.
+    // Улики на газоні відповідають «те саме коліно чи нове» і нічого не ламають: ні травми, ні свідка.
+    // Id лишився з часів, коли лист ішов без дати: він записаний у career.vacation збережених кар’єр.
     const clues = VACATION.find((s) => s.id === 'sc_pitch_no_date')!;
     for (const o of clues.options) { expect(o.injury, o.id).toBeUndefined(); expect(o.witness, o.id).toBeUndefined(); }
     expect(new Set(clues.options.map((o) => o.voice)).size).toBe(clues.options.length);
@@ -63,9 +77,10 @@ describe('відпустка', () => {
   it('фініш: форма за вибором (не травма — рішення 21.09), лог агента «зірвалося через медогляд», дублер пішов у клуб, що піднявся з нами', () => {
     const sn = full([3, 0], 7, 7, 1);
     const promo = promotion(sn)!;
-    const heavy = finishVacation(defaultCareer(), VACATION, [{ spread: 'trip', option: 'trip_tibo' }, { spread: 'sc_pitch_no_date', option: 'clue_sure' }, { spread: 'sc_night_before', option: 'night_lie' }, { spread: 'sc_pitch_again', option: 'wit_silent' }, { spread: 'sc_medical', option: 'exam_prove' }, { spread: 'return', option: 'ret_joke' }], promo, 1);
+    const heavy = finishVacation(defaultCareer(), VACATION, [{ spread: 'trip', option: 'trip_tibo' }, { spread: 'sc_night_before', option: 'night_lie' }, { spread: 'sc_pitch_no_date', option: 'clue_sure' }, { spread: 'sc_pitch_again', option: 'wit_silent' }, { spread: 'sc_medical', option: 'exam_prove' }, { spread: 'return', option: 'ret_joke' }], promo, 1);
     expect(heavy.career.injuredMatches).toBe(0);
-    expect(heavy.career.nextMatch?.start?.stamina).toBe(-12);
+    // Місяць без м’яча, а не літо без передсезонки (M35): форма м’якша, ніж була.
+    expect(heavy.career.nextMatch?.start?.stamina).toBe(-8);
     expect(heavy.career.carriedFlags?.filter((f) => f.flag === 'out_of_form').map((f) => f.after)).toEqual([0, 1]);
     expect(heavy.career.agentLog).toEqual([{ season: 1, choice: 'leave', reason: 'medical' }]);
     expect(heavy.career.subLeft).toBe(true);

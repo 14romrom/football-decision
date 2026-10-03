@@ -925,6 +925,7 @@
   },
   {
     "id": "ep_free_kick",
+    "chainOf": "ep_free_kick_close",
     "phase": "setpiece",
     "weight": 1.0,
     "requires": {
@@ -2282,6 +2283,7 @@
   },
   {
     "id": "ep_corner_near_post",
+    "chainOf": "ep_corner_delivery",
     "phase": "setpiece",
     "weight": 1.0,
     "requires": {
@@ -14876,6 +14878,7 @@
   },
   {
     "id": "ep_high_line_pass",
+    "chainOf": "ep_counter_run",
     "phase": "transition",
     "weight": 1,
     "requires": {
@@ -30489,6 +30492,7 @@
   },
   {
     "id": "ep_two_v_one_lead",
+    "chainOf": "ep_counter_run",
     "family": "counter",
     "phase": "attack",
     "weight": 1.2,
@@ -40063,6 +40067,7 @@
   },
   {
     "id": "ep_corner_four_in_three",
+    "chainOf": "ep_corner_delivery",
     "phase": "setpiece",
     "weight": 1.0,
     "family": "corner_attack",
@@ -41091,6 +41096,7 @@
   },
   {
     "id": "ep_free_kick_dummy",
+    "chainOf": "ep_free_kick_close",
     "phase": "setpiece",
     "weight": 1.1,
     "family": "free_kick",

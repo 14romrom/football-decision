@@ -48,10 +48,16 @@ function career(seed: number) {
   return seen;
 }
 
+const kind = (id: string) => {
+  const e = EPISODES_RAW.find((x: Episode) => x.id === id);
+  return e?.followUpOnly ? 'ланцюжок' : (e?.requires?.flags?.length ?? 0) > 0 ? 'реактивний' : e?.afterWhistle ? 'після свистка' : 'плановий';
+};
 const counts: number[] = [];
 const threePlus: number[] = [];
 const byPhase: Record<string, number> = { attack: 0, defense: 0, transition: 0, setpiece: 0 };
 const worst = new Map<string, number>();   // скільки кар'єр бачили цю сцену 3+ рази
+const times1 = new Map<number, number>();  // розподіл «скільки разів бачив одну сцену»
+const byKind = new Map<string, number>();  // повтори за типом сцени
 let decisions = 0;
 let distinct = 0;
 for (let i = 0; i < N; i++) {
@@ -67,16 +73,25 @@ for (let i = 0; i < N; i++) {
   counts.push(seen.length - times.size);
   threePlus.push([...times.values()].filter((v) => v >= 3).length);
   for (const [id, v] of times) if (v >= 3) worst.set(id, (worst.get(id) ?? 0) + 1);
+  for (const [id, v] of times) {
+    const bucket = Math.min(v, 4);
+    times1.set(bucket, (times1.get(bucket) ?? 0) + 1);
+    if (v > 1) byKind.set(kind(id), (byKind.get(kind(id)) ?? 0) + (v - 1));
+  }
 }
 const avg = (xs: number[]) => (xs.reduce((s, x) => s + x, 0) / xs.length).toFixed(1);
 console.log(`\n${N} кар'єр по ${MATCHES} матчів\n`);
 console.log(`рішень за кар'єру: ${(decisions / N).toFixed(1)}, різних сцен: ${(distinct / N).toFixed(1)}`);
-console.log(`повторних зустрічей: ${avg(counts)}`);
+console.log(`повторних зустрічей: ${avg(counts)} — це ${((100 * Number(avg(counts))) / (decisions / N)).toFixed(0)}% рішень`);
+console.log(`
+скільки разів гравець бачить одну сцену (у середньому сцен за кар'єру):`);
+for (const [k, v] of [...times1.entries()].sort((a, b) => a[0] - b[0])) {
+  console.log(`  ${k === 4 ? '4+' : String(k)} раз${k === 1 ? '' : 'и'}  ${(v / N).toFixed(1).padStart(5)}  сцен`);
+}
+console.log(`
+повтори за типом сцени (у середньому за кар'єру):`);
+for (const [k, v] of [...byKind.entries()].sort((a, b) => b[1] - a[1])) console.log(`  ${k.padEnd(14)} ${(v / N).toFixed(1)}`);
 console.log(`сцен, що прийшли 3+ рази: ${avg(threePlus)} (кар'єр без таких: ${Math.round(100 * threePlus.filter((x) => x === 0).length / N)}%)`);
-const kind = (id: string) => {
-  const e = EPISODES_RAW.find((x: Episode) => x.id === id);
-  return e?.followUpOnly ? 'ланцюжок' : (e?.requires?.flags?.length ?? 0) > 0 ? 'реактивний' : e?.afterWhistle ? 'після свистка' : 'плановий';
-};
 console.log('\nхто приходить 3+ рази (частка кар’єр):');
 for (const [id, n] of [...worst.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10)) {
   console.log(`  ${id.padEnd(26)} ${String(Math.round((100 * n) / N)).padStart(3)}%  ${kind(id)}`);

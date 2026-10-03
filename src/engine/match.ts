@@ -50,6 +50,9 @@ export type MatchSession = {
   finished: boolean;
   /** Реплики второго голоса, уже прочитанные в этом матче — flavor.ts не повторяет их, пока есть свежие. */
   flavorSeen: Set<string>;
+  /** Усі сцени, які кар'єра вже бачила (carryover.seenEpisodes). Планувальник бере цей список
+   *  параметром, а ланцюжку він потрібен на ходу — ціль обирається в момент ісходу (M44). */
+  seen: Set<string>;
   /** Сетапи (вступи сцен), прочитані в цьому й останніх матчах: серед підхожих варіантів береться невиданий (21.09). */
   setupSeen: Set<string>;
   setupSeenNow: Set<string>;
@@ -162,10 +165,14 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
   }
   // Квота вищої ліги (M27.4): слоты, которые достаются сценам «мы андердоги» (`requires.league: "top"`).
   // Без неё тема второго сезона зависела от броска — в двух матчах из десяти таких сцен не было вовсе.
+  // Квота спадна (M44): дві сцени, поки в пулі є непоказані за кар'єру, далі одна — інакше
+  // гарантія теми сезону сама ж і робила повтор (20 слотів на 18 сцен за десять матчів).
   const topSlots = new Set<number>();
   if (league === 'top') {
+    const topUnseen = episodes.some((e) => e.requires?.league === 'top' && inPlay(e) && !seen.has(e.id));
+    const topQuota = topUnseen ? m.minTopLeague : m.minTopLeagueSeen;
     for (const i of order) {
-      if (topSlots.size >= m.minTopLeague) break;
+      if (topSlots.size >= topQuota) break;
       if (defenseSlots.has(i) || attackSlots.has(i)) continue;
       if (episodes.some((e) => e.requires?.league === 'top' && inPlay(e) && fitsMinute(e, schedule[i]))) topSlots.add(i);
     }
@@ -355,6 +362,7 @@ export function createMatch(
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),
     feedSeen: new Set(carryover.feedSeen ?? []), feedSeenNow: new Set(), flavorSeenNow: new Set(),
     setupSeen: new Set(carryover.setupSeen ?? []), setupSeenNow: new Set(),
+    seen: new Set(carryover.seenEpisodes ?? []),
     injuriesSeason: carryover.injuriesSeason,
   };
   state.log.push({
@@ -581,15 +589,16 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
 /** Що саме буде наступним рішенням у ланцюжку — підпис на кнопці «Далі → …» (ui/RollView).
  *  Кожна ланка з `apply.followUp` має тут ім'я (тест у chain.test.ts); без імені кнопка каже
  *  просто «Далі» — плейтест 27.09: кутовий імені не мав, і виходило «Далі → далі». */
-/** M44 (план): у цілі ланцюжка немає альтернатив, і правило «небачене першим» її не торкається —
- *  мета задана жорстко в `apply.followUp`. Через це `fin_shot` бачать тричі в 41% кар'єр, а
- *  `ep_free_kick_close` — у 48%: це двоє найчастіших повторів у грі. Лікується не добором, а
- *  контентом: два-три різні фінали удару й два штрафні, і вибір серед них тим самим правилом. */
+/** Ім'я потрібне і кожній альтернативі (`chainOf`, M44): підпис описує сцену, яку движок справді
+ *  вибрав, а не групу, — «штрафний» годиться всім трьом штрафним, але кутовий від прапорця й кутовий,
+ *  який подає {dm}, — це різні обіцянки. Тест у chain.test.ts перевіряє обидва списки. */
 export const CHAIN_NEXT: Record<string, string> = {
   fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний',
   ep_rebound_follow_up: 'добивання', ep_corner_delivery: 'подача з кутового', ep_counter_run: 'контратака',
   ep_between_lines: 'м’яч між лініями', ep_progressive_pass: 'пас уперед', ep_edge_of_box: 'на межі штрафного',
   ep_after_turnover: 'м’яч відібрано',
+  ep_free_kick: 'штрафний', ep_free_kick_dummy: 'штрафний', ep_corner_near_post: 'кутовий',
+  ep_corner_four_in_three: 'кутовий', ep_high_line_pass: 'контратака', ep_two_v_one_lead: 'контратака',
 };
 
 /** Мітка приходить із тижня, прологу або відпустки, де імена ще не підставлені (плейтест 27.09:
@@ -823,16 +832,34 @@ export function sceneInsights(episode: Episode, state: MatchState, player: Playe
   return availableOptions(episode, state, player).flatMap((o) => (o.insight ? [o.insight] : []));
 }
 
-/** Сработает ли цепочка из этого исхода: звено существует, лимиты не выбраны, звено ещё не играли. */
-function chainTarget(session: MatchSession, apply: ApplyEffect | undefined): Episode | null {
+/** Сработает ли цепочка из этого исхода: звено существует, лимиты не выбраны, звено ещё не играли.
+ *  Ціль — група (M44): названа в `apply.followUp` сцена плюс усі з `chainOf` на неї. Серед доступних
+ *  береться небачена за кар'єру — те саме правило, що в планувальнику; раніше мета була одна й
+ *  поверталася щоматчу, бо добір ішов повз нього (`fin_shot` тричі в 41% кар'єр).
+ *  Названа сцена лишається доступною завжди, як і до M44: вікно хвилин у неї від планувальника
+ *  («не ставити штрафний на 7-й»), а зароблений тобою стандарт б'ється тоді, коли заробив.
+ *  Альтернативи ж мусять підійти і по хвилині, і по флагах — вони добровільні, і ламати ними
+ *  сцену немає сенсу. */
+function chainTarget(session: MatchSession, apply: ApplyEffect | undefined, rng: Rng, fromId: string): Episode | null {
   if (!apply?.followUp) return null;
   const c = BALANCE.match.chain;
-  const target = session.episodes.find((e) => e.id === apply.followUp);
-  if (!target) throw new Error('followUp «' + apply.followUp + '» не найден в пуле');
+  const named = session.episodes.find((e) => e.id === apply.followUp);
+  if (!named) throw new Error('followUp «' + apply.followUp + '» не найден в пуле');
   if (session.chainLinks >= c.maxLinksPerSlot) return null;
   if (session.chainLinks === 0 && session.chainsUsed >= c.maxChainsPerMatch) return null;
-  if (session.usedEpisodeIds.includes(target.id)) return null;
-  return target;
+  const minute = session.state.minute;
+  // Сцена не може бути ланкою сама собі: «кутовий розіграли коротко» веде в групу кутових, і доки
+  // id цієї сцени не ліг у usedEpisodeIds (це відбувається нижче, після ісходу), вона була в групі
+  // своїм же кандидатом — і той самий кутовий грався двічі за матч (сід 9073 в acceptance).
+  const pool = [named, ...session.episodes.filter((e) => e.chainOf === apply.followUp
+    && fitsMinute(e, minute) && !blockedNow(e, session.state, session.conditions))]
+    .filter((e) => e.id !== fromId && !session.usedEpisodeIds.includes(e.id));
+  if (pool.length === 0) return null;
+  const unseen = pool.filter((e) => !session.seen.has(e.id));
+  const from = unseen.length ? unseen : pool;
+  // Один кандидат — без кидка: інакше група з однієї сцени зсувала б усю послідовність випадкових
+  // чисел матчу, і сіди тестів перестали б означати те саме.
+  return from.length === 1 ? from[0] : rng.weighted(from, (e) => e.weight);
 }
 
 // ——— применение исхода ————————————————————————————————————————————
@@ -969,7 +996,7 @@ export function applyChoice(
       state.voices.muted[k] = Math.max(0, (state.voices.muted[k] ?? 0) - 1);
     }
   }
-  const link = chainTarget(session, outcome.apply);
+  const link = chainTarget(session, outcome.apply, rng, episode.id);
   const conceded = applyEffects(session, outcome.apply, minute, rng, { episodeId: episode.id, optionId: option.id, past: option.past });
   // Цепочка не сработала — исход достраивается запасным apply (пенальті б’є {striker}).
   if (!link && outcome.apply?.followUpElse) {

@@ -250,9 +250,72 @@ describe('плейсхолдеры с цифрой и строки ленты', 
 describe('підпис кнопки ланцюжка', () => {
   it('у кожної ланки є ім’я: кнопка каже «Далі → удар», а не «Далі → далі» (плейтест 27.09)', () => {
     const targets = new Set(EPISODES_RAW.flatMap((e) => e.options.flatMap((o) => Object.values(o.outcomes).map((out) => out?.apply?.followUp).filter((x): x is string => !!x))));
+    for (const id of EPISODES_RAW.filter((e) => e.chainOf).map((e) => e.id)) targets.add(id);
     for (const id of targets) {
       expect(CHAIN_NEXT[id], `ланка ${id} без імені`).toBeTruthy();
       expect(CHAIN_NEXT[id], id).not.toBe('далі');
     }
+  });
+});
+
+describe('альтернативи цілі ланцюжка (M44)', () => {
+  it('у кожної альтернативи є ціль, і вона сама нічиєю альтернативою не є', () => {
+    const ids = new Set(EPISODES_RAW.map((e) => e.id));
+    const alts = EPISODES_RAW.filter((e) => e.chainOf);
+    expect(alts.length).toBeGreaterThan(0);
+    for (const e of alts) {
+      expect(ids.has(e.chainOf!), `${e.id}: ціль ${e.chainOf} не існує`).toBe(true);
+      expect(EPISODES_RAW.find((x) => x.id === e.chainOf)!.chainOf, `${e.id}: ланцюжок груп на два рівні`).toBeUndefined();
+    }
+  });
+
+  it('ціль ланцюжка — небачена з групи: сцена, яку кар’єра вже бачила, уступає альтернативі', () => {
+    // «Штрафний за вісімнадцять метрів» уже бачили — фол на межі має привести до іншого штрафного.
+    const group = ['ep_free_kick_close', 'ep_free_kick', 'ep_free_kick_dummy'];
+    const got = new Set<string>();
+    for (let seed = 700; seed < 740; seed++) {
+      const rng = makeRng(seed);
+      const s = createMatch(`a-${seed}`, seed, PLAYER, rng, EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES,
+        { seenEpisodes: ['ep_free_kick_close'] });
+      s.plan[1] = 'ep_drag_defender';
+      s.nextIndex = 1;
+      s.state.minute = 40;                                  // усі три штрафні вже в своєму вікні
+      const ep = nextEpisode(s, rng)!;
+      const take = ep.episode.options.find((o) => o.id === 'take_him_on')!;
+      const res = { ...resolveOption(s.state, s.player, take, ep.episode.phase, rng), tier: 'cost' as const, critical: null };
+      applyChoice(s, ep.episode, take, res, rng);
+      expect(group).toContain(s.pendingFollowUp!);
+      got.add(s.pendingFollowUp!);
+    }
+    expect(got.has('ep_free_kick_close'), 'бачену сцену взяли, хоча в групі були небачені').toBe(false);
+    expect(got.size, 'серед небачених вибір має бути не завжди той самий').toBeGreaterThan(1);
+  });
+
+  it('сцена не веде в себе саму: короткий кутовий дає інший кутовий або нічого', () => {
+    // `ep_corner_near_post` сама з групи кутових, і доки її id не ліг у usedEpisodeIds, вона була
+    // своїм же кандидатом — той самий кутовий грався двічі за матч.
+    for (let seed = 800; seed < 830; seed++) {
+      const { s, rng } = sessionAt(seed, 'ep_corner_near_post');
+      s.state.minute = 40;
+      const ep = nextEpisode(s, rng)!;
+      if (ep.episode.id !== 'ep_corner_near_post') continue;   // слот міг забрати реактивна сцена
+      const short = ep.episode.options.find((o) => o.id === 'short_corner')!;
+      applyChoice(s, ep.episode, short, resolveOption(s.state, s.player, short, ep.episode.phase, high(19)), rng);
+      expect(s.pendingFollowUp, `seed ${seed}`).not.toBe('ep_corner_near_post');
+    }
+  });
+
+  it('усю групу вже бачили — ланка все одно є: ланцюжок не обривається', () => {
+    const rng = makeRng(777);
+    const s = createMatch('b', 777, PLAYER, rng, EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES,
+      { seenEpisodes: ['ep_free_kick_close', 'ep_free_kick', 'ep_free_kick_dummy'] });
+    s.plan[1] = 'ep_drag_defender';
+    s.nextIndex = 1;
+    s.state.minute = 40;
+    const ep = nextEpisode(s, rng)!;
+    const take = ep.episode.options.find((o) => o.id === 'take_him_on')!;
+    const res = { ...resolveOption(s.state, s.player, take, ep.episode.phase, rng), tier: 'cost' as const, critical: null };
+    applyChoice(s, ep.episode, take, res, rng);
+    expect(s.pendingFollowUp).toBeTruthy();
   });
 });

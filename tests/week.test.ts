@@ -82,7 +82,9 @@ describe('контекст и предложения', () => {
     const c = ctxFor(seasonWith([[1, 1]]), career);
     let hits = 0;
     for (let i = 0; i < 30; i++) if (offerWeek(ACTIVITIES, c, career, makeRng(i)).some((a) => a.id === 'apologize_partner')) hits += 1;
-    expect(hits).toBeGreaterThan(12);   // вес 8 против ~11 обычных дел Команди
+    expect(hits).toBeGreaterThan(12);   // вес 16 против ~18 суммарного веса безусловных дел голоса:
+    // справа за флагом має випадати частіше за половину разів, інакше полагодити стосунки — питання везіння.
+    // Вага росте разом із пулом (03.10: було 8 проти ~11, стало 16 проти ~18). Команди
     expect(offerWeek(ACTIVITIES, ctxFor(seasonWith([[1, 1]])), defaultCareer(), makeRng(1)).some((a) => a.id === 'apologize_partner')).toBe(false);
   });
 

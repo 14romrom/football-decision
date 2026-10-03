@@ -188,16 +188,20 @@ describe('скрытое чтение воротаря', () => {
   it('сетап удара говорит, что ты знаешь о воротаре, только когда прочитал', () => {
     // Вариант сетапа выбирается среди подходящих по свежести (M17.1), а не строго «самый конкретный»,
     // поэтому «прочитал» проверяем по серии сидов: без флага строка не появляется никогда, с флагом — появляется.
-    const linkSetup = (seed: number, flags: string[]) => {
+    // Слот може забрати реактивна сцена (вона всплывает по флагу замість планової) — тоді цей сід
+    // просто не про те, і ми його пропускаємо. Інакше тест залежить від того, скільки випадкових
+    // чисел з'їв планувальник, а не від того, що перевіряє.
+    const linkSetup = (seed: number, flags: string[]): string | null => {
       const { s, rng } = sessionAt(seed, 'ep_wing_one_on_one', 'castelrio', flags);   // castelrio: падає рано
       const first = nextEpisode(s, rng)!;
-      const cut = first.episode.options.find((o) => o.id === 'cut_inside')!;
+      const cut = first.episode.options.find((o) => o.id === 'cut_inside');
+      if (!cut) return null;
       applyChoice(s, first.episode, cut, resolveOption(s.state, s.player, cut, first.episode.phase, high(19)), rng);
-      return nextEpisode(s, rng)!.episode.setup;
+      return nextEpisode(s, rng)?.episode.setup ?? null;
     };
     const seeds = Array.from({ length: 12 }, (_, i) => 3 + i);
-    expect(seeds.filter((i) => linkSetup(i, ['keeper_read']).includes('падає рано')).length).toBeGreaterThan(0);
-    expect(seeds.some((i) => linkSetup(i, []).includes('падає рано'))).toBe(false);
+    expect(seeds.filter((i) => linkSetup(i, ['keeper_read'])?.includes('падає рано')).length).toBeGreaterThan(0);
+    expect(seeds.some((i) => linkSetup(i, [])?.includes('падає рано'))).toBe(false);
   });
 });
 

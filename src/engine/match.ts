@@ -216,6 +216,22 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
   };
   assign(0);
 
+  // Квота фізичної роботи (M43d): після розкладки добираємо сцени, у яких є дорогий варіант, поки їх
+  // не стане `minPhysical`. Саме добираємо, а не резервуємо слоти наперед: інакше у вищій лізі
+  // 2 оборони + 2 ліги + 3 роботи зайняли б сім слотів із дев'яти, і планувальник втратив би свободу.
+  const physical = (e: Episode | null | undefined) => !!e && e.options.some((o) => o.staminaCost >= m.physicalCost);
+  const byIdIn = (id: string | null) => (id ? episodes.find((e) => e.id === id) : null);
+  let physicalNow = plan.filter((id) => physical(byIdIn(id))).length;
+  for (let i = 0; i < plan.length && physicalNow < m.minPhysical; i++) {
+    if (defenseSlots.has(i) || attackSlots.has(i) || topSlots.has(i)) continue;
+    if (physical(byIdIn(plan[i]))) continue;
+    const candidates = episodes.filter((e) => physical(e) && inPlay(e) && fitsMinute(e, schedule[i])
+      && phaseOk(e, i) && !plan.includes(e.id) && !(noSetPieces && setPieceOfPlayer(e)));
+    if (candidates.length === 0) continue;
+    plan[i] = rng.weighted(candidates, weightOf).id;
+    physicalNow += 1;
+  }
+
   // Если раскладка не сошлась (контента меньше, чем слотов) — добиваем чем есть.
   return plan.map((id, i) => id ?? episodes.filter((e) => !plan.includes(e.id))[0]?.id ?? episodes[i % episodes.length].id);
 }

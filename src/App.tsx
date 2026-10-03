@@ -74,6 +74,8 @@ import { DeltaScreen } from './ui/DeltaScreen';
 import { boardMoments, cardDelta } from './engine/board';
 import { StatsScreen } from './ui/StatsScreen';
 import { DebugPanel } from './ui/DebugPanel';
+import { NavMenu } from './ui/NavMenu';
+import { dropShot, restoreShot, takeShot } from './telemetry/checkpoint';
 
 type Stage =
   | { k: 'menu' }
@@ -123,6 +125,12 @@ function delayFor(e: TimelineEvent): number {
 }
 
 function Game() {
+  // Матч не переживає монтування (M45): сесія живе в рефах, і перезавантаження сторінки чи вихід на
+  // головну його стирають. Знімок, зроблений перед стартом, повертаємо тут — ще до того, як рефи
+  // нижче прочитають сховище. Інакше кар'єра лишилася б із «з'їденими» наслідками минулого туру
+  // (consumeStartPenalty у start), а матч довелося б грати заново вже без них.
+  useState(() => restoreShot('prematch'));
+
   const sessionRef = useRef<MatchSession | null>(null);
   const rngRef = useRef<Rng | null>(null);
   const pendingRef = useRef<Pending | null>(null);
@@ -229,6 +237,9 @@ function Game() {
         setSeasonBoth(withPlayoff(recordRound(sn, ourResult, strengths, makeRng(sn.seed + sn.round * 7919))));
       }
 
+      // Матч записано в кар'єру і сезон — повертатися більше нікуди (M45).
+      dropShot('prematch');
+
       pendingRef.current = {
         kind: 'result', whistle, summary, xpEarned, leveledFrom: before.level, leveledTo: after.level, before, after,
       };
@@ -268,6 +279,10 @@ function Game() {
     // Условия матча — по сиду и расписанию сезона, тонус — из истории этого устройства; та сама функція
     // малює їх на екрані перед матчем (generateConditions — перший споживач цього ж потоку rng).
     const conditions = buildConditions(rng);
+
+    // Точка повернення (M45): слот запам'ятовується до того, як матч почне його міняти, — щоб вихід
+    // із матчу чи перезавантаження означали «тур не зіграно», а не «тур зіграно начисто».
+    takeShot('prematch', `сезон ${seasonRef.current.number}, тур ${seasonRef.current.round + 1}`);
 
     // Перенос из карьеры: травма/карточка прошлого матча бьют по старту этого,
     // доверие тренера продолжается (с регрессией), а не сбрасывается на 55.
@@ -995,5 +1010,10 @@ export function App() {
   }
   // Слот карьеры (telemetry/slots.ts): Game держит карьеру и сезон в refs, прочитанных при монтировании,
   // поэтому смена слота на титуле — это смена key, а не setState внутри.
-  return <Game key={activeSlot()} />;
+  // Меню (M45) живе поруч із грою, а не всередині: Game — ланцюжок ранніх return'ів на двадцять
+  // екранів, і кнопку довелося б дописувати в кожен.
+  return (<>
+    <Game key={activeSlot()} />
+    <NavMenu go={go} />
+  </>);
 }

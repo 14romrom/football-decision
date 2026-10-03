@@ -213,6 +213,34 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .share-num, .share-time { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .warn-line { color: var(--warn); font-size: 12px; margin: 6px 0 0; }
 
+/* ——— навігація в грі (ui/NavMenu.tsx) ———
+   Кнопка стоїть над усіма екранами гри, тому мусить читатися і на кремовому листі, і на кадрі поля:
+   звідси підкладка кольору панелі з рамкою, а не голий знак. Праворуч угорі — там, де її шукають,
+   і там, де немає ні рахунку, ні ярлика листа. Нижче прожектора (z-index 100), щоб підказки
+   першого матчу перекривали меню, а не навпаки. */
+.nav-toggle {
+  position: fixed; z-index: 12;
+  top: calc(6px + env(safe-area-inset-top, 0px)); right: calc(6px + env(safe-area-inset-right, 0px));
+  display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0;
+  background: rgba(19,19,22,.78); border: 1px solid var(--line); border-radius: 6px;
+  color: var(--muted); backdrop-filter: blur(3px);
+}
+.nav-toggle:active, .nav-toggle[aria-expanded="true"] { color: var(--ink); background: var(--panel); }
+.nav-sheet { position: fixed; inset: 0; z-index: 13; }
+.nav-scrim { position: absolute; inset: 0; width: 100%; height: 100%; background: rgba(8,8,10,.72); border: 0; border-radius: 0; padding: 0; }
+.nav-panel {
+  position: absolute; top: calc(46px + env(safe-area-inset-top, 0px)); right: calc(6px + env(safe-area-inset-right, 0px));
+  width: min(300px, calc(100vw - 24px)); max-height: calc(100dvh - 70px); overflow: auto;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 14px;
+  box-shadow: 0 18px 40px -12px rgba(0,0,0,.7);
+}
+.nav-panel .rows { margin-top: 8px; }
+.nav-panel .row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 15.5px; }
+.row-note { flex: none; font-family: var(--font-mono); font-size: 11px; color: var(--faint); font-style: normal; white-space: nowrap; }
+.nav-panel .row-back { margin-top: 10px; font-size: 14px; border-bottom: 0; }
+.nav-warn { font-size: 14px; line-height: 1.45; color: var(--ink); margin: 6px 0 14px; }
+.nav-panel .danger-btn { margin-bottom: 8px; }
+
 /* ——— debug ——— */
 .debug { position: fixed; right: 10px; bottom: 10px; z-index: 10; }
 .debug-toggle { font-size: 11px; padding: 4px 8px; opacity: .5; }

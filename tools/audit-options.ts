@@ -73,7 +73,12 @@ type Row = {
 
 /** Силы — тоже валюта: четверть очка за пункт (≈100 сил на 9 эпизодов). */
 const STAMINA_WEIGHT = 0.25;
-/** Отрыв EV, с которого эпизод считается «с правильным ответом». */
+/** Отрыв EV, с которого эпизод считается «с правильным ответом». Порог абсолютный, поэтому он
+ *  **читается только при `--bonus=0`**: с ростом игрока вся шкала EV раздувается (средний |EV| опции
+ *  1.21 при +0 → 1.88 при +3, то есть на 55%), и отрывы растут вместе с ней — сцен с отрывом > 1.5
+ *  становится 20 → 51, хотя форма выбора та же. Мерило для выросшего игрока — `gapShare` ниже: отрыв
+ *  лидера к размаху сцены. Он почти не двигается (0.41 → 0.46), и это как раз значит, что рост
+ *  виден (мёртвых кнопок 124 → 75, у смелого варианта шанс чистого 28% → 55%), а решение не плоское. */
 const SINGLE_ANSWER_GAP = 1.5;
 /** Пороги аудита — храповик: опускать после каждой партии правок 9.6, поднимать нельзя.
  *  20.09: 34% / 36 на старте → 26% / 23 после пяти партий (кураж за ризик, цепочки и спокій в модели, призы
@@ -186,7 +191,19 @@ function main() {
 
   console.log(`\nЛучшая опция эпизода по EV: упевнено ${r.bestForm.controlled}, ризиковано ${r.bestForm.risky}, відчайдушно ${r.bestForm.desperate}`);
   console.log(`Доминируемых опций: ${r.dominated.length} из ${r.options} (${pc(r.dominated.length / r.options)}), эпизодов с ними: ${new Set(r.dominated.map((d) => d.ep.id)).size}`);
-  console.log(`Эпизодов с «правильным ответом» (отрыв EV > ${SINGLE_ANSWER_GAP}): ${r.singleAnswer.length}`);
+  console.log(`Эпизодов с «правильным ответом» (отрыв EV > ${SINGLE_ANSWER_GAP}): ${r.singleAnswer.length}`
+    + (bonus ? `  — порог абсолютный, при --bonus сравнивать по «отрыв/размах» ниже` : ''));
+  // Отрыв лидера к размаху сцены: мерило, которое не раздувается вместе со шкалой EV (см. SINGLE_ANSWER_GAP).
+  const shares = (EPISODES_RAW as Episode[]).flatMap((ep) => {
+    const rows = ep.options.filter(unconditional).map((o) => scoreOption(ep, o, bonus));
+    if (rows.length < 2) return [];
+    const s = [...rows].sort((a, b) => b.ev - a.ev);
+    const span = s[0].ev - s[s.length - 1].ev;
+    return span > 0.01 ? [(s[0].ev - s[1].ev) / span] : [];
+  }).sort((a, b) => a - b);
+  const avgEv = (EPISODES_RAW as Episode[]).flatMap((ep) => ep.options.filter(unconditional).map((o) => Math.abs(scoreOption(ep, o, bonus).ev)));
+  console.log(`Отрыв лидера к размаху сцены: медиана ${f2(shares[shares.length >> 1])}, сцен с отрывом больше половины размаха ${pc(shares.filter((x) => x > 0.5).length / shares.length)}`
+    + `  (средний |EV| опции ${f2(avgEv.reduce((a, b) => a + b, 0) / avgEv.length)})`);
 
   if (r.safeGoals.length) {
     console.log(`\nГол на clean у формы «упевнено» (кроме fin_* и позиції) — ${r.safeGoals.length}, пересмотреть:`);

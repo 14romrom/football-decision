@@ -581,6 +581,10 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
 /** Що саме буде наступним рішенням у ланцюжку — підпис на кнопці «Далі → …» (ui/RollView).
  *  Кожна ланка з `apply.followUp` має тут ім'я (тест у chain.test.ts); без імені кнопка каже
  *  просто «Далі» — плейтест 27.09: кутовий імені не мав, і виходило «Далі → далі». */
+/** M44 (план): у цілі ланцюжка немає альтернатив, і правило «небачене першим» її не торкається —
+ *  мета задана жорстко в `apply.followUp`. Через це `fin_shot` бачать тричі в 41% кар'єр, а
+ *  `ep_free_kick_close` — у 48%: це двоє найчастіших повторів у грі. Лікується не добором, а
+ *  контентом: два-три різні фінали удару й два штрафні, і вибір серед них тим самим правилом. */
 export const CHAIN_NEXT: Record<string, string> = {
   fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний',
   ep_rebound_follow_up: 'добивання', ep_corner_delivery: 'подача з кутового', ep_counter_run: 'контратака',

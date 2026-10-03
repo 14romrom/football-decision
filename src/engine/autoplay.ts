@@ -56,7 +56,7 @@ export type AutoResult = {
 const pick = <T>(rng: Rng, xs: T[]): T => xs[rng.int(0, xs.length - 1)];
 
 /** Один тур: матч випадковою політикою. Повертає підсумок і кар'єру після нього. */
-function playMatch(career: Career, season: Season, c: AutoContent, rng: Rng) {
+function playMatch(career: Career, season: Season, c: AutoContent, rng: Rng, seen: string[]) {
   const fixture = ourFixture(season)!;
   const grip = coachGrip(career.coachTrust);
   const conditions: MatchConditions = {
@@ -74,6 +74,7 @@ function playMatch(career: Career, season: Season, c: AutoContent, rng: Rng) {
       staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty,
       flags: penalty.flags, startDelta: penalty.startDelta, voiceStreak: penalty.voiceStreak,
       voiceMute: penalty.voiceMute, injuriesSeason: consumed.injuriesSeason, arc: arcStage(consumed),
+      seenEpisodes: seen,
     },
   );
   for (;;) {
@@ -100,7 +101,7 @@ function playMatch(career: Career, season: Season, c: AutoContent, rng: Rng) {
   const nextSeasonState = playoffPending(season)
     ? recordPlayoff(season, ours)
     : withPlayoff(recordRound(season, ours, strengths, makeRng(season.seed + season.round * 7919)));
-  return { career: after, season: nextSeasonState, score: { scoreUs: summary.scoreUs, scoreThem: summary.scoreThem } };
+  return { career: after, season: nextSeasonState, score: { scoreUs: summary.scoreUs, scoreThem: summary.scoreThem }, episodes: session.usedEpisodeIds };
 }
 
 /** Тиждень після туру: одна справа на день, випадково. */
@@ -118,6 +119,7 @@ export function autoPlay(start: { career: Career; season: Season }, target: Auto
   let career = start.career;
   let season = start.season;
   const matches: { scoreUs: number; scoreThem: number }[] = [];
+  const seenEpisodes: string[] = [];
   let vacationAuto = false;
 
   // Пролог — теж за гравця: без нього гра відкриється зошитом нульового тижня, а не тим, куди мотали.
@@ -145,9 +147,10 @@ export function autoPlay(start: { career: Career; season: Season }, target: Auto
       career = rolled.career as Career;
       continue;
     }
-    const round = playMatch(career, season, c, rng);
+    const round = playMatch(career, season, c, rng, seenEpisodes);
     career = round.career;
     season = round.season;
+    seenEpisodes.push(...round.episodes);
     matches.push(round.score);
     if (!isSeasonOver(season)) career = playWeek(career, season, c, rng);
   }

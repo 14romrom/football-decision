@@ -135,7 +135,7 @@ function byStrength(e: Episode, strength?: string): number {
  *  тобою стандарт ти б'єш сам. Гравець бачить причину рядком у програмці. */
 const setPieceOfPlayer = (e: Episode) => (e.family === 'free_kick' || e.family === 'corner_attack') && e.phase !== 'defense';
 
-function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = [], strength?: string, league?: string, noSetPieces = false): string[] {
+function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent: string[] | EpisodeMemory = [], strength?: string, league?: string, noSetPieces = false, seen: Set<string> = new Set()): string[] {
   const m = BALANCE.match;
   const memory = toMemory(recent);
   const families = familyAges(memory, episodes);
@@ -170,9 +170,14 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
       if (episodes.some((e) => e.requires?.league === 'top' && inPlay(e) && fitsMinute(e, schedule[i]))) topSlots.add(i);
     }
   }
+  // Оборона — тільки у своїх слотах (M43a): інакше вона добирала ще півсцени за матч із вільних
+  // слотів, і найтонший пул гри витрачався найшвидше. Квота 0 знімає і обмеження: без квоти немає
+  // і «своїх слотів», і планувальник поводиться як до M43a (цим користується tools/repeat-rate.ts --old).
   const phaseOk = (e: Episode, index: number) =>
     topSlots.has(index) ? e.requires?.league === 'top'
-    : defenseSlots.has(index) ? e.phase === 'defense' : attackSlots.has(index) ? e.phase === 'attack' : true;
+    : defenseSlots.has(index) ? e.phase === 'defense'
+    : attackSlots.has(index) ? e.phase === 'attack'
+    : (BALANCE.match.minDefense > 0 ? e.phase !== 'defense' : true);
 
   // Реактивные эпизоды заранее не планируются — они всплывают по флагам (см. pickEpisode).
   const slots = schedule
@@ -189,7 +194,11 @@ function planEpisodes(schedule: number[], episodes: Episode[], rng: Rng, recent:
   const assign = (k: number): boolean => {
     if (k >= slots.length) return true;
     const pool = slots[k].candidates.filter((e) => !used.has(e.id));
-    const rest = [...pool];
+    // Небачене за кар'єру йде першим (M43a): те саме правило, що в справах тижня. Вага пам'яті —
+    // це «давно не було», а тут потрібне «ще жодного разу»: 180 рішень за кар'єру проти 136 сцен,
+    // і без цього правила повтор приходив на дев'ятому матчі, а не в хвості другого сезону.
+    const unseen = pool.filter((e) => !seen.has(e.id));
+    const rest = unseen.length ? [...unseen] : [...pool];
     const order: Episode[] = [];
     while (rest.length) {
       const picked = rng.weighted(rest, weightOf);
@@ -246,6 +255,9 @@ export type Carryover = {
   arc?: number;
   /** Перший матч кар’єри — фіксований план і підказки (content/firstmatch.json). Довжина плану має
    *  збігатися з кількістю слотів (з лави — чотири), інакше план ігнорується. */
+  /** Усі сцени, які кар'єра вже бачила (telemetry/history.allEpisodes): правило «небачене першим»
+   *  у планувальнику. Порожньо — поводиться як раніше, тому тести й сим не чіпаємо. */
+  seenEpisodes?: string[];
   tutorial?: Tutorial;
 };
 
@@ -321,7 +333,7 @@ export function createMatch(
     pendingFollowUp: null, chainLinks: 0, chainsUsed: 0, chainMark: null,
     plan: carryover.tutorial && carryover.tutorial.plan.length === schedule.length && carryover.tutorial.plan.every((id) => episodes.some((e) => e.id === id))
       ? [...carryover.tutorial.plan]
-      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds, conditions.strength, conditions.league, conditions.noSetPieces === true)],
+      : [...(benchCall.length ? [BALANCE.bench.callEpisode] : []), ...planEpisodes(fieldSchedule, episodes, rng, recentEpisodeIds, conditions.strength, conditions.league, conditions.noSetPieces === true, new Set(carryover.seenEpisodes ?? []))],
     ...(benchCall.length ? { onBench: true, fromBench: true } : {}),
     ...(carryover.tutorial ? { tutorial: carryover.tutorial } : {}),
     usedEpisodeIds: [], nextIndex: 0, finished: false, flavorSeen: new Set(carryover.flavorSeen ?? []),

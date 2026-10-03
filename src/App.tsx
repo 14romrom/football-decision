@@ -19,7 +19,7 @@ const SUBBED_ROUND = 3;
 const NERVES_ROUNDS = 2;
 import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
-import { readHistory, episodeMemory, recentFeed, recentFlavor, recentPosts, allSetups, recordPosts, recordResult } from './telemetry/history';
+import { readHistory, allEpisodes, episodeMemory, recentFeed, recentFlavor, recentPosts, allSetups, recordPosts, recordResult } from './telemetry/history';
 import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } from './engine/posts';
 import { PostsScreen } from './ui/PostsScreen';
 import { fillNames, opponentTraits } from './engine/names';
@@ -318,6 +318,7 @@ function Game() {
           ...(seasonRef.current.number >= 2 && seasonRef.current.round === AGENT_IN_STANDS_ROUND ? [{ flag: 'agent_in_stands', mark: { minute: 0, episodeId: 'season', optionId: 'agent', past: 'бачив агента на трибуні' } }] : []),
         ],
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon), setupSeen: allSetups(),
+        seenEpisodes: allEpisodes(),
         // Канва не конкурує з вагою (M18.0): два епізоди вищої ліги ставимо в план примусово.
         forceEpisodes: seasonRef.current.number >= 2
           ? [...(seasonRef.current.round === SUBBED_ROUND ? ['ep_subbed_off'] : []),

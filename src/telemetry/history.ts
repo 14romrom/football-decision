@@ -38,6 +38,13 @@ export function recentFlavor(horizon: number): string[] {
 
 /** Вступи сцен (сетапи) за всю кар’єру — не горизонт: на горизонті сим повторів тексту не зрушив (21%), бо епізод
  *  повертається пізніше, ніж горизонт його забуває (match.ts:withSetup). */
+/** Усі сцени, які кар'єра взагалі бачила — для правила «небачене першим» у плані матчу (M43a).
+ *  Пам'ять episodeMemory живе горизонтом у 12 матчів і відповідає на «давно не було»; тут потрібне
+ *  інше питання — «чи було хоч раз», і воно без горизонту. */
+export function allEpisodes(): string[] {
+  return readHistory().flatMap((h) => h.episodes ?? []);
+}
+
 export function allSetups(): string[] {
   return readHistory().flatMap((h) => h.setups ?? []);
 }

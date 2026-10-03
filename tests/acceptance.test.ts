@@ -28,7 +28,10 @@ describe('критерии приёмки, п. 13', () => {
     expect(stragglers.length, JSON.stringify(stragglers.map((r) => r.summary.staminaLeft))).toBeLessThanOrEqual(2);
     for (const r of stragglers) expect(r.summary.staminaLeft).toBeLessThanOrEqual(5);
     const sorted = (minutes.filter((m) => m !== null) as number[]).sort((a, b) => a - b);
-    expect(sorted[sorted.length >> 1]).toBeLessThan(75);
+    // M43a (03.10): оборони в матчі стало 2 замість 3.4, атаки — більше. Оборонні рішення дорожчі
+    // по силах, тому жадібний бот тепер вигоряє трохи пізніше: медіана 73 → 75. Сенс критерію той
+    // самий — ноги кінчаються до останніх двох слотів (82 і 88), — тому межа 75 включно.
+    expect(sorted[sorted.length >> 1]).toBeLessThanOrEqual(75);
     expect(sorted[Math.floor(sorted.length * 0.9)]).toBeLessThan(85);
   });
 
@@ -187,15 +190,18 @@ describe('состав матча (после первого плейтеста)
       const option = next.episode.options[0];
       applyChoice(s, next.episode, option, resolveOption(s.state, s.player, option, next.episode.phase, rng), rng);
     }
-    return s.usedEpisodeIds;
+    return s;
   };
 
-  it('в каждом матче минимум три оборонительных эпизода', () => {
+  it('у кожному матчі стільки оборонних епізодів, скільки каже квота', () => {
     const byId = new Map(EPISODES.map((e) => [e.id, e]));
     for (const seed of seeds(300, 21000)) {
-      const ids = play(seed);
-      // Матч, обірваний червоною або заміною, квоту оборони не зобов’язаний добрати.
-      if (ids.length < BALANCE.match.episodeMinutes.length) continue;
+      const s = play(seed);
+      const ids = s.usedEpisodeIds;
+      // Матч, обірваний червоною або заміною, квоту оборони не зобов’язаний добрати. Рахувати це
+      // за кількістю рішень не можна (03.10): ланка ланцюжка додає рішення, не займаючи слот, —
+      // і матч, зрізаний на 74-й, виглядав як дограний. Питаємо прямо в стану матчу.
+      if (s.state.flags.includes('sent_off') || s.state.flags.includes('subbed_off')) continue;
       const defense = ids.filter((id) => byId.get(id)!.phase === 'defense').length;
       expect(defense, `seed ${seed}`).toBeGreaterThanOrEqual(BALANCE.match.minDefense);
     }
@@ -206,9 +212,9 @@ describe('состав матча (после первого плейтеста)
     let third12 = 0;
     let total = 0;
     for (const seed of seeds(100, 23000)) {
-      const first = play(seed);
-      const second = play(seed + 1, first);
-      const third = play(seed + 2, [...first, ...second]);
+      const first = play(seed).usedEpisodeIds;
+      const second = play(seed + 1, first).usedEpisodeIds;
+      const third = play(seed + 2, [...first, ...second]).usedEpisodeIds;
       second1 += second.filter((id) => first.includes(id)).length;
       third12 += third.filter((id) => first.includes(id) || second.includes(id)).length;
       total += 9;

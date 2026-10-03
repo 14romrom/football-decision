@@ -37,7 +37,7 @@ type Props = {
   /** Фінал: партнер без дуету — розв’язка `replyCold`, якщо є. */
   cold?: boolean;
   /** Фінал: замість листа здобутків — епілог і одна кнопка. */
-  epilogue?: { tab: string; text: string[]; sign: string };
+  epilogue?: { tab: string; text: string[]; textCold?: string[]; sign: string };
   /** Підпис на плівці (26.09): назва частини ліворуч, номер розвороту праворуч — як маркування кадру
    *  на титулі. Тільки тут: у матчі така смуга змагалася б із хвилиною і рахунком. */
   film?: string;
@@ -97,7 +97,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
         {epilogue ? (
           <div className={`moment${epi.mark}`}>{epi.plate}<div className="scene">
             <span className="minute-tab">{epilogue.tab.toUpperCase()}</span>
-            {epilogue.text.map((t, k) => <p key={k} className="setup" style={k ? { paddingTop: 0 } : undefined}>{t}</p>)}
+            {(cold && epilogue.textCold ? epilogue.textCold : epilogue.text).map((t, k) => <p key={k} className="setup" style={k ? { paddingTop: 0 } : undefined}>{t}</p>)}
             <p className="nb-aside"><b>{epilogue.sign}</b></p>
             <button className="primary menu-primary nb-sheet-btn" onClick={onNext}>{lootButton}</button>
           </div></div>

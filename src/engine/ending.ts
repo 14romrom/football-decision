@@ -17,7 +17,8 @@ export type EndingOption = PrologueOption & { arcMin?: number; /** Партне�
 export type EndingSpread = Omit<PrologueSpread, 'options'> & { options: EndingOption[] };
 export type EndingContent = {
   spreads: EndingSpread[];
-  epilogue: { tab: string; text: string[]; sign: string };
+  /** `textCold` — епілог без зв'язки з партнером: ніхто не приїжджає, і березня в ньому немає. */
+  epilogue: { tab: string; text: string[]; textCold?: string[]; sign: string };
   /** Перший абзац листа дзвінка (M28): хто дзвонить — клуб, який бачив передачу, чи агент із вітриною
    *  (career.scoutSaw). Дописується до всіх варіантів листа, бо `sheetBy` уже зайнятий голосом прологу. */
   scoutLead?: Record<'team' | 'shot', string>;

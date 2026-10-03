@@ -15,9 +15,9 @@ const high = (n: number) => ({ ...makeRng(1), roll: () => n });
 const byId = (id: string) => EPISODES_RAW.find((e) => e.id === id)!;
 
 /** Сессия, у которой следующий слот — заданный эпизод. */
-function sessionAt(seed: number, episodeId: string, opponent = 'castelrio', flags: string[] = []) {
+function sessionAt(seed: number, episodeId: string, opponent = 'castelrio', flags: string[] = [], seen: string[] = []) {
   const rng = makeRng(seed);
-  const s = createMatch(`c-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(opponent), neutralConditions(opponent), [], FLAG_RULES);
+  const s = createMatch(`c-${seed}`, seed, PLAYER, rng, EPISODES_RAW, rosterFor(opponent), neutralConditions(opponent), [], FLAG_RULES, { seenEpisodes: seen });
   s.plan[1] = episodeId;
   s.nextIndex = 1;
   s.state.minute = s.schedule[0];
@@ -27,7 +27,9 @@ function sessionAt(seed: number, episodeId: string, opponent = 'castelrio', flag
 
 describe('цепочки: исход ведёт в следующее решение в том же слоте', () => {
   it('обіграв на фланзі → удар: fin_shot приходит без ленты и той же минутой', () => {
-    const { s, rng } = sessionAt(3, 'ep_wing_one_on_one');
+    // Удар — група з трьох ланок (M44); щоб тест говорив про fin_shot, інші дві вже «бачені»,
+    // і правило «небачене першим» лишає рівно одного кандидата.
+    const { s, rng } = sessionAt(3, 'ep_wing_one_on_one', 'castelrio', [], ['fin_shot_keeper_rush', 'fin_shot_chased']);
     const first = nextEpisode(s, rng)!;
     const cut = first.episode.options.find((o) => o.id === 'cut_inside')!;
     applyChoice(s, first.episode, cut, resolveOption(s.state, s.player, cut, first.episode.phase, high(19)), rng);
@@ -68,7 +70,8 @@ describe('цепочки: исход ведёт в следующее решен
 
   it('звенья не планируются, не всплывают и не повторяются; в слоте не больше двух звеньев', () => {
     const links = EPISODES_RAW.filter((e) => e.followUpOnly);
-    expect(links.map((e) => e.id).sort()).toEqual(['fin_penalty', 'fin_penalty_wait', 'fin_shot']);
+    expect(links.map((e) => e.id).sort()).toEqual(
+      ['fin_penalty', 'fin_penalty_wait', 'fin_shot', 'fin_shot_chased', 'fin_shot_keeper_rush']);
     for (let seed = 500; seed < 560; seed++) {
       const rng = makeRng(seed);
       const s = createMatch('p', seed, PLAYER, rng, EPISODES_RAW, ROSTER, undefined, [], FLAG_RULES);

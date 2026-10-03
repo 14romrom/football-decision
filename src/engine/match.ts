@@ -599,6 +599,7 @@ export const CHAIN_NEXT: Record<string, string> = {
   ep_after_turnover: 'м’яч відібрано',
   ep_free_kick: 'штрафний', ep_free_kick_dummy: 'штрафний', ep_corner_near_post: 'кутовий',
   ep_corner_four_in_three: 'кутовий', ep_high_line_pass: 'контратака', ep_two_v_one_lead: 'контратака',
+  fin_shot_keeper_rush: 'удар', fin_shot_chased: 'удар',
 };
 
 /** Мітка приходить із тижня, прологу або відпустки, де імена ще не підставлені (плейтест 27.09:

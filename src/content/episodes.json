@@ -18752,6 +18752,585 @@
     ]
   },
   {
+    "id": "fin_shot_keeper_rush",
+    "phase": "attack",
+    "weight": 1,
+    "followUpOnly": true,
+    "chainOf": "fin_shot",
+    "family": "finishing",
+    "requires": {
+      "minMinute": 0,
+      "maxMinute": 95
+    },
+    "setup": "Ти {trigger.past} — і воротар не став чекати на лінії: він летить назустріч, у ноги, останні п’ять метрів. Хто дістане м’яч першим, той і вирішив.",
+    "setups": [
+      {
+        "when": {
+          "flags": [
+            "keeper_read",
+            "keeper_comesOut"
+          ]
+        },
+        "text": "Ти {trigger.past}, а воротар уже біжить назустріч. Ти знав, що він так робить: він завжди виходить рано. Знати й встигнути — різні речі."
+      },
+      {
+        "when": {
+          "score": "trailing",
+          "minMinute": 80
+        },
+        "text": "Ти {trigger.past}, і воротар кидається назустріч. Ми позаду, на годиннику майже нічого, і ця секунда — остання, яку вам дали."
+      }
+    ],
+    "options": [
+      {
+        "id": "hit_early",
+        "label": "Пробити зараз, поки він не дійшов",
+        "past": "пробив, поки воротар ще не дійшов",
+        "attribute": "finishing",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 0,
+        "staminaCost": 5,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Зараз. Через секунду тут буде він, а не м’яч."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти б’єш за мить до того, як він накриває, — низом, під руку. М’яч проходить під ним і докочується у ворота сам.",
+            "recap": "і встиг вдарити до того, як воротар накрив.",
+            "apply": {
+              "goal": true,
+              "fanHype": 16,
+              "coachTrust": 6,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Він накриває корпусом — удар іде в нього й відскакує за лицьову. Кутовий.",
+            "recap": "і пробив у воротаря, що встиг накрити.",
+            "apply": {
+              "corner": true,
+              "fanHype": 6,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Удар виходить поспішним і слабким — він забирає м’яч у ноги без жодних проблем.",
+            "recap": "і поспішив — воротар забрав у ноги.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Удар влучає в нього, і рикошет вилітає в центр, просто під {them.mid.gen}. Вони біжать, ти ще на газоні.",
+            "recap": "і пробив у воротаря так, що з рикошету пішла контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -5,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "crit": {
+            "text": "Ти б’єш рано, з невигідної ноги, і все одно точно — м’яч проходить там, де його вже ніхто не дістане. Воротар лишається лежати й дивитися в сітку.",
+            "recap": "і вдарив раніше за воротаря — той так і лишився лежати.",
+            "apply": {
+              "goal": true,
+              "fanHype": 22,
+              "coachTrust": 8,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "push_past",
+        "label": "Прокинути повз нього і перестрибнути",
+        "past": "прокинув м’яч повз воротаря і перестрибнув його",
+        "attribute": "dribbling",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 4,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "Він уже в повітрі. Проштовхни м’яч і перескоч."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти штовхаєш м’яч мимо його рук і перестрибуєш через нього. Він летить у порожнє, ти — на порожні ворота, і м’яч іде в них без удару.",
+            "recap": "і перестрибнув воротаря, щоб закотити в порожні.",
+            "apply": {
+              "goal": true,
+              "fanHype": 18,
+              "coachTrust": 6,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Перестрибнув, м’яч лишився твій — але кут уже нульовий. Простріл блокують на лінії: кутовий.",
+            "recap": "і перестрибнув воротаря, та кут уже зник.",
+            "apply": {
+              "corner": true,
+              "fanHype": 6,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Він дістає м’яч раніше, ніж ти встигаєш його прокинути, — і ти перестрибуєш уже через рукавиці з м’ячем.",
+            "recap": "і не встиг прокинути — воротар забрав.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Ви стикаєтесь, м’яч лишається під ним, суддя показує грати далі. {them.cb} виносить у поле, і туди ж біжать троє.",
+            "recap": "і зіткнувся з воротарем, після чого пішла контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -5,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "wait_him_out",
+        "label": "Зачекати, поки він ляже",
+        "past": "дочекався, поки воротар ляже",
+        "attribute": "composure",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 2,
+        "staminaCost": 4,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "composure",
+          "line": "Він упаде першим. Він завжди падає першим."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти не б’єш — ти чекаєш. Він не витримує першим, падає в ноги, і ти просто котиш м’яч мимо його рукавиць у порожні ворота.",
+            "recap": "і дочекався падіння воротаря, щоб закотити мимо.",
+            "apply": {
+              "goal": true,
+              "fanHype": 18,
+              "coachTrust": 5,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Він не падає — стоїть широко і закриває все, що можна закрити. Ти котиш у його ногу, м’яч іде на кутовий.",
+            "recap": "і не дочекався падіння — кутовий.",
+            "apply": {
+              "corner": true,
+              "fanHype": 4,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Він читає паузу раніше, ніж ти її закінчуєш, — і просто забирає м’яч собі в руки.",
+            "recap": "і прочекав момент.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "badFail": {
+            "text": "Пауза виходить настільки довгою, що {them.cb} встигає повернутися і вибити м’яч з-під тебе.",
+            "recap": "і дав захиснику повернутися, поки чекав.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -4,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "square_striker",
+        "label": "Відкотити {striker.dat} — він за спиною воротаря",
+        "past": "відкотив {striker.dat} за спину воротарю",
+        "attribute": "vision",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "team",
+          "line": "Він за його спиною і сам. Не бий — покоти."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти котиш низом під руку воротаря — {striker} приймає за його спиною і просто вкладає м’яч у ворота.",
+            "recap": "і відкотив під гол {striker.gen}.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 8,
+              "fanHype": 6,
+              "scorer": "striker"
+            }
+          },
+          "cost": {
+            "text": "Пас доходить, {striker} б’є — воротар устиг піднятися і відбив. Кутовий.",
+            "recap": "і вивів {striker.gen} на удар, який воротар відбив.",
+            "apply": {
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 3
+            }
+          },
+          "fail": {
+            "text": "Пас виходить сильним — м’яч іде мимо {striker.gen} за лицьову.",
+            "recap": "і перекотив пас мимо {striker.gen}.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -2
+            }
+          },
+          "badFail": {
+            "text": "{them.cb}, що наздоганяв, читає відкат і перехоплює. З цього й починається їхня атака.",
+            "recap": "і подарував перехоплення на відкаті.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -4
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "fin_shot_chased",
+    "phase": "attack",
+    "weight": 1,
+    "followUpOnly": true,
+    "chainOf": "fin_shot",
+    "family": "finishing",
+    "requires": {
+      "minMinute": 0,
+      "maxMinute": 95
+    },
+    "setup": "Ти {trigger.past}, але там уже другий захисник: встигає впоперек і сідає на плече, рука на ребрах, і м’яч у тебе лише тому, що ти його закриваєш. До воріт метрів вісімнадцять — і цих вісімнадцяти в тебе немає.",
+    "setups": [
+      {
+        "when": {
+          "tired": true
+        },
+        "text": "Ти {trigger.past}, але другий захисник уже висить на плечі, а твої ноги вже не ті. Вісімнадцять метрів до воріт — це на один рух більше, ніж у тебе лишилося."
+      },
+      {
+        "when": {
+          "flags": [
+            "them_hard"
+          ]
+        },
+        "text": "Ти {trigger.past}, і другий захисник одразу чіпляє: рука на ребрах, коліно в стегно. Вони так грають увесь матч, і суддя вже втомився свистіти. До воріт метрів вісімнадцять."
+      }
+    ],
+    "options": [
+      {
+        "id": "shoot_running",
+        "label": "Бити як лежить, з ходу",
+        "past": "вдарив з ходу, не підлаштовуючись",
+        "attribute": "finishing",
+        "basePosition": "desperate",
+        "effect": "great",
+        "difficulty": 0,
+        "staminaCost": 4,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "ego",
+          "line": "Другого замаху не буде. Бий, як лежить."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти не підлаштовуєш ні корпус, ні ногу — б’єш, як лежить. Саме тому воротар цей удар і не читає.",
+            "recap": "і вдарив з ходу так, що воротар не прочитав.",
+            "apply": {
+              "goal": true,
+              "fanHype": 20,
+              "coachTrust": 7,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Удар сильний, але в нього — воротар відбиває перед собою, і м’яч лишається живим у штрафному.",
+            "recap": "і пробив у воротаря, а м’яч відскочив у штрафний.",
+            "apply": {
+              "fanHype": 8,
+              "addFlags": [
+                "keeper_read"
+              ],
+              "followUp": "ep_rebound_follow_up",
+              "followUpElse": {
+                "corner": true
+              }
+            }
+          },
+          "fail": {
+            "text": "З такого положення нога не встигає за м’ячем — вище воріт. Трибуни видихають.",
+            "recap": "і пробив з ходу вище воріт.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -3,
+              "fanHype": -2
+            }
+          },
+          "badFail": {
+            "text": "Удар влучає в його коліно, м’яч летить у центр поля, і вони вже біжать — усі троє.",
+            "recap": "і пробив у захисника, з якого пішла контратака.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -6
+            }
+          },
+          "crit": {
+            "text": "Удар виходить із тієї ноги й під тим кутом, із яких не бувають голи, — і влітає під поперечину. Половина стадіону ще шукає, де м’яч.",
+            "recap": "і вдарив з ходу під поперечину.",
+            "apply": {
+              "goal": true,
+              "fanHype": 24,
+              "coachTrust": 8,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "one_more_touch",
+        "label": "Ще один дотик під себе",
+        "past": "зробив ще один дотик під себе",
+        "attribute": "first_touch",
+        "basePosition": "risky",
+        "effect": "great",
+        "difficulty": 0,
+        "staminaCost": 5,
+        "goals": {
+          "team": 1,
+          "personal": 3
+        },
+        "voice": {
+          "who": "instinct",
+          "line": "Один дотик. Він уже біжить і не зможе повернутися."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Один короткий дотик під себе — і він пролітає мимо: він біг, а ти вже ні. Удар виходить вільним.",
+            "recap": "і дотиком під себе прибрав захисника з дороги.",
+            "apply": {
+              "goal": true,
+              "fanHype": 16,
+              "coachTrust": 6,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "cost": {
+            "text": "Дотик виходить довгим, б’єш уже з-під його ноги — воротар переводить на кутовий.",
+            "recap": "і вдарив з-під ноги захисника, вибивши кутовий.",
+            "apply": {
+              "corner": true,
+              "fanHype": 6,
+              "addFlags": [
+                "keeper_read"
+              ]
+            }
+          },
+          "fail": {
+            "text": "Він дістає м’яч носком саме тоді, коли ти його відпускаєш. М’яч за лицьовою.",
+            "recap": "і загубив м’яч на другому дотику.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -2
+            }
+          },
+          "badFail": {
+            "text": "Він вибиває м’яч з-під тебе на вільне місце, і {them.winger} уже біжить туди. Ти — ні.",
+            "recap": "і дав вибити м’яч з-під себе в контратаку.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -5
+            }
+          }
+        }
+      },
+      {
+        "id": "shield_for_foul",
+        "label": "Закрити корпусом і тягти на фол",
+        "past": "закрив м’яч корпусом і тягнув на фол",
+        "attribute": "stamina",
+        "basePosition": "controlled",
+        "effect": "standard",
+        "difficulty": -1,
+        "staminaCost": 8,
+        "goals": {
+          "team": 3,
+          "personal": 1
+        },
+        "voice": {
+          "who": "body",
+          "line": "Він важчий. Але він уже тричі біг за тобою."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти ставиш корпус між ним і м’ячем і просто тягнеш — метр, другий. Він не витримує й хапає тебе за футболку. Свисток.",
+            "recap": "і дотягнув до фолу, закриваючи м’яч корпусом.",
+            "apply": {
+              "duelWon": true,
+              "coachTrust": 5,
+              "followUp": "ep_free_kick_close",
+              "followUpElse": {
+                "fanHype": 5,
+                "coachTrust": 3
+              }
+            }
+          },
+          "cost": {
+            "text": "Фолу не дають, але ти дотягуєш м’яч до лицьової — і він вибиває на кутовий, бо іншого виходу вже немає.",
+            "recap": "і дотягнув м’яч до кутового.",
+            "apply": {
+              "corner": true,
+              "duelWon": true,
+              "coachTrust": 3
+            }
+          },
+          "fail": {
+            "text": "Він довший за тебе й дістає м’яч збоку, обходячи корпус. Суддя показує грати далі.",
+            "recap": "і не втримав м’яч корпусом.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -2
+            }
+          },
+          "badFail": {
+            "text": "Він обертає тебе разом із м’ячем, забирає його і одразу віддає вперед. Ти лишаєшся стояти спиною до своїх воріт.",
+            "recap": "і дав розвернути себе разом із м’ячем.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -4
+            }
+          }
+        }
+      },
+      {
+        "id": "lay_back",
+        "label": "Віддати назад на дугу, під удар",
+        "past": "віддав назад на дугу під удар",
+        "attribute": "vision",
+        "basePosition": "controlled",
+        "effect": "great",
+        "difficulty": 1,
+        "staminaCost": 3,
+        "goals": {
+          "team": 3,
+          "personal": 0
+        },
+        "voice": {
+          "who": "team",
+          "line": "Назад. {dm} уже на дузі й бачить усе."
+        },
+        "outcomes": {
+          "clean": {
+            "text": "Ти приховуєш пас корпусом і котиш назад — {dm} б’є з ходу в дальній кут, не зупиняючи м’яч.",
+            "recap": "і відкотив назад під гол {dm.gen}.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 8,
+              "fanHype": 6,
+              "scorer": "dm"
+            }
+          },
+          "cost": {
+            "text": "Пас виходить, {dm} б’є — м’яч проходить вище. Момент був твій.",
+            "recap": "і вивів {dm.gen} на удар, який пішов вище.",
+            "apply": {
+              "keyPass": true,
+              "coachTrust": 3
+            }
+          },
+          "fail": {
+            "text": "Під його тиском пас виходить коротким — просто під ноги {them.mid.dat}.",
+            "recap": "і віддав назад просто під ноги суперника.",
+            "apply": {
+              "losses": 1,
+              "coachTrust": -2
+            }
+          },
+          "badFail": {
+            "text": "Він читає пас назад і перехоплює його на ходу. Тепер біжать вони, а ти стоїш у чужому штрафному.",
+            "recap": "і подарував перехоплення пасом назад.",
+            "apply": {
+              "losses": 1,
+              "counterAttack": true,
+              "coachTrust": -4
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
     "id": "fin_penalty",
     "phase": "setpiece",
     "weight": 1,

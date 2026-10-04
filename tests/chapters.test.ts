@@ -27,7 +27,9 @@ describe('глави й кадри якорів', () => {
     const scenes = new Set(WEEK_SCENES.map((s) => s.id));
     // Розвороти прологу (scout / call / base) і кадри, намальовані наперед до сцен медогляду (M28).
     // Розвороти прологу і відпустки — теж адреси кадрів (VACATION: газон, ніч, медогляд).
-    const planned = new Set(['scout', 'call', 'base', 'epilogue', ...VACATION.map((s) => s.id), ...ENDING.spreads.map((s) => s.id)]);
+    // Розділювачі глав (M41, 04.10) — четверта адреса: у них свої кадри, не позичені в сцен.
+    const planned = new Set(['scout', 'call', 'base', 'epilogue', ...VACATION.map((s) => s.id), ...ENDING.spreads.map((s) => s.id),
+      ...CHAPTERS.map((c) => c.shot).filter((s): s is string => !!s)]);
     for (const id of Object.keys(SHOTS)) {
       expect(scenes.has(id) || planned.has(id), `кадр ${id} нікуди не веде`).toBe(true);
     }

@@ -5,7 +5,7 @@
     "title": "Пролог",
     "voice": "instinct",
     "line": "Один клуб у списку. Нижче — тільки чемпіонат пивоварень.",
-    "shot": "sc_larsson_training"
+    "shot": "chapter_prologue"
   },
   {
     "id": "season1",
@@ -13,7 +13,7 @@
     "title": "Перший сезон",
     "voice": "body",
     "line": "Друга ліга — це не про футбол. Це про трамвай.",
-    "shot": "sc_city_driver"
+    "shot": "chapter_season1"
   },
   {
     "id": "season2",
@@ -21,7 +21,7 @@
     "title": "Другий сезон",
     "voice": "ego",
     "line": "Той самий автобус, той самий водій. Тільки дорога довша.",
-    "shot": "sc_top_first_week"
+    "shot": "chapter_season2"
   },
   {
     "id": "epilogue",
@@ -29,6 +29,6 @@
     "title": "Епілог",
     "voice": "composure",
     "line": "Десятого трамвая тут немає, і ти ловиш себе на тому, що його бракує.",
-    "shot": "sc_agent_call"
+    "shot": "chapter_epilogue"
   }
 ]

@@ -38,6 +38,15 @@ const PROSE_KEYS = new Set([
   'note', 'title', 'sub', 'tab', 'head', 'mark', 'summary', 'blurb', 'short', 'intent', 'name',
   'whenText', 'column', 'sign', 'textCold', 'sheetCold', 'say', 'line',
   'nom', 'gen', 'dat', 'ins',
+  // Ключ-голос, під яким лежить варіант листа або луна (`sheetBy.ego`, `scoutLead.team`): проза, а не
+  // дані — сам голос ідентифікатор, але текст під ним гравець читає. Коштувало це дорого: ці ключі
+  // не були ні тут, ні в SKIP, тому `walk` викидав їх **мовчки**, і звіт показував пролог і
+  // відпустку як 100%, хоча 90 рядків прози він ніколи не бачив. Числові `composure: -2` в `effect`
+  // сюди не потрапляють — вони не рядки.
+  'ego', 'team', 'vision', 'body', 'instinct', 'composure',
+  'replyCold',                                    // варіант розв'язки, коли дуету з партнером немає
+  'after', 'medical', 'debts', 'scout', 'epilogue', // причини зриву й епілог у agent.json
+  'poll', 'kicker', 'cta', 'tag',                 // опитування в Y, кікер ESPM, кнопка й ярлик реклами
 ]);
 /** Ключі, під якими лежать дані, хоч вони і рядки. */
 const SKIP_KEYS = new Set([

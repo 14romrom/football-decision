@@ -16,6 +16,10 @@ import { join } from 'node:path';
 
 const DIR = 'src/content';
 const MAP = join(DIR, 'i18n/en.json');
+const MARK = "t('";
+const END = "')";
+const SEP = /[\\/]/;
+const NL = String.fromCharCode(10);
 
 /** Той самий хеш, що в `src/content/i18n.ts` — тримати синхронно (тест це перевіряє). */
 export function srcHash(s: string): string {
@@ -51,6 +55,38 @@ export function collect(): Row[] {
   for (const f of readdirSync(DIR).filter((x) => x.endsWith('.json')).sort()) {
     const data = JSON.parse(readFileSync(join(DIR, f), 'utf8'));
     walk(data, f, '', out, seen);
+  }
+  // Рядки, що живуть у коді (ярлики кнопок, назви голосів, шматки фраз, які рушій склеює сам),
+  // позначені викликом `t('…')` у місці літерала. Беремо рівно їх: усе інше в коді — не текст
+  // для гравця, і перекладати його не можна.
+  for (const f of srcFiles('src')) {
+    const code = readFileSync(f, 'utf8');
+    // Без регулярки: шукаємо літерал t('…') посимвольно — так простіше й надійніше, ніж
+    // екранувати лапки в патерні. Перед «t» має стояти не-ідентифікатор, інакше зловимо sort('…').
+    let i = code.indexOf(MARK);
+    while (i >= 0) {
+      const before = i > 0 ? code[i - 1] : ' ';
+      const close = code.indexOf(END, i + MARK.length);
+      const raw = close < 0 ? '' : code.slice(i + MARK.length, close);
+      if (close >= 0 && !/[A-Za-z0-9_$.]/.test(before) && !raw.includes(NL) && isUkr(raw)) {
+        const hash = srcHash(raw);
+        if (!seen.has(hash)) {
+          seen.add(hash);
+          out.push({ hash, file: f.split(SEP).join('/'), path: 't()', src: raw });
+        }
+      }
+      i = code.indexOf(MARK, i + MARK.length);
+    }
+  }
+  return out;
+}
+
+function srcFiles(dir: string): string[] {
+  const out: string[] = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) out.push(...srcFiles(p));
+    else if (/\.(ts|tsx)$/.test(e.name)) out.push(p);
   }
   return out;
 }

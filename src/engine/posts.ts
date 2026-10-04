@@ -6,7 +6,7 @@
 // историю, чтобы за сезон один твит не читался дважды.
 
 import postsJsonRaw from '../content/posts.json';
-import { tr } from '../content/i18n';
+import { tr, LANG } from '../content/i18n';
 // Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
 const postsJson = tr(postsJsonRaw);
 import { pickFresh } from './flavor';
@@ -217,6 +217,12 @@ export type Post = {
 /** Порядковое «хвилина» в називному («62-га», «6-та», «41-ша», «40-ва») и знахідному («62-гу», «6-ту»). */
 export function minuteOrdinal(n: number, kase: 'nom' | 'acc' = 'nom'): string {
   const d = n % 10, dd = n % 100;
+  // Англійська (M47): відмінка немає, суфікс один — st / nd / rd / th. Це той випадок, коли
+  // перекласти рядок не можна: форму слова будує код, і для другої мови потрібна своя гілка.
+  if (LANG === 'en') {
+    if (dd >= 11 && dd <= 13) return `${n}th`;
+    return `${n}${d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th'}`;
+  }
   let end: string;
   if (dd >= 11 && dd <= 19) end = kase === 'nom' ? 'та' : 'ту';
   else if (n === 40) end = kase === 'nom' ? 'ва' : 'ву';

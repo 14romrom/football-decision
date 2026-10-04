@@ -8,15 +8,16 @@
 
 import { BALANCE } from './balance';
 import { attrMod } from './attr';
+import { t } from '../content/i18n';
 import type { EpisodeOption, MatchState, Player, VoiceKey, VoiceTrace } from './types';
 
 export const VOICE_LABEL: Record<VoiceKey, string> = {
-  ego: 'Его',
-  team: 'Команда',
-  composure: 'Спокій',
-  vision: 'Бачення',
-  instinct: 'Інстинкт',
-  body: 'Тіло',
+  ego: t('Его'),
+  team: t('Команда'),
+  composure: t('Спокій'),
+  vision: t('Бачення'),
+  instinct: t('Інстинкт'),
+  body: t('Тіло'),
 };
 
 export function initVoiceTrace(): VoiceTrace {

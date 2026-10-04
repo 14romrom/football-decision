@@ -7,6 +7,7 @@
 import { makeRng, type Rng } from './rng';
 import { BALANCE } from './balance';
 import type { Period, Strength } from './conditions';
+import { t } from '../content/i18n';
 
 export const US = 'us';
 export const SEASON_ROUNDS = 10;
@@ -82,9 +83,12 @@ export const LEAGUE_SIZE = 6;
 // матчами: нагору йде стільки команд, яке місце у «Вальмари», але з нами в наступну лігу переходять максимум
 // двоє інших (PROMOTED_WITH) — інакше «нова ліга» була б старою.
 export type League = { name: string; nameGen: string; nameLoc: string; short: string };
+// Чотири форми — українські: родовий і місцевий відмінки назви ліги. В англійській форма одна,
+// і всі чотири поля сходяться в неї; окремої гілки коду для цього не треба — досить перекласти
+// кожну форму в той самий рядок (M47).
 export const LEAGUES: Record<number, League> = {
-  1: { name: 'Друга ліга', nameGen: 'другої ліги', nameLoc: 'другій лізі', short: 'друга' },
-  2: { name: 'Вища ліга', nameGen: 'вищої ліги', nameLoc: 'вищій лізі', short: 'вища' },
+  1: { name: t('Друга ліга'), nameGen: t('другої ліги'), nameLoc: t('другій лізі'), short: t('друга') },
+  2: { name: t('Вища ліга'), nameGen: t('вищої ліги'), nameLoc: t('вищій лізі'), short: t('вища') },
 };
 export const leagueOf = (seasonNumber: number): League => LEAGUES[Math.min(seasonNumber, 2)];
 /** Прямо нагору — двоє; третє місце грає стикові з четвертим, переможець іде третім (M19). */
@@ -92,7 +96,9 @@ export const PROMOTION_SPOTS = 2;
 export const PLAYOFF_SPOTS = [3, 4];
 export const PROMOTED_WITH = 2;
 /** Місяць туру (1-based): серпень → травень із зимовою перервою після 5-го. */
-export const MONTHS = ['серпень', 'вересень', 'жовтень', 'листопад', 'грудень', 'лютий', 'березень', 'квітень', 'квітень', 'травень'];
+// Кожен місяць окремим t('…'), а не `.map(t)`: інструмент перекладу шукає саме виклик у місці
+// літерала, і рядок, схований у map, лишився б непоміченим — тобто мовчки неперекладеним.
+export const MONTHS = [t('серпень'), t('вересень'), t('жовтень'), t('листопад'), t('грудень'), t('лютий'), t('березень'), t('квітень'), t('квітень'), t('травень')];
 export const monthOfRound = (round: number): string => MONTHS[Math.max(0, Math.min(MONTHS.length - 1, round - 1))];
 /** Пора року туру (M37, 04.10): календар у грі був, і з ним не радилися — «Пляжний футбол» міг лягти
  *  в грудень, а спека випасти в лютому. Тепер місяць віддає пору, а пора вирішує дві речі: які справи

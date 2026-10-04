@@ -6,6 +6,7 @@ import { computeContext } from './context';
 import type { ApplyEffect, Episode, EpisodeOption, FlagRule, MatchState, Outcome, Player, Position, Resolution, ResultBadge, Tier } from './types';
 import type { Rng } from './rng';
 import { neutralConditions, type MatchConditions } from './conditions';
+import { t } from '../content/i18n';
 
 /** Полоса зриву: форма ризику задає ціну сміливості, майстерність викуповує одну грань
  *  (balance.ts:CATASTROPHE_MASTER). Контекст — погода, втома, суперник — її не рухає: він уже рухає
@@ -70,22 +71,22 @@ export function pickOutcome(option: EpisodeOption, res: Resolution): Outcome {
 
 /** Ярлыки, которые видит игрок. Ни одного числа — это условие эксперимента. */
 export const POSITION_LABEL: Record<Position, string> = {
-  controlled: 'упевнено',
-  risky: 'ризиковано',
-  desperate: 'відчайдушно',
+  controlled: t('упевнено'),
+  risky: t('ризиковано'),
+  desperate: t('відчайдушно'),
 };
 
 export const EFFECT_LABEL = {
-  limited: 'утримати',
-  standard: 'створити',
-  great: 'вирішити',
+  limited: t('утримати'),
+  standard: t('створити'),
+  great: t('вирішити'),
 } as const;
 
 export const TIER_LABEL: Record<Tier, string> = {
-  clean: 'Чисто',
-  cost: 'Вийшло, але…',
-  fail: 'Не вийшло',
-  badFail: 'Катастрофа',
+  clean: t('Чисто'),
+  cost: t('Вийшло, але…'),
+  fail: t('Не вийшло'),
+  badFail: t('Катастрофа'),
 };
 
 /** Ярус («Чисто»/«Вийшло, але…») — про якість спроби. Ці теги — про сам факт: що

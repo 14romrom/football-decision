@@ -4,6 +4,7 @@ import { readSlotSummary } from '../telemetry/saves';
 import { activeSlot } from '../telemetry/slots';
 import { Icon } from './icons';
 import { slotLine } from './TitleScreen';
+import { t } from '../content/i18n';
 
 // Навігація в грі (M45, 03.10, скарга тестера: «не можу вийти з матчу на головний екран»).
 // До цього вийти можна було тільки з двох екранів — титул і меню перед матчем, — а всередині матчу,
@@ -30,11 +31,11 @@ type Ask =
 
 // Підпис праворуч — короткий, бо на 375 px довгий переносить і сам рядок (плейтест 03.10).
 const ROWS: { hash: string; label: string; note: string }[] = [
-  { hash: '#/player', label: 'Картка гравця', note: 'хто ти зараз' },
-  { hash: '#/espm', label: 'Профіль на ESPM', note: 'що пишуть' },
-  { hash: '#/settings', label: 'Налаштування', note: 'кидок, екран' },
-  { hash: '#/about', label: 'Про гру', note: 'як це працює' },
-  { hash: '#/', label: 'Головна', note: 'титул, кар\'єри' },
+  { hash: '#/player', label: t('Картка гравця'), note: t('хто ти зараз') },
+  { hash: '#/espm', label: t('Профіль на ESPM'), note: t('що пишуть') },
+  { hash: '#/settings', label: t('Налаштування'), note: t('кидок, екран') },
+  { hash: '#/about', label: t('Про гру'), note: t('як це працює') },
+  { hash: '#/', label: t('Головна'), note: t('титул, кар’єри') },
 ];
 
 const when = (at: number) => new Date(at).toLocaleString('uk-UA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -92,14 +93,14 @@ export function NavMenu({ go }: Props) {
               <ul className="rows">
                 <li>
                   <button className="row" onClick={saveHere}>
-                    <span>Зберегти тут</span>
-                    <i className="row-note">{savedAt ? 'збережено' : here}</i>
+                    <span>{t('Зберегти тут')}</span>
+                    <i className="row-note">{savedAt ? t('збережено') : here}</i>
                   </button>
                 </li>
                 {save && (
                   <li>
                     <button className="row" onClick={() => setAsk({ kind: 'load', name: 'save', shot: save })}>
-                      <span>Повернутися до збереження</span>
+                      <span>{t('Повернутися до збереження')}</span>
                       <i className="row-note">{when(save.at)}</i>
                     </button>
                   </li>
@@ -107,7 +108,7 @@ export function NavMenu({ go }: Props) {
                 {auto && (
                   <li>
                     <button className="row" onClick={() => setAsk({ kind: 'load', name: 'auto', shot: auto })}>
-                      <span>Автоточка</span>
+                      <span>{t('Автоточка')}</span>
                       <i className="row-note">{auto.label}</i>
                     </button>
                   </li>
@@ -121,29 +122,29 @@ export function NavMenu({ go }: Props) {
                   </li>
                 ))}
               </ul>
-              <button className="row row-back" onClick={close}>Повернутися до гри</button>
+              <button className="row row-back" onClick={close}>{t('Повернутися до гри')}</button>
             </>)}
 
             {ask?.kind === 'leave' && (<>
-              <p className="eyebrow">Матч триває</p>
+              <p className="eyebrow">{t('Матч триває')}</p>
               <p className="nav-warn">
                 Матч ніде не зберігається. Якщо вийти зараз, його наче не було: ти повернешся на екран
                 перед матчем і зіграєш цей тур заново — з тим самим суперником, погодою і установкою.
                 Усе, що сталося на полі за сьогодні, зникне.
               </p>
-              <button className="danger-btn" onClick={confirmLeave}>Вийти, матч не зберігати</button>
-              <button className="ghost" onClick={() => setAsk(null)}>Лишитися в матчі</button>
+              <button className="danger-btn" onClick={confirmLeave}>{t('Вийти, матч не зберігати')}</button>
+              <button className="ghost" onClick={() => setAsk(null)}>{t('Лишитися в матчі')}</button>
             </>)}
 
             {ask?.kind === 'load' && (<>
-              <p className="eyebrow">Повернення до точки</p>
+              <p className="eyebrow">{t('Повернення до точки')}</p>
               <p className="nav-warn">
                 Гра відкотиться до стану «{ask.shot.label}» від {when(ask.shot.at)}. Усе, що сталося
                 після того, зникне назовсім: зіграні матчі, тижні, рішення й те, що про тебе встигли
                 написати. Далі гра піде з тієї точки — можна прожити це інакше.
               </p>
-              <button className="danger-btn" onClick={load}>Повернутися до точки</button>
-              <button className="ghost" onClick={() => setAsk(null)}>Ні, лишити як є</button>
+              <button className="danger-btn" onClick={load}>{t('Повернутися до точки')}</button>
+              <button className="ghost" onClick={() => setAsk(null)}>{t('Ні, лишити як є')}</button>
             </>)}
           </div>
         </div>

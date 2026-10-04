@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ATTRIBUTE_GROUPS, ATTRIBUTE_LABEL, type Attribute, type Player } from '../engine/types';
 import { pointEffect, type Career } from '../engine/career';
+import { t, tf } from '../content/i18n';
 
 // Показывается сразу после результата, если матч поднял уровень, и снова из меню, пока очко
 // не потрачено (career.unspentPoints). Одно очко — в один атрибут по выбору игрока, не
@@ -18,7 +19,7 @@ export function LevelUpScreen({ player, career, fromLevel, toLevel, onConfirm }:
     <div className="levelup">
       <h1>Новий рівень: {toLevel}</h1>
       <p className="muted">
-        {fromLevel === toLevel - 1 ? `Було ${fromLevel}, стало ${toLevel}.` : `Рівень ${toLevel}, непотрачених очок: ${toLevel - fromLevel} — по одному за раз.`}
+        {fromLevel === toLevel - 1 ? tf('Було {0}, стало {1}.', fromLevel, toLevel) : tf('Рівень {0}, непотрачених очок: {1} — по одному за раз.', toLevel, toLevel - fromLevel)}
         {' '}Це не тренування — це ріст: обери один атрибут, його кидок стане на +1 сильнішим назавжди, потім підтверди.
         Сильніший атрибут — гучніший голос: від «чутно» до «бачить».
       </p>
@@ -45,10 +46,10 @@ export function LevelUpScreen({ player, career, fromLevel, toLevel, onConfirm }:
       ))}
 
       <p className={selected ? 'levelup-pick' : 'levelup-pick muted'}>
-        {selected ? `Обрано: ${ATTRIBUTE_LABEL[selected]} → +1 до кидка` : 'Крок 1: натисни на атрибут. Крок 2: підтверди.'}
+        {selected ? `Обрано: ${ATTRIBUTE_LABEL[selected]} → +1 до кидка` : t('Крок 1: натисни на атрибут. Крок 2: підтверди.')}
       </p>
       <button className="primary" disabled={!selected} onClick={() => selected && onConfirm(selected)}>
-        {selected ? `Підтвердити +1 до «${ATTRIBUTE_LABEL[selected]}»` : 'Спершу обери атрибут'}
+        {selected ? `Підтвердити +1 до «${ATTRIBUTE_LABEL[selected]}»` : t('Спершу обери атрибут')}
       </button>
     </div>
   );

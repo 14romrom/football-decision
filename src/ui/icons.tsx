@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { t } from '../content/i18n';
 
 // Знаки факторов броска (решение 19.09: «иконками дополнительные характеристики»). Инлайн-SVG,
 // обводка currentColor — цвет задаёт родитель. Подбор по подписи модификатора из context.ts:
@@ -33,20 +34,20 @@ export const Icon = {
 /** Знак по подписи модификатора (context.ts). Порядок важен: «свіжість» раньше общего «сил». */
 export function modIcon(label: string, source?: string): ReactNode {
   const l = label.toLowerCase();
-  if (l.startsWith('свіжість')) return Icon.battery(false);
-  if (l.startsWith('ноги')) return Icon.battery(true);
-  if (l.startsWith('кураж')) return Icon.flame();
-  if (l.startsWith('куражу немає') || l.startsWith('без куражу')) return Icon.down();
-  if (l.startsWith('після провалу')) return Icon.down();
-  if (l.includes('нерви') || l.startsWith('спокійний')) return Icon.pulse();
-  if (l.startsWith('жовта')) return Icon.card();
-  if (l.startsWith('пошкодження') || l.startsWith('мікротравма')) return Icon.bandage();
-  if (l.includes('трибуни') || l.includes('стадіон')) return Icon.crowd();
-  if (l.includes('суперник')) return Icon.shield();
-  if (l.includes('газон')) return Icon.rain();
-  if (l.startsWith('вітер')) return Icon.wind();
-  if (l.includes('веде') || l.includes('заглушило') || l.includes('чекає на пас')) return Icon.voice();
-  if (l.includes('рідні')) return Icon.home();
-  if (l.startsWith('їхн')) return Icon.shield();
+  if (l.startsWith(t('свіжість'))) return Icon.battery(false);
+  if (l.startsWith(t('ноги'))) return Icon.battery(true);
+  if (l.startsWith(t('кураж'))) return Icon.flame();
+  if (l.startsWith(t('куражу немає')) || l.startsWith(t('без куражу'))) return Icon.down();
+  if (l.startsWith(t('після провалу'))) return Icon.down();
+  if (l.includes(t('нерви')) || l.startsWith(t('спокійний'))) return Icon.pulse();
+  if (l.startsWith(t('жовта'))) return Icon.card();
+  if (l.startsWith(t('пошкодження')) || l.startsWith(t('мікротравма'))) return Icon.bandage();
+  if (l.includes(t('трибуни')) || l.includes(t('стадіон'))) return Icon.crowd();
+  if (l.includes(t('суперник'))) return Icon.shield();
+  if (l.includes(t('газон'))) return Icon.rain();
+  if (l.startsWith(t('вітер'))) return Icon.wind();
+  if (l.includes(t('веде')) || l.includes(t('заглушило')) || l.includes(t('чекає на пас'))) return Icon.voice();
+  if (l.includes(t('рідні'))) return Icon.home();
+  if (l.startsWith(t('їхн'))) return Icon.shield();
   return source === 'field' ? Icon.shield() : Icon.dot();
 }

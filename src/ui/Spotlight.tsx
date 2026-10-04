@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { t } from '../content/i18n';
 
 // Прожектор (M12, 20.09, макет «Здобутки і підказки», варіант А, решение пользователя): підказка першого
 // матчу не абзацом у листі, а пальцем — усе гасне, крім однієї деталі (смуга варіантів, формула кидка,
@@ -19,7 +20,7 @@ type Props = { hint: Hint; target: RefObject<HTMLElement>; onDone: () => void };
 
 /** Слова-ярлики в тексті — у кольорі форми ризику чи голосу, як у дужках і на листі. */
 const KEYWORDS: [RegExp, string][] = [
-  [/вийшло, але/gi, 'kw-r'], [/упевнено/gi, 'kw-c'], [/ризиковано/gi, 'kw-r'], [/відчайдушно/gi, 'kw-d'], [/Тіло/g, 'kw-body'],
+  [/вийшло, але/gi, 'kw-rt('], [/упевнено/gi, ')kw-ct('], [/ризиковано/gi, ')kw-rt('], [/відчайдушно/gi, ')kw-dt('], [/Тіло/g, ')kw-body'],
 ];
 function renderText(text: string) {
   const out: (string | JSX.Element)[] = [];
@@ -71,8 +72,8 @@ export function Spotlight({ hint, target, onDone }: Props) {
         <b>{hint.title}</b>
         <p>{renderText(hint.text)}</p>
         <div className="spot-ok">
-          <span>{hint.step === 1 ? 'підказки можна вимкнути в налаштуваннях' : ''}</span>
-          <button type="button" onClick={onDone}>Зрозуміло</button>
+          <span>{hint.step === 1 ? t('підказки можна вимкнути в налаштуваннях') : ''}</span>
+          <button type="button" onClick={onDone}>{t('Зрозуміло')}</button>
         </div>
       </div>
     </div>,

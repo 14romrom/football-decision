@@ -7,6 +7,7 @@ import { SEASON_ROUNDS, monthOfRound } from '../engine/season';
 import { Sticker } from './Sticker';
 import { INSTRUCTION, WEATHER, toneLines } from './prematch-text';
 import { plural } from './pluralize';
+import { t } from '../content/i18n';
 
 // Екран перед матчем (28.09, макет «Екран перед матчем», варіант А «Роздягальня»): один аркуш замість
 // двох — меню кар'єри і брифінг злилися. Було: меню з карткою і турами, потім окремий екран зі станом.
@@ -62,24 +63,24 @@ export function PrematchScreen({
 
   // Плитки: коротке слово згори, наслідок під ним. Довгі пояснення лишаються прозою нижче.
   const tiles: { label: string; value: string; note: string }[] = [
-    { label: 'Форма', value: tone.title, note: tone.note.split('.')[0] + '.' },
-    { label: 'Поле', value: home ? 'Вдома' : 'Виїзд', note: home ? 'Трибуни за тебе.' : 'Свист замість підтримки.' },
-    { label: 'Погода', value: weather.title, note: weather.note },
+    { label: t('Форма'), value: tone.title, note: tone.note.split('.')[0] + '.' },
+    { label: t('Поле'), value: home ? t('Вдома') : t('Виїзд'), note: home ? t('Трибуни за тебе.') : t('Свист замість підтримки.') },
+    { label: t('Погода'), value: weather.title, note: weather.note },
   ];
 
   const about = [trait, guest].filter(Boolean).join(' ');
   const memory = [
-    lastYear?.length ? `Торік: ${lastYear.map((r) => `${r.scoreUs}:${r.scoreThem} ${r.venue === 'home' ? 'вдома' : 'на виїзді'}`).join(', ')}.` : '',
+    lastYear?.length ? `Торік: ${lastYear.map((r) => `${r.scoreUs}:${r.scoreThem} ${r.venue === 'home' ? t('вдома') : t('на виїзді')}`).join(', ')}.` : '',
     subThere ? `У їхній формі — ${subThere}, торік ваш дублер.` : '',
   ].filter(Boolean).join(' ');
 
   return (
     <div className="prematch">
       <div className="pm-head">
-        <span>Тур <b>{round}</b> з {SEASON_ROUNDS} · {monthOfRound(round)}</span>
-        {position !== null && <span>{position}-е місце · {points} {plural(points ?? 0, 'очко', 'очки', 'очок')}</span>}
+        <span>{t('Тур')} <b>{round}</b> з {SEASON_ROUNDS} · {monthOfRound(round)}</span>
+        {position !== null && <span>{position}-е місце · {points} {plural(points ?? 0, t('очко'), t('очки'), t('очок'))}</span>}
       </div>
-      <h1 className="pm-fixture">«{opponent.name.nom}»<small>{home ? 'Вдома' : 'На виїзді'}</small></h1>
+      <h1 className="pm-fixture">«{opponent.name.nom}»<small>{home ? t('Вдома') : t('На виїзді')}</small></h1>
 
       <Sticker compact player={player} career={career} season={season} dominant={dominant} onOpen={onCard} />
 
@@ -99,11 +100,11 @@ export function PrematchScreen({
         ))}
       </dl>
 
-      <p className="pm-prose"><b>Стан</b>{note}</p>
-      {about && <p className="pm-prose"><b>Суперник</b>{about}</p>}
-      {memory && <p className="pm-prose"><b>Пам’ять</b>{memory}</p>}
+      <p className="pm-prose"><b>{t('Стан')}</b>{note}</p>
+      {about && <p className="pm-prose"><b>{t('Суперник')}</b>{about}</p>}
+      {memory && <p className="pm-prose"><b>{t('Пам’ять')}</b>{memory}</p>}
 
-      <button className="primary menu-primary pm-cta" onClick={onStart}>До матчу</button>
+      <button className="primary menu-primary pm-cta" onClick={onStart}>{t('До матчу')}</button>
     </div>
   );
 }

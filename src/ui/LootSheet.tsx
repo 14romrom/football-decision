@@ -3,6 +3,7 @@ import type { LootItem } from '../engine/week';
 import type { Player, VoiceKey } from '../engine/types';
 import { VOICE_LABEL } from '../engine/voices';
 import { voiceMod } from './Sticker';
+import { t } from '../content/i18n';
 
 // Лист здобутків (M12, 20.09, макет «Здобутки і підказки», варіант Б, решение пользователя): підсумок
 // тижня і прологу — не список із галочками ручкою, а лист оповідача поверх погаслого зошита. Зошит —
@@ -28,16 +29,16 @@ type Props = {
 
 // Шість голосів, як на картці (28.09): удар пішов Его, пас — Команді, голосів без атрибута не лишилось.
 const ATTR_VOICES: VoiceKey[] = ['vision', 'instinct', 'body', 'composure', 'ego', 'team'];
-const BOX_LABEL: Record<VoiceKey, string> = { vision: 'Бачення', instinct: 'Інстинкт', body: 'Тіло', composure: 'Спокій', ego: 'Его', team: 'Команда' };
+const BOX_LABEL: Record<VoiceKey, string> = { vision: t('Бачення'), instinct: t('Інстинкт'), body: t('Тіло'), composure: t('Спокій'), ego: t('Его'), team: t('Команда') };
 /** Дві літери в кружечку: голос, або людина, або «+1» для пункту назавжди. */
 function badge(item: LootItem): { text: string; cls: string } {
   if (item.kind === 'perm') return { text: '+1', cls: 'gold' };
   if (item.kind === 'train') return { text: '▲', cls: 'train' };
-  if (item.kind === 'coach') return { text: 'ТР', cls: 'coach' };
+  if (item.kind === 'coach') return { text: t('ТР'), cls: 'coach' };
   if (item.kind === 'flag') return { text: '⚑', cls: 'flag' };
-  if (item.kind === 'person') return { text: 'ПА', cls: 'voice-team' };
+  if (item.kind === 'person') return { text: t('ПА'), cls: 'voice-team' };
   if (item.who) return { text: VOICE_LABEL[item.who].slice(0, 2).toUpperCase(), cls: `voice-${item.who}` };
-  return { text: 'ТБ', cls: 'fans' };   // трибуни
+  return { text: t('ТБ'), cls: 'fans' };   // трибуни
 }
 
 export function LootSheet({ tab, loot, before, after, empty, button, onNext }: Props) {
@@ -45,7 +46,7 @@ export function LootSheet({ tab, loot, before, after, empty, button, onNext }: P
   // Лист лягає під прожиті розвороти — довга сторінка, тому підвозимо його в кадр, як тільки він з’явився.
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { ref.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, []);
-  const words = ['', 'одна річ', 'дві речі', 'три речі', 'чотири речі', 'п’ять речей', 'шість речей', 'сім речей', 'вісім речей'];
+  const words = ['', t('одна річ'), t('дві речі'), t('три речі'), t('чотири речі'), t('п’ять речей'), t('шість речей'), t('сім речей'), t('вісім речей')];
   return (
     <div className="moment nb-sheet loot-sheet" ref={ref}><div className="scene">
       <span className="minute-tab">{tab}</span>
@@ -78,7 +79,7 @@ export function LootSheet({ tab, loot, before, after, empty, button, onNext }: P
       )}
       {n > 0 && (
         <div className="loot-card" style={{ ['--i' as string]: n }}>
-          <p className="loot-cap">У картку — скільки кожен голос додає до кубиків</p>
+          <p className="loot-cap">{t('У картку — скільки кожен голос додає до кубиків')}</p>
           {ATTR_VOICES.map((who) => {
             const was = voiceMod(who, before); const now = voiceMod(who, after);
             return <div key={who} className={`loot-box voice-${who} ${now > was ? 'up' : ''}`}>{BOX_LABEL[who]}<b>+{now}</b></div>;

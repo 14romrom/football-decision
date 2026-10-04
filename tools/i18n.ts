@@ -16,8 +16,8 @@ import { join } from 'node:path';
 
 const DIR = 'src/content';
 const MAP = join(DIR, 'i18n/en.json');
-const MARK = "t('";
-const END = "')";
+const MARKS = ["t('", "tf('"];
+const END = String.fromCharCode(39);   // закривна лапка: t('…') закінчується «')», а tf('…', x) — «',»
 const SEP = /[\\/]/;
 const NL = String.fromCharCode(10);
 
@@ -63,6 +63,7 @@ export function collect(): Row[] {
     const code = readFileSync(f, 'utf8');
     // Без регулярки: шукаємо літерал t('…') посимвольно — так простіше й надійніше, ніж
     // екранувати лапки в патерні. Перед «t» має стояти не-ідентифікатор, інакше зловимо sort('…').
+    for (const MARK of MARKS) {
     let i = code.indexOf(MARK);
     while (i >= 0) {
       const before = i > 0 ? code[i - 1] : ' ';
@@ -76,6 +77,7 @@ export function collect(): Row[] {
         }
       }
       i = code.indexOf(MARK, i + MARK.length);
+    }
     }
   }
   return out;

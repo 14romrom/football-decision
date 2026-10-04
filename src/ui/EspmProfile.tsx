@@ -5,6 +5,7 @@ import type { Player } from '../engine/types';
 import type { HistoryEntry } from '../telemetry/history';
 import { Banner } from './SeasonScreen';
 import { plural } from './pluralize';
+import { t, tf } from '../content/i18n';
 
 // Профіль гравця на ESPM (28.09, макет «Картка: було / стало») — друга половина листа персонажа.
 // Правило поділу: **картка — це ти, профіль — це те, що про тебе знає місто**. Тому тут матчі, форма,
@@ -17,10 +18,10 @@ import { plural } from './pluralize';
 // чужих клубах не існує, і вигаданий рейтинг зробив би сторінку брехливою.
 
 const POSITION_LABEL: Record<Player['position'], string> = {
-  AM: 'Атакувальний півзахисник', CM: 'Центральний півзахисник', ST: 'Нападник', LW: 'Лівий вінгер',
+  AM: t('Атакувальний півзахисник'), CM: t('Центральний півзахисник'), ST: t('Нападник'), LW: t('Лівий вінгер'),
 };
 const RESULT_CLASS: Record<HistoryEntry['result'], string> = { W: 'w', D: 'd', L: 'l' };
-const RESULT_LABEL: Record<HistoryEntry['result'], string> = { W: 'В', D: 'Н', L: 'П' };
+const RESULT_LABEL: Record<HistoryEntry['result'], string> = { W: t('В'), D: t('Н'), L: t('П') };
 
 const fmt = (n: number) => n.toFixed(1).replace('.', ',');
 
@@ -53,14 +54,14 @@ export function EspmProfile({ player, career, season, history, club, clubGen, ad
         <div className="chrome"><span className="chrome-tabs">3</span><span className="chrome-url"><b>espm.com</b>/football/players/reyes</span><span aria-hidden="true">⋮</span></div>
         <div className="espm">
           <div className="espm-mast"><span className="espm-logo"><b>ESPM</b><i>Футбол · {league.name}</i></span><span className="espm-burger" aria-hidden="true" /></div>
-          <nav className="espm-nav"><span>Головна</span><span>Таблиця</span><span className="on">Гравці</span><span>Трансфери</span><span>Відео</span></nav>
+          <nav className="espm-nav"><span>{t('Головна')}</span><span>{t('Таблиця')}</span><span className="on">{t('Гравці')}</span><span>{t('Трансфери')}</span><span>{t('Відео')}</span></nav>
           <p className="espm-crumbs">Футбол › {league.name} › «{club}» › {player.name}</p>
 
           <div className="espm-phead">
             <img src="./img/portrait.webp" width="450" height="600" alt={player.name} decoding="async" />
             <div>
               <h1>{player.name}</h1>
-              <p className="espm-pmeta">{POSITION_LABEL[player.position]} · 10 · «{club}»{row ? ` · ${row.position}-е місце` : ''}</p>
+              <p className="espm-pmeta">{POSITION_LABEL[player.position]} · 10 · «{club}»{row ? tf(' · {0}-е місце', row.position) : ''}</p>
               <span className="espm-label">{press.label}</span>
               <span className="espm-label-why">{press.why}. Ярлик редакції, не клубу.</span>
             </div>
@@ -69,10 +70,10 @@ export function EspmProfile({ player, career, season, history, club, clubGen, ad
           <div className="espm-widget">
             <h4>Сезон {season?.number ?? 1} · {league.name}</h4>
             <table className="espm-tbl espm-own">
-              <thead><tr><th>Тур</th><th>Матчі</th><th>Голи</th><th>Передачі</th><th>Оцінка</th></tr></thead>
+              <thead><tr><th>{t('Тур')}</th><th>{t('Матчі')}</th><th>{t('Голи')}</th><th>{t('Передачі')}</th><th>{t('Оцінка')}</th></tr></thead>
               <tbody>
                 <tr className="us">
-                  <td>{season ? `${Math.min(season.round + 1, SEASON_ROUNDS)} з ${SEASON_ROUNDS}` : '—'}</td>
+                  <td>{season ? tf('{0} з {1}', Math.min(season.round + 1, SEASON_ROUNDS), SEASON_ROUNDS) : '—'}</td>
                   <td>{stats?.matches ?? 0}</td>
                   <td>{stats?.goals ?? 0}</td>
                   <td>{stats?.assists ?? 0}</td>
@@ -81,20 +82,20 @@ export function EspmProfile({ player, career, season, history, club, clubGen, ad
               </tbody>
             </table>
             <p className="espm-note">
-              У кар’єрі — {career.matchesPlayed} {plural(career.matchesPlayed, 'матч', 'матчі', 'матчів')}: {wdl.W} — {wdl.D} — {wdl.L}.
-              {last ? ` Торік — ${last.position}-е місце в ${leagueOf(last.number).nameLoc}.` : ''}
+              У кар’єрі — {career.matchesPlayed} {plural(career.matchesPlayed, t('матч'), t('матчі'), t('матчів'))}: {wdl.W} — {wdl.D} — {wdl.L}.
+              {last ? tf(' Торік — {0}-е місце в {1}.', last.position, leagueOf(last.number).nameLoc) : ''}
             </p>
           </div>
 
           {form.length > 0 && (
             <div className="espm-widget">
-              <h4>Форма</h4>
+              <h4>{t('Форма')}</h4>
               <div className="espm-form">
                 {form.map((h, i) => (
                   <span key={`${h.at}-${i}`} className={RESULT_CLASS[h.result]}>{RESULT_LABEL[h.result]} {h.scoreUs}:{h.scoreThem}</span>
                 ))}
               </div>
-              <p className="espm-note">Останні матчі, зліва — найстаріший.</p>
+              <p className="espm-note">{t('Останні матчі, зліва — найстаріший.')}</p>
             </div>
           )}
 
@@ -102,7 +103,7 @@ export function EspmProfile({ player, career, season, history, club, clubGen, ad
             <div className="espm-widget">
               <h4>Бомбардири «{clubGen}»</h4>
               <p>{scorers.map(([name, g]) => `${name} — ${g}`).join(' · ')}</p>
-              <p className="espm-note">Тільки клуб: поіменної статистики по лізі сайт не веде.</p>
+              <p className="espm-note">{t('Тільки клуб: поіменної статистики по лізі сайт не веде.')}</p>
             </div>
           )}
 
@@ -111,14 +112,14 @@ export function EspmProfile({ player, career, season, history, club, clubGen, ad
               <div className="espm-kicker">{column.kicker}</div>
               <h3>{column.title}</h3>
               <p>{column.text}</p>
-              <div className="espm-by">Редакція · сьогодні</div>
+              <div className="espm-by">{t('Редакція · сьогодні')}</div>
             </div>
           )}
 
           {ads.banners[0] && <Banner ad={ads.banners[0]} dark />}
         </div>
       </div>
-      <button className="primary menu-primary" onClick={onBack}>Назад до картки</button>
+      <button className="primary menu-primary" onClick={onBack}>{t('Назад до картки')}</button>
     </div>
   );
 }

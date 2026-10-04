@@ -9,6 +9,7 @@ import { availableOptions, sceneInsights } from '../engine/match';
 import { VOICE_LABEL } from '../engine/voices';
 import { Pitch } from './Pitch';
 import { Icon } from './icons';
+import { t } from '../content/i18n';
 
 // Экран матча по макету А2 (19.09): поле целиком сверху, под ним стрічка подій як діалог —
 // старые строки гаснут и уходят под поле, — сцена (EpisodeCard) или бросок (RollView), внизу
@@ -34,7 +35,7 @@ function stateMods(episode: Episode, state: MatchState, player: Player, conditio
   for (const o of availableOptions(episode, state, player)) {
     const ctx = computeContext(state, player, o, episode.phase, conditions, flagRules);
     for (const m of ctx.mods.slice(1)) {
-      if (m.value === 0 || m.label.includes('веде')) continue;
+      if (m.value === 0 || m.label.includes(t('веде'))) continue;
       const prev = seen.get(m.label);
       if (!prev || m.value < prev.value) seen.set(m.label, m);
     }
@@ -99,16 +100,16 @@ export function MatchScreen({
           <span className="score-line">{clock}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
         </div>
         <div className={`stamina-bar ${staminaTone}`} title={`сили ${Math.round(stamina)}`} aria-hidden="true">
-          <b>сили</b><i style={{ width: `${stamina}%` }} />
+          <b>{t('сили')}</b><i style={{ width: `${stamina}%` }} />
         </div>
       </div>}
 
       {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}`}>
         <div className="tape-shade" />
         {hidden > 0 && !expanded && (
-          <button className="tape-more" onClick={() => setExpanded(true)}>{Icon.list()} ще {hidden} {hidden === 1 ? 'подія' : hidden < 5 ? 'події' : 'подій'}</button>
+          <button className="tape-more" onClick={() => setExpanded(true)}>{Icon.list()} ще {hidden} {hidden === 1 ? t('подія') : hidden < 5 ? t('події') : t('подій')}</button>
         )}
-        {expanded && <button className="tape-more" onClick={() => setExpanded(false)}>згорнути</button>}
+        {expanded && <button className="tape-more" onClick={() => setExpanded(false)}>{t('згорнути')}</button>}
         {tape.map((e, i) => {
           const age = tape.length - 1 - i;   // 0 — последняя строка
           return (
@@ -118,9 +119,9 @@ export function MatchScreen({
           );
         })}
         {state.coachTrust < 30 && (
-          <p className="tape-line say say-coach"><b>Тренер</b> — дедалі частіше поглядає на брівку: там уже розминаються.</p>
+          <p className="tape-line say say-coach"><b>{t('Тренер')}</b> {t('— дедалі частіше поглядає на брівку: там уже розминаються.')}</p>
         )}
-        {waiting && <button className="skip" onClick={onSkip}>далі ⟶</button>}
+        {waiting && <button className="skip" onClick={onSkip}>{t('далі ⟶')}</button>}
       </div>}
 
       {/* Карточка момента отделена от таймлайна панелью: сцена, варианты и зона «на кубик» — одно целое.
@@ -129,7 +130,7 @@ export function MatchScreen({
       {children}
 
       {!hideDiceZone && !sheet && <footer className="dice-zone">
-        <span className="dice-zone-label">на кубик</span>
+        <span className="dice-zone-label">{t('на кубик')}</span>
         <span className="chips">
           {mods.map((m) => (
             <span key={m.label} className={`chip src-${m.source} ${m.value < 0 ? 'neg' : 'pos'}`} title={m.label} aria-label={`${m.label} ${fmt(m.value)}`}>
@@ -137,9 +138,9 @@ export function MatchScreen({
             </span>
           ))}
           {insights.map((v) => (
-            <span key={v.who} className={`chip chip-insight voice-${v.who}`} title={`${VOICE_LABEL[v.who]} бачить`}>{Icon.eye()}<span>бачить</span></span>
+            <span key={v.who} className={`chip chip-insight voice-${v.who}`} title={`${VOICE_LABEL[v.who]} бачить`}>{Icon.eye()}<span>{t('бачить')}</span></span>
           ))}
-          {mods.length === 0 && insights.length === 0 && episode && <span className="chip chip-none">без поправок</span>}
+          {mods.length === 0 && insights.length === 0 && episode && <span className="chip chip-none">{t('без поправок')}</span>}
         </span>
       </footer>}
       </section>}

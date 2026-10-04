@@ -5,6 +5,7 @@ import { VOICE_LABEL } from '../engine/voices';
 import { pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 import { Icon } from './icons';
 import { motionReduced, readSettings, vibrate } from '../telemetry/settings';
+import { t } from '../content/i18n';
 
 // Кидок і результат (правка 19.09 после первой версии Г: «дубли и сложно»). Карточка строится
 // вокруг кубиков — ключевой зоны азарта: цифры бегут барабаном, первый кубик останавливается
@@ -60,8 +61,8 @@ const HAPTIC: Record<string, number | number[]> = { clean: 30, cost: [20, 40, 20
 
 /** Цвет подписи второй реплики — как у голоса на листе; тренер и трибуны — своими цветами. */
 const FLAVOR_CLASS: Record<string, string> = {
-  'ЕГО': 'voice-ego', 'КОМАНДА': 'voice-team', 'СПОКІЙ': 'voice-composure', 'БАЧЕННЯ': 'voice-vision', 'ІНСТИНКТ': 'voice-instinct', 'ТІЛО': 'voice-body',
-  'ТРЕНЕР': 'say-coach', 'ТРИБУНИ': 'say-fans',
+  [t('ЕГО')]: 'voice-ego', [t('КОМАНДА')]: 'voice-team', [t('СПОКІЙ')]: 'voice-composure', [t('БАЧЕННЯ')]: 'voice-vision', [t('ІНСТИНКТ')]: 'voice-instinct', [t('ТІЛО')]: 'voice-body',
+  [t('ТРЕНЕР')]: 'say-coach', [t('ТРИБУНИ')]: 'say-fans',
 };
 
 export function RollView({ option, res, flavor, flavorVoice, badges, continues, chained = false, onNext, onVerdict, hint }: Props) {
@@ -140,7 +141,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         {critBad && stage >= 3 && (
           <p className="crit-note">{res.dice[0]} і {res.dice[1]} — на такому ризику це катастрофа, навичка тут не рятує.</p>
         )}
-        {res.critical === 'success' && stage >= 3 && <p className="crit-note">Двадцять. Таке не пояснюють.</p>}
+        {res.critical === 'success' && stage >= 3 && <p className="crit-note">{t('Двадцять. Таке не пояснюють.')}</p>}
 
         {stage >= 3 && (
           <div className="formula" ref={formulaRef} onClick={(e) => { e.stopPropagation(); setLabels((v) => !v); }}>
@@ -165,18 +166,18 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
 
         <div ref={verdictRef}>
         {stage >= S_VERDICT && (
-          <div className={`verdict tier-${res.tier} ${critGood ? 'crit' : ''}`}>{critGood ? 'Критичний успіх' : TIER_LABEL[res.tier]}</div>
+          <div className={`verdict tier-${res.tier} ${critGood ? 'crit' : ''}`}>{critGood ? t('Критичний успіх') : TIER_LABEL[res.tier]}</div>
         )}
 
         {stage >= LAST && (
           <div className="after">
             <p className="outcome">{outcome.text}</p>
-            {flavor && <p className={`say say-second ${FLAVOR_CLASS[flavorVoice ?? 'ТРИБУНИ'] ?? ''}`}><b>{flavorVoice ?? 'ТРИБУНИ'}</b> — {flavor}</p>}
+            {flavor && <p className={`say say-second ${FLAVOR_CLASS[flavorVoice ?? t('ТРИБУНИ')] ?? ''}`}><b>{flavorVoice ?? t('ТРИБУНИ')}</b> — {flavor}</p>}
             {(option.insight || option.requires?.flags?.some((f) => f.startsWith('week_'))) && (
               <p className="origin-note">
                 {option.insight
                   ? <>{VOICE_LABEL[option.insight.who]} побачив цей варіант — без нього кнопки не було б.</>
-                  : <>Цей варіант з’явився завдяки тижню між матчами.</>}
+                  : <>{t('Цей варіант з’явився завдяки тижню між матчами.')}</>}
               </p>
             )}
             {badges && badges.length > 0 && (
@@ -186,8 +187,8 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
                 ))}
               </ul>
             )}
-            {(chained || continues) && <p className="continues">Момент триває — наступне рішення на цій же хвилині.</p>}
-            <button className="primary de-next" onClick={onNext}>{continues ? `Далі → ${continues}` : chained ? 'Далі' : 'Граємо далі'}</button>
+            {(chained || continues) && <p className="continues">{t('Момент триває — наступне рішення на цій же хвилині.')}</p>}
+            <button className="primary de-next" onClick={onNext}>{continues ? `Далі → ${continues}` : chained ? t('Далі') : t('Граємо далі')}</button>
           </div>
         )}
         </div>

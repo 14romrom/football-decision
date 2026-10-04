@@ -2,6 +2,7 @@ import type { MatchSummary } from '../engine/match';
 import type { Roster } from '../engine/names';
 import type { BoardMoment } from '../engine/board';
 import { FAMILY_SPOT, PHASE_SPOT } from './Pitch';
+import { t } from '../content/i18n';
 
 // Дошка аналітика (19.09, макет «Після матчу», кадр 1Б «магнітна дошка») — итог матча вместо
 // протокола с плитками: серо-белая магнитная доска в роздягальні, маркер Neucha (синий — разбор,
@@ -50,9 +51,9 @@ export function BoardScreen({ summary, roster, moments, round, prev, onNext }: P
   const st = summary.stats;
   const theirGoals = summary.goals.filter((g) => g.side === 'them');
   const nums: [string, number][] = [
-    ...(st.goals > 0 ? [['голів', st.goals] as [string, number]] : []),
-    ...(st.assists > 0 ? [['передач', st.assists] as [string, number]] : []),
-    ['ключових пасів', st.keyPasses], ['втрат', st.losses], ['єдиноборств', st.duelsWon], ['сили в кінці', summary.staminaLeft],
+    ...(st.goals > 0 ? [[t('голів'), st.goals] as [string, number]] : []),
+    ...(st.assists > 0 ? [[t('передач'), st.assists] as [string, number]] : []),
+    [t('ключових пасів'), st.keyPasses], [t('втрат'), st.losses], [t('єдиноборств'), st.duelsWon], [t('сили в кінці'), summary.staminaLeft],
   ];
   const lost = summary.scoreUs < summary.scoreThem;
 
@@ -85,7 +86,7 @@ export function BoardScreen({ summary, roster, moments, round, prev, onNext }: P
               </g>
             );
           })}
-          <text className="wb-dir" x="12" y="140">МИ →</text>
+          <text className="wb-dir" x="12" y="140">{t('МИ →')}</text>
         </svg>
 
         <ul className="wb-notes mk">
@@ -94,20 +95,20 @@ export function BoardScreen({ summary, roster, moments, round, prev, onNext }: P
               <span>{m.minute}′</span><span>{telegraph(m)}{m.concede || m.goal ? `. ${m.score.us}:${m.score.them}` : ''}</span>
             </li>
           ))}
-          {moments.length === 0 && <li><span>90′</span><span>Розбирати нема чого — рівний матч</span></li>}
+          {moments.length === 0 && <li><span>90′</span><span>{t('Розбирати нема чого — рівний матч')}</span></li>}
         </ul>
 
         <div className="wb-rating mk">
-          <div className="big black">{fmt(summary.coachRating)}<small>оцінка тренера</small></div>
+          <div className="big black">{fmt(summary.coachRating)}<small>{t('оцінка тренера')}</small></div>
           <div className="nums black">
             {nums.map(([label, value]) => <span key={label}>{label} — {value}</span>)}
           </div>
         </div>
 
-        <div className="wb-sticky">з трибун<b>{fmt(summary.fanRating)}</b></div>
+        <div className="wb-sticky">{t('з трибун')}<b>{fmt(summary.fanRating)}</b></div>
         <div className="wb-tray" aria-hidden="true" /><div className="wb-pen" aria-hidden="true" /><div className="wb-sponge" aria-hidden="true" />
       </div>
-      <button className="primary menu-primary" onClick={onNext}>Далі</button>
+      <button className="primary menu-primary" onClick={onNext}>{t('Далі')}</button>
     </div>
   );
 }

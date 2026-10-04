@@ -5,6 +5,7 @@ import type { Career } from '../engine/career';
 import { ourRow, SEASON_ROUNDS, type Season } from '../engine/season';
 import { VOICES } from './voices-text';
 import { plural } from './pluralize';
+import { t } from '../content/i18n';
 
 // Стикер персонажа (19.09, макет «Картка гравця: було / стало») — по карточке архетипа Disco Elysium:
 // портрет в рамке, чёрная плашка с именем, реплика доминантного голоса, четыре бокса — четыре
@@ -12,9 +13,9 @@ import { plural } from './pluralize';
 // слушаешь чаще всех. Полный — шапка картки, компактный — меню кар’єри (тап открывает картку).
 
 const POSITION_LABEL: Record<Player['position'], string> = {
-  AM: 'атакувальний півзахисник', CM: 'центральний півзахисник', ST: 'нападник', LW: 'лівий вінгер',
+  AM: t('атакувальний півзахисник'), CM: t('центральний півзахисник'), ST: t('нападник'), LW: t('лівий вінгер'),
 };
-const BOX_LABEL: Record<VoiceKey, string> = { vision: 'Бач', instinct: 'Інст', body: 'Тіло', composure: 'Спокій', ego: 'Его', team: 'Ком' };
+const BOX_LABEL: Record<VoiceKey, string> = { vision: t('Бач'), instinct: t('Інст'), body: t('Тіло'), composure: t('Спокій'), ego: t('Его'), team: t('Ком') };
 /** Шесть боксов, а не четыре (28.09): удар ушёл Его, пас — Команді, и голосов без атрибута не осталось
  *  (ui/voices-text.ts). Заливка — только у тех, кто `voiceSees`: Его і Команда бачать за станом матчу,
  *  не за силою атрибута, тому їхні бокси не заливаються ніколи. */
@@ -66,7 +67,7 @@ export function Sticker({ player, career, season, club, dominant, compact, brief
 
   if (compact) {
     return (
-      <Tag className="stk stk-compact" onClick={onOpen} aria-label={onOpen ? 'Картка гравця' : undefined}>
+      <Tag className="stk stk-compact" onClick={onOpen} aria-label={onOpen ? t('Картка гравця') : undefined}>
         <span className="stk-frame"><img src="./img/portrait.webp" width="450" height="600" alt="" decoding="async" /></span>
         <span className="stk-side">
           <span className="stk-band">{player.name}</span>
@@ -83,18 +84,18 @@ export function Sticker({ player, career, season, club, dominant, compact, brief
       <p className="stk-role">{POSITION_LABEL[player.position]}{club ? ` «${club}»` : ''} · 10</p>
       {about
         ? <p className={`stk-motto voice-${dominant}`}><b>{VOICE_LABEL[dominant!]}</b> — {about.about}</p>
-        : <p className="stk-motto muted">Голос ще не визначився — послухай когось кілька разів.</p>}
+        : <p className="stk-motto muted">{t('Голос ще не визначився — послухай когось кілька разів.')}</p>}
       {brief ? null : boxes}
       {brief ? null : (
         <p className={`stk-sig ${heard ? `voice-${heard.who}` : 'muted'}`}>
-          {heard ? <>+ {VOICE_LABEL[heard.who]}<small>голос, який слухаєш: {heard.n} із {heard.total} {plural(heard.total, 'разу', 'разів', 'разів')}</small></> : <>+ ?<small>голос, який слухаєш, — після першого матчу</small></>}
+          {heard ? <>+ {VOICE_LABEL[heard.who]}<small>голос, який слухаєш: {heard.n} із {heard.total} {plural(heard.total, t('разу'), t('разів'), t('разів'))}</small></> : <>+ ?<small>{t('голос, який слухаєш, — після першого матчу')}</small></>}
         </p>
       )}
       {brief ? null : (
         <dl className="stk-fields">
-          <div><dt>Матчів</dt><dd>{career?.matchesPlayed ?? 0}</dd></div>
-          <div><dt>Сезон</dt><dd>{season ? `${season.number}, тур ${Math.min(season.round + 1, SEASON_ROUNDS)}` : '—'}</dd></div>
-          <div><dt>Місце</dt><dd>{row ? `${row.position}-е` : '—'}</dd></div>
+          <div><dt>{t('Матчів')}</dt><dd>{career?.matchesPlayed ?? 0}</dd></div>
+          <div><dt>{t('Сезон')}</dt><dd>{season ? `${season.number}, тур ${Math.min(season.round + 1, SEASON_ROUNDS)}` : '—'}</dd></div>
+          <div><dt>{t('Місце')}</dt><dd>{row ? `${row.position}-е` : '—'}</dd></div>
         </dl>
       )}
     </header>

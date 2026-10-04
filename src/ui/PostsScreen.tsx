@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { agoLabel, countLabel, type Post, type PostAccount, type ReplyOption } from '../engine/posts';
+import { t } from '../content/i18n';
 
 // Стрічка між матчами — пародія на твіттер, тепер і за формою (19.09, макет «Стрічка як застосунок»,
 // решение пользователя): застосунок «Y» (то, что пришло после X — оммаж в один символ, как ESPM), без
@@ -73,7 +74,7 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
     <div className="result posts">
       <div className="x-app">
         <div className="x-top"><Avatar self /><span className="x-logo" aria-label="Y">Y</span><span className="x-gear" aria-hidden="true" /></div>
-        <div className="x-tabs"><span className="on">Для тебе</span><span>Підписки</span></div>
+        <div className="x-tabs"><span className="on">{t('Для тебе')}</span><span>{t('Підписки')}</span></div>
 
         {posts.map((p, i) => {
           const when = p.kind === 'live' && p.liveMinute !== undefined ? undefined : agoLabel(p.hoursAgo);
@@ -86,9 +87,9 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
               <div className="x-body">
                 <Name account={p.account} when={when} />
                 {p.kind === 'live' && p.liveMinute !== undefined && <span className="x-live">{p.liveMinute}′ · наживо</span>}
-                {p.kind === 'promo' && <span className="x-ad">Реклама</span>}
+                {p.kind === 'promo' && <span className="x-ad">{t('Реклама')}</span>}
                 {p.kind === 'deleted'
-                  ? <p className="x-tx x-del">Цей пост видалено автором.</p>
+                  ? <p className="x-tx x-del">{t('Цей пост видалено автором.')}</p>
                   : <p className="x-tx">{p.text}</p>}
                 {p.poll && (
                   <div className="x-poll">
@@ -116,15 +117,15 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
                 <>
                   <Avatar self />
                   <div className="x-body x-sub x-compose">
-                    <div className="x-ph">{draft && draft.index === i ? draft.option.text : 'Напиши відповідь'}</div>
+                    <div className="x-ph">{draft && draft.index === i ? draft.option.text : t('Напиши відповідь')}</div>
                     <div className="x-opts">
                       {p.replyOptions!.map((o, k) => (
                         <button key={k} type="button" className={draft?.index === i && draft.option === o ? 'on' : ''} onClick={() => setDraft({ index: i, option: o })}>{o.text}</button>
                       ))}
-                      <button type="button" className="skip" onClick={() => setReplied({ index: i, option: { text: '', reaction: '', effect: { note: '' } }, tags: [] })}>Не відповідати</button>
+                      <button type="button" className="skip" onClick={() => setReplied({ index: i, option: { text: '', reaction: '', effect: { note: '' } }, tags: [] })}>{t('Не відповідати')}</button>
                     </div>
                     <button type="button" className="x-post-btn" disabled={!(draft && draft.index === i)}
-                      onClick={() => { if (draft && draft.index === i) setReplied({ index: i, option: draft.option, tags: onReply(p, draft.option) }); }}>Опублікувати</button>
+                      onClick={() => { if (draft && draft.index === i) setReplied({ index: i, option: draft.option, tags: onReply(p, draft.option) }); }}>{t('Опублікувати')}</button>
                   </div>
                 </>
               )}
@@ -152,7 +153,7 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
           );
         })}
       </div>
-      <button className="primary menu-primary" onClick={onNext}>Закрити стрічку</button>
+      <button className="primary menu-primary" onClick={onNext}>{t('Закрити стрічку')}</button>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Film } from './Film';
 import { PLAYER, ROSTER } from '../content';
 import titleJsonRaw from '../content/title.json';
-import { tr } from '../content/i18n';
+import { tr, t, tf } from '../content/i18n';
 // Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
 const titleJson = tr(titleJsonRaw);
 import { makeRng } from '../engine/rng';
@@ -31,8 +31,8 @@ export function slotLine(s: SlotSummary): string {
 
 /** Хвост строки карьеры: место, очки, матчи — или клуб, пока таблицы нет. */
 export function slotTail(s: SlotSummary): string {
-  const matches = `${s.matches} ${plural(s.matches, 'матч', 'матчі', 'матчів')}`;
-  return s.position ? `${s.position}-е місце, ${s.points} ${plural(s.points, 'очко', 'очки', 'очок')}, ${matches}` : `«${ROSTER.us.name.nom}», ${matches}`;
+  const matches = `${s.matches} ${plural(s.matches, t('матч'), t('матчі'), t('матчів'))}`;
+  return s.position ? `${s.position}-е місце, ${s.points} ${plural(s.points, t('очко'), t('очки'), t('очок'))}, ${matches}` : `«${ROSTER.us.name.nom}», ${matches}`;
 }
 
 export function slotMotto(s: SlotSummary): { who: string; motto: string; key: string } | null {
@@ -43,7 +43,7 @@ export function slotMotto(s: SlotSummary): { who: string; motto: string; key: st
 
 export function buildLabel(): string {
   const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
-  return `Тестова збірка ${build}`;
+  return tf('Тестова збірка {0}', build);
 }
 
 type Props = { onContinue: () => void; onNewCareer: () => void; onSettings: () => void; onAbout: () => void };
@@ -58,9 +58,10 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
     return l;
   }, [slot]);
 
+  const surname = PLAYER.name.split(String.fromCharCode(32)).pop() ?? PLAYER.name;
   return (
     <div className="title">
-      <Film labels={{ left: [0, 1, 2].map((d) => `01A0${d}`), right: ['Inside the Box', 'тестова', `слот ${activeSlot() + 1}`] }} />
+      <Film labels={{ left: [0, 1, 2].map((d) => `01A0${d}`), right: ['Inside the Box', t('тестова'), tf('слот {0}', activeSlot() + 1)] }} />
 
       <div className="title-art" aria-hidden="true">
         <img src="./img/title.webp" width="800" height="960" alt="" decoding="async" />
@@ -74,15 +75,15 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
           </p>
         )}
         {slot.empty && (
-          <p className="title-intro">{PLAYER.name.split(' ').pop()}, десятка. Шість голосів радять, один кубик вирішує, а винен потім чомусь ти.</p>
+          <p className="title-intro">{tf('{0}, десятка. Шість голосів радять, один кубик вирішує, а винен потім чомусь ти.', surname)}</p>
         )}
 
         <div className="title-menu">
           {slot.empty ? (
-            <button className="primary title-primary" onClick={onNewCareer}>Нова кар’єра</button>
+            <button className="primary title-primary" onClick={onNewCareer}>{t('Нова кар’єра')}</button>
           ) : (
             <>
-              <button className="primary title-primary" onClick={onContinue}>Продовжити</button>
+              <button className="primary title-primary" onClick={onContinue}>{t('Продовжити')}</button>
               {/* Девиз голоса картки в строке карьеры убран (19.09, пользователь): на титуле один голос —
                   реплика над кнопкой; второй в корешке дублировал его. slotMotto остаётся для слотов. */}
               <p className="title-career">
@@ -91,9 +92,9 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
             </>
           )}
           <ul className="rows">
-            {!slot.empty && <li><button className="row" onClick={onNewCareer}>Нова кар’єра</button></li>}
-            <li><button className="row" onClick={onSettings}>Налаштування</button></li>
-            <li><button className="row" onClick={onAbout}>Про гру</button></li>
+            {!slot.empty && <li><button className="row" onClick={onNewCareer}>{t('Нова кар’єра')}</button></li>}
+            <li><button className="row" onClick={onSettings}>{t('Налаштування')}</button></li>
+            <li><button className="row" onClick={onAbout}>{t('Про гру')}</button></li>
           </ul>
           <p className="build">{buildLabel()}</p>
         </div>

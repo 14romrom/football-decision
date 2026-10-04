@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BROKEN_SHARE, FAST_DECISION_MS, choiceDistribution, clearLogs, exportLogs, readLogs } from '../telemetry/log';
 import { EPISODES } from '../content';
+import { t } from '../content/i18n';
 
 // Единственный экран, где проценты уместны: это доля выборов живых тестеров,
 // а не вероятность исхода. Ради неё телеметрия и собирается (п. 10 ТЗ).
@@ -12,19 +13,19 @@ export function StatsScreen() {
 
   return (
     <div className="stats-screen" key={version}>
-      <h1>Розподіл виборів</h1>
+      <h1>{t('Розподіл виборів')}</h1>
       <p className="muted">
         Рішень записано: {logs.length}. Епізод вважається зламаним, якщо одна опція забирає
         більше {Math.round(BROKEN_SHARE * 100)}% виборів: отже, рішення уявне і епізод треба переписати.
       </p>
 
-      {dist.length === 0 && <p className="muted">Поки порожньо — зіграйте матч.</p>}
+      {dist.length === 0 && <p className="muted">{t('Поки порожньо — зіграйте матч.')}</p>}
 
       {dist.map((e) => (
         <section key={e.episodeId} className={`ep-stats${e.broken ? ' broken' : ''}`}>
           <h2>
             {e.episodeId} <span className="muted">· {e.total} рішень</span>
-            {e.broken && <span className="broken-badge">рішення уявне</span>}
+            {e.broken && <span className="broken-badge">{t('рішення уявне')}</span>}
           </h2>
           <p className="muted setup-quote">{setups.get(e.episodeId)}</p>
           {e.options.map((o) => (
@@ -49,9 +50,9 @@ export function StatsScreen() {
       ))}
 
       <div className="actions">
-        <a className="link" href="#/settings">⟵ до налаштувань</a>
-        <button onClick={exportLogs}>Вивантажити логи</button>
-        <button onClick={() => { clearLogs(); setVersion((v) => v + 1); }}>Очистити</button>
+        <a className="link" href="#/settings">{t('⟵ до налаштувань')}</a>
+        <button onClick={exportLogs}>{t('Вивантажити логи')}</button>
+        <button onClick={() => { clearLogs(); setVersion((v) => v + 1); }}>{t('Очистити')}</button>
       </div>
     </div>
   );

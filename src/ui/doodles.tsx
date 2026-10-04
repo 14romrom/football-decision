@@ -3,6 +3,7 @@
 // зошит «жив»; місця фіксовані вздовж полів, щоб не лягати на текст. Тремтіння — фільтр #pen (feTurbulence).
 
 import type { ReactNode } from 'react';
+import { t } from '../content/i18n';
 
 const D: ReactNode[] = [
   <svg key="ball" width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" /><path d="M13 5l5 4-2 6h-6l-2-6z" /><path d="M8 9L4 8M18 9l4-1M11 15l-3 6M15 15l3 6" /></svg>,
@@ -12,7 +13,7 @@ const D: ReactNode[] = [
   <svg key="boot" width="36" height="22" viewBox="0 0 36 22"><path d="M2 14c4-6 8-8 14-6l4-4 6 2-2 6c4 2 8 4 10 8H4z" /><path d="M8 14l2 6M14 12l2 6" /></svg>,
   <svg key="smile" width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="9" /><circle cx="8" cy="9" r="1" /><circle cx="14" cy="9" r="1" /><path d="M7 14c2 3 6 3 8 0" /></svg>,
   <svg key="bolt" width="26" height="30" viewBox="0 0 26 30"><path d="M14 2l-6 14h6l-4 12 12-16h-7l5-10z" /></svg>,
-  <svg key="gol" width="44" height="26" viewBox="0 0 44 26"><text x="0" y="20" fontSize="20">ГОЛ!!</text></svg>,
+  <svg key="gol" width="44" height="26" viewBox="0 0 44 26"><text x="0" y="20" fontSize="20">{t('ГОЛ!!')}</text></svg>,
   <svg key="cup" width="30" height="30" viewBox="0 0 30 30"><path d="M6 4h18v6a9 9 0 0 1-18 0zM6 8H2v4a4 4 0 0 0 4 3M24 8h4v4a4 4 0 0 1-4 3M12 19l-1 6h8l-1-6M9 27h12" /></svg>,
   <svg key="arrow" width="28" height="14" viewBox="0 0 28 14"><path d="M2 7h20M17 2l6 5-6 5" /></svg>,
   <svg key="whistle" width="30" height="20" viewBox="0 0 30 20"><path d="M4 8h14l8-4v6l-8 2a8 8 0 1 1-14-4z" /><circle cx="11" cy="12" r="2" /></svg>,

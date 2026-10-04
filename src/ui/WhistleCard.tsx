@@ -3,17 +3,18 @@
 // («Нова кар’єра» на титулі), без підпису: це не вибір із варіантів, а один вихід (рішення користувача 20.09).
 
 import type { Whistle } from '../engine/whistle';
+import { t } from '../content/i18n';
 
 type Props = { whistle: Whistle; onNext: () => void };
 
 export function WhistleCard({ whistle, onNext }: Props) {
   return (
     <div className="scene whistle">
-      <span className="minute-tab">90′ · фінальний свисток</span>
+      <span className="minute-tab">{t('90′ · фінальний свисток')}</span>
       <p className="setup">{whistle.summary}</p>
       {whistle.promise && <p className="setup whistle-promise">{whistle.promise}</p>}
       <p className="setup whistle-crowd">{whistle.crowd}</p>
-      <button className="primary title-primary whistle-go" onClick={onNext}>Перейти в роздягальню</button>
+      <button className="primary title-primary whistle-go" onClick={onNext}>{t('Перейти в роздягальню')}</button>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { Attribute, VoiceKey } from '../engine/types';
+import { t } from '../content/i18n';
 
 // Тексты голосов — что стоит за каждым и его девиз. Одно место для картки, стикера, титула и «Про гру».
 //
@@ -12,10 +13,10 @@ import type { Attribute, VoiceKey } from '../engine/types';
 // Это список для экрана: движок голосами распоряжается сам (voices.ts). Его и Команда по-прежнему
 // не «бачать» силой атрибута — их слышно по состоянию матча (кураж, серия, доверие), см. voiceSeesNow.
 export const VOICES: { who: VoiceKey; attrs: Attribute[]; about: string; motto: string }[] = [
-  { who: 'ego', attrs: ['finishing'], about: 'Хоче м’яч. Хоче гол. Хоче, щоб бачили.', motto: 'Ти для цього тут.' },
-  { who: 'team', attrs: ['passing'], about: 'Знає, де партнер. Іноді — раніше за тебе.', motto: 'Крім тебе — нікого. І нікого, крім них.' },
-  { who: 'vision', attrs: ['vision', 'positioning'], about: 'Поле згори. Партнер відкритий за секунду до того, як відкриється.', motto: 'Не вискакуй. Подивись.' },
-  { who: 'instinct', attrs: ['dribbling', 'first_touch'], about: 'Стопи, плечі, п’яти суперника. Знає, куди він піде, раніше за нього.', motto: 'Не думай. Він уже впав.' },
-  { who: 'body', attrs: ['pace', 'stamina', 'strength'], about: 'Вага, ноги, дихання. Своє і чуже.', motto: 'Наступний стик — твій.' },
-  { who: 'composure', attrs: ['composure'], about: 'Півсекунди, яких у інших немає.', motto: 'Є час. Завжди є час.' },
+  { who: 'ego', attrs: ['finishing'], about: t('Хоче м’яч. Хоче гол. Хоче, щоб бачили.'), motto: t('Ти для цього тут.') },
+  { who: 'team', attrs: ['passing'], about: t('Знає, де партнер. Іноді — раніше за тебе.'), motto: t('Крім тебе — нікого. І нікого, крім них.') },
+  { who: 'vision', attrs: ['vision', 'positioning'], about: t('Поле згори. Партнер відкритий за секунду до того, як відкриється.'), motto: t('Не вискакуй. Подивись.') },
+  { who: 'instinct', attrs: ['dribbling', 'first_touch'], about: t('Стопи, плечі, п’яти суперника. Знає, куди він піде, раніше за нього.'), motto: t('Не думай. Він уже впав.') },
+  { who: 'body', attrs: ['pace', 'stamina', 'strength'], about: t('Вага, ноги, дихання. Своє і чуже.'), motto: t('Наступний стик — твій.') },
+  { who: 'composure', attrs: ['composure'], about: t('Півсекунди, яких у інших немає.'), motto: t('Є час. Завжди є час.') },
 ];

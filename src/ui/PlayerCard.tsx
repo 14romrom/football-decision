@@ -9,6 +9,7 @@ import { dominantCareerVoice } from '../engine/week';
 import { Sticker, voiceMod } from './Sticker';
 import { modScale, VoiceHex } from './VoiceHex';
 import { VOICES } from './voices-text';
+import { t } from '../content/i18n';
 
 // Лист персонажа (28.09, макет «Картка: було / стало»): стикер → шестикутник голосів → характеристики,
 // згруповані за голосами, → підвал із розшифровкою станів. До этого карточка была четырьмя экранами
@@ -24,7 +25,7 @@ import { VOICES } from './voices-text';
 // — сезон, кар'єра, форма и пресса уехали на профиль ESPM (ui/EspmProfile.tsx).
 
 type VoiceState = 'sees' | 'heard' | 'silent';
-const STATE_LABEL: Record<VoiceState, string> = { sees: 'бачить', heard: 'чутно', silent: 'мовчить' };
+const STATE_LABEL: Record<VoiceState, string> = { sees: t('бачить'), heard: t('чутно'), silent: t('мовчить') };
 const STATE_RANK: Record<VoiceState, number> = { sees: 2, heard: 1, silent: 0 };
 
 function attrVoiceState(who: VoiceKey, attrs: Attribute[], player: Player): VoiceState {
@@ -36,12 +37,12 @@ function attrVoiceState(who: VoiceKey, attrs: Attribute[], player: Player): Voic
 function wantsState(who: 'ego' | 'team', counts?: Record<VoiceKey, number>): { state: VoiceState; note: string } {
   const ego = counts?.ego ?? 0;
   const team = counts?.team ?? 0;
-  if (ego + team === 0) return { state: 'heard', note: 'ще не сперечалися' };
+  if (ego + team === 0) return { state: 'heard', note: t('ще не сперечалися') };
   const mine = who === 'ego' ? ego : team;
   const other = who === 'ego' ? team : ego;
-  if (mine >= other * 1.5 && mine > 0) return { state: 'sees', note: who === 'ego' ? 'перекрикує Команду' : 'перекрикує Его' };
-  if (other >= mine * 1.5) return { state: 'silent', note: who === 'ego' ? 'поступається Команді' : 'поступається Его' };
-  return { state: 'heard', note: who === 'ego' ? 'сперечається з Командою' : 'сперечається з Его' };
+  if (mine >= other * 1.5 && mine > 0) return { state: 'sees', note: who === 'ego' ? t('перекрикує Команду') : t('перекрикує Его') };
+  if (other >= mine * 1.5) return { state: 'silent', note: who === 'ego' ? t('поступається Команді') : t('поступається Его') };
+  return { state: 'heard', note: who === 'ego' ? t('сперечається з Командою') : t('сперечається з Его') };
 }
 
 type Props = {
@@ -89,10 +90,10 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
       <Sticker brief player={effective} career={career} season={season} club={club} dominant={dominant} />
 
       <VoiceHex player={effective} />
-      <p className="hex-note">Шість голосів в одних одиницях. Пунктир — кільце <i>«бачить»</i>.</p>
+      <p className="hex-note">{t('Шість голосів в одних одиницях. Пунктир — кільце')} <i>{t('«бачить»')}</i>.</p>
       {/* Одне число в рядку (рішення користувача 28.09): два плюси поруч плуталися навіть у різних
           формах. Ріст лишився тим, чим він і є, — зеленим куском полоси; риски через два моди дають міру. */}
-      <p className="rows-note">Число в рамці — <b className="m">що атрибут додає до кидка</b>. Зелене на полосі — <b className="d">що наросло від дебюту</b>.</p>
+      <p className="rows-note">{t('Число в рамці —')} <b className="m">{t('що атрибут додає до кидка')}</b>{t('. Зелене на полосі —')} <b className="d">{t('що наросло від дебюту')}</b>.</p>
 
       {groups.map((g, i) => (
         <section key={g.who} className={`vg voice-${g.who}`}>
@@ -102,7 +103,7 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
               <span className="vg-name">{VOICE_LABEL[g.who]}</span>
               <span className={`voice-state state-${g.state}`}>{g.note}</span>
               <span className="vg-spacer" />
-              <span className="vg-more">про голос</span>
+              <span className="vg-more">{t('про голос')}</span>
             </summary>
             <p className="vg-about">
               {g.about}
@@ -149,31 +150,31 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
       ))}
 
       <p className="card-summary">
-        <b>Коронне:</b> {signature.map((a) => ATTRIBUTE_LABEL[a]).join(', ')} — за це тебе знають трибуни.
-        {' '}<b>Слабке:</b> {weakest.map((a) => ATTRIBUTE_LABEL[a]).join(', ')} — тут кубик грає сам.
-        {!BALANCE.growth.levels && ' Ріст — через тиждень: три тренування одного атрибута дають +1 назавжди.'}
+        <b>{t('Коронне:')}</b> {signature.map((a) => ATTRIBUTE_LABEL[a]).join(', ')} — за це тебе знають трибуни.
+        {' '}<b>{t('Слабке:')}</b> {weakest.map((a) => ATTRIBUTE_LABEL[a]).join(', ')} — тут кубик грає сам.
+        {!BALANCE.growth.levels && t(' Ріст — через тиждень: три тренування одного атрибута дають +1 назавжди.')}
       </p>
 
       {onEspm && (
         <button className="espm-link" onClick={onEspm}>
-          <span>Профіль на <b>ESPM</b> — матчі, форма, преса</span>
+          <span>{t('Профіль на')} <b>ESPM</b> {t('— матчі, форма, преса')}</span>
           <span aria-hidden="true">›</span>
         </button>
       )}
 
       <dl className="card-legend">
-        <dt><span className="voice-state state-sees">бачить</span></dt>
-        <dd>помічає те, чого немає в сетапі, і відкриває варіант, якого інші не побачать.</dd>
-        <dt><span className="voice-state state-heard">чутно</span></dt>
-        <dd>підказує на кнопці і додає +1 до кидка.</dd>
-        <dt><span className="voice-state state-silent">мовчить</span></dt>
-        <dd>не втручається — кубик грає сам.</dd>
-        <dt><span className="voice-state state-heard">сперечається</span></dt>
-        <dd>Его і Команда не вмикаються силою атрибута: їх чути за станом матчу — кураж, серія, довіра тренера. Хто з них голосніший — за тим, кого ти слухав частіше.</dd>
-        <dd className="legend-tail">Прокачка атрибута робить голос голоснішим.</dd>
+        <dt><span className="voice-state state-sees">{t('бачить')}</span></dt>
+        <dd>{t('помічає те, чого немає в сетапі, і відкриває варіант, якого інші не побачать.')}</dd>
+        <dt><span className="voice-state state-heard">{t('чутно')}</span></dt>
+        <dd>{t('підказує на кнопці і додає +1 до кидка.')}</dd>
+        <dt><span className="voice-state state-silent">{t('мовчить')}</span></dt>
+        <dd>{t('не втручається — кубик грає сам.')}</dd>
+        <dt><span className="voice-state state-heard">{t('сперечається')}</span></dt>
+        <dd>{t('Его і Команда не вмикаються силою атрибута: їх чути за станом матчу — кураж, серія, довіра тренера. Хто з них голосніший — за тим, кого ти слухав частіше.')}</dd>
+        <dd className="legend-tail">{t('Прокачка атрибута робить голос голоснішим.')}</dd>
       </dl>
 
-      {onBack && <button className="primary" onClick={onBack}>Назад</button>}
+      {onBack && <button className="primary" onClick={onBack}>{t('Назад')}</button>}
     </div>
   );
 }

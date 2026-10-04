@@ -4,6 +4,7 @@ import type { Season } from '../engine/season';
 import type { CardDelta } from '../engine/board';
 import { VOICE_LABEL } from '../engine/voices';
 import { Sticker } from './Sticker';
+import { t } from '../content/i18n';
 
 // Картка з дельтою (19.09, макет «Після матчу», кадр 2) — что изменилось в картке за матч:
 // компактный стикер (тап — полная картка), «Що змінилось»: голоса, которые слушал, довіра
@@ -20,14 +21,14 @@ export function DeltaScreen({ player, career, season, dominant, delta, onOpenCar
   return (
     <div className="delta-screen">
       <Sticker compact player={player} career={career} season={season} dominant={dominant} onOpen={onOpenCard} />
-      <h2>Що змінилось за матч</h2>
+      <h2>{t('Що змінилось за матч')}</h2>
       {empty ? (
-        <p className="muted">Нічого. Тренер не помітив, голоси мовчали, сліду не лишилось.</p>
+        <p className="muted">{t('Нічого. Тренер не помітив, голоси мовчали, сліду не лишилось.')}</p>
       ) : (
         <dl className="delta">
           {delta.voices.length > 0 && (
             <div>
-              <dt>Голоси</dt>
+              <dt>{t('Голоси')}</dt>
               <dd>
                 {delta.voices.map(({ who, count }) => (
                   <span key={who} className="delta-voice">
@@ -41,7 +42,7 @@ export function DeltaScreen({ player, career, season, dominant, delta, onOpenCar
           )}
           {delta.trust && (
             <div>
-              <dt>Тренер</dt>
+              <dt>{t('Тренер')}</dt>
               <dd>
                 Довіра {delta.trust.from} → <span className={delta.trust.to < delta.trust.from ? 'down' : 'up'}>{delta.trust.to}</span>.{' '}
                 <span className="muted">{delta.trust.why}</span>
@@ -50,7 +51,7 @@ export function DeltaScreen({ player, career, season, dominant, delta, onOpenCar
           )}
           {delta.traces.length > 0 && (
             <div>
-              <dt>Сліди</dt>
+              <dt>{t('Сліди')}</dt>
               <dd>
                 {delta.traces.map((t, i) => (
                   <span key={i} className="delta-trace">
@@ -62,14 +63,14 @@ export function DeltaScreen({ player, career, season, dominant, delta, onOpenCar
           )}
           {delta.voiceNotes.length > 0 && (
             <div>
-              <dt>Голос</dt>
+              <dt>{t('Голос')}</dt>
               <dd>{delta.voiceNotes.map((n, i) => <span key={i} className="delta-trace">{n}</span>)}</dd>
             </div>
           )}
         </dl>
       )}
-      <p className="muted delta-hint">Тап по стикеру — повна картка.</p>
-      <button className="primary menu-primary" onClick={onNext}>Далі</button>
+      <p className="muted delta-hint">{t('Тап по стикеру — повна картка.')}</p>
+      <button className="primary menu-primary" onClick={onNext}>{t('Далі')}</button>
     </div>
   );
 }

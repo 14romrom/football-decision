@@ -7,6 +7,7 @@ import { computeContext } from '../engine/context';
 import { availableOptions, CHAIN_NEXT, sceneInsights } from '../engine/match';
 import { catastropheBand, POSITION_LABEL } from '../engine/resolve';
 import { cleanTarget } from '../engine/balance';
+import { t, tf } from '../content/i18n';
 
 // Сцена как диалог (макет А2, 19.09): сетап — строка ленты, голоса говорят до вариантов
 // («ЕГО — …», как в Disco Elysium), варианты — нумерованный список с одной скобкой
@@ -40,7 +41,7 @@ type Props = {
  *  было, падало в «далі» — та сама «Далі → далі» з плейтесту 27.09, тільки в скобці. */
 function chainHint(o: EpisodeOption): string | null {
   const target = o.outcomes.clean.apply?.followUp ?? o.outcomes.cost.apply?.followUp;
-  return target ? (CHAIN_NEXT[target] ?? 'далі') : null;
+  return target ? (CHAIN_NEXT[target] ?? t('далі')) : null;
 }
 
 export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, link, hint, onChoose }: Props) {
@@ -62,7 +63,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
     // Лист момента (макет «Екран матчу: було / стало», кадр «стало+ зі знаком», 19.09): три зоны —
     // сетап под ярлыком минуты, голоса колонкой с линией (как в сценарии), варианты с номером в ячейке.
     <div className="scene">
-      <span className="minute-tab">{minute}′{link && <i className="link-mark"> · продовження</i>}</span>
+      <span className="minute-tab">{minute}′{link && <i className="link-mark"> {t('· продовження')}</i>}</span>
       <p className="setup">{episode.setup}</p>
       {(insights.length > 0 || lines.length > 0) && (
         <div className="voices" ref={voicesRef}>
@@ -74,16 +75,16 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
           ))}
         </div>
       )}
-      <div className="hand"><span>Твій хід</span></div>
+      <div className="hand"><span>{t('Твій хід')}</span></div>
       <ol className="choices" ref={choicesRef}>
         {options.map((o, i) => {
           // Форма риска уже со сдвигами от контекста: игрок должен видеть, что надёжный
           // вариант перестал быть надёжным.
           const ctx = computeContext(state, player, o, episode.phase, conditions, flagRules);
           const chain = chainHint(o);
-          const origin = o.insight ? `відкрив ${VOICE_LABEL[o.insight.who]}`
-            : o.requires?.flags?.some((f) => f.startsWith('week_')) ? 'з тижня'
-            : o.requires?.flags?.includes('keeper_read') ? 'по підказці' : null;
+          const origin = o.insight ? tf('відкрив {0}', VOICE_LABEL[o.insight.who])
+            : o.requires?.flags?.some((f) => f.startsWith('week_')) ? t('з тижня')
+            : o.requires?.flags?.includes('keeper_read') ? t('по підказці') : null;
           return (
             <li key={o.id}>
               <button className={`choice ${o.insight ? `choice-insight voice-${o.insight.who}` : ''}`} onClick={() => onChoose(o)}>

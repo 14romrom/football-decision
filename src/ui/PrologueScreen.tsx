@@ -7,6 +7,7 @@ import { LootSheet } from './LootSheet';
 import type { WeekResult } from './WeekScreen';
 import type { VoiceKey } from '../engine/types';
 import { Film } from './Film';
+import { t } from '../content/i18n';
 
 // Пролог, відпустка, лист травня і фінал — листи оповідача на весь екран (26.09, плейтест на телефоні).
 // Було: зошит із паперу в лінійку, стікери голосів і лист усередині розвороту. Стало: **той самий лист,
@@ -45,7 +46,7 @@ type Props = {
 
 type Phase = { p: 'sheet'; page: number } | { p: 'reply'; option: PrologueOption } | { p: 'summary'; result: WeekResult };
 
-export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕРШОГО МАТЧУ', lootButton = 'На лаву', lootEmpty = 'Три розвороти — і жодної відповіді.', arc = 1, labels = { open: 'Відповісти', pick: 'Обери відповідь', confirm: 'Так і відповісти' }, firstVoice, cold = false, epilogue, film }: Props) {
+export function PrologueScreen({ spreads, onFinish, onNext, lootTab = t('ДО ПЕРШОГО МАТЧУ'), lootButton = t('На лаву'), lootEmpty = t('Три розвороти — і жодної відповіді.'), arc = 1, labels = { open: t('Відповісти'), pick: t('Обери відповідь'), confirm: t('Так і відповісти') }, firstVoice, cold = false, epilogue, film }: Props) {
   // Варіант зі станом арки (Спокій у відпустці): нижче стану — його немає, і гравець про нього не знає.
   const visible = (o: PrologueOption) => ((o as { arcMin?: number }).arcMin ?? 1) <= arc;
   const [i, setI] = useState(0);
@@ -117,7 +118,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
         {sheetCard(spread.tab, (
           <>
             <p className="setup">{cold && (o as { replyCold?: string }).replyCold ? (o as { replyCold?: string }).replyCold : o.reply}</p>
-            <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? 'Що далі' : 'Далі'}</button>
+            <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? t('Що далі') : t('Далі')}</button>
           </>
         ), false)}
       </div>
@@ -136,13 +137,13 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = 'ДО ПЕ
           {spread.head && page === 0 && <div className="head-line"><b>{spread.head}</b></div>}
           <p className="setup">{sheet[page]}</p>
           {!lastPage && (
-            <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'sheet', page: page + 1 })}>Далі</button>
+            <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'sheet', page: page + 1 })}>{t('Далі')}</button>
           )}
           {/* Лист без вибору (M35): розворот, який нічого не питає, а каже, чим усе скінчилося.
               Потрібен там, де гравець щойно отримав новину і йому треба її дочитати, а не вирішувати:
               розв’язка медогляду. Кадр лишається — варіанти за нього не борються. */}
           {lastPage && options.length === 0 && (
-            <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? 'Що далі' : 'Далі'}</button>
+            <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? t('Що далі') : t('Далі')}</button>
           )}
           {lastPage && options.length > 0 && (
             <>

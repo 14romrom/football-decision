@@ -6,6 +6,7 @@ import { useShot } from './Shot';
 import { VOICE_LABEL } from '../engine/voices';
 import { ATTRIBUTE_LABEL, type Attribute, type Player, type VoiceKey } from '../engine/types';
 import { Doodles } from './doodles';
+import { t } from '../content/i18n';
 
 // Тиждень v3: три дні, у кожному три справи — одна на день; исход уже выпавший, может вести в сцену
 // (одна на неделю); всё применяется разом в конце (onFinish → бирки). Правила — engine/week.ts.
@@ -60,7 +61,7 @@ type Phase =
   | { p: 'anchor'; scene: WeekScene; chosen?: WeekSceneOption }
   | { p: 'summary'; result: WeekResult };
 
-const DAY = ['День 1', 'День 2', 'День 3', 'День 4'];
+const DAY = [t('День 1'), t('День 2'), t('День 3'), t('День 4')];
 
 export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, anchor, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
@@ -163,14 +164,14 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
     const offers = days[d] ?? [];
     return (
       <section key={d} className="nb-day">
-        <h3>{DAY[d] ?? `День ${d + 1}`}<small>{offer ? offer.activity.title.toLowerCase() : 'нічого'}</small></h3>
+        <h3>{DAY[d] ?? `День ${d + 1}`}<small>{offer ? offer.activity.title.toLowerCase() : t('нічого')}</small></h3>
         {offers.length > 0 && (
           <div className="nb-notes compact">
             {offers.map((o) => note(o, o === offer ? 'on' : 'torn'))}
           </div>
         )}
         {offer && <p className="nb-mark">{markOf(d, withScene)}</p>}
-        {!offer && <p className="nb-mark muted-ink">— день минув. голоси запам’ятали.</p>}
+        {!offer && <p className="nb-mark muted-ink">{t('— день минув. голоси запам’ятали.')}</p>}
       </section>
     );
   };
@@ -186,14 +187,14 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
         {anchorShot.plate}
         <div className="scene">
         {/* Ярлик як у матчі, тільки замість хвилини — місце і місяць (M24). */}
-        <span className="minute-tab">{scene.tab ?? 'ПІСЛЯ ТРЕНУВАННЯ'}{month && <i className="link-mark"> · {month}</i>}</span>
+        <span className="minute-tab">{scene.tab ?? t('ПІСЛЯ ТРЕНУВАННЯ')}{month && <i className="link-mark"> · {month}</i>}</span>
         {scene.head && <div className="head-line"><b>{scene.head}</b></div>}
         <p className="setup">{scene.setup}</p>
         {chosen ? (
           <>
             <p className="nb-chosen"><b>{chosen.label}.</b> {chosen.text}</p>
             <p className="nb-aside">{chosen.effect.note}</p>
-            <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'pick' })}>День 1</button>
+            <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'pick' })}>{t('День 1')}</button>
           </>
         ) : (
           <>
@@ -204,7 +205,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
                 ))}
               </div>
             )}
-            <div className="hand"><span>Твій хід</span></div>
+            <div className="hand"><span>{t('Твій хід')}</span></div>
             <ol className="choices">
               {visible.map((o, i) => (
                 <li key={o.id}>
@@ -241,7 +242,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
             <>
               <p className="nb-chosen"><b>{chosen.label}.</b> {chosen.text}</p>
               <p className="nb-aside">{chosen.effect.note}</p>
-              <button className="primary menu-primary nb-sheet-btn" onClick={() => advance(picks)}>{last ? 'Підсумок тижня' : 'Далі'}</button>
+              <button className="primary menu-primary nb-sheet-btn" onClick={() => advance(picks)}>{last ? t('Підсумок тижня') : t('Далі')}</button>
             </>
           ) : (
             <>
@@ -252,7 +253,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
                   ))}
                 </div>
               )}
-              <div className="hand"><span>Твій хід</span></div>
+              <div className="hand"><span>{t('Твій хід')}</span></div>
               <ol className="choices">
                 {visible.map((o, i) => (
                   <li key={o.id}>
@@ -278,7 +279,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
         <span className="minute-tab">{DAY[d].toUpperCase()} · ВЕЧІР</span>
         <p className="setup">{out.text}</p>
         <p className={`nb-aside voice-${offer.activity.voice}`}><b>{voice}</b>{out.effect.note}</p>
-        <button className="primary menu-primary nb-sheet-btn" onClick={() => afterOutcome(offer)}>{sceneFor(out, scenes, seen, sceneUsed) ? 'Що далі' : last ? 'Підсумок тижня' : 'Далі'}</button>
+        <button className="primary menu-primary nb-sheet-btn" onClick={() => afterOutcome(offer)}>{sceneFor(out, scenes, seen, sceneUsed) ? t('Що далі') : last ? t('Підсумок тижня') : t('Далі')}</button>
       </div></div>
     );
   };
@@ -286,7 +287,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
   const button = (() => {
     if (phase.p === 'summary' || phase.p === 'outcome' || phase.p === 'scene' || phase.p === 'anchor') return null;   // кнопка — всередині листа
     const offers = days[day] ?? [];
-    return <button className="primary menu-primary" onClick={confirmDay}>{selected ? 'Так і зробити' : offers.length ? 'Нічого не робити сьогодні' : 'Далі'}</button>;
+    return <button className="primary menu-primary" onClick={confirmDay}>{selected ? t('Так і зробити') : offers.length ? t('Нічого не робити сьогодні') : t('Далі')}</button>;
   })();
 
   // Якір — подія на весь екран (26.09, плейтест на телефоні: усередині зошита лист стискався в
@@ -309,7 +310,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
         </svg>
         <Doodles seed={seed} />
         {locked && (
-          <div className="nb-coach"><b>Тренер</b>Місто закрите. База, відео, психолог. Місто почекає.</div>
+          <div className="nb-coach"><b>{t('Тренер')}</b>{t('Місто закрите. База, відео, психолог. Місто почекає.')}</div>
         )}
 
         {days.map((offers, d) => {
@@ -332,7 +333,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
 
           return (
             <section key={d} className="nb-day">
-              <h3>{DAY[d]}{d === 0 && <small>{locked ? 'місто закрите' : 'одна справа на день'}</small>}</h3>
+              <h3>{DAY[d]}{d === 0 && <small>{locked ? t('місто закрите') : t('одна справа на день')}</small>}</h3>
               <div className="nb-notes">
                 {offers.map((o) => note(o, selected === o.activity.id ? 'on' : 'open',
                   () => { setSelected(selected === o.activity.id ? null : o.activity.id); setTrainAttr(null); }))}

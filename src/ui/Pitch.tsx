@@ -3,6 +3,7 @@ import type { Episode, TimelineEvent } from '../engine/types';
 import { FORMATION_BY_STRENGTH, type Strength } from '../engine/conditions';
 import type { FinaleKind } from '../engine/finale';
 import { motionReduced } from '../telemetry/settings';
+import { t } from '../content/i18n';
 
 // Поле над сценою (макет А2; план анимации 19.09, три слоя). 11 на 11: наши — 4-3-3 (АПЗ — десятка),
 // соперник по силе: слабый 4-4-2, равный 4-2-3-1, сильный 4-3-3. Ми атакуємо праворуч.
@@ -241,7 +242,7 @@ export function Pitch({ episode, selfName, strength = 'even', finale, pulse, onB
         {card && <rect className={`pitch-card ${card}`} x="-3" y="-30" width="6" height="9" />}
       </g>
       <circle className="pitch-dot pitch-ball" style={at(BALL)} r="3" />
-      <text className="pitch-dir" x={PAD + 4} y={H - 4}>ми →</text>
+      <text className="pitch-dir" x={PAD + 4} y={H - 4}>{t('ми →')}</text>
     </svg>
   );
 }

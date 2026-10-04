@@ -93,20 +93,20 @@ export const TIER_LABEL: Record<Tier, string> = {
  *  саме сталося в грі. Порядок задає пріоритет; показуємо всі, що спрацювали
  *  (зазвичай 1, зрідка 2), а не тільки перший. */
 const BADGE_RULES: { test: (a: ApplyEffect) => boolean; badge: ResultBadge }[] = [
-  { test: (a) => !!a.goal, badge: { icon: '⚽', label: 'Гол!', tone: 'good' } },
-  { test: (a) => !!a.assist, badge: { icon: '🅰️', label: 'Гольова передача', tone: 'good' } },
-  { test: (a) => !!a.teamGoal, badge: { icon: '⚽', label: 'Гол команди', tone: 'good' } },
-  { test: (a) => !!a.concede, badge: { icon: '🥅', label: 'Пропущений гол', tone: 'bad' } },
-  { test: (a) => !!a.keyPass, badge: { icon: '🎯', label: 'Точний пас', tone: 'good' } },
-  { test: (a) => !!a.duelWon, badge: { icon: '💪', label: 'Виграна дуель', tone: 'good' } },
-  { test: (a) => (a.losses ?? 0) > 0, badge: { icon: '❌', label: 'Втрата м’яча', tone: 'bad' } },
-  { test: (a) => !!a.corner, badge: { icon: '🚩', label: 'Кутовий', tone: 'neutral' } },
-  { test: (a) => !!a.counterAttack, badge: { icon: '⚠️', label: 'Ризик контратаки', tone: 'bad' } },
-  { test: (a) => !!a.foul, badge: { icon: '🟨', label: 'Фол', tone: 'bad' } },
-  { test: (a) => !!a.addFlags?.includes('booked'), badge: { icon: '🟨', label: 'Жовта картка', tone: 'bad' } },
-  { test: (a) => !!a.addFlags?.includes('injured'), badge: { icon: '🤕', label: 'Пошкодження', tone: 'bad' } },
-  { test: (a) => !!a.addFlags?.includes('knock'), badge: { icon: '🩹', label: 'Мікротравма', tone: 'bad' } },
-  { test: (a) => !!a.removeFlags?.includes('knock') && !a.addFlags?.includes('injured'), badge: { icon: '🩹', label: 'Нога відпустила', tone: 'good' } },
+  { test: (a) => !!a.goal, badge: { icon: '⚽', label: t('Гол!'), tone: 'good' } },
+  { test: (a) => !!a.assist, badge: { icon: '🅰️', label: t('Гольова передача'), tone: 'good' } },
+  { test: (a) => !!a.teamGoal, badge: { icon: '⚽', label: t('Гол команди'), tone: 'good' } },
+  { test: (a) => !!a.concede, badge: { icon: '🥅', label: t('Пропущений гол'), tone: 'bad' } },
+  { test: (a) => !!a.keyPass, badge: { icon: '🎯', label: t('Точний пас'), tone: 'good' } },
+  { test: (a) => !!a.duelWon, badge: { icon: '💪', label: t('Виграна дуель'), tone: 'good' } },
+  { test: (a) => (a.losses ?? 0) > 0, badge: { icon: '❌', label: t('Втрата м’яча'), tone: 'bad' } },
+  { test: (a) => !!a.corner, badge: { icon: '🚩', label: t('Кутовий'), tone: 'neutral' } },
+  { test: (a) => !!a.counterAttack, badge: { icon: '⚠️', label: t('Ризик контратаки'), tone: 'bad' } },
+  { test: (a) => !!a.foul, badge: { icon: '🟨', label: t('Фол'), tone: 'bad' } },
+  { test: (a) => !!a.addFlags?.includes('booked'), badge: { icon: '🟨', label: t('Жовта картка'), tone: 'bad' } },
+  { test: (a) => !!a.addFlags?.includes('injured'), badge: { icon: '🤕', label: t('Пошкодження'), tone: 'bad' } },
+  { test: (a) => !!a.addFlags?.includes('knock'), badge: { icon: '🩹', label: t('Мікротравма'), tone: 'bad' } },
+  { test: (a) => !!a.removeFlags?.includes('knock') && !a.addFlags?.includes('injured'), badge: { icon: '🩹', label: t('Нога відпустила'), tone: 'good' } },
 ];
 
 export function resultBadges(apply: ApplyEffect | undefined): ResultBadge[] {

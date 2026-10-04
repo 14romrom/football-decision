@@ -301,9 +301,9 @@ export function secondSeasonVerdict(season: Season, coachTrust: number): Verdict
   const row = ourRow(season);
   const p = season.player;
   const stats = `${p.goals} голів і ${p.assists} передач`;
-  const table = row.position === 1 ? 'Чемпіон вищої ліги' : `${row.position}-е місце у вищій лізі`;
-  const tail = base.kind === 'bench' ? ' Тренер хотів би тримати тебе в шорах іще рік. Не встигне.' : base.kind === 'transfer' ? ' Тренер каже «скатертиною» — і, здається, це щиро.' : ' Тренер підписав би ще на рік. Не доведеться.';
-  return { kind: 'transfer', title: 'Дзвонить скаут', text: `${table}, ${stats} за сезон. Дзвонить той самий скаут, що два роки тому питав про ногу, — тепер із клубу, який грає в Лізі чемпіонів. Про ногу не питає.${tail}` };
+  const table = row.position === 1 ? t('Чемпіон вищої ліги') : `${row.position}-е місце у вищій лізі`;
+  const tail = base.kind === 'bench' ? t(' Тренер хотів би тримати тебе в шорах іще рік. Не встигне.') : base.kind === 'transfer' ? t(' Тренер каже «скатертиною» — і, здається, це щиро.') : t(' Тренер підписав би ще на рік. Не доведеться.');
+  return { kind: 'transfer', title: t('Дзвонить скаут'), text: `${table}, ${stats} за сезон. Дзвонить той самий скаут, що два роки тому питав про ногу, — тепер із клубу, який грає в Лізі чемпіонів. Про ногу не питає.${tail}` };
 }
 
 /** Кінець першого сезону (M15): дзвінок агента безумовний — вихід у вищу лігу помітили. Таблиця й тренер
@@ -320,8 +320,8 @@ export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict 
   const promo = promotion(season);
   const won = playoffWon(season);
   // Три гілки регламенту (M19): двійка — прямо, стики виграли — через них, решта — «за регламентом».
-  const how = promo?.kind === 'scandal' ? 'Вихід у вищу лігу — хай і за регламентом —'
-    : won === true ? 'Вихід через стикові' : 'Вихід у вищу лігу';
+  const how = promo?.kind === 'scandal' ? t('Вихід у вищу лігу — хай і за регламентом —')
+    : won === true ? t('Вихід через стикові') : t('Вихід у вищу лігу');
   let text: string;
   if (row.position <= k.transferPosition && coachTrust >= k.transferTrust) {
     text = `${row.position}-е місце, ${stats}. ${how} помітили не тільки в місті: клуб із вищої ліги хоче тебе вже влітку. Медогляд у липні. Тренер не радий — але це найкраща з його проблем.`;
@@ -330,8 +330,8 @@ export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict 
   } else {
     text = `${row.position}-е місце, ${stats}. ${how} помітили ті, хто дивиться не таблицю, а поле: клуб із вищої ліги дзвонить — не через цифри, а тому, що бачив тебе. Медогляд у липні.`;
   }
-  if (base.kind === 'bench') text += ' А новий сезон починаєш під наглядом: ' + (base.text.includes('свист') ? 'трибуни свистіли, і президент це чув.' : 'тренер не дивиться в очі.');
-  return { kind: 'transfer', title: 'Дзвонить агент', text };
+  if (base.kind === 'bench') text += t(' А новий сезон починаєш під наглядом: ') + (base.text.includes(t('свист')) ? t('трибуни свистіли, і президент це чув.') : t('тренер не дивиться в очі.'));
+  return { kind: 'transfer', title: t('Дзвонить агент'), text };
 }
 
 /** Итог сезона — две силы (M9, 20.09). Тренер: место, довіра, средняя оценка. Трибуни и протокол:
@@ -353,21 +353,21 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
   if (avgFan < k.crowdBoo) {
     return {
       kind: 'bench',
-      title: 'Розмова в кабінеті',
+      title: t('Розмова в кабінеті'),
       text: `${row.position}-е місце, ${stats}. Тренер задоволений, трибуни — ні: свист після кожного пасу назад дійшов до президента. Новий сезон починаєш під наглядом: установка від оборони, «щоб зняти напругу».`,
     };
   }
   if (row.position <= k.transferPosition && coachTrust >= k.transferTrust) {
     return {
       kind: 'transfer',
-      title: 'Дзвонить агент',
+      title: t('Дзвонить агент'),
       text: `${row.position}-е місце, ${stats} за сезон. Клуб із сильнішої ліги хоче тебе вже цієї зими. Тренер не радий — але це найкраща з його проблем.`,
     };
   }
   if (actions >= k.starActions && avgFan >= k.starFan && coachTrust >= k.starMinTrust) {
     return {
       kind: 'transfer',
-      title: 'Дзвонить агент',
+      title: t('Дзвонить агент'),
       text: `${stats} за сезон, і трибуни знають твоє прізвище краще за тренера. Клуб із сильнішої ліги дзвонить попри ${row.position}-е місце. Тренер каже «скатертиною» — і, здається, це щиро.`,
     };
   }
@@ -378,21 +378,21 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
   if (coachBenches && crowdShields) {
     return {
       kind: 'extend',
-      title: 'Продовження контракту',
+      title: t('Продовження контракту'),
       text: `${row.position}-е місце, ${stats}. Тренер хотів би посадити — але трибуни скандують твоє прізвище, і президент це чує. Контракт підписаний. Тренер — ні.`,
     };
   }
   if (coachBenches) {
-    const why = coachTrust < k.benchTrust ? 'тренер не дивиться в очі' : row.position > clubs - k.benchBottom ? 'таблиця не пробачає' : 'тренер має свої оцінки';
+    const why = coachTrust < k.benchTrust ? t('тренер не дивиться в очі') : row.position > clubs - k.benchBottom ? t('таблиця не пробачає') : t('тренер має свої оцінки');
     return {
       kind: 'bench',
-      title: 'Розмова в кабінеті',
+      title: t('Розмова в кабінеті'),
       text: `${row.position}-е місце, ${stats}, і ${why}: новий сезон починаєш під наглядом — установка від оборони, стандарти б’є інший. Дублер уже знає.`,
     };
   }
   return {
     kind: 'extend',
-    title: 'Продовження контракту',
+    title: t('Продовження контракту'),
     text: `${row.position}-е місце, ${stats}. Тренер підписує ще на рік: «Місце в основі — твоє. Поки що».`,
   };
 }

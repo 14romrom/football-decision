@@ -1,3 +1,4 @@
+import { t } from '../content/i18n';
 // Модель данных прототипа. Здесь нет React и нет случайности —
 // всё, что ниже, должно одинаково работать в браузере и в балансном прогоне.
 
@@ -9,15 +10,15 @@ export type Attribute =
   | 'composure' | 'vision' | 'positioning';
 
 export const ATTRIBUTE_GROUPS: { title: string; attrs: Attribute[] }[] = [
-  { title: 'Техніка', attrs: ['finishing', 'passing', 'dribbling', 'first_touch'] },
-  { title: 'Фізика', attrs: ['pace', 'strength', 'stamina'] },
-  { title: 'Голова', attrs: ['composure', 'vision', 'positioning'] },
+  { title: t('Техніка'), attrs: ['finishing', 'passing', 'dribbling', 'first_touch'] },
+  { title: t('Фізика'), attrs: ['pace', 'strength', 'stamina'] },
+  { title: t('Голова'), attrs: ['composure', 'vision', 'positioning'] },
 ];
 
 export const ATTRIBUTE_LABEL: Record<Attribute, string> = {
-  finishing: 'удар', passing: 'пас', dribbling: 'дриблінг', first_touch: 'перший дотик',
-  pace: 'швидкість', strength: 'корпус', stamina: 'витривалість',
-  composure: 'спокій', vision: 'бачення поля', positioning: 'позиція',
+  finishing: t('удар'), passing: t('пас'), dribbling: t('дриблінг'), first_touch: t('перший дотик'),
+  pace: t('швидкість'), strength: t('корпус'), stamina: t('витривалість'),
+  composure: t('спокій'), vision: t('бачення поля'), positioning: t('позиція'),
 };
 
 export type Player = {

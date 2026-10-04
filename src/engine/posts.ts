@@ -6,7 +6,7 @@
 // историю, чтобы за сезон один твит не читался дважды.
 
 import postsJsonRaw from '../content/posts.json';
-import { tr, LANG } from '../content/i18n';
+import { tr, LANG, t } from '../content/i18n';
 // Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
 const postsJson = tr(postsJsonRaw);
 import { pickFresh } from './flavor';
@@ -224,13 +224,13 @@ export function minuteOrdinal(n: number, kase: 'nom' | 'acc' = 'nom'): string {
     return `${n}${d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th'}`;
   }
   let end: string;
-  if (dd >= 11 && dd <= 19) end = kase === 'nom' ? 'та' : 'ту';
-  else if (n === 40) end = kase === 'nom' ? 'ва' : 'ву';
-  else if (d === 1) end = kase === 'nom' ? 'ша' : 'шу';
-  else if (d === 2) end = kase === 'nom' ? 'га' : 'гу';
-  else if (d === 3) end = kase === 'nom' ? 'тя' : 'тю';
-  else if (d === 7 || d === 8) end = kase === 'nom' ? 'ма' : 'му';
-  else end = kase === 'nom' ? 'та' : 'ту';
+  if (dd >= 11 && dd <= 19) end = kase === 'nom' ? t('та') : t('ту');
+  else if (n === 40) end = kase === 'nom' ? t('ва') : t('ву');
+  else if (d === 1) end = kase === 'nom' ? t('ша') : t('шу');
+  else if (d === 2) end = kase === 'nom' ? t('га') : t('гу');
+  else if (d === 3) end = kase === 'nom' ? t('тя') : t('тю');
+  else if (d === 7 || d === 8) end = kase === 'nom' ? t('ма') : t('му');
+  else end = kase === 'nom' ? t('та') : t('ту');
   return `${n}-${end}`;
 }
 
@@ -339,7 +339,7 @@ export function buildFeed(
         ? { account: content.accounts[pick.rule.reply.account], text: replyText }
         : undefined;
       out.push({
-        account, text: kind === 'deleted' ? 'Цей твіт видалено' : pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0, kind,
+        account, text: kind === 'deleted' ? t('Цей твіт видалено') : pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0, kind,
         ...(kind === 'poll' && pick.rule.poll ? { poll: pollResults(pick.rule.poll, rng) } : {}),
         ...(kind === 'live' && pick.rule.live ? { liveMinute: rng.int(pick.rule.live[0], pick.rule.live[1]) } : {}),
         ...(pick.rule.replyOptions ? { replyOptions: pick.rule.replyOptions.map((o) => ({ ...o, text: withMoment(o.text), reaction: withMoment(o.reaction) })) } : {}),
@@ -417,5 +417,5 @@ export function agoLabel(hours: number): string {
 
 /** «2,4 тис.» — лайки, как в твиттере. */
 export function countLabel(n: number): string {
-  return n >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + ' тис.' : String(n);
+  return n >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + t(' тис.') : String(n);
 }

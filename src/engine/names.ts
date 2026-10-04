@@ -1,3 +1,4 @@
+import { t } from '../content/i18n';
 // Подстановка имён в тексты контента. Имена партнёров и соперников не зашиты
 // в эпизоды: в карьере команда сменится, а эпизод должен остаться.
 // Падежи хранятся в ростере, потому что «віддати {partner.dat}» иначе не собрать.
@@ -62,7 +63,7 @@ function resolveName(path: string, roster: Roster, whole: string): string {
     const player = team.players[parts[0]];
     const kase = parts[1] ?? 'nom';
     if (!player || !CASES.has(kase) || parts.length > 2) {
-      throw new Error('неизвестный плейсхолдер ' + whole);
+      throw new Error(t('неизвестный плейсхолдер ') + whole);
     }
     return player[kase as keyof NameForms] as string;
 }

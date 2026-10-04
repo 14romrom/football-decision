@@ -6,6 +6,7 @@ import { BALANCE } from './balance';
 import type { MatchConditions } from './conditions';
 import type { Rng } from './rng';
 import type { MatchState, SituationWhen, Tier } from './types';
+import { t } from '../content/i18n';
 
 /** voice — кто говорит; без него голос выводится из условия (flavorVoice). */
 export type FlavorRule = { when: SituationWhen; lines: string[]; voice?: string };
@@ -64,17 +65,17 @@ export function pickFlavor(rules: FlavorRule[], state: MatchState, tier: Tier, r
  *  той же капителью, что голоса на листе, читались как мусор — одна подпись означала две разные
  *  системы). Строки предметов переподписаны голосам: партнёр — Команда, кураж/табло — Его, годинник —
  *  Спокій, суперник/суддя — Бачення, воротар суперника — Інстинкт, свой воротар — Команда. */
-export const FLAVOR_VOICES = ['ЕГО', 'КОМАНДА', 'СПОКІЙ', 'БАЧЕННЯ', 'ІНСТИНКТ', 'ТІЛО', 'ТРЕНЕР', 'ТРИБУНИ'] as const;
+export const FLAVOR_VOICES = [t('ЕГО'), t('КОМАНДА'), t('СПОКІЙ'), t('БАЧЕННЯ'), t('ІНСТИНКТ'), t('ТІЛО'), t('ТРЕНЕР'), t('ТРИБУНИ')] as const;
 
 /** Голос для правила без явного voice — по тому, на что оно реагирует. */
 export function flavorVoice(when: SituationWhen): string {
-  if (when.momentumMin !== undefined || when.momentumMax !== undefined) return 'ЕГО';
-  if (when.tired) return 'ТІЛО';
-  if (when.booked) return 'СПОКІЙ';
-  if (when.lowTrust) return 'ТРЕНЕР';
-  if (when.score) return 'ЕГО';
-  if (when.minMinute !== undefined) return 'СПОКІЙ';
-  return 'ТРИБУНИ';
+  if (when.momentumMin !== undefined || when.momentumMax !== undefined) return t('ЕГО');
+  if (when.tired) return t('ТІЛО');
+  if (when.booked) return t('СПОКІЙ');
+  if (when.lowTrust) return t('ТРЕНЕР');
+  if (when.score) return t('ЕГО');
+  if (when.minMinute !== undefined) return t('СПОКІЙ');
+  return t('ТРИБУНИ');
 }
 
 /** Семейная реплика знает сцену, общая — только счёт и минуту. Строгое «побеждает самое

@@ -136,7 +136,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
       )}
 
       <button className="row row-back" onClick={onBack}>{t('На головну')}</button>
-      <p className="build">тестова збірка · {build} · ukr</p>
+      <p className="build">{tf('тестова збірка · {0} · ukr', build)}</p>
     </div>
   );
 }

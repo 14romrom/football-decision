@@ -15,6 +15,7 @@ import type { Rng } from './rng';
 import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
 import { VOICE_LABEL, voiceSees } from './voices';
 import { attrMod } from './attr';
+import { t } from '../content/i18n';
 
 /** Условие показа — по итогам сезона и карьеры; побеждает не самое конкретное, а вес:
  *  условия здесь отсекают, а не ранжируют (в отличие от сетапов). */
@@ -385,26 +386,26 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
     for (const v of e.louder ?? []) {
       if (v === 'ego' || v === 'team') prep.voiceStreak = { who: v, count: 2 };
       for (const a of VOICE_ATTRS[v]) bump(a, 1);
-      tags.push({ text: `${VOICE_LABEL[v]} гучніше`, kind: 'voice', who: v, dir: 'up', where: 'на матч' });
+      tags.push({ text: `${VOICE_LABEL[v]} гучніше`, kind: 'voice', who: v, dir: 'up', where: t('на матч') });
     }
     for (const v of e.quieter ?? []) {
       if (v === 'ego' || v === 'team') prep.voiceMute = { ...(prep.voiceMute ?? {}), [v]: BALANCE.week.muteEpisodes };
       for (const a of VOICE_ATTRS[v]) bump(a, -1);
-      tags.push({ text: `${VOICE_LABEL[v]} тихіше`, kind: 'voice', who: v, dir: 'down', where: 'на матч' });
+      tags.push({ text: `${VOICE_LABEL[v]} тихіше`, kind: 'voice', who: v, dir: 'down', where: t('на матч') });
     }
     const start = (key: 'stamina' | 'composure' | 'fanHype' | 'momentum', label: string, delta: number) => {
       prep.start![key] = (prep.start![key] ?? 0) + delta;
-      tags.push({ text: `${label} ${delta > 0 ? '↑' : '↓'}`, kind: 'start', who: START_VOICE[key], dir: delta > 0 ? 'up' : 'down', where: 'на старт матчу' });
+      tags.push({ text: `${label} ${delta > 0 ? '↑' : '↓'}`, kind: 'start', who: START_VOICE[key], dir: delta > 0 ? 'up' : 'down', where: t('на старт матчу') });
     };
-    if (e.stamina) start('stamina', 'сили', e.stamina);
-    if (e.composure) start('composure', 'спокій', e.composure);
-    if (e.fanHype) start('fanHype', 'трибуни', e.fanHype);
-    if (e.momentum) start('momentum', 'кураж', e.momentum);
-    if (e.coachTrust) { next.coachTrust = clampTrust(next.coachTrust + e.coachTrust); tags.push({ text: e.coachTrust > 0 ? 'тренер ↑' : 'тренер ↓', kind: 'coach', dir: e.coachTrust > 0 ? 'up' : 'down', where: 'одразу' }); }
+    if (e.stamina) start('stamina', t('сили'), e.stamina);
+    if (e.composure) start('composure', t('спокій'), e.composure);
+    if (e.fanHype) start('fanHype', t('трибуни'), e.fanHype);
+    if (e.momentum) start('momentum', t('кураж'), e.momentum);
+    if (e.coachTrust) { next.coachTrust = clampTrust(next.coachTrust + e.coachTrust); tags.push({ text: e.coachTrust > 0 ? t('тренер ↑') : t('тренер ↓'), kind: 'coach', dir: e.coachTrust > 0 ? 'up' : 'down', where: t('одразу') }); }
     if (e.heal) {
       prep.healed = true;
       flags = flags.filter((f) => f.flag !== 'knock');
-      if (career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock')) tags.push({ text: 'здоровий', kind: 'heal', who: 'body', dir: 'up', where: 'на матч' });
+      if (career.injuredMatches > 0 || (career.carriedFlags ?? []).some((f) => f.flag === 'knock')) tags.push({ text: t('здоровий'), kind: 'heal', who: 'body', dir: 'up', where: t('на матч') });
     }
     const attr = e.train === 'choice' ? trainAttr : e.train;
     if (attr) {
@@ -412,10 +413,10 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
       if (n >= BALANCE.week.trainToPoint) {
         next.training![attr] = 0;
         next.attrPoints[attr] = (next.attrPoints[attr] ?? 0) + 1;
-        tags.push({ text: `${ATTRIBUTE_LABEL[attr]} +1 назавжди`, kind: 'perm', attr, dir: 'up', where: 'назавжди · у картку' });
+        tags.push({ text: `${ATTRIBUTE_LABEL[attr]} +1 назавжди`, kind: 'perm', attr, dir: 'up', where: t('назавжди · у картку') });
       } else {
         next.training![attr] = n;
-        tags.push({ text: `${ATTRIBUTE_LABEL[attr]}: ${n} з ${BALANCE.week.trainToPoint}`, kind: 'train', attr, where: 'тренування', progress: [n, BALANCE.week.trainToPoint] });
+        tags.push({ text: `${ATTRIBUTE_LABEL[attr]}: ${n} з ${BALANCE.week.trainToPoint}`, kind: 'train', attr, where: t('тренування'), progress: [n, BALANCE.week.trainToPoint] });
       }
     }
     if (e.removeFlags?.length) flags = flags.filter((f) => !e.removeFlags!.includes(f.flag));
@@ -423,7 +424,7 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
       const after = f.after ?? 0;
       const mark: Mark = { minute: 0, episodeId: activity.id, optionId: 'week', past: f.past, previousMatch: true, whenText: whenTextFor(after) };
       flags = [...flags.filter((x) => x.flag !== f.flag), { flag: f.flag, mark, ...(after > 0 ? { after } : {}) }];
-      tags.push({ text: after > 0 ? 'це ще відгукнеться' : 'відгукнеться на полі', kind: 'flag', where: after > 0 ? whenTextFor(after) : 'на полі' });
+      tags.push({ text: after > 0 ? t('це ще відгукнеться') : t('відгукнеться на полі'), kind: 'flag', where: after > 0 ? whenTextFor(after) : t('на полі') });
     }
     prep.notes!.push(e.note);
   }
@@ -434,8 +435,8 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
 
 /** «Когда» для реактивного эпизода от дела недели. */
 export function whenTextFor(after: number): string {
-  if (after <= 0) return 'ще минулого тижня';
-  const words = ['', '', 'два', 'три', 'чотири', 'п’ять'];
+  if (after <= 0) return t('ще минулого тижня');
+  const words = ['', '', t('два'), t('три'), t('чотири'), t('п’ять')];
   return `ще ${words[after + 1] ?? after + 1} тури тому`;
 }
 

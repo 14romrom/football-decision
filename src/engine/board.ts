@@ -12,6 +12,7 @@ import { pickMoments, type MatchSummary } from './match';
 import { dominantCareerVoice } from './week';
 import { voiceSees, VOICE_LABEL } from './voices';
 import { ATTRIBUTE_LABEL, type Attribute, type Episode, type MatchState, type Player, type TimelineEvent, type VoiceKey } from './types';
+import { t } from '../content/i18n';
 
 export type BoardRole = 'best' | 'turn' | 'worst';
 export type BoardMoment = {
@@ -98,16 +99,16 @@ function listened(counts: Record<VoiceKey, number>): 'ego' | 'team' | null {
   return counts.team > counts.ego ? 'team' : 'ego';
 }
 
-const ACC: Record<'ego' | 'team', string> = { ego: 'Его', team: 'Команду' };
+const ACC: Record<'ego' | 'team', string> = { ego: t('Его'), team: t('Команду') };
 
 /** Подписи следов, которые едут в следующий матч. У keeper_read нет правила модификатора
  *  (это ключ к варианту «по підказці»), поэтому подпись здесь. */
 const TRACE_LABEL: Record<string, string> = {
-  partner_trusts: 'Партнер шукає тебе',
-  partner_annoyed: 'Партнер ображений',
-  coach_flank: 'Гра піде через твій фланг',
-  sub_threat: 'Заміна дихає в спину',
-  keeper_read: 'Воротар прочитаний',
+  partner_trusts: t('Партнер шукає тебе'),
+  partner_annoyed: t('Партнер ображений'),
+  coach_flank: t('Гра піде через твій фланг'),
+  sub_threat: t('Заміна дихає в спину'),
+  keeper_read: t('Воротар прочитаний'),
 };
 
 const risky = (state: MatchState, episodes: Episode[]) => {
@@ -128,10 +129,10 @@ const plural = (n: number, one: string, few: string, many: string) =>
 function trustWhy(summary: MatchSummary, risks: number, inMatch: number, overall: number): string {
   const rating = summary.coachRating.toFixed(1).replace('.', ',');
   let why: string;
-  if (inMatch < 0) why = risks >= 3 ? `За ${rating} і ${risks} ${plural(risks, 'ризик', 'ризики', 'ризиків')}.` : `За ${rating}.`;
+  if (inMatch < 0) why = risks >= 3 ? `За ${rating} і ${risks} ${plural(risks, t('ризик'), t('ризики'), t('ризиків'))}.` : `За ${rating}.`;
   else if (inMatch > 0) why = summary.stats.goals + summary.stats.assists > 0 ? `За ${rating} і участь у голах.` : risks === 0 ? `За ${rating} — без зайвого ризику.` : `За ${rating}.`;
-  else why = 'Матч нічого не змінив.';
-  if (sign(overall) !== sign(inMatch)) why += overall > 0 ? ' До наступного туру тренер трохи відходить.' : ' До наступного туру запал тренера остигає.';
+  else why = t('Матч нічого не змінив.');
+  if (sign(overall) !== sign(inMatch)) why += overall > 0 ? t(' До наступного туру тренер трохи відходить.') : t(' До наступного туру запал тренера остигає.');
   return why;
 }
 
@@ -163,12 +164,12 @@ export function cardDelta(
     // Минута 0 — след из брифинга (аналитик про воротаря): поступок есть, минуты нет.
     traces.push({ text: label, minute: f.mark.minute > 0 ? f.mark.minute : undefined, past: f.mark.past });
   }
-  if (after.pendingSentOff && !before.pendingSentOff) traces.push({ text: 'Червона картка — наступний матч під наглядом тренера', minute: state.marks.sent_off?.minute });
+  if (after.pendingSentOff && !before.pendingSentOff) traces.push({ text: t('Червона картка — наступний матч під наглядом тренера'), minute: state.marks.sent_off?.minute });
   else if (after.careerYellows > before.careerYellows) {
     const n = after.careerYellows;
-    traces.push({ text: n >= 3 ? `Жовта — вже ${n}-я, тренер починає наступний матч насторожі` : 'Жовта картка — тренер пам’ятає', minute: state.marks.booked?.minute });
+    traces.push({ text: n >= 3 ? `Жовта — вже ${n}-я, тренер починає наступний матч насторожі` : t('Жовта картка — тренер пам’ятає'), minute: state.marks.booked?.minute });
   }
-  if (after.injuredMatches > before.injuredMatches) traces.push({ text: 'Травма — наступний матч зі свіжим болем', minute: state.marks.injured?.minute });
+  if (after.injuredMatches > before.injuredMatches) traces.push({ text: t('Травма — наступний матч зі свіжим болем'), minute: state.marks.injured?.minute });
 
   const voiceNotes: string[] = [];
   const pBefore = effectivePlayer(base, before);
@@ -186,7 +187,7 @@ export function cardDelta(
   const domBefore = dominantCareerVoice(before);
   const domAfter = dominantCareerVoice(after);
   if (domAfter && domAfter !== domBefore) voiceNotes.push(`${VOICE_LABEL[domAfter]} тепер говорить з картки.`);
-  else if (!domAfter && domBefore) voiceNotes.push('Голос картки ще не визначився — двоє нарівні.');
+  else if (!domAfter && domBefore) voiceNotes.push(t('Голос картки ще не визначився — двоє нарівні.'));
 
   return { voices, balanceNote, trust, traces, voiceNotes };
 }

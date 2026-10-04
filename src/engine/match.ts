@@ -14,6 +14,7 @@ import type {
   ApplyEffect, Episode, EpisodeMemory, EpisodeOption, FlagRule, Mark, MatchState, Player, Resolution,
   TimelineEvent, Tier, Voice, VoiceKey,
 } from './types';
+import { t } from '../content/i18n';
 
 export type MatchSession = {
   matchId: string;
@@ -300,7 +301,7 @@ export function createMatch(
   const visionReads = attrMod(player.attrs.vision) >= BALANCE.keeperRead.visionMod;
   const readsKeeper = !!roster.them.keeper && (visionReads || !!conditions.keeperTip)
     && !carried.some((f) => f.flag === 'keeper_read');
-  const keeperReadPast = conditions.keeperTip ? 'вислухав аналітика про воротаря' : 'прочитав воротаря ще на розминці';
+  const keeperReadPast = conditions.keeperTip ? t('вислухав аналітика про воротаря') : t('прочитав воротаря ще на розминці');
   const last = BALANCE.match.episodeMinutes.length - 1;
   const fieldSchedule = BALANCE.match.episodeMinutes.map((m, i) => {
     const j = BALANCE.match.minuteJitter;
@@ -476,7 +477,7 @@ function rollKnock(session: MatchSession, rng: Rng): boolean {
 function pushKnock(session: MatchSession, minute: number, rng: Rng) {
   const state = session.state;
   state.flags.push('knock');
-  state.marks.knock = { minute, episodeId: 'feed', optionId: 'knock', past: 'відчув, як тягне нога після стику' };
+  state.marks.knock = { minute, episodeId: 'feed', optionId: 'knock', past: t('відчув, як тягне нога після стику') };
   state.log.push({ minute, kind: 'filler', text: feedLine(session, 'knock', rng) + ' 🤕' });
 }
 
@@ -590,13 +591,13 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
  *  вибрав, а не групу, — «штрафний» годиться всім трьом штрафним, але кутовий від прапорця й кутовий,
  *  який подає {dm}, — це різні обіцянки. Тест у chain.test.ts перевіряє обидва списки. */
 export const CHAIN_NEXT: Record<string, string> = {
-  fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний',
-  ep_rebound_follow_up: 'добивання', ep_corner_delivery: 'подача з кутового', ep_counter_run: 'контратака',
-  ep_between_lines: 'м’яч між лініями', ep_progressive_pass: 'пас уперед', ep_edge_of_box: 'на межі штрафного',
-  ep_after_turnover: 'м’яч відібрано',
-  ep_free_kick: 'штрафний', ep_free_kick_dummy: 'штрафний', ep_corner_near_post: 'кутовий',
-  ep_corner_four_in_three: 'кутовий', ep_high_line_pass: 'контратака', ep_two_v_one_lead: 'контратака',
-  fin_shot_keeper_rush: 'удар', fin_shot_chased: 'удар',
+  fin_shot: t('удар'), fin_penalty: t('удар з позначки'), fin_penalty_wait: t('гра нервів'), ep_free_kick_close: t('штрафний'),
+  ep_rebound_follow_up: t('добивання'), ep_corner_delivery: t('подача з кутового'), ep_counter_run: t('контратака'),
+  ep_between_lines: t('м’яч між лініями'), ep_progressive_pass: t('пас уперед'), ep_edge_of_box: t('на межі штрафного'),
+  ep_after_turnover: t('м’яч відібрано'),
+  ep_free_kick: t('штрафний'), ep_free_kick_dummy: t('штрафний'), ep_corner_near_post: t('кутовий'),
+  ep_corner_four_in_three: t('кутовий'), ep_high_line_pass: t('контратака'), ep_two_v_one_lead: t('контратака'),
+  fin_shot_keeper_rush: t('удар'), fin_shot_chased: t('удар'),
 };
 
 /** Мітка приходить із тижня, прологу або відпустки, де імена ще не підставлені (плейтест 27.09:
@@ -608,7 +609,7 @@ export function fillMarkNames<M extends { past: string; whenText?: string }>(mar
 
 export function fillTrigger<T>(value: T, mark: { minute: number; past: string; previousMatch?: boolean; whenText?: string }): T {
   if (typeof value === 'string') {
-    const when = mark.whenText ?? (mark.previousMatch ? 'ще минулого матчу' : 'на ' + mark.minute + '-й');
+    const when = mark.whenText ?? (mark.previousMatch ? t('ще минулого матчу') : t('на ') + mark.minute + t('-й'));
     return value
       .replace(/\{trigger\.past\}/g, mark.past)
       .replace(/\{trigger\.minute\}/g, String(mark.minute))
@@ -647,7 +648,7 @@ function pickReactive(session: MatchSession, rng: Rng): Episode | null {
   // Слот квоты обороны реактивный эпизод занимает только оборонительным.
   const planned = session.episodes.find((e) => e.id === session.plan[i]);
   if (planned?.phase === 'defense' && chosen.phase !== 'defense') return null;
-  const mark = state.marks[chosen.requires!.flags![0]] ?? { minute: state.minute, past: 'зробив свій хід' };
+  const mark = state.marks[chosen.requires!.flags![0]] ?? { minute: state.minute, past: t('зробив свій хід') };
   session.reactiveUsed += 1;
   return withSetup(fillTrigger(chosen, fillMarkNames(mark, session.roster)), session, rng);
 }
@@ -746,7 +747,7 @@ function blowWhistle(session: MatchSession, rng: Rng): TimelineEvent[] {
   state.log.push({
     minute: 90,
     kind: 'fulltime',
-    text: 'Фінальний свисток. «' + session.roster.us.name.nom + '» — «' + session.roster.them.name.nom + '» '
+    text: t('Фінальний свисток. «') + session.roster.us.name.nom + '» — «' + session.roster.them.name.nom + '» '
       + state.scoreUs + ':' + state.scoreThem + '.',
   });
   session.whistled = true;
@@ -829,7 +830,7 @@ function chainTarget(session: MatchSession, apply: ApplyEffect | undefined, rng:
   if (!apply?.followUp) return null;
   const c = BALANCE.match.chain;
   const named = session.episodes.find((e) => e.id === apply.followUp);
-  if (!named) throw new Error('followUp «' + apply.followUp + '» не найден в пуле');
+  if (!named) throw new Error('followUp «' + apply.followUp + t('» не найден в пуле'));
   if (session.chainLinks >= c.maxLinksPerSlot) return null;
   if (session.chainLinks === 0 && session.chainsUsed >= c.maxChainsPerMatch) return null;
   const minute = session.state.minute;
@@ -871,14 +872,14 @@ function applyEffects(
   if (apply.foul) state.stats.fouls += 1;
 
   // Свой гол — по фамилии, как у партнёров: иначе персонаж в ленте безымянный (плейтест 17.09).
-  if (apply.goal) { state.stats.goals += 1; pushGoal(session, 'us', minute, rng, namedScorer(session.roster, 'us', 'self') + ' забиває — гол! ' + (state.scoreUs + 1) + ':' + state.scoreThem + '.', 'self'); }
+  if (apply.goal) { state.stats.goals += 1; pushGoal(session, 'us', minute, rng, namedScorer(session.roster, 'us', 'self') + t(' забиває — гол! ') + (state.scoreUs + 1) + ':' + state.scoreThem + '.', 'self'); }
   if (apply.assist) { state.stats.assists += 1; pushGoal(session, 'us', minute, rng, undefined, apply.scorer); }
   if (apply.teamGoal) pushGoal(session, 'us', minute, rng, undefined, apply.scorer);
 
   if (apply.concede) pushGoal(session, 'them', minute, rng, undefined, apply.scorer);
   if (apply.counterAttack && !apply.concede && rng.chance(BALANCE.counterAttackConcede)) {
     pushGoal(session, 'them', minute + 1, rng,
-      'Контратаку доводять до удару — ' + scorer(session.roster, 'them', rng) + ' не промахується. '
+      t('Контратаку доводять до удару — ') + scorer(session.roster, 'them', rng) + t(' не промахується. ')
       + state.scoreUs + ':' + (state.scoreThem + 1) + '.');
     fromCounter = true;
   }
@@ -1117,8 +1118,8 @@ export function finishMatch(session: MatchSession, rng: Rng): { events: Timeline
 function pluralSuffix(n: number): string {
   // 1 раз, 2-4 рази, 5+ разів — украинская плюрализация для маленьких чисел (n <= ~9 за матч).
   if (n % 10 === 1 && n % 100 !== 11) return '';
-  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'и';
-  return 'ів';
+  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return t('и');
+  return t('ів');
 }
 
 const TIER_WEIGHT: Record<Tier, number> = { clean: 3, badFail: 3, cost: 2, fail: 1 };
@@ -1133,11 +1134,11 @@ function importance(e: TimelineEvent): number {
 }
 
 function connective(index: number, minute: number, prevMinute: number): string {
-  if (index === 0) return 'На ' + minute + '-й';
-  if (minute >= 85) return 'На ' + minute + '-й, уже в кінцівці,';
-  if (minute - prevMinute <= 8) return 'Майже одразу, на ' + minute + '-й,';
-  if (index % 2 === 0) return 'Ближче до ' + minute + '-ї';
-  return 'Потім, на ' + minute + '-й,';
+  if (index === 0) return t('На ') + minute + t('-й');
+  if (minute >= 85) return t('На ') + minute + t('-й, уже в кінцівці,');
+  if (minute - prevMinute <= 8) return t('Майже одразу, на ') + minute + t('-й,');
+  if (index % 2 === 0) return t('Ближче до ') + minute + t('-ї');
+  return t('Потім, на ') + minute + t('-й,');
 }
 
 export function buildRecap(state: MatchState, coachRating: number, fanRating: number): string[] {
@@ -1149,17 +1150,17 @@ export function buildRecap(state: MatchState, coachRating: number, fanRating: nu
   let prev = 0;
   chosen.forEach((e, i) => {
     let line = connective(i, e.minute, prev) + ' ' + e.past + ' — ' + e.recap;
-    if (e.causedConcede) line += ' За хвилину гості цим скористалися.';
+    if (e.causedConcede) line += t(' За хвилину гості цим скористалися.');
     lines.push(line);
     prev = e.minute;
   });
 
-  const verdict = state.scoreUs > state.scoreThem ? 'Перемога' : state.scoreUs === state.scoreThem ? 'Нічия' : 'Поразка';
+  const verdict = state.scoreUs > state.scoreThem ? t('Перемога') : state.scoreUs === state.scoreThem ? t('Нічия') : t('Поразка');
   const dominant = dominantVoice(state.voices);
   const voiceNote = dominant ? ` Цього матчу найгучніше звучав ${VOICE_LABEL[dominant.who]} — ти слухав його ${dominant.count} раз${pluralSuffix(dominant.count)}.` : '';
   lines.push(
     verdict + ', ' + state.scoreUs + ':' + state.scoreThem
-    + '. Тренер поставив ' + coachRating.toFixed(1) + ', трибуни — ' + fanRating.toFixed(1) + '.' + voiceNote,
+    + t('. Тренер поставив ') + coachRating.toFixed(1) + t(', трибуни — ') + fanRating.toFixed(1) + '.' + voiceNote,
   );
   return lines;
 }

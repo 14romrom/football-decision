@@ -4,6 +4,7 @@
 
 import { FORMATION_BY_STRENGTH, type Strength } from './conditions';
 import { coachGrip } from './career';
+import { t } from '../content/i18n';
 
 export type ProgrammeInput = {
   /** Тур, который предстоит (1-based). */
@@ -33,23 +34,23 @@ export type ProgrammeInput = {
   carry?: { sentOff: boolean; yellows: boolean; injured: boolean; outOfForm?: boolean };
 };
 
-const ORD = ['', 'перший', 'другий', 'третій', 'четвертий', 'п’ятий', 'шостий', 'сьомий', 'восьмий', 'дев’ятий', 'десятий'];
-const MILESTONE: Record<number, string> = { 10: 'Десятий матч за клуб.', 25: 'Двадцять п’ятий матч за клуб.', 50: 'П’ятдесятий матч за клуб.', 100: 'Сотий матч за клуб.' };
+const ORD = ['', t('перший'), t('другий'), t('третій'), t('четвертий'), t('п’ятий'), t('шостий'), t('сьомий'), t('восьмий'), t('дев’ятий'), t('десятий')];
+const MILESTONE: Record<number, string> = { 10: t('Десятий матч за клуб.'), 25: t('Двадцять п’ятий матч за клуб.'), 50: t('П’ятдесятий матч за клуб.'), 100: t('Сотий матч за клуб.') };
 
 function lastLine(i: ProgrammeInput): string {
-  if (!i.last) return i.round === 1 ? ((i.seasonNumber ?? 1) >= 2 ? 'Перший матч у вищій лізі.' : 'Дебютує в сезоні.') : '';
+  if (!i.last) return i.round === 1 ? ((i.seasonNumber ?? 1) >= 2 ? t('Перший матч у вищій лізі.') : t('Дебютує в сезоні.')) : '';
   const { scoreUs: a, scoreThem: b, opponentGen } = i.last;
   const score = `${a}:${b}`;
-  const kind = a > b ? 'перемоги' : a < b ? 'поразки' : 'нічиєї';
-  const tail = a < b ? (b - a >= 3 ? ' виходить із бажанням реабілітуватися' : ' хоче відповісти') : a > b ? ' — на підйомі' : '';
+  const kind = a > b ? t('перемоги') : a < b ? t('поразки') : t('нічиєї');
+  const tail = a < b ? (b - a >= 3 ? t(' виходить із бажанням реабілітуватися') : t(' хоче відповісти')) : a > b ? t(' — на підйомі') : '';
   return `Після ${kind} ${score} проти «${opponentGen}»${tail}.`;
 }
 
 function formLine(i: ProgrammeInput): string {
   if (i.scoringStreak >= 2 && i.scoringStreak <= 10) return `${ORD[i.scoringStreak].charAt(0).toUpperCase() + ORD[i.scoringStreak].slice(1)} матч поспіль із результативною дією.`;
-  if (i.dryStreak >= 3) return 'Серія без результативних дій триває.';
-  if (i.confidence >= 2) return 'Серія перемог за плечима.';
-  if (i.confidence <= -2) return 'Серія поразок триває.';
+  if (i.dryStreak >= 3) return t('Серія без результативних дій триває.');
+  if (i.confidence >= 2) return t('Серія перемог за плечима.');
+  if (i.confidence <= -2) return t('Серія поразок триває.');
   return '';
 }
 
@@ -66,19 +67,19 @@ function weekLine(i: ProgrammeInput): string {
 /** Ставлення прес-служби дрейфує зі станом: до «свій» — нічого, далі — «улюбленець трибун», після зими — і про агента. */
 function arcLine(i: ProgrammeInput): string {
   // Луна дзвінка (M15 — у відпустці): «улюбленець» — тільки зі стану 3, прес-служба не поспішає.
-  const own = (i.arc ?? 1) >= 3 ? 'Улюбленець трибун. ' : '';
+  const own = (i.arc ?? 1) >= 3 ? t('Улюбленець трибун. ') : '';
   if (i.agentEcho === 'leave') return `${own}Тренер: «Кажуть, улітку мало не пішов». Не питання.`;
   if (i.agentEcho === 'stay') return `${own}Про літо тренер не сказав ні слова — це його спосіб сказати «дякую».`;
   if (i.agentEcho === 'wait') return `${own}«До зими», — сказав тренер. Він теж чув.`;
-  if ((i.arc ?? 1) >= 4) return 'Улюбленець трибун. Улітку лишився.';
-  if ((i.arc ?? 1) >= 3) return 'Улюбленець трибун.';
+  if ((i.arc ?? 1) >= 4) return t('Улюбленець трибун. Улітку лишився.');
+  if ((i.arc ?? 1) >= 3) return t('Улюбленець трибун.');
   return '';
 }
 
 function carryLine(i: ProgrammeInput): string {
   const c = i.carry;
   if (!c) return '';
-  const bits = [c.sentOff ? 'Після вилучення в минулому турі' : c.yellows ? 'Три жовті за сезон — під наглядом' : '', c.injured ? 'грає після травми' : c.outOfForm ? 'літо минуло без передсезонки — форма не та' : ''].filter(Boolean);
+  const bits = [c.sentOff ? t('Після вилучення в минулому турі') : c.yellows ? t('Три жовті за сезон — під наглядом') : '', c.injured ? t('грає після травми') : c.outOfForm ? t('літо минуло без передсезонки — форма не та') : ''].filter(Boolean);
   if (bits.length === 0) return '';
   const line = bits.join(', ');
   return line.charAt(0).toUpperCase() + line.slice(1) + '.';
@@ -86,15 +87,15 @@ function carryLine(i: ProgrammeInput): string {
 
 // Довіра тренера — словами прес-служби про тренера, не оцінкою стану гравця.
 function coachLine(i: ProgrammeInput): string {
-  if (i.benched) return 'У заявці, починає на лаві.';
-  if (i.coachTrust >= 70) return 'Тренер сумнівів не має.';
-  if (i.coachTrust >= 45) return 'Тренер придивляється.';
+  if (i.benched) return t('У заявці, починає на лаві.');
+  if (i.coachTrust >= 70) return t('Тренер сумнівів не має.');
+  if (i.coachTrust >= 45) return t('Тренер придивляється.');
   // Хватка тренера (26.09): гравець має бачити, що саме змінилося і чому — інакше «автобус» і чужі
   // стандарти читаються як випадковість. Голос той самий, прес-служби: факт, без оцінки.
   const grip = coachGrip(i.coachTrust);
-  if (grip.noSetPieces) return 'Тренер, кажуть, дав останнє попередження: стандарти цього разу б’є інший.';
-  if (grip.hold) return 'Тренер придивляється пильніше, ніж хотілося б: установка на матч — від оборони.';
-  return 'Тренер, кажуть, дав останнє попередження.';
+  if (grip.noSetPieces) return t('Тренер, кажуть, дав останнє попередження: стандарти цього разу б’є інший.');
+  if (grip.hold) return t('Тренер придивляється пильніше, ніж хотілося б: установка на матч — від оборони.');
+  return t('Тренер, кажуть, дав останнє попередження.');
 }
 
 /** Заметка «Реєс» — 2–4 короткие фразы; каждая часть опциональна, пустые не оставляют дыр. */
@@ -109,10 +110,10 @@ export function programmeNote(i: ProgrammeInput): string {
 export function coachGoalWord(seasonNumber: number, round: number, position: number, rounds: number): string | null {
   if (seasonNumber !== 1 || round < 7) return null;
   // Стикові (M19): тур поза кругом — тренер говорить не про таблицю, а про один матч.
-  if (round > rounds) return 'І ще: «Таблиця закінчилася. Лишився один матч, і в ньому немає другого шансу».';
+  if (round > rounds) return t('І ще: «Таблиця закінчилася. Лишився один матч, і в ньому немає другого шансу».');
   const left = rounds - round + 1;
-  const tail = left <= 1 ? 'Один матч.' : left === 2 ? 'Два тури.' : `${left} тури.`;
-  if (position <= 2) return left <= 1 ? 'І ще: «Ми в перших двох. До свистка це нічого не означає».' : `І ще: «Ми в перших двох. ${tail} Не відпускати».`;
+  const tail = left <= 1 ? t('Один матч.') : left === 2 ? t('Два тури.') : `${left} тури.`;
+  if (position <= 2) return left <= 1 ? t('І ще: «Ми в перших двох. До свистка це нічого не означає».') : `І ще: «Ми в перших двох. ${tail} Не відпускати».`;
   if (position <= 4) return `І ще: «Стики нікому не потрібні — ні їм, ні нам. ${tail} Перші двоє поруч».`;
   return `І ще: «Нам треба одне місце. Одне. ${tail} Я не прошу — я кажу».`;
 }
@@ -135,9 +136,9 @@ export const TRAIT_NOTE: Record<string, (side: string) => string> = {
  *  болельщика перед матчем это обычная строка программки. Голосом пресс-службы, без подсказок игроку:
  *  что означает схема, читатель знает сам. */
 const FORMATION_NOTE: Record<string, string> = {
-  '4-4-2': 'два форварди, дві лінії по чотири',
-  '4-2-3-1': 'два опорних, трійка за форвардом',
-  '4-3-3': 'трійка в центрі, вінгери високо',
+  '4-4-2': t('два форварди, дві лінії по чотири'),
+  '4-2-3-1': t('два опорних, трійка за форвардом'),
+  '4-3-3': t('трійка в центрі, вінгери високо'),
 };
 export function formationNote(strength: Strength): string {
   const f = FORMATION_BY_STRENGTH[strength];
@@ -145,7 +146,7 @@ export function formationNote(strength: Strength): string {
 }
 
 export function traitNote(traits: string[], venue: 'home' | 'away'): string | null {
-  const side = venue === 'home' ? 'гостей' : 'господарів';
+  const side = venue === 'home' ? t('гостей') : t('господарів');
   for (const t of traits) if (TRAIT_NOTE[t]) return TRAIT_NOTE[t](side);
   return null;
 }
@@ -156,7 +157,7 @@ export function traitNote(traits: string[], venue: 'home' | 'away'): string | nu
  *  тижня (`sc_hunter` у weekscenes.json) не пояснює, звідки обличчя знайоме; гравець знає, Реєс — ні, Тібо — «Хто?».
  *  Єдиний суперник з ім’ям — саме тому й помітний. Один раз за кар’єру. */
 export const HUNTER = {
-  programme: 'У їхньому складі — № 29 Алекс Хантер, 32 роки. У біографії — Прем’єр-ліга, Лос-Анджелес, Мадрид.',
+  programme: t('У їхньому складі — № 29 Алекс Хантер, 32 роки. У біографії — Прем’єр-ліга, Лос-Анджелес, Мадрид.'),
 };
 
 /** Тур Хантера: програмка перед 2-м туром першого сезону; лист того ж тижня — week.ts:ANCHOR_SCENES. */

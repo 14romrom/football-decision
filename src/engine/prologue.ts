@@ -12,6 +12,7 @@ import { applyWeek, VOICE_ATTRS, type ActivityEffect, type LootItem } from './we
 import { BALANCE } from './balance';
 import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from './types';
 import type { Career } from './career';
+import { t } from '../content/i18n';
 
 export type PrologueOption = {
   id: string;
@@ -90,20 +91,20 @@ export function finishPrologue(career: Career, spreads: PrologueSpread[], picks:
       const attr = pick.attr && VOICE_ATTRS[option.voice].includes(pick.attr) ? pick.attr : VOICE_ATTRS[option.voice][0];
       if (attr) {
         next.attrPoints[attr] = (next.attrPoints[attr] ?? 0) + 1;
-        loot.push({ text: `${ATTRIBUTE_LABEL[attr]} +1 назавжди`, kind: 'perm', attr, dir: 'up', where: 'назавжди · у картку' });
+        loot.push({ text: `${ATTRIBUTE_LABEL[attr]} +1 назавжди`, kind: 'perm', attr, dir: 'up', where: t('назавжди · у картку') });
       }
     }
     if (option.bond) {
       next.partnerBond = (next.partnerBond ?? 0) + option.bond;
       loot.push({
-        text: option.bond > 0 ? 'партнер: є привід довіряти' : 'партнер: є привід ображатися', kind: 'person', who: 'team',
-        dir: option.bond > 0 ? 'up' : 'down', where: 'дует', progress: [Math.max(0, next.partnerBond), BALANCE.people.partnerBonded],
+        text: option.bond > 0 ? t('партнер: є привід довіряти') : t('партнер: є привід ображатися'), kind: 'person', who: 'team',
+        dir: option.bond > 0 ? 'up' : 'down', where: t('дует'), progress: [Math.max(0, next.partnerBond), BALANCE.people.partnerBonded],
       });
     }
   }
 
   const ids = new Set(chosen.map(({ option }) => option.id));
-  next.carriedFlags = (next.carriedFlags ?? []).map((f) => (ids.has(f.mark.episodeId) ? { ...f, mark: { ...f.mark, whenText: 'ще до сезону' } } : f));
+  next.carriedFlags = (next.carriedFlags ?? []).map((f) => (ids.has(f.mark.episodeId) ? { ...f, mark: { ...f.mark, whenText: t('ще до сезону') } } : f));
   next.benched = true;
   next.prologue = Object.fromEntries(chosen.map(({ pick, option }) => [pick.spread, option.id])) as Career['prologue'];
   const uniq = loot.filter((x, i) => loot.findIndex((y) => y.text === x.text) === i);

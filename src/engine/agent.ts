@@ -12,6 +12,7 @@ import type { Career } from './career';
 import type { Season, Verdict } from './season';
 import { ourRow } from './season';
 import type { Voice } from './types';
+import { t } from '../content/i18n';
 
 export type AgentChoice = 'leave' | 'stay' | 'wait';
 export type CollapseReason = 'medical' | 'debts' | 'scout';
@@ -70,7 +71,7 @@ export function resolveAgent(
   career: Career, season: Season, content: AgentContent, choice: AgentChoice, mode: AgentMode = 'winter',
 ): { career: Career; loot: LootItem[]; text: string; reason?: CollapseReason; ended?: boolean } {
   const option = (mode === 'summer' ? content.summer.options : content.options).find((o) => o.id === choice);
-  if (!option) throw new Error('немає варіанта агента ' + choice);
+  if (!option) throw new Error(t('немає варіанта агента ') + choice);
   if (mode === 'summer' && choice === 'leave') {
     // Улітку «так» — це кінець кар’єри тут: епілог, без наслідків і без покарання.
     const next: Career = { ...career, ended: { season: season.number }, agentLog: [...(career.agentLog ?? []), { season: season.number, choice }] };

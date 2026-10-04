@@ -13,12 +13,13 @@ import type { Rng } from './rng';
 import { PLAYOFF_SPOTS, playoffPending, playoffWon, promotion, PROMOTION_SPOTS, standings, SEASON_ROUNDS, US, type OurResult, type Season } from './season';
 import type { MatchResult } from './conditions';
 import type { Attribute } from './types';
+import { t } from '../content/i18n';
 
 export type ClubName = { nom: string; gen: string };
 
 // Місцевий відмінок для «на … місці» — і називний середнього роду для «піднялася на …».
-const AT = ['', 'першому', 'другому', 'третьому', 'четвертому', 'п’ятому', 'шостому', 'сьомому', 'восьмому'];
-const TO = ['', 'перше', 'друге', 'третє', 'четверте', 'п’яте', 'шосте', 'сьоме', 'восьме'];
+const AT = ['', t('першому'), t('другому'), t('третьому'), t('четвертому'), t('п’ятому'), t('шостому'), t('сьомому'), t('восьмому')];
+const TO = ['', t('перше'), t('друге'), t('третє'), t('четверте'), t('п’яте'), t('шосте'), t('сьоме'), t('восьме')];
 
 /** Колонка ESPM про Реєса (M13): ставлення видання дрейфує зі станом арки — абзац в огляді («той, що після
  *  травми») → «гравець туру?» → колонка «Чому він ще тут» → «узимку він міг піти». Вибір — pickFresh з
@@ -36,13 +37,13 @@ export function playerColumn(columns: Record<string, EspmColumn[]>, arc: number,
 export function pressLabel(uses: Partial<Record<Attribute, number>> | undefined): { label: string; why: string } {
   const u = (a: Attribute) => uses?.[a] ?? 0;
   const total = (Object.values(uses ?? {}) as number[]).reduce((s, n) => s + n, 0);
-  if (total < 6) return { label: 'Новий у лізі', why: 'поки що рядок у протоколі' };
+  if (total < 6) return { label: t('Новий у лізі'), why: t('поки що рядок у протоколі') };
   const kinds = [
-    { label: 'Бомбардир', why: 'б’є сам і влучає', n: u('finishing') },
-    { label: 'Плеймейкер', why: 'віддає і бачить поле', n: (u('passing') + u('vision')) / 2 },
-    { label: 'Технар', why: 'проходить і приймає', n: (u('dribbling') + u('first_touch')) / 2 },
-    { label: 'Робоча конячка', why: 'виграє те, що виграється ногами', n: (u('pace') + u('strength') + u('stamina')) / 3 },
-    { label: 'Холодна голова', why: 'не поспішає і стоїть там, де треба', n: (u('composure') + u('positioning')) / 2 },
+    { label: t('Бомбардир'), why: t('б’є сам і влучає'), n: u('finishing') },
+    { label: t('Плеймейкер'), why: t('віддає і бачить поле'), n: (u('passing') + u('vision')) / 2 },
+    { label: t('Технар'), why: t('проходить і приймає'), n: (u('dribbling') + u('first_touch')) / 2 },
+    { label: t('Робоча конячка'), why: t('виграє те, що виграється ногами'), n: (u('pace') + u('strength') + u('stamina')) / 3 },
+    { label: t('Холодна голова'), why: t('не поспішає і стоїть там, де треба'), n: (u('composure') + u('positioning')) / 2 },
   ];
   return kinds.reduce((a, b) => (b.n > a.n ? b : a));
 }
@@ -94,7 +95,7 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
     }
     if (promo?.kind === 'scandal') {
       // M19: місце звільняє дискваліфікація у вищій лізі — так програш у стиках усе одно веде нагору.
-      return `У вищій лізі дискваліфікували клуб: нагору цього року йдуть ${promo.count} ${plural(promo.count, 'команда', 'команди', 'команд')}. «${usName}» — ${AT[promo.position]} місце — серед них.`;
+      return `У вищій лізі дискваліфікували клуб: нагору цього року йдуть ${promo.count} ${plural(promo.count, t('команда'), t('команди'), t('команд'))}. «${usName}» — ${AT[promo.position]} місце — серед них.`;
     }
     return leader.club === US
       ? `Сезон закінчено. «${usName}» — чемпіон.`
@@ -106,14 +107,14 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
     if (PLAYOFF_SPOTS.includes(us.position)) {
       const second = rows[PROMOTION_SPOTS - 1];
       const gap = second.points - us.points;
-      return ` У зоні стикових. До прямого підвищення — ${gap} ${plural(gap, 'очко', 'очки', 'очок')}.`;
+      return ` У зоні стикових. До прямого підвищення — ${gap} ${plural(gap, t('очко'), t('очки'), t('очок'))}.`;
     }
     const last = rows[PLAYOFF_SPOTS[PLAYOFF_SPOTS.length - 1] - 1];
     const gap = last.points - us.points;
-    return gap > 0 ? ` До стикових — ${gap} ${plural(gap, 'очко', 'очки', 'очок')}.` : ` Стикові — поруч, за різницею м’ячів.`;
+    return gap > 0 ? ` До стикових — ${gap} ${plural(gap, t('очко'), t('очки'), t('очок'))}.` : ` Стикові — поруч, за різницею м’ячів.`;
   })() : '';
   if (season.round === 1) {
-    const how = res === 'W' ? 'з перемоги' : res === 'L' ? 'з поразки' : 'з нічиєї';
+    const how = res === 'W' ? t('з перемоги') : res === 'L' ? t('з поразки') : t('з нічиєї');
     return `«${usName}» стартує ${how}: ${score}.${zone}`;
   }
 
@@ -125,9 +126,9 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
     const second = rows[1];
     const gap = us.points - second.points;
     const tail = gap > 0
-      ? `«${club(second.club).nom}» відстає на ${gap} ${plural(gap, 'очко', 'очки', 'очок')}.`
+      ? `«${club(second.club).nom}» відстає на ${gap} ${plural(gap, t('очко'), t('очки'), t('очок'))}.`
       : `«${club(second.club).nom}» — поруч, за різницею м’ячів.`;
-    const verb = prevUs.position === 1 ? 'утримує перше' : 'виходить на перше';
+    const verb = prevUs.position === 1 ? t('утримує перше') : t('виходить на перше');
     return `«${usName}» ${verb} після ${score}. ${tail}`;
   }
 

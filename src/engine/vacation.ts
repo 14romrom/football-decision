@@ -32,6 +32,7 @@ import { applyWeek, type LootItem } from './week';
 import type { PrologueOption, PrologueSpread } from './prologue';
 import type { Career } from './career';
 import type { Promotion } from './season';
+import { t } from '../content/i18n';
 
 export type Injury = 'heavy' | 'medium' | 'light';
 /** Що {oldsub} знає про травму (M28): він єдиний свідок, і другий сезон проти його клубу це пам’ятає. */
@@ -72,9 +73,9 @@ export function finishVacation(
   next.nextMatch = { ...prep, start: { ...(prep.start ?? {}), stamina: (prep.start?.stamina ?? 0) + form.stamina } };
   next.carriedFlags = [
     ...(next.carriedFlags ?? []),
-    ...Array.from({ length: form.matches }, (_, i) => ({ flag: 'out_of_form', after: i, mark: { minute: 0, episodeId: 'vacation', optionId: injury, past: 'місяць не бігав', whenText: 'у липні' } })),
+    ...Array.from({ length: form.matches }, (_, i) => ({ flag: 'out_of_form', after: i, mark: { minute: 0, episodeId: 'vacation', optionId: injury, past: t('місяць не бігав'), whenText: t('у липні') } })),
   ];
-  loot.push({ text: form.matches === 1 ? 'місяць без м’яча: у першому матчі сили закінчаться раніше' : 'місяць без м’яча: у перших матчах сили закінчаться раніше', kind: 'start', who: 'body', dir: 'down', where: 'старт сезону' });
+  loot.push({ text: form.matches === 1 ? t('місяць без м’яча: у першому матчі сили закінчаться раніше') : t('місяць без м’яча: у перших матчах сили закінчаться раніше'), kind: 'start', who: 'body', dir: 'down', where: t('старт сезону') });
 
   // Єдиний свідок (M28): {oldsub} бачив травму на газоні — другий сезон проти його клубу читає це з career.
   const witness = chosen.map(({ option }) => option.witness).find((x): x is Witness => !!x);
@@ -88,7 +89,7 @@ export function finishVacation(
   if (promo?.with[0]) next.subClub = promo.with[0];
 
   const ids = new Set(chosen.map(({ option }) => option.id));
-  next.carriedFlags = (next.carriedFlags ?? []).map((f) => (ids.has(f.mark.episodeId) ? { ...f, mark: { ...f.mark, whenText: 'ще у відпустці' } } : f));
+  next.carriedFlags = (next.carriedFlags ?? []).map((f) => (ids.has(f.mark.episodeId) ? { ...f, mark: { ...f.mark, whenText: t('ще у відпустці') } } : f));
   next.vacation = Object.fromEntries(chosen.map(({ pick, option }) => [pick.spread, option.id]));
   const uniq = loot.filter((x, i) => loot.findIndex((y) => y.text === x.text) === i);
   return { career: next, tags: uniq.map((x) => x.text), loot: uniq };

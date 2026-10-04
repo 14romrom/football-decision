@@ -8,6 +8,7 @@ import type { Attribute, Mark, MatchState, Player, VoiceKey } from './types';
 import type { MatchSummary } from './match';
 import type { AgentLogEntry } from './agent';
 import { voiceSees, VOICE_LABEL } from './voices';
+import { t } from '../content/i18n';
 
 export type Career = {
   xp: number;
@@ -288,9 +289,9 @@ export function nextMatchCoachTrust(endingTrust: number): number {
 export function peopleFlags(career: Career): CarriedFlag[] {
   const p = BALANCE.people;
   const bond = career.partnerBond ?? 0;
-  const mark = (past: string): Mark => ({ minute: 0, episodeId: 'career', optionId: 'partner', past, whenText: 'за ці місяці' });
-  if (bond >= p.partnerBonded) return [{ flag: 'partner_bonded', mark: mark('грав із партнером в одне торкання, поки це не стало звичкою') }];
-  if (bond <= p.partnerCold) return [{ flag: 'partner_cold', mark: mark('раз за разом не віддавав партнеру, і він перестав просити') }];
+  const mark = (past: string): Mark => ({ minute: 0, episodeId: 'career', optionId: 'partner', past, whenText: t('за ці місяці') });
+  if (bond >= p.partnerBonded) return [{ flag: 'partner_bonded', mark: mark(t('грав із партнером в одне торкання, поки це не стало звичкою')) }];
+  if (bond <= p.partnerCold) return [{ flag: 'partner_cold', mark: mark(t('раз за разом не віддавав партнеру, і він перестав просити')) }];
   return [];
 }
 
@@ -299,7 +300,7 @@ export function prologueFlags(career: Career): CarriedFlag[] {
   const tone: Record<string, string> = { call_ego: 'call_tone_ego', call_team: 'call_tone_team', call_vision: 'call_tone_vision' };
   const flag = career.prologue?.call ? tone[career.prologue.call] : undefined;
   if (!flag || career.matchesPlayed > 0) return [];
-  return [{ flag, mark: { minute: 0, episodeId: 'prologue', optionId: 'call', past: 'відповів тренеру по телефону', whenText: 'ще до сезону' } }];
+  return [{ flag, mark: { minute: 0, episodeId: 'prologue', optionId: 'call', past: t('відповів тренеру по телефону'), whenText: t('ще до сезону') } }];
 }
 
 /** Луна сцени агента (21.09): що Реєс відповів узимку, тренер і Тібо пам’ятають перший матч нового сезону —
@@ -308,14 +309,14 @@ export function agentFlags(career: Career): CarriedFlag[] {
   const echo = career.agentEcho;
   if (!echo) return [];
   const flag = echo === 'leave' ? 'agent_left' : echo === 'stay' ? 'agent_stayed' : 'agent_waited';
-  return [{ flag, mark: { minute: 0, episodeId: 'agent', optionId: echo, past: 'говорив з агентом узимку', whenText: 'ще взимку' } }];
+  return [{ flag, mark: { minute: 0, episodeId: 'agent', optionId: echo, past: t('говорив з агентом узимку'), whenText: t('ще взимку') } }];
 }
 
 /** Жарт Тібо (M12/M13): перепитав у пролозі, чи це жарт, — Тібо нагнітає сильніше. Маркер для реплік і сетапів,
  *  без модифікатора; системний, як partner_bonded. Живе, поки арка не дійде до «свій» — далі жарт уже спільний. */
 export function tiboFlags(career: Career): CarriedFlag[] {
   if (career.prologue?.base !== 'base_vision' || arcStage(career) >= 3) return [];
-  return [{ flag: 'tibo_asked', mark: { minute: 0, episodeId: 'prologue', optionId: 'base', past: 'перепитав у Тібо, чи мафія — це жарт', whenText: 'ще до сезону' } }];
+  return [{ flag: 'tibo_asked', mark: { minute: 0, episodeId: 'prologue', optionId: 'base', past: t('перепитав у Тібо, чи мафія — це жарт'), whenText: t('ще до сезону') } }];
 }
 
 /** Трибуни між матчами — та сама регресія, що й довіра: пам'ятають, але не навіки. */
@@ -376,18 +377,18 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
 
   if (career.pendingSentOff) {
     coachTrustPenalty = 25;
-    note = 'Тренер не забув червону картку з минулого матчу — починаєш із меншою довірою.';
+    note = t('Тренер не забув червону картку з минулого матчу — починаєш із меншою довірою.');
     next.pendingSentOff = false;
   } else if (career.careerYellows >= 3) {
     coachTrustPenalty = 15;
-    note = 'Тренер пам’ятає про жовті картки — починаєш під пильнішим наглядом.';
+    note = t('Тренер пам’ятає про жовті картки — починаєш під пильнішим наглядом.');
     next.careerYellows = 0;
   }
 
   const prep = career.nextMatch;
   if (career.injuredMatches > 0 && !prep?.healed) {
     staminaPenalty = 20;
-    note = note ? note + ' Ще й тіло не до кінця відновилося.' : 'Ти граєш після травми — сили менше з першої хвилини.';
+    note = note ? note + t(' Ще й тіло не до кінця відновилося.') : t('Ти граєш після травми — сили менше з першої хвилини.');
     next.injuredMatches = career.injuredMatches - 1;
   } else if (prep?.healed) {
     next.injuredMatches = 0;
@@ -402,7 +403,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   // фінального свистка (28.09, питання користувача «чому „починає на лаві“ на другому турі»). Матч
   // можна не догравати — перезавантажити сторінку, закрити вкладку, — і тоді мітка, яку знімав лише
   // `applyMatchToCareer`, жила в кар'єрі вічно й вилазила на екран перед кожним матчем.
-  if (career.benched) note = [note, 'Починаєш на лаві: тренер випустить у другому таймі.'].filter(Boolean).join(' ');
+  if (career.benched) note = [note, t('Починаєш на лаві: тренер випустить у другому таймі.')].filter(Boolean).join(' ');
   next.benched = false;
   if (prep?.notes?.length) note = [note, ...prep.notes].filter(Boolean).join(' ');
   next.nextMatch = undefined;

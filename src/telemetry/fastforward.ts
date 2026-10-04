@@ -13,12 +13,13 @@ import { readCareer, writeCareer } from './career-storage';
 import { readSeason, writeSeason } from './season-storage';
 import { recordResult } from './history';
 import { takeShot } from './checkpoint';
+import { t } from '../content/i18n';
 
 export type FastForwardResult = { played: number; vacationAuto: boolean; seed: number };
 
 export function fastForward(target: AutoTarget): FastForwardResult {
   // Точка повернення — до того, як щось зміниться.
-  takeShot('save', 'перед перемоткою');
+  takeShot('save', t('перед перемоткою'));
 
   const career = readCareer();
   const season = readSeason() ?? createSeason(Math.floor(Math.random() * 1e9), OPPONENT_KEYS.second);

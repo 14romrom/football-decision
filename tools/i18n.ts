@@ -72,8 +72,13 @@ function walk(v: unknown, file: string, path: string, out: Row[], seen: Set<stri
   }
 }
 
-const readMap = (): Record<string, string> => JSON.parse(readFileSync(MAP, 'utf8'));
+export const readMap = (): Record<string, string> => JSON.parse(readFileSync(MAP, 'utf8'));
+
+// CLI виконується тільки при прямому запуску: тест імпортує `collect` і `srcHash` із цього ж
+// файлу, і запускати команду під час імпорту не можна.
+const isCli = /i18n\.ts$/.test(process.argv[1] ?? '');
 const cmd = process.argv[2] ?? 'stat';
+if (isCli) {
 const rows = collect();
 const map = readMap();
 
@@ -105,4 +110,5 @@ if (cmd === 'stat') {
 } else {
   console.error('команди: stat | take <файл> [N] | orphans');
   process.exit(1);
+}
 }

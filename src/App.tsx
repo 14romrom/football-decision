@@ -822,7 +822,12 @@ function Game() {
           // флаги и старт следующего матча считались в одном месте. Неделя потом дольёт своё.
           const activity: Activity = { id: 'reply', voice: 'ego', title: 'Відповідь у стрічці', line: option.text, effect: option.effect };
           const { career: after, tags } = applyWeek(careerRef.current, [{ activity }]);
-          setCareerBoth(after);
+          // Місто пам'ятає тільки названі відповіді (`ReplyOption.id`) — і тільки щоб потім
+          // пролунати в стрічці (`PostWhen.said`). Ні в голоси, ні в баланс це не йде.
+          const sn = seasonRef.current;
+          setCareerBoth(option.id
+            ? { ...after, replyLog: [...(after.replyLog ?? []), { season: sn.number, round: sn.round, said: option.id }] }
+            : after);
           return tags;
         }}
         onNext={() => afterPosts(stage.leveledFrom, stage.leveledTo)}

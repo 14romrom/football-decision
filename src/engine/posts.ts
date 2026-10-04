@@ -49,6 +49,11 @@ export type PostWhen = {
   /** Стан арки (career.ts:arcStage): ставлення міста дрейфує — «хто це» → «той з коліном» → «наш». */
   arcMin?: number;
   arcMax?: number;
+  /** Що Реєс сказав у стрічці раніше (`career.replyLog`, пари `<пост>:<варіант>`): правило підходить,
+   *  якщо хоч одна з перелічених відповідей уже прозвучала. Для відлуння, і тільки для нього:
+   *  рішення користувача 04.10 — відповідям у стрічці великої ваги не давати, лише подекуди підсвітити,
+   *  щоб світ здавався живим. Тому в такого поста наслідків або немає, або вони дрібні. */
+  said?: string[];
 };
 
 /** Вид поста (19.09, «форма»): poll — опрос с абсурдными вариантами, проценты раздаёт rng;
@@ -58,10 +63,17 @@ export type PostKind = 'post' | 'poll' | 'deleted' | 'promo' | 'live';
 
 /** Ответ игрока на пост — решение без кубика: три реплики, у каждой последствие как у дела
  *  недели (ActivityEffect: трибуны, тренер, кураж, флаг на матч) и реакция автора поста. */
-export type ReplyOption = { text: string; reaction: string; effect: ActivityEffect };
+export type ReplyOption = {
+  text: string; reaction: string; effect: ActivityEffect;
+  /** Только у тех ответов, которые город потом вспомнит: пара `<id правила>:<id варианта>`
+   *  уходит в `career.replyLog`, и её читает `PostWhen.said`. Без `id` ответ живёт один вечер. */
+  id?: string;
+};
 
 export type PostRule = {
   group: PostGroup; account: string; when?: PostWhen; lines: string[];
+  /** Имя правила — нужно только тем постам, чей ответ город запомнит (`replyOptions[].id`). */
+  id?: string;
   /** Ответ под постом — от другого аккаунта, одна из строк. */
   reply?: { account: string; lines: string[] };
   kind?: PostKind;
@@ -89,6 +101,8 @@ export type PostContext = {
   leaderKey: string; bottomKey: string; lastOpponentKey: string | null;
   /** Дела недели перед этим матчем (career.weekLog). */
   lastWeek: string[];
+  /** Что Реєс уже отвечал в стрічці за карьеру (career.replyLog) — для отлуння, см. `PostWhen.said`. */
+  said: string[];
   /** Лучший и худший момент последнего матча (season.rounds[].moments). */
   moments: { best?: MomentRef; worst?: MomentRef };
   arc: number;
@@ -137,6 +151,10 @@ export function buildPostContext(
     // Неделя перед сыгранным туром записана с round = этот тур до инкремента (week.ts:recordWeek).
     // Справи минулого тижня і їхні ісходи («interview:dream_ego») — стрічка повторює те, що Реєс сказав.
     lastWeek: (() => { const w = (career.weekLog ?? []).find((x) => x.season === season.number && x.round === season.round - 1); return [...(w?.chosen ?? []), ...(w?.outcomes ?? [])]; })(),
+    // Відповіді, які місто запам'ятало (M-стрічка, 04.10): тільки ті, у кого є `id`, — решта
+    // живе один вечір. Віку в умови не додаємо: пости не повторюються, тож відлуння спрацює
+    // один раз у найближчій стрічці, де все інше в правилі теж зійшлося.
+    said: (career.replyLog ?? []).map((r) => r.said),
     arc: arcStage(career),
     moments: last.moments ?? {},
   };
@@ -176,6 +194,7 @@ export function matchesPost(w: PostWhen | undefined, c: PostContext): boolean {
   if (w.moment && !c.moments[w.moment]) return false;
   if (w.arcMin !== undefined && c.arc < w.arcMin) return false;
   if (w.arcMax !== undefined && c.arc > w.arcMax) return false;
+  if (w.said && !w.said.some((id) => c.said.includes(id))) return false;
   return true;
 }
 

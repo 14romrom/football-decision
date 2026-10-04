@@ -105,7 +105,7 @@ describe('решта пунктів арки', () => {
   const pctx = (arc: number, over: Partial<PostContext> = {}): PostContext => ({
     result: 'win', scoreUs: 2, scoreThem: 1, goals: 1, assists: 0, coachRating: 7, fanRating: 7, position: 3, clubs: 6, round: 4,
     coachTrust: 55, injured: false, flags: [], nextStrength: 'even', nextFlags: [], nextVenue: 'home', leaderLost: false, bottomWon: false,
-    voice: null, hasScored: true, leaderKey: 'olvar', bottomKey: 'rioseco', lastOpponentKey: 'terranova', lastWeek: [], moments: {}, arc, ...over,
+    voice: null, hasScored: true, leaderKey: 'olvar', bottomKey: 'rioseco', lastOpponentKey: 'terranova', lastWeek: [], said: [], moments: {}, arc, ...over,
   });
 
   it('стрічка: на кожен стан є пости про Реєса, і вони не змішуються; інтерв’ю повторюється через тур', () => {

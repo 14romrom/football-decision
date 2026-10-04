@@ -40,7 +40,7 @@ function ctx(season: number, round: number, rng: ReturnType<typeof makeRng>): Po
     leaderLost: rng.chance(0.3), bottomWon: rng.chance(0.3),
     voice: null, hasScored: goals > 0,
     leaderKey: 'olvar', bottomKey: 'rioseco', lastOpponentKey: 'terranova',
-    lastWeek: [], moments: {},
+    lastWeek: [], said: [], moments: {},
     arc: Math.min(4, 1 + Math.floor(careerRound(season, round) / 6)),
   };
 }

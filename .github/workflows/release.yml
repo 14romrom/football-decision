@@ -1,0 +1,98 @@
+# Релизная сборка для Play Market: подписанный AAB по тегу. Отдельно от android.yml, который
+# собирает debug-APK на каждый пуш в main и остаётся как был — тестерам по-прежнему нужна ссылка
+# `android-latest`, и ломать её релиз не должен.
+#
+# Почему AAB, а не APK: Play принимает только Android App Bundle. APK тут тоже собирается —
+# чтобы можно было поставить ту же самую подписанную сборку на телефон руками, минуя магазин,
+# и убедиться, что подпись и versionCode те, что уйдут в релиз.
+#
+# Что нужно один раз завести в Settings → Secrets and variables → Actions:
+#   RELEASE_KEYSTORE_BASE64   — keystore (.jks), закодированный base64
+#   RELEASE_KEYSTORE_PASSWORD — пароль хранилища
+#   RELEASE_KEY_ALIAS         — алиас ключа
+#   RELEASE_KEY_PASSWORD      — пароль ключа
+# Keystore создаётся один раз и **хранится вечно**: потерянный ключ = приложение нельзя обновить
+# никогда (если не включено Play App Signing, где апгрейд-ключ можно восстановить через поддержку).
+#
+# Версия: versionCode — номер прогона, versionName — сам тег без «v». Play требует, чтобы
+# versionCode строго рос; номер прогона это обеспечивает и не зависит от того, как назван тег.
+name: release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'versionName, например 1.0.0'
+        required: true
+permissions:
+  contents: write
+concurrency:
+  group: release
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 21 }
+
+      - name: версия из тега
+        id: ver
+        run: |
+          NAME="${{ github.event.inputs.version }}"
+          [ -z "$NAME" ] && NAME="${GITHUB_REF_NAME#v}"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "versionName=$NAME, versionCode=${{ github.run_number }}"
+
+      - run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+      - run: npm ci
+      - name: тесты перед релизом
+        run: npx vitest run
+      - run: npm run build
+      - run: npx cap sync android
+
+      - name: проставить версию
+        run: |
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"${{ steps.ver.outputs.name }}\"/" android/app/build.gradle
+          grep -n "version" android/app/build.gradle
+
+      - name: восстановить keystore из секрета
+        env:
+          KS: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KS" ]; then echo "::error::нет секрета RELEASE_KEYSTORE_BASE64 — подписать нечем"; exit 1; fi
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "RELEASE_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: gradle bundleRelease + assembleRelease
+        env:
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        shell: bash {0}
+        run: |
+          chmod +x android/gradlew
+          (cd android && ./gradlew bundleRelease assembleRelease --no-daemon) > build.log 2>&1; status=$?
+          tail -40 build.log
+          if [ "$status" -ne 0 ]; then grep -n -i "error\|what went wrong\|FAILURE" -A3 build.log | head -40 | while IFS= read -r l; do echo "::error::$l"; done; fi
+          exit "$status"
+
+      - name: проверить, что сборка действительно подписана
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$APK" | head -5
+
+      - run: |
+          cp android/app/build/outputs/bundle/release/app-release.aab inside-the-box-${{ steps.ver.outputs.name }}.aab
+          cp android/app/build/outputs/apk/release/app-release.apk inside-the-box-${{ steps.ver.outputs.name }}.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inside-the-box-release
+          path: |
+            inside-the-box-*.aab
+            inside-the-box-*.apk
+          retention-days: 90

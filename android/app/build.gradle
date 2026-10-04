@@ -16,10 +16,26 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Подпись релиза берётся из переменных окружения, а не из файла в репозитории: keystore и
+    // пароли живут в секретах Actions (RELEASE_KEYSTORE_BASE64, RELEASE_KEYSTORE_PASSWORD,
+    // RELEASE_KEY_ALIAS, RELEASE_KEY_PASSWORD) и на диск попадают только на время прогона.
+    // Без них сборка не падает, а остаётся неподписанной — так debug-пайплайн работает как работал.
+    signingConfigs {
+        release {
+            def storePath = System.getenv("RELEASE_KEYSTORE_PATH")
+            if (storePath != null && file(storePath).exists()) {
+                storeFile file(storePath)
+                storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword System.getenv("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (System.getenv("RELEASE_KEYSTORE_PATH") != null) signingConfig signingConfigs.release
         }
     }
 }

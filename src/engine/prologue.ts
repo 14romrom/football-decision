@@ -12,7 +12,7 @@ import { applyWeek, VOICE_ATTRS, type ActivityEffect, type LootItem } from './we
 import { BALANCE } from './balance';
 import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from './types';
 import type { Career } from './career';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 export type PrologueOption = {
   id: string;
@@ -91,7 +91,7 @@ export function finishPrologue(career: Career, spreads: PrologueSpread[], picks:
       const attr = pick.attr && VOICE_ATTRS[option.voice].includes(pick.attr) ? pick.attr : VOICE_ATTRS[option.voice][0];
       if (attr) {
         next.attrPoints[attr] = (next.attrPoints[attr] ?? 0) + 1;
-        loot.push({ text: `${ATTRIBUTE_LABEL[attr]} +1 назавжди`, kind: 'perm', attr, dir: 'up', where: t('назавжди · у картку') });
+        loot.push({ text: tf('{0} +1 назавжди', ATTRIBUTE_LABEL[attr]), kind: 'perm', attr, dir: 'up', where: t('назавжди · у картку') });
       }
     }
     if (option.bond) {

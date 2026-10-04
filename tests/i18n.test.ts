@@ -3,7 +3,7 @@
 // недоперекладеним рядком. Та сама логіка, що тримає «ніяких відсотків» і «імена плейсхолдерами».
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { collect, srcHash as toolHash } from '../tools/i18n';
+import { collect, rawCodeStrings, srcHash as toolHash, unknownKeys } from '../tools/i18n';
 import { srcHash } from '../src/content/i18n';
 
 const EN = JSON.parse(readFileSync('src/content/i18n/en.json', 'utf8')) as Record<string, string>;
@@ -14,6 +14,10 @@ const bySrc = new Map(rows.map((r) => [r.hash, r]));
  *  це нормальна адаптація. А от загублений чи вигаданий плейсхолдер — помилка. */
 const bases = (s: string): string[] =>
   [...s.matchAll(/\{([a-z0-9]+)(?:\.[a-z]+)*\}/g)].map((m) => m[1]).sort();
+
+/** `⟨ціна⟩` і `⟨чутка⟩` (engine/market.ts) шукає регулярка, а не перекладач: токен лишається
+ *  українським і в англійському тексті справи. Загублений — і в рядку назавжди порожньо. */
+const tokens = (s: string): string[] => [...s.matchAll(/⟨([^⟩]+)⟩/g)].map((m) => m[1]).sort();
 
 describe('переклад', () => {
   it('хеш у рушії і в інструменті — один і той самий', () => {
@@ -37,7 +41,7 @@ describe('переклад', () => {
     for (const [h, v] of Object.entries(EN)) {
       const src = bySrc.get(h);
       if (!src) continue;
-      const a = bases(src.src), b = bases(v);
+      const a = [...bases(src.src), ...tokens(src.src)], b = [...bases(v), ...tokens(v)];
       if (a.join(',') !== b.join(',')) bad.push(`${h}\n  укр: ${a.join(' ')}\n  анг: ${b.join(' ')}\n  ${v.slice(0, 70)}`);
     }
     expect(bad).toEqual([]);
@@ -48,6 +52,22 @@ describe('переклад', () => {
     // «ГОЛ!!» вони є, і переклад має право їх зберегти. Заборонено саме додавати свої.
     const shouty = Object.entries(EN).filter(([h, v]) => v.includes('!') && !bySrc.get(h)?.src.includes('!'));
     expect(shouty.map(([h, v]) => `${h}: ${v.slice(0, 60)}`)).toEqual([]);
+  });
+
+  // Дві перевірки проти того, що вже сталося: інструмент рахував 100%, а в англійській збірці
+  // лишалася кирилиця. Обидві дірки — не про старанність, а про те, що звіт про них не знав.
+  it('кожен ключ контенту віднесено або до прози, або до даних', () => {
+    // Ключ, якого немає в жодному списку, `walk` викидає **тихо** — так 90 рядків прологу й
+    // відпустки не потрапили ні в переклад, ні у звіт (04.10). Новий ключ має бути названий.
+    const unknown = unknownKeys().map((u) => `${u.file} · ${u.key}: ${u.sample}`);
+    expect(unknown, 'ключі поза PROSE_KEYS і SKIP_KEYS').toEqual([]);
+  });
+
+  it('у коді немає кирилиці поза t() і tf()', () => {
+    // Шаблонний рядок із підстановкою і текст прямо в JSX виглядають як переклад, але карта їх
+    // не бачить: 137 таких рядків лишалися українськими, коли DESIGN уже казав «код закрито».
+    const raw = rawCodeStrings().map((r) => `${r.file}:${r.line} (${r.kind}) ${r.text}`);
+    expect(raw, 'обгорнути в tf() або позначити i18n-skip').toEqual([]);
   });
 
   it('словник термінів: ключові слова перекладені однаково скрізь', () => {

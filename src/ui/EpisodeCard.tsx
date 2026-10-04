@@ -95,7 +95,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                       катастрофа — на яких кубиках усе піде не так. До цього видно було тільки ціль, і гравець
                       добудовував правило сам («катастрофа — це коли випала одиниця»). */}
                   <span className={`bracket risk-${ctx.position}`}>
-                    [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)} · катастрофа {catastropheBand(ctx.position, ctx.attrMod)}]
+                    {tf('[{0} {1} · катастрофа {2}]', POSITION_LABEL[ctx.position], cleanTarget(ctx.position, o.difficulty), catastropheBand(ctx.position, ctx.attrMod))}
                   </span>
                   {/* Куди веде варіант — окремим елементом, не всередині скобки: скобка `nowrap`, і з
                       довгим ім'ям ланки («м'яч між лініями») рядок вилазив за екран на 47 px. */}

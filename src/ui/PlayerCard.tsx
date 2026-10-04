@@ -9,7 +9,7 @@ import { dominantCareerVoice } from '../engine/week';
 import { Sticker, voiceMod } from './Sticker';
 import { modScale, VoiceHex } from './VoiceHex';
 import { VOICES } from './voices-text';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Лист персонажа (28.09, макет «Картка: було / стало»): стикер → шестикутник голосів → характеристики,
 // згруповані за голосами, → підвал із розшифровкою станів. До этого карточка была четырьмя экранами
@@ -107,7 +107,7 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
             </summary>
             <p className="vg-about">
               {g.about}
-              {g.listened > 0 && <span className="muted"> Слухав {g.listened} з {heard}.</span>}
+              {g.listened > 0 && <span className="muted">{tf(' Слухав {0} з {1}.', g.listened, heard)}</span>}
             </p>
           </details>
           <div className="vg-rows">
@@ -133,7 +133,7 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
                   {/* Полоса в шкале шестикутника, риски через два мода: ряды и фигура меряют одним. */}
                   <span
                     className="arow-bar" style={{ backgroundSize: `${(2 / scale) * 100}% 100%` }}
-                    title={grown > 0 ? `від дебюту +${grown}` : undefined}
+                    title={grown > 0 ? tf('від дебюту +{0}', grown) : undefined}
                   >
                     <span className="arow-base" style={{ width: `${(debut / scale) * 100}%` }} />
                     {grown > 0 && <span className="arow-grown" style={{ left: `${(debut / scale) * 100}%`, width: `${(grown / scale) * 100}%` }} />}
@@ -150,8 +150,8 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
       ))}
 
       <p className="card-summary">
-        <b>{t('Коронне:')}</b> {signature.map((a) => ATTRIBUTE_LABEL[a]).join(', ')} — за це тебе знають трибуни.
-        {' '}<b>{t('Слабке:')}</b> {weakest.map((a) => ATTRIBUTE_LABEL[a]).join(', ')} — тут кубик грає сам.
+        <b>{t('Коронне:')}</b> {tf('{0} — за це тебе знають трибуни.', signature.map((a) => ATTRIBUTE_LABEL[a]).join(', '))}
+        {' '}<b>{t('Слабке:')}</b> {tf('{0} — тут кубик грає сам.', weakest.map((a) => ATTRIBUTE_LABEL[a]).join(', '))}
         {!BALANCE.growth.levels && t(' Ріст — через тиждень: три тренування одного атрибута дають +1 назавжди.')}
       </p>
 

@@ -15,7 +15,7 @@ import type { Rng } from './rng';
 import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
 import { VOICE_LABEL, voiceSees } from './voices';
 import { attrMod } from './attr';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 /** Условие показа — по итогам сезона и карьеры; побеждает не самое конкретное, а вес:
  *  условия здесь отсекают, а не ранжируют (в отличие от сетапов). */
@@ -328,8 +328,8 @@ export function neglectPenalties(career: Career, offeredVoices: VoiceKey[], chos
     if (next[v]! >= BALANCE.week.neglectWeeks) {
       next[v] = 0;
       penalties.push({
-        id: `neglect_${v}`, voice: v, title: `${VOICE_LABEL[v]} мовчить`, line: '',
-        effect: { quieter: [v], note: `${VOICE_LABEL[v]} мовчить: три тижні без жодної його справи.` },
+        id: `neglect_${v}`, voice: v, title: tf('{0} мовчить', VOICE_LABEL[v]), line: '',
+        effect: { quieter: [v], note: tf('{0} мовчить: три тижні без жодної його справи.', VOICE_LABEL[v]) },
       });
     }
   }
@@ -386,12 +386,12 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
     for (const v of e.louder ?? []) {
       if (v === 'ego' || v === 'team') prep.voiceStreak = { who: v, count: 2 };
       for (const a of VOICE_ATTRS[v]) bump(a, 1);
-      tags.push({ text: `${VOICE_LABEL[v]} гучніше`, kind: 'voice', who: v, dir: 'up', where: t('на матч') });
+      tags.push({ text: tf('{0} гучніше', VOICE_LABEL[v]), kind: 'voice', who: v, dir: 'up', where: t('на матч') });
     }
     for (const v of e.quieter ?? []) {
       if (v === 'ego' || v === 'team') prep.voiceMute = { ...(prep.voiceMute ?? {}), [v]: BALANCE.week.muteEpisodes };
       for (const a of VOICE_ATTRS[v]) bump(a, -1);
-      tags.push({ text: `${VOICE_LABEL[v]} тихіше`, kind: 'voice', who: v, dir: 'down', where: t('на матч') });
+      tags.push({ text: tf('{0} тихіше', VOICE_LABEL[v]), kind: 'voice', who: v, dir: 'down', where: t('на матч') });
     }
     const start = (key: 'stamina' | 'composure' | 'fanHype' | 'momentum', label: string, delta: number) => {
       prep.start![key] = (prep.start![key] ?? 0) + delta;
@@ -413,10 +413,10 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
       if (n >= BALANCE.week.trainToPoint) {
         next.training![attr] = 0;
         next.attrPoints[attr] = (next.attrPoints[attr] ?? 0) + 1;
-        tags.push({ text: `${ATTRIBUTE_LABEL[attr]} +1 назавжди`, kind: 'perm', attr, dir: 'up', where: t('назавжди · у картку') });
+        tags.push({ text: tf('{0} +1 назавжди', ATTRIBUTE_LABEL[attr]), kind: 'perm', attr, dir: 'up', where: t('назавжди · у картку') });
       } else {
         next.training![attr] = n;
-        tags.push({ text: `${ATTRIBUTE_LABEL[attr]}: ${n} з ${BALANCE.week.trainToPoint}`, kind: 'train', attr, where: t('тренування'), progress: [n, BALANCE.week.trainToPoint] });
+        tags.push({ text: tf('{0}: {1} з {2}', ATTRIBUTE_LABEL[attr], n, BALANCE.week.trainToPoint), kind: 'train', attr, where: t('тренування'), progress: [n, BALANCE.week.trainToPoint] });
       }
     }
     if (e.removeFlags?.length) flags = flags.filter((f) => !e.removeFlags!.includes(f.flag));
@@ -437,7 +437,7 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
 export function whenTextFor(after: number): string {
   if (after <= 0) return t('ще минулого тижня');
   const words = ['', '', t('два'), t('три'), t('чотири'), t('п’ять')];
-  return `ще ${words[after + 1] ?? after + 1} тури тому`;
+  return tf('ще {0} тури тому', words[after + 1] ?? after + 1);
 }
 
 /** Неделя записывается всегда — и с выбором, и без, — чтобы после перезагрузки не искать её заново. */
@@ -526,11 +526,13 @@ export function finishWeek(career: Career, c: WeekContext, days: WeekOffer[][], 
  *  до того, чого з ним не було. Тест `tests/canon.test.ts` проганяє видачу якорів по сезону і падає,
  *  якщо якась із цих сцен не доходить: якорів на сезон стає більше, тури скінченні, і черга — річ, яку
  *  треба міряти, а не тримати в голові. Додав відсилку в текст — додай сцену сюди. */
+/** Поле `why` — пояснення для того, хто читає код, а не текст для гравця, тому воно не
+ *  перекладається (CLAUDE.md, M47); позначка в кінці кожного рядка це й каже перевірці. */
 export const CANON_SCENES: { scene: string; season: number; why: string }[] = [
-  { scene: 'sc_first_week', season: 1, why: 'ім\'я Ларссона: скотч від чужого прізвища на шафці. Звідти воно в програмці, постах, сетапі rx_sub_there і у відпустці' },
-  { scene: 'sc_larsson_training', season: 1, why: 'штрафні мовчки: на них посилається сетап rx_sub_there («торік ви били штрафні мовчки») і флаг larsson_respect' },
-  { scene: 'sc_boots_box', season: 1, why: 'жовті бутси з «10» маркером: улика на газоні у відпустці і вибір у фіналі («почистити і лишити»)' },
-  { scene: 'sc_top_first_week', season: 2, why: 'та сама база в новому календарі: на «не змінилося нічого, крім усього» спирається тон другого сезону' },
+  { scene: 'sc_first_week', season: 1, why: 'ім\'я Ларссона: скотч від чужого прізвища на шафці. Звідти воно в програмці, постах, сетапі rx_sub_there і у відпустці' },  // i18n-skip
+  { scene: 'sc_larsson_training', season: 1, why: 'штрафні мовчки: на них посилається сетап rx_sub_there («торік ви били штрафні мовчки») і флаг larsson_respect' },  // i18n-skip
+  { scene: 'sc_boots_box', season: 1, why: 'жовті бутси з «10» маркером: улика на газоні у відпустці і вибір у фіналі («почистити і лишити»)' },  // i18n-skip
+  { scene: 'sc_top_first_week', season: 2, why: 'та сама база в новому календарі: на «не змінилося нічого, крім усього» спирається тон другого сезону' },  // i18n-skip
 ];
 
 export const ANCHOR_SCENES: { seasonNumber?: number; round?: number; byRound?: number; scene: string; arcMin?: number; when?: (career: Career) => boolean }[] = [

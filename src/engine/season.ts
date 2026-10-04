@@ -7,7 +7,7 @@
 import { makeRng, type Rng } from './rng';
 import { BALANCE } from './balance';
 import type { Period, Strength } from './conditions';
-import { t } from '../content/i18n';
+import { ord, t, tf } from '../content/i18n';
 
 export const US = 'us';
 export const SEASON_ROUNDS = 10;
@@ -300,10 +300,10 @@ export function secondSeasonVerdict(season: Season, coachTrust: number): Verdict
   const base = seasonVerdict(season, coachTrust);
   const row = ourRow(season);
   const p = season.player;
-  const stats = `${p.goals} голів і ${p.assists} передач`;
-  const table = row.position === 1 ? t('Чемпіон вищої ліги') : `${row.position}-е місце у вищій лізі`;
+  const stats = tf('{0} голів і {1} передач', p.goals, p.assists);
+  const table = row.position === 1 ? t('Чемпіон вищої ліги') : tf('{0} місце у вищій лізі', ord(row.position));
   const tail = base.kind === 'bench' ? t(' Тренер хотів би тримати тебе в шорах іще рік. Не встигне.') : base.kind === 'transfer' ? t(' Тренер каже «скатертиною» — і, здається, це щиро.') : t(' Тренер підписав би ще на рік. Не доведеться.');
-  return { kind: 'transfer', title: t('Дзвонить скаут'), text: `${table}, ${stats} за сезон. Дзвонить той самий скаут, що два роки тому питав про ногу, — тепер із клубу, який грає в Лізі чемпіонів. Про ногу не питає.${tail}` };
+  return { kind: 'transfer', title: t('Дзвонить скаут'), text: tf('{0}, {1} за сезон. Дзвонить той самий скаут, що два роки тому питав про ногу, — тепер із клубу, який грає в Лізі чемпіонів. Про ногу не питає.{2}', table, stats, tail) };
 }
 
 /** Кінець першого сезону (M15): дзвінок агента безумовний — вихід у вищу лігу помітили. Таблиця й тренер
@@ -316,7 +316,7 @@ export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict 
   const row = ourRow(season);
   const p = season.player;
   const actions = p.goals + p.assists;
-  const stats = `${p.goals} голів і ${p.assists} передач`;
+  const stats = tf('{0} голів і {1} передач', p.goals, p.assists);
   const promo = promotion(season);
   const won = playoffWon(season);
   // Три гілки регламенту (M19): двійка — прямо, стики виграли — через них, решта — «за регламентом».
@@ -324,11 +324,11 @@ export function firstSeasonVerdict(season: Season, coachTrust: number): Verdict 
     : won === true ? t('Вихід через стикові') : t('Вихід у вищу лігу');
   let text: string;
   if (row.position <= k.transferPosition && coachTrust >= k.transferTrust) {
-    text = `${row.position}-е місце, ${stats}. ${how} помітили не тільки в місті: клуб із вищої ліги хоче тебе вже влітку. Медогляд у липні. Тренер не радий — але це найкраща з його проблем.`;
+    text = tf('{0} місце, {1}. {2} помітили не тільки в місті: клуб із вищої ліги хоче тебе вже влітку. Медогляд у липні. Тренер не радий — але це найкраща з його проблем.', ord(row.position), stats, how);
   } else if (actions >= k.starActions) {
-    text = `${stats} за сезон — і ${how.charAt(0).toLowerCase() + how.slice(1)} помітили: клуб із вищої ліги дзвонить за протоколом, попри ${row.position}-е місце. Медогляд у липні.`;
+    text = tf('{0} за сезон — і {1} помітили: клуб із вищої ліги дзвонить за протоколом, попри {2} місце. Медогляд у липні.', stats, how.charAt(0).toLowerCase() + how.slice(1), ord(row.position));
   } else {
-    text = `${row.position}-е місце, ${stats}. ${how} помітили ті, хто дивиться не таблицю, а поле: клуб із вищої ліги дзвонить — не через цифри, а тому, що бачив тебе. Медогляд у липні.`;
+    text = tf('{0} місце, {1}. {2} помітили ті, хто дивиться не таблицю, а поле: клуб із вищої ліги дзвонить — не через цифри, а тому, що бачив тебе. Медогляд у липні.', ord(row.position), stats, how);
   }
   if (base.kind === 'bench') text += t(' А новий сезон починаєш під наглядом: ') + (base.text.includes(t('свист')) ? t('трибуни свистіли, і президент це чув.') : t('тренер не дивиться в очі.'));
   return { kind: 'transfer', title: t('Дзвонить агент'), text };
@@ -346,7 +346,7 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
   const avgCoach = p.matches ? p.coachSum / p.matches : 0;
   const avgFan = p.matches ? p.fanSum / p.matches : 0;
   const actions = p.goals + p.assists;
-  const stats = `${p.goals} голів і ${p.assists} передач`;
+  const stats = tf('{0} голів і {1} передач', p.goals, p.assists);
 
   // Свист трибун — раніше за трансфер від таблиці: клуб, що виграв лігу з тобою, все одно чує
   // стадіон, а агент за освистаного не дзвонить. Зірка протоколу (нижче) свисту не збирає за визначенням.
@@ -354,21 +354,21 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
     return {
       kind: 'bench',
       title: t('Розмова в кабінеті'),
-      text: `${row.position}-е місце, ${stats}. Тренер задоволений, трибуни — ні: свист після кожного пасу назад дійшов до президента. Новий сезон починаєш під наглядом: установка від оборони, «щоб зняти напругу».`,
+      text: tf('{0} місце, {1}. Тренер задоволений, трибуни — ні: свист після кожного пасу назад дійшов до президента. Новий сезон починаєш під наглядом: установка від оборони, «щоб зняти напругу».', ord(row.position), stats),
     };
   }
   if (row.position <= k.transferPosition && coachTrust >= k.transferTrust) {
     return {
       kind: 'transfer',
       title: t('Дзвонить агент'),
-      text: `${row.position}-е місце, ${stats} за сезон. Клуб із сильнішої ліги хоче тебе вже цієї зими. Тренер не радий — але це найкраща з його проблем.`,
+      text: tf('{0} місце, {1} за сезон. Клуб із сильнішої ліги хоче тебе вже цієї зими. Тренер не радий — але це найкраща з його проблем.', ord(row.position), stats),
     };
   }
   if (actions >= k.starActions && avgFan >= k.starFan && coachTrust >= k.starMinTrust) {
     return {
       kind: 'transfer',
       title: t('Дзвонить агент'),
-      text: `${stats} за сезон, і трибуни знають твоє прізвище краще за тренера. Клуб із сильнішої ліги дзвонить попри ${row.position}-е місце. Тренер каже «скатертиною» — і, здається, це щиро.`,
+      text: tf('{0} за сезон, і трибуни знають твоє прізвище краще за тренера. Клуб із сильнішої ліги дзвонить попри {1} місце. Тренер каже «скатертиною» — і, здається, це щиро.', stats, ord(row.position)),
     };
   }
 
@@ -379,7 +379,7 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
     return {
       kind: 'extend',
       title: t('Продовження контракту'),
-      text: `${row.position}-е місце, ${stats}. Тренер хотів би посадити — але трибуни скандують твоє прізвище, і президент це чує. Контракт підписаний. Тренер — ні.`,
+      text: tf('{0} місце, {1}. Тренер хотів би посадити — але трибуни скандують твоє прізвище, і президент це чує. Контракт підписаний. Тренер — ні.', ord(row.position), stats),
     };
   }
   if (coachBenches) {
@@ -387,13 +387,13 @@ export function seasonVerdict(season: Season, coachTrust: number): Verdict {
     return {
       kind: 'bench',
       title: t('Розмова в кабінеті'),
-      text: `${row.position}-е місце, ${stats}, і ${why}: новий сезон починаєш під наглядом — установка від оборони, стандарти б’є інший. Дублер уже знає.`,
+      text: tf('{0} місце, {1}, і {2}: новий сезон починаєш під наглядом — установка від оборони, стандарти б’є інший. Дублер уже знає.', ord(row.position), stats, why),
     };
   }
   return {
     kind: 'extend',
     title: t('Продовження контракту'),
-    text: `${row.position}-е місце, ${stats}. Тренер підписує ще на рік: «Місце в основі — твоє. Поки що».`,
+    text: tf('{0} місце, {1}. Тренер підписує ще на рік: «Місце в основі — твоє. Поки що».', ord(row.position), stats),
   };
 }
 

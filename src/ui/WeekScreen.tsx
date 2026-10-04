@@ -6,7 +6,7 @@ import { useShot } from './Shot';
 import { VOICE_LABEL } from '../engine/voices';
 import { ATTRIBUTE_LABEL, type Attribute, type Player, type VoiceKey } from '../engine/types';
 import { Doodles } from './doodles';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Тиждень v3: три дні, у кожному три справи — одна на день; исход уже выпавший, может вести в сцену
 // (одна на неделю); всё применяется разом в конце (onFinish → бирки). Правила — engine/week.ts.
@@ -164,7 +164,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
     const offers = days[d] ?? [];
     return (
       <section key={d} className="nb-day">
-        <h3>{DAY[d] ?? `День ${d + 1}`}<small>{offer ? offer.activity.title.toLowerCase() : t('нічого')}</small></h3>
+        <h3>{DAY[d] ?? tf('День {0}', d + 1)}<small>{offer ? offer.activity.title.toLowerCase() : t('нічого')}</small></h3>
         {offers.length > 0 && (
           <div className="nb-notes compact">
             {offers.map((o) => note(o, o === offer ? 'on' : 'torn'))}
@@ -213,7 +213,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
                     <span className="choice-num">{i + 1}</span>
                     <span className="choice-text">
                       {o.label}
-                      {o.insight && <span className="bracket"><i className="origin">відкрив {VOICE_LABEL[o.insight.who]}</i></span>}
+                      {o.insight && <span className="bracket"><i className="origin">{tf('відкрив {0}', VOICE_LABEL[o.insight.who])}</i></span>}
                     </span>
                     <span className="choice-go" aria-hidden="true">›</span>
                   </button>
@@ -236,7 +236,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
       const visible = sceneOptionsFor(scene, sees);
       return (
         <div className="moment nb-sheet" ref={sheetRef}><div className="scene">
-          <span className="minute-tab">{DAY[d].toUpperCase()} · ПІЗНО</span>
+          <span className="minute-tab">{tf('{0} · ПІЗНО', DAY[d].toUpperCase())}</span>
           <p className="setup">{scene.setup}</p>
           {chosen ? (
             <>
@@ -261,7 +261,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
                       <span className="choice-num">{i + 1}</span>
                       <span className="choice-text">
                         {o.label}
-                        {o.insight && <span className="bracket"><i className="origin">відкрив {VOICE_LABEL[o.insight.who]}</i></span>}
+                        {o.insight && <span className="bracket"><i className="origin">{tf('відкрив {0}', VOICE_LABEL[o.insight.who])}</i></span>}
                       </span>
                       <span className="choice-go" aria-hidden="true">›</span>
                     </button>
@@ -276,7 +276,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
     }
     return (
       <div className="moment nb-sheet" ref={sheetRef}><div className="scene">
-        <span className="minute-tab">{DAY[d].toUpperCase()} · ВЕЧІР</span>
+        <span className="minute-tab">{tf('{0} · ВЕЧІР', DAY[d].toUpperCase())}</span>
         <p className="setup">{out.text}</p>
         <p className={`nb-aside voice-${offer.activity.voice}`}><b>{voice}</b>{out.effect.note}</p>
         <button className="primary menu-primary nb-sheet-btn" onClick={() => afterOutcome(offer)}>{sceneFor(out, scenes, seen, sceneUsed) ? t('Що далі') : last ? t('Підсумок тижня') : t('Далі')}</button>
@@ -315,7 +315,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
 
         {days.map((offers, d) => {
           if (phase.p === 'summary' || d < day) return doneDay(d, true);
-          if (d > day) return <section key={d} className="nb-day"><h3>{DAY[d] ?? `День ${d + 1}`}</h3><div className="nb-empty" /></section>;
+          if (d > day) return <section key={d} className="nb-day"><h3>{DAY[d] ?? tf('День {0}', d + 1)}</h3><div className="nb-empty" /></section>;
 
           // поточний день
           if (phase.p === 'outcome' || phase.p === 'scene') {

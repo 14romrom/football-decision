@@ -17,11 +17,10 @@ export function LevelUpScreen({ player, career, fromLevel, toLevel, onConfirm }:
 
   return (
     <div className="levelup">
-      <h1>Новий рівень: {toLevel}</h1>
+      <h1>{tf('Новий рівень: {0}', toLevel)}</h1>
       <p className="muted">
         {fromLevel === toLevel - 1 ? tf('Було {0}, стало {1}.', fromLevel, toLevel) : tf('Рівень {0}, непотрачених очок: {1} — по одному за раз.', toLevel, toLevel - fromLevel)}
-        {' '}Це не тренування — це ріст: обери один атрибут, його кидок стане на +1 сильнішим назавжди, потім підтверди.
-        Сильніший атрибут — гучніший голос: від «чутно» до «бачить».
+        {' '}{t('Це не тренування — це ріст: обери один атрибут, його кидок стане на +1 сильнішим назавжди, потім підтверди. Сильніший атрибут — гучніший голос: від «чутно» до «бачить».')}
       </p>
 
       {ATTRIBUTE_GROUPS.map((g) => (
@@ -30,8 +29,8 @@ export function LevelUpScreen({ player, career, fromLevel, toLevel, onConfirm }:
           <div className="train-grid">
             {g.attrs.map((a) => {
               const e = pointEffect(player, career, a);
-              const voiceNote = e.voice?.change === 'sees' ? `${e.voice.label} почне бачити`
-                : e.voice?.change === 'hears' ? `${e.voice.label} стане чутно` : null;
+              const voiceNote = e.voice?.change === 'sees' ? tf('{0} почне бачити', e.voice.label)
+                : e.voice?.change === 'hears' ? tf('{0} стане чутно', e.voice.label) : null;
               return (
                 <button key={a} className={`train-attr ${selected === a ? 'picked' : ''} ${voiceNote ? 'wakes' : ''}`} onClick={() => setSelected(a)}>
                   <span>{ATTRIBUTE_LABEL[a]}</span>
@@ -46,10 +45,10 @@ export function LevelUpScreen({ player, career, fromLevel, toLevel, onConfirm }:
       ))}
 
       <p className={selected ? 'levelup-pick' : 'levelup-pick muted'}>
-        {selected ? `Обрано: ${ATTRIBUTE_LABEL[selected]} → +1 до кидка` : t('Крок 1: натисни на атрибут. Крок 2: підтверди.')}
+        {selected ? tf('Обрано: {0} → +1 до кидка', ATTRIBUTE_LABEL[selected]) : t('Крок 1: натисни на атрибут. Крок 2: підтверди.')}
       </p>
       <button className="primary" disabled={!selected} onClick={() => selected && onConfirm(selected)}>
-        {selected ? `Підтвердити +1 до «${ATTRIBUTE_LABEL[selected]}»` : t('Спершу обери атрибут')}
+        {selected ? tf('Підтвердити +1 до «{0}»', ATTRIBUTE_LABEL[selected]) : t('Спершу обери атрибут')}
       </button>
     </div>
   );

@@ -3,7 +3,7 @@ import { isSeasonOver, leagueOf, monthOfRound, SEASON_ROUNDS, standings, US, typ
 import { plural } from './pluralize';
 import type { AdRule, AdSet, ClubName } from '../engine/espm';
 import { playerLine, roundHeadline, type EspmColumn } from '../engine/espm';
-import { t } from '../content/i18n';
+import { dec, t, tf } from '../content/i18n';
 
 // Экран сезона = сторінка таблиці на сайті ESPM (19.09, макет «Таблиця: ESPM», решение пользователя):
 // рамка браузера с адресом делает страницу предметом; сама страница — светлый экран с чужой
@@ -29,7 +29,7 @@ type Props = {
   nextLabel?: string;
 };
 
-const fmt = (n: number) => n.toFixed(1).replace('.', ',');
+const fmt = (n: number) => dec(n);
 
 /** Рекламный блок страницы — общий с профилем игрока (ui/EspmProfile.tsx): формат один и тот же. */
 export function Banner({ ad, dark }: { ad: AdRule; dark?: boolean }) {
@@ -54,11 +54,11 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
       <div className="browser">
         <div className="chrome"><span className="chrome-tabs">3</span><span className="chrome-url"><b>espm.com</b>/football/liga/table</span><span aria-hidden="true">⋮</span></div>
         <div className="espm">
-          <div className="espm-mast"><span className="espm-logo"><b>ESPM</b><i>Футбол · {leagueOf(season.number).name}</i></span><span className="espm-burger" aria-hidden="true" /></div>
+          <div className="espm-mast"><span className="espm-logo"><b>ESPM</b><i>{tf('Футбол · {0}', leagueOf(season.number).name)}</i></span><span className="espm-burger" aria-hidden="true" /></div>
           <nav className="espm-nav"><span>{t('Головна')}</span><span className="on">{t('Таблиця')}</span><span>{t('Результати')}</span><span>{t('Трансфери')}</span><span>{t('Відео')}</span></nav>
 
           <div className="espm-art">
-            <div className="espm-kicker">{over ? `Підсумки сезону · ${leagueOf(season.number).name}` : `Тур ${season.round} з ${SEASON_ROUNDS} · ${monthOfRound(season.round)}`}</div>
+            <div className="espm-kicker">{over ? tf('Підсумки сезону · {0}', leagueOf(season.number).name) : tf('Тур {0} з {1} · {2}', season.round, SEASON_ROUNDS, monthOfRound(season.round))}</div>
             <h1 className="espm-hl">{roundHeadline(season, club)}</h1>
             {(() => { const l = playerLine(season.rounds?.[season.rounds.length - 1], { nom: playerName, gen: playerGen }); return l ? <p className="espm-dek">{l}</p> : null; })()}
             <div className="espm-by">{t('Редакція · 2 год тому')}</div>
@@ -79,11 +79,11 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
           </div>
 
           {scorers.length > 0 && (
-            <div className="espm-widget"><h4>Бомбардири «{usGen}»</h4><p>{scorers.map(([name, g]) => `${name} — ${g}`).join(' · ')}</p></div>
+            <div className="espm-widget"><h4>{tf('Бомбардири «{0}»', usGen)}</h4><p>{scorers.map(([name, g]) => `${name} — ${g}`).join(' · ')}</p></div>
           )}
           <div className="espm-widget">
-            <h4>{playerName} за сезон</h4>
-            <p><span className="num">{p.matches}</span>{plural(p.matches, t('матч'), t('матчі'), t('матчів'))} · <span className="num">{p.goals}</span>{plural(p.goals, t('гол'), t('голи'), t('голів'))} · <span className="num">{p.assists}</span>{plural(p.assists, t('передача'), t('передачі'), t('передач'))} · оцінка {p.matches ? fmt(p.coachSum / p.matches) : '—'}</p>
+            <h4>{tf('{0} за сезон', playerName)}</h4>
+            <p><span className="num">{p.matches}</span>{plural(p.matches, t('матч'), t('матчі'), t('матчів'))} · <span className="num">{p.goals}</span>{plural(p.goals, t('гол'), t('голи'), t('голів'))} · <span className="num">{p.assists}</span>{plural(p.assists, t('передача'), t('передачі'), t('передач'))} · {tf('оцінка {0}', p.matches ? fmt(p.coachSum / p.matches) : '—')}</p>
           </div>
 
           {column && (
@@ -99,7 +99,7 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
 
           <div className="espm-pay">
             <div className="espm-kicker">{t('Аналітика')}</div>
-            <p className="blur">Чому «{club(US).nom}» грає саме так і до чого тут десятка. Наш оглядач порахував усе і не повірив.</p>
+            <p className="blur">{tf('Чому «{0}» грає саме так і до чого тут десятка. Наш оглядач порахував усе і не повірив.', club(US).nom)}</p>
             <p className="blur">{t('Три графіки, які пояснюють усе. Або нічого.')}</p>
             <div className="gate"><span>{t('Читати з передплатою')}</span></div>
           </div>

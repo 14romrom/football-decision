@@ -5,7 +5,7 @@ import { VOICE_LABEL } from '../engine/voices';
 import { pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 import { Icon } from './icons';
 import { motionReduced, readSettings, vibrate } from '../telemetry/settings';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Кидок і результат (правка 19.09 после первой версии Г: «дубли и сложно»). Карточка строится
 // вокруг кубиков — ключевой зоны азарта: цифры бегут барабаном, первый кубик останавливается
@@ -139,7 +139,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
           <i className={`die ${stage >= 2 ? 'stopped' : 'spinning'}`}>{stage >= 2 ? res.dice[1] : spin[1] || '·'}</i>
         </div>
         {critBad && stage >= 3 && (
-          <p className="crit-note">{res.dice[0]} і {res.dice[1]} — на такому ризику це катастрофа, навичка тут не рятує.</p>
+          <p className="crit-note">{tf('{0} і {1} — на такому ризику це катастрофа, навичка тут не рятує.', res.dice[0], res.dice[1])}</p>
         )}
         {res.critical === 'success' && stage >= 3 && <p className="crit-note">{t('Двадцять. Таке не пояснюють.')}</p>}
 
@@ -154,7 +154,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
             </span>
             <span className="formula-total">
               {res.rawRoll} <b>{fmt(running - res.rawRoll)}</b> = <b className="tick">{running}</b>
-              {stage >= S_VERDICT && <> проти {res.target}</>}
+              {stage >= S_VERDICT && <>{tf(' проти {0}', res.target)}</>}
             </span>
           </div>
         )}
@@ -172,11 +172,16 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         {stage >= LAST && (
           <div className="after">
             <p className="outcome">{outcome.text}</p>
-            {flavor && <p className={`say say-second ${FLAVOR_CLASS[flavorVoice ?? t('ТРИБУНИ')] ?? ''}`}><b>{flavorVoice ?? t('ТРИБУНИ')}</b> — {flavor}</p>}
+            {flavor && (() => {
+              // Ключ FLAVOR_CLASS — перекладена назва голосу (CLAUDE.md, M47): і сам голос, і ключ
+              // мапи беруться з того самого t(), інакше англійський голос не знайде свій колір.
+              const who = flavorVoice ?? t('ТРИБУНИ');
+              return <p className={`say say-second ${FLAVOR_CLASS[who] ?? ''}`}><b>{who}</b>{tf(' — {0}', flavor)}</p>;
+            })()}
             {(option.insight || option.requires?.flags?.some((f) => f.startsWith('week_'))) && (
               <p className="origin-note">
                 {option.insight
-                  ? <>{VOICE_LABEL[option.insight.who]} побачив цей варіант — без нього кнопки не було б.</>
+                  ? <>{tf('{0} побачив цей варіант — без нього кнопки не було б.', VOICE_LABEL[option.insight.who])}</>
                   : <>{t('Цей варіант з’явився завдяки тижню між матчами.')}</>}
               </p>
             )}
@@ -188,7 +193,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
               </ul>
             )}
             {(chained || continues) && <p className="continues">{t('Момент триває — наступне рішення на цій же хвилині.')}</p>}
-            <button className="primary de-next" onClick={onNext}>{continues ? `Далі → ${continues}` : chained ? t('Далі') : t('Граємо далі')}</button>
+            <button className="primary de-next" onClick={onNext}>{continues ? tf('Далі → {0}', continues) : chained ? t('Далі') : t('Граємо далі')}</button>
           </div>
         )}
         </div>

@@ -4,7 +4,7 @@
 
 import { FORMATION_BY_STRENGTH, type Strength } from './conditions';
 import { coachGrip } from './career';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 export type ProgrammeInput = {
   /** Тур, который предстоит (1-based). */
@@ -40,14 +40,14 @@ const MILESTONE: Record<number, string> = { 10: t('Десятий матч за 
 function lastLine(i: ProgrammeInput): string {
   if (!i.last) return i.round === 1 ? ((i.seasonNumber ?? 1) >= 2 ? t('Перший матч у вищій лізі.') : t('Дебютує в сезоні.')) : '';
   const { scoreUs: a, scoreThem: b, opponentGen } = i.last;
-  const score = `${a}:${b}`;
+  const score = tf('{0}:{1}', a, b);
   const kind = a > b ? t('перемоги') : a < b ? t('поразки') : t('нічиєї');
   const tail = a < b ? (b - a >= 3 ? t(' виходить із бажанням реабілітуватися') : t(' хоче відповісти')) : a > b ? t(' — на підйомі') : '';
-  return `Після ${kind} ${score} проти «${opponentGen}»${tail}.`;
+  return tf('Після {0} {1} проти «{2}»{3}.', kind, score, opponentGen, tail);
 }
 
 function formLine(i: ProgrammeInput): string {
-  if (i.scoringStreak >= 2 && i.scoringStreak <= 10) return `${ORD[i.scoringStreak].charAt(0).toUpperCase() + ORD[i.scoringStreak].slice(1)} матч поспіль із результативною дією.`;
+  if (i.scoringStreak >= 2 && i.scoringStreak <= 10) return tf('{0} матч поспіль із результативною дією.', ORD[i.scoringStreak].charAt(0).toUpperCase() + ORD[i.scoringStreak].slice(1));
   if (i.dryStreak >= 3) return t('Серія без результативних дій триває.');
   if (i.confidence >= 2) return t('Серія перемог за плечима.');
   if (i.confidence <= -2) return t('Серія поразок триває.');
@@ -61,16 +61,16 @@ const PUBLIC_ACTIVITIES = new Set(['academy_kids', 'school_masterclass', 'press_
 function weekLine(i: ProgrammeInput): string {
   const acts = i.weekActivities.filter((a) => PUBLIC_ACTIVITIES.has(a.id)).slice(0, 1).map((a) => a.title.charAt(0).toLowerCase() + a.title.slice(1));
   if (acts.length === 0) return '';
-  return `Цього тижня — ${acts[0]}.`;
+  return tf('Цього тижня — {0}.', acts[0]);
 }
 
 /** Ставлення прес-служби дрейфує зі станом: до «свій» — нічого, далі — «улюбленець трибун», після зими — і про агента. */
 function arcLine(i: ProgrammeInput): string {
   // Луна дзвінка (M15 — у відпустці): «улюбленець» — тільки зі стану 3, прес-служба не поспішає.
   const own = (i.arc ?? 1) >= 3 ? t('Улюбленець трибун. ') : '';
-  if (i.agentEcho === 'leave') return `${own}Тренер: «Кажуть, улітку мало не пішов». Не питання.`;
-  if (i.agentEcho === 'stay') return `${own}Про літо тренер не сказав ні слова — це його спосіб сказати «дякую».`;
-  if (i.agentEcho === 'wait') return `${own}«До зими», — сказав тренер. Він теж чув.`;
+  if (i.agentEcho === 'leave') return own + t('Тренер: «Кажуть, улітку мало не пішов». Не питання.');
+  if (i.agentEcho === 'stay') return own + t('Про літо тренер не сказав ні слова — це його спосіб сказати «дякую».');
+  if (i.agentEcho === 'wait') return own + t('«До зими», — сказав тренер. Він теж чув.');
   if ((i.arc ?? 1) >= 4) return t('Улюбленець трибун. Улітку лишився.');
   if ((i.arc ?? 1) >= 3) return t('Улюбленець трибун.');
   return '';
@@ -112,24 +112,24 @@ export function coachGoalWord(seasonNumber: number, round: number, position: num
   // Стикові (M19): тур поза кругом — тренер говорить не про таблицю, а про один матч.
   if (round > rounds) return t('І ще: «Таблиця закінчилася. Лишився один матч, і в ньому немає другого шансу».');
   const left = rounds - round + 1;
-  const tail = left <= 1 ? t('Один матч.') : left === 2 ? t('Два тури.') : `${left} тури.`;
-  if (position <= 2) return left <= 1 ? t('І ще: «Ми в перших двох. До свистка це нічого не означає».') : `І ще: «Ми в перших двох. ${tail} Не відпускати».`;
-  if (position <= 4) return `І ще: «Стики нікому не потрібні — ні їм, ні нам. ${tail} Перші двоє поруч».`;
-  return `І ще: «Нам треба одне місце. Одне. ${tail} Я не прошу — я кажу».`;
+  const tail = left <= 1 ? t('Один матч.') : left === 2 ? t('Два тури.') : tf('{0} тури.', left);
+  if (position <= 2) return left <= 1 ? t('І ще: «Ми в перших двох. До свистка це нічого не означає».') : tf('І ще: «Ми в перших двох. {0} Не відпускати».', tail);
+  if (position <= 4) return tf('І ще: «Стики нікому не потрібні — ні їм, ні нам. {0} Перші двоє поруч».', tail);
+  return tf('І ще: «Нам треба одне місце. Одне. {0} Я не прошу — я кажу».', tail);
 }
 
 /** Черта соперника голосом клуба: одна фраза, без модификаторов; `side` — «гостей» или «господарів». */
 export const TRAIT_NOTE: Record<string, (side: string) => string> = {
-  star: (s) => `Лідера ${s} не відпускають ні на крок.`,
-  dribbler: (s) => `Дриблер ${s}: за фінтами встигають не всі.`,
-  playmaker: (s) => `Плеймейкер ${s} бачить кожну лінію.`,
-  veteran: (s) => `Ветеран в обороні ${s} на фінти не купується.`,
-  youngster: (s) => `Молодий захисник ${s} — перший сезон в основі.`,
-  hard: (s) => `Опорник ${s} — сім карток за сезон.`,
-  rookie: (s) => `Новачок в обороні ${s} ще шукає позицію.`,
-  target: (s) => `Здоровань в атаці ${s} виграє повітря.`,
-  captain: (s) => `Капітан ${s} говорить із суддями за двох.`,
-  local: (s) => `Улюбленець трибун ${s} — стадіон за нього.`,
+  star: (s) => tf('Лідера {0} не відпускають ні на крок.', s),
+  dribbler: (s) => tf('Дриблер {0}: за фінтами встигають не всі.', s),
+  playmaker: (s) => tf('Плеймейкер {0} бачить кожну лінію.', s),
+  veteran: (s) => tf('Ветеран в обороні {0} на фінти не купується.', s),
+  youngster: (s) => tf('Молодий захисник {0} — перший сезон в основі.', s),
+  hard: (s) => tf('Опорник {0} — сім карток за сезон.', s),
+  rookie: (s) => tf('Новачок в обороні {0} ще шукає позицію.', s),
+  target: (s) => tf('Здоровань в атаці {0} виграє повітря.', s),
+  captain: (s) => tf('Капітан {0} говорить із суддями за двох.', s),
+  local: (s) => tf('Улюбленець трибун {0} — стадіон за нього.', s),
 };
 
 /** Схема соперника в рубрике «Суперник» (M23, 26.09): на поле она рисовалась и ни на что не влияла, а для
@@ -142,7 +142,7 @@ const FORMATION_NOTE: Record<string, string> = {
 };
 export function formationNote(strength: Strength): string {
   const f = FORMATION_BY_STRENGTH[strength];
-  return `Схема — ${f}: ${FORMATION_NOTE[f]}.`;
+  return tf('Схема — {0}: {1}.', f, FORMATION_NOTE[f]);
 }
 
 export function traitNote(traits: string[], venue: 'home' | 'away'): string | null {

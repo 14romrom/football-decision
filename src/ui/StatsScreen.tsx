@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { BROKEN_SHARE, FAST_DECISION_MS, choiceDistribution, clearLogs, exportLogs, readLogs } from '../telemetry/log';
 import { EPISODES } from '../content';
-import { t } from '../content/i18n';
+import { dec, t, tf } from '../content/i18n';
 
 // Единственный экран, где проценты уместны: это доля выборов живых тестеров,
 // а не вероятность исхода. Ради неё телеметрия и собирается (п. 10 ТЗ).
@@ -15,8 +15,7 @@ export function StatsScreen() {
     <div className="stats-screen" key={version}>
       <h1>{t('Розподіл виборів')}</h1>
       <p className="muted">
-        Рішень записано: {logs.length}. Епізод вважається зламаним, якщо одна опція забирає
-        більше {Math.round(BROKEN_SHARE * 100)}% виборів: отже, рішення уявне і епізод треба переписати.
+        {tf('Рішень записано: {0}. Епізод вважається зламаним, якщо одна опція забирає більше {1}% виборів: отже, рішення уявне і епізод треба переписати.', logs.length, Math.round(BROKEN_SHARE * 100))}
       </p>
 
       {dist.length === 0 && <p className="muted">{t('Поки порожньо — зіграйте матч.')}</p>}
@@ -24,7 +23,7 @@ export function StatsScreen() {
       {dist.map((e) => (
         <section key={e.episodeId} className={`ep-stats${e.broken ? ' broken' : ''}`}>
           <h2>
-            {e.episodeId} <span className="muted">· {e.total} рішень</span>
+            {e.episodeId} <span className="muted">{tf('· {0} рішень', e.total)}</span>
             {e.broken && <span className="broken-badge">{t('рішення уявне')}</span>}
           </h2>
           <p className="muted setup-quote">{setups.get(e.episodeId)}</p>
@@ -38,12 +37,12 @@ export function StatsScreen() {
                 />
               </span>
               <span className="share-num">{Math.round(o.share * 100)}%</span>
-              <span className="share-time">{(o.medianMs / 1000).toFixed(1)} с</span>
+              <span className="share-time">{tf('{0} с', dec(o.medianMs / 1000))}</span>
             </div>
           ))}
           {e.fastShare > 0.3 && (
             <p className="warn-line">
-              {Math.round(e.fastShare * 100)}% рішень швидше за {FAST_DECISION_MS / 1000} с — тиснуть за звичкою, а не думають.
+              {tf('{0}% рішень швидше за {1} с — тиснуть за звичкою, а не думають.', Math.round(e.fastShare * 100), FAST_DECISION_MS / 1000)}
             </p>
           )}
         </section>

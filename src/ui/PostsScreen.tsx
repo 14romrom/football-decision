@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { agoLabel, countLabel, type Post, type PostAccount, type ReplyOption } from '../engine/posts';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Стрічка між матчами — пародія на твіттер, тепер і за формою (19.09, макет «Стрічка як застосунок»,
 // решение пользователя): застосунок «Y» (то, что пришло после X — оммаж в один символ, как ESPM), без
@@ -86,7 +86,7 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
               <Avatar account={p.account} />
               <div className="x-body">
                 <Name account={p.account} when={when} />
-                {p.kind === 'live' && p.liveMinute !== undefined && <span className="x-live">{p.liveMinute}′ · наживо</span>}
+                {p.kind === 'live' && p.liveMinute !== undefined && <span className="x-live">{tf('{0}′ · наживо', p.liveMinute)}</span>}
                 {p.kind === 'promo' && <span className="x-ad">{t('Реклама')}</span>}
                 {p.kind === 'deleted'
                   ? <p className="x-tx x-del">{t('Цей пост видалено автором.')}</p>
@@ -96,7 +96,7 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
                     {p.poll.map((o, k) => (
                       <div key={o.text} className={k === 0 ? 'top' : ''} style={{ ['--w' as string]: `${o.pct}%` }}><span>{o.text}</span><b>{o.pct}%</b></div>
                     ))}
-                    <small>{countLabel(p.likes * 3)} голосів · Завершено</small>
+                    <small>{tf('{0} голосів · Завершено', countLabel(p.likes * 3))}</small>
                   </div>
                 )}
                 <Acts p={p} />

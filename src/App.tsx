@@ -11,7 +11,7 @@ import { finishVacation, vacationPending } from './engine/vacation';
 import { endingPending, endingSpreads, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
 import { HUNTER, hunterRound } from './engine/programme';
 import { maySpread } from './engine/may';
-import { t } from './content/i18n';
+import { t, tf } from './content/i18n';
 /** Тур другого сезону (0-based, після зими), у якому агент сидить на трибуні (rx_top_agent_in_stands). */
 const AGENT_IN_STANDS_ROUND = 6;
 /** Тур другого сезону (0-based), у якому тренер міняє тебе на Марена — канвовий показ ep_subbed_off. */
@@ -284,7 +284,7 @@ function Game() {
 
     // Точка повернення (M45): слот запам'ятовується до того, як матч почне його міняти, — щоб вихід
     // із матчу чи перезавантаження означали «тур не зіграно», а не «тур зіграно начисто».
-    takeShot('prematch', `сезон ${seasonRef.current.number}, тур ${seasonRef.current.round + 1}`);
+    takeShot('prematch', tf('сезон {0}, тур {1}', seasonRef.current.number, seasonRef.current.round + 1));
 
     // Перенос из карьеры: травма/карточка прошлого матча бьют по старту этого,
     // доверие тренера продолжается (с регрессией), а не сбрасывается на 55.
@@ -631,7 +631,7 @@ function Game() {
         {film}
         <div className="card-minute">{t('епілог')}</div>
         <section className="moment"><div className="scene">
-          <span className="minute-tab">{career.ending ? ENDING.epilogue.tab.toUpperCase() : `СЕЗОН ${career.ended.season} · ІНШЕ МІСТО`}</span>
+          <span className="minute-tab">{career.ending ? ENDING.epilogue.tab.toUpperCase() : tf('СЕЗОН {0} · ІНШЕ МІСТО', career.ended.season)}</span>
           {career.ending
             ? <>{ENDING.epilogue.text.map((t, k) => <p key={k} className="setup" style={k ? { paddingTop: 0 } : undefined}>{fillNames(t, ROSTER)}</p>)}<p className="nb-aside"><b>{ENDING.epilogue.sign}</b></p></>
             : <p className="setup">{fillNames(AGENT.epilogue, ROSTER)}</p>}
@@ -648,7 +648,7 @@ function Game() {
         <div className="menu">
           {film}
           <Sticker compact player={effectivePlayer(PLAYER, career)} career={career} season={season} dominant={dominantCareerVoice(career)} onOpen={() => { location.hash = '#/player'; }} />
-          <p className="season-line menu-fixture"><b>Сезон {season.number} завершено.</b></p>
+          <p className="season-line menu-fixture"><b>{tf('Сезон {0} завершено.', season.number)}</b></p>
           <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>{t('Підсумки сезону')}</button>
           <ul className="rows"><li><a className="row" href="#/">{t('Головна')}</a></li></ul>
         </div>

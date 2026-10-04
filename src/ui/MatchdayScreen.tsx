@@ -2,7 +2,7 @@ import type { MatchConditions } from '../engine/conditions';
 import type { Opponent } from '../content';
 import { leagueOf } from '../engine/season';
 import { WEATHER, matchDay, matchTime } from './prematch-text';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Матчдей (27.09, макет «Матчдей Вальмари», варіант А з ярликами на полі): останній екран перед виходом.
 // Було — кремовий лист із сімома рубриками, де половина пояснювала гравцеві його ж рішення. Стало —
@@ -51,7 +51,7 @@ export function MatchdayScreen({ conditions, opponent, usName, round, seasonNumb
       <span className="md-cross tl" /><span className="md-cross tr" /><span className="md-cross bl" /><span className="md-cross br" />
 
       <div className="md-body">
-        <div><span className="md-plate">{leagueOf(seasonNumber).name} · {playoff ? t('стикові') : `тур ${round}`}</span></div>
+        <div><span className="md-plate">{tf('{0} · {1}', leagueOf(seasonNumber).name, playoff ? t('стикові') : tf('тур {0}', round))}</span></div>
         <div className="md-spacer" />
 
         <div className="md-clubs">
@@ -66,7 +66,7 @@ export function MatchdayScreen({ conditions, opponent, usName, round, seasonNumb
           </div>
         </div>
 
-        <div className="md-bar">{matchDay(round)} · {matchTime(conditions.venue)} · стадіон «{stadium}» · {weather}</div>
+        <div className="md-bar">{tf('{0} · {1} · стадіон «{2}» · {3}', matchDay(round), matchTime(conditions.venue), stadium, weather)}</div>
 
         {/* Назви, водяний знак і смуга стоять посередині висоти: дві розпірки навколо них. Кнопка
             лишається внизу — до неї дотягується палець, і вона не частина афіші (рішення 28.09). */}

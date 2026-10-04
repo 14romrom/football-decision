@@ -13,7 +13,7 @@ import type { Rng } from './rng';
 import { PLAYOFF_SPOTS, playoffPending, playoffWon, promotion, PROMOTION_SPOTS, standings, SEASON_ROUNDS, US, type OurResult, type Season } from './season';
 import type { MatchResult } from './conditions';
 import type { Attribute } from './types';
-import { t } from '../content/i18n';
+import { plural, t, tf } from '../content/i18n';
 
 export type ClubName = { nom: string; gen: string };
 
@@ -48,9 +48,6 @@ export function pressLabel(uses: Partial<Record<Attribute, number>> | undefined)
   return kinds.reduce((a, b) => (b.n > a.n ? b : a));
 }
 
-const plural = (n: number, one: string, few: string, many: string) =>
-  n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
-
 /** Заголовок тура на странице таблицы. Наш клуб — «Вальмара», женский род глаголов зашит: клуб
  *  фиксирован в ростере (roster.json → us). Соперник — только в родительном («проти „Ольвара“»),
  *  у клубов нет орудного (см. CLAUDE.md про «з/із/у»). */
@@ -60,12 +57,12 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
   const usName = club(US).nom;
   const last = season.rounds?.[season.rounds.length - 1];
   const fixture = season.fixtures.find((f) => f.round === season.round - 1 && (f.home === US || f.away === US));
-  if (!last || !fixture) return `Тур ${season.round} з ${SEASON_ROUNDS}. «${usName}» — на ${AT[us.position]} місці.`;
+  if (!last || !fixture) return tf('Тур {0} з {1}. «{2}» — на {3} місці.', season.round, SEASON_ROUNDS, usName, AT[us.position]);
 
   const oppKey = fixture.home === US ? fixture.away : fixture.home;
   const opp = club(oppKey);
   const res: MatchResult = last.scoreUs > last.scoreThem ? 'W' : last.scoreUs < last.scoreThem ? 'L' : 'D';
-  const score = `${last.scoreUs}:${last.scoreThem} проти «${opp.gen}»`;
+  const score = tf('{0}:{1} проти «{2}»', last.scoreUs, last.scoreThem, opp.gen);
   const leader = rows[0];
   const leaderName = club(leader.club).nom;
 
@@ -73,49 +70,49 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
     // Стикові (M19): поки пара є, а результату немає — заголовок про них, а не про підсумок сезону.
     if (playoffPending(season)) {
       const rival = club(season.playoff!.opponent);
-      return `Круг дограно. «${usName}» — ${AT[us.position]} місце і стикові проти «${rival.gen}»: один матч, переможець іде нагору третім.`;
+      return tf('Круг дограно. «{0}» — {1} місце і стикові проти «{2}»: один матч, переможець іде нагору третім.', usName, AT[us.position], rival.gen);
     }
     const won = playoffWon(season);
     if (won === true) {
       const rival = club(season.playoff!.opponent);
       const r = season.playoff!.result!;
-      return `Стикові: «${usName}» — «${rival.nom}» ${r.scoreUs}:${r.scoreThem}. Третє місце у вищій лізі — наше.`;
+      return tf('Стикові: «{0}» — «{1}» {2}:{3}. Третє місце у вищій лізі — наше.', usName, rival.nom, r.scoreUs, r.scoreThem);
     }
     if (won === false) {
       const rival = club(season.playoff!.opponent);
       const r = season.playoff!.result!;
-      return `Стикові програні: «${usName}» — «${rival.nom}» ${r.scoreUs}:${r.scoreThem}. Сезон закінчено ${AT[us.position]} місцем.`;
+      return tf('Стикові програні: «{0}» — «{1}» {2}:{3}. Сезон закінчено {4} місцем.', usName, rival.nom, r.scoreUs, r.scoreThem, AT[us.position]);
     }
     // Перший сезон — про регламент, не про чемпіона: клуб цілий рік кричав про вихід (M14).
     const promo = promotion(season);
     if (promo?.kind === 'earned') {
       return leader.club === US
-        ? `Сезон закінчено. «${usName}» — чемпіон другої ліги і виходить у вищу.`
-        : `Сезон закінчено. «${usName}» — ${AT[promo.position]} місце і вихід у вищу лігу.`;
+        ? tf('Сезон закінчено. «{0}» — чемпіон другої ліги і виходить у вищу.', usName)
+        : tf('Сезон закінчено. «{0}» — {1} місце і вихід у вищу лігу.', usName, AT[promo.position]);
     }
     if (promo?.kind === 'scandal') {
       // M19: місце звільняє дискваліфікація у вищій лізі — так програш у стиках усе одно веде нагору.
-      return `У вищій лізі дискваліфікували клуб: нагору цього року йдуть ${promo.count} ${plural(promo.count, t('команда'), t('команди'), t('команд'))}. «${usName}» — ${AT[promo.position]} місце — серед них.`;
+      return tf('У вищій лізі дискваліфікували клуб: нагору цього року йдуть {0} {1}. «{2}» — {3} місце — серед них.', promo.count, plural(promo.count, t('команда'), t('команди'), t('команд')), usName, AT[promo.position]);
     }
     return leader.club === US
-      ? `Сезон закінчено. «${usName}» — чемпіон.`
-      : `Сезон закінчено. «${leaderName}» — чемпіон, «${usName}» фінішує на ${AT[us.position]} місці.`;
+      ? tf('Сезон закінчено. «{0}» — чемпіон.', usName)
+      : tf('Сезон закінчено. «{0}» — чемпіон, «{1}» фінішує на {2} місці.', leaderName, usName, AT[us.position]);
   }
   // Друга ліга: після рахунку — де ми відносно зони підвищення (мета клубу, M14).
   const zone = season.number === 1 ? (() => {
-    if (us.position <= PROMOTION_SPOTS) return ` У зоні прямого підвищення: нагору йдуть двоє.`;
+    if (us.position <= PROMOTION_SPOTS) return t(' У зоні прямого підвищення: нагору йдуть двоє.');
     if (PLAYOFF_SPOTS.includes(us.position)) {
       const second = rows[PROMOTION_SPOTS - 1];
       const gap = second.points - us.points;
-      return ` У зоні стикових. До прямого підвищення — ${gap} ${plural(gap, t('очко'), t('очки'), t('очок'))}.`;
+      return tf(' У зоні стикових. До прямого підвищення — {0} {1}.', gap, plural(gap, t('очко'), t('очки'), t('очок')));
     }
     const last = rows[PLAYOFF_SPOTS[PLAYOFF_SPOTS.length - 1] - 1];
     const gap = last.points - us.points;
-    return gap > 0 ? ` До стикових — ${gap} ${plural(gap, t('очко'), t('очки'), t('очок'))}.` : ` Стикові — поруч, за різницею м’ячів.`;
+    return gap > 0 ? tf(' До стикових — {0} {1}.', gap, plural(gap, t('очко'), t('очки'), t('очок'))) : t(' Стикові — поруч, за різницею м’ячів.');
   })() : '';
   if (season.round === 1) {
     const how = res === 'W' ? t('з перемоги') : res === 'L' ? t('з поразки') : t('з нічиєї');
-    return `«${usName}» стартує ${how}: ${score}.${zone}`;
+    return tf('«{0}» стартує {1}: {2}.{3}', usName, how, score, zone);
   }
 
   const prev = standings({ ...season, played: season.played.filter((m) => m.round < season.round - 1) });
@@ -126,17 +123,17 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
     const second = rows[1];
     const gap = us.points - second.points;
     const tail = gap > 0
-      ? `«${club(second.club).nom}» відстає на ${gap} ${plural(gap, t('очко'), t('очки'), t('очок'))}.`
-      : `«${club(second.club).nom}» — поруч, за різницею м’ячів.`;
+      ? tf('«{0}» відстає на {1} {2}.', club(second.club).nom, gap, plural(gap, t('очко'), t('очки'), t('очок')))
+      : tf('«{0}» — поруч, за різницею м’ячів.', club(second.club).nom);
     const verb = prevUs.position === 1 ? t('утримує перше') : t('виходить на перше');
-    return `«${usName}» ${verb} після ${score}. ${tail}`;
+    return tf('«{0}» {1} після {2}. {3}', usName, verb, score, tail);
   }
 
-  const lead = prevLeader.club === leader.club ? `«${leaderName}» утримує перше.` : `«${leaderName}» виходить на перше.`;
-  const move = us.position < prevUs.position ? `піднялася на ${TO[us.position]}`
-    : us.position > prevUs.position ? `опустилася на ${TO[us.position]}`
-    : `лишається на ${AT[us.position]}`;
-  return `${lead} «${usName}» ${move} після ${score}.${zone}`;
+  const lead = prevLeader.club === leader.club ? tf('«{0}» утримує перше.', leaderName) : tf('«{0}» виходить на перше.', leaderName);
+  const move = us.position < prevUs.position ? tf('піднялася на {0}', TO[us.position])
+    : us.position > prevUs.position ? tf('опустилася на {0}', TO[us.position])
+    : tf('лишається на {0}', AT[us.position]);
+  return tf('{0} «{1}» {2} після {3}.{4}', lead, usName, move, score, zone);
 }
 
 /** Підзаголовок про Реєса — реакція видання на його гру в останньому турі (21.09, пользователь: після дубля
@@ -146,14 +143,14 @@ export function playerLine(last: OurResult | undefined, name: { nom: string; gen
   if (!last) return '';
   const { goals, assists, coachRating, fanRating } = last;
   const lost = last.scoreUs < last.scoreThem;
-  if (goals >= 3) return `Хет-трик ${name.gen} — головна тема вечора.`;
-  if (goals === 2) return lost ? `Дубль ${name.gen} команду не врятував.` : `Дубль ${name.gen} — головна тема вечора.`;
-  if (goals === 1 && assists >= 1) return `Гол і передача: ${name.nom} — найкращий на полі.`;
-  if (goals === 1) return lost ? `Гол ${name.gen} — єдине, що варто переглянути.` : `Гол ${name.gen} вирішив долю матчу.`;
-  if (assists >= 2) return `Дві передачі ${name.gen}: у центрі поля все йшло через нього.`;
-  if (assists === 1) return `Передача ${name.gen} — момент туру.`;
-  if (coachRating >= 7.5 || fanRating >= 8) return `${name.nom} — серед найкращих на полі, хоч і без гола.`;
-  if (coachRating < 5.5 && fanRating < 5.5) return `${name.nom} — один із найгірших у складі. Питання до тренера.`;
+  if (goals >= 3) return tf('Хет-трик {0} — головна тема вечора.', name.gen);
+  if (goals === 2) return lost ? tf('Дубль {0} команду не врятував.', name.gen) : tf('Дубль {0} — головна тема вечора.', name.gen);
+  if (goals === 1 && assists >= 1) return tf('Гол і передача: {0} — найкращий на полі.', name.nom);
+  if (goals === 1) return lost ? tf('Гол {0} — єдине, що варто переглянути.', name.gen) : tf('Гол {0} вирішив долю матчу.', name.gen);
+  if (assists >= 2) return tf('Дві передачі {0}: у центрі поля все йшло через нього.', name.gen);
+  if (assists === 1) return tf('Передача {0} — момент туру.', name.gen);
+  if (coachRating >= 7.5 || fanRating >= 8) return tf('{0} — серед найкращих на полі, хоч і без гола.', name.nom);
+  if (coachRating < 5.5 && fanRating < 5.5) return tf('{0} — один із найгірших у складі. Питання до тренера.', name.nom);
   return '';
 }
 

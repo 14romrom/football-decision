@@ -4,7 +4,7 @@ import type { Season } from '../engine/season';
 import type { CardDelta } from '../engine/board';
 import { VOICE_LABEL } from '../engine/voices';
 import { Sticker } from './Sticker';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Картка з дельтою (19.09, макет «Після матчу», кадр 2) — что изменилось в картке за матч:
 // компактный стикер (тап — полная картка), «Що змінилось»: голоса, которые слушал, довіра
@@ -44,7 +44,7 @@ export function DeltaScreen({ player, career, season, dominant, delta, onOpenCar
             <div>
               <dt>{t('Тренер')}</dt>
               <dd>
-                Довіра {delta.trust.from} → <span className={delta.trust.to < delta.trust.from ? 'down' : 'up'}>{delta.trust.to}</span>.{' '}
+                {tf('Довіра {0} → ', delta.trust.from)}<span className={delta.trust.to < delta.trust.from ? 'down' : 'up'}>{delta.trust.to}</span>.{' '}
                 <span className="muted">{delta.trust.why}</span>
               </dd>
             </div>

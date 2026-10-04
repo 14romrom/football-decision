@@ -2,7 +2,7 @@ import type { MatchSummary } from '../engine/match';
 import type { Roster } from '../engine/names';
 import type { BoardMoment } from '../engine/board';
 import { FAMILY_SPOT, PHASE_SPOT } from './Pitch';
-import { t } from '../content/i18n';
+import { dec, t, tf } from '../content/i18n';
 
 // Дошка аналітика (19.09, макет «Після матчу», кадр 1Б «магнітна дошка») — итог матча вместо
 // протокола с плитками: серо-белая магнитная доска в роздягальні, маркер Neucha (синий — разбор,
@@ -38,7 +38,7 @@ function telegraph(m: BoardMoment): string {
   return `${past} — ${recap}`;
 }
 
-const fmt = (n: number) => n.toFixed(1).replace('.', ',');
+const fmt = (n: number) => dec(n);
 
 type Props = {
   summary: MatchSummary; roster: Roster; moments: BoardMoment[]; round: number;
@@ -62,7 +62,7 @@ export function BoardScreen({ summary, roster, moments, round, prev, onNext }: P
       <div className="wb">
         {prev && <div className="wb-ghost" aria-hidden="true">{prev.us}:{prev.them}</div>}
         {/* Правый угол занят запиской «з трибун» — надпись одна, слева. */}
-        <div className="wb-top mk black"><span>Роздягальня · розбір · тур {round}</span></div>
+        <div className="wb-top mk black"><span>{tf('Роздягальня · розбір · тур {0}', round)}</span></div>
         <h1 className="mk">{roster.us.name.nom} <span className={lost ? 'red' : ''}>{summary.scoreUs}:{summary.scoreThem}</span> {roster.them.name.nom}</h1>
 
         <svg className="wb-pitch" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">

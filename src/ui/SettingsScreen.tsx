@@ -102,9 +102,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
       {confirmWind && !wound && (
         <div className="sheet" role="dialog" aria-label={t('Перемотати')}>
           <p>
-            Гра доіграє за тебе — випадковими рішеннями, тим самим рушієм, що й у грі. Кар’єра вийде
-            справжня: з пам’яттю тижня, флагами й людьми, тільки прожита не тобою. Поточний стан слота
-            збережеться в контрольну точку, щоб можна було повернутися.
+            {t('Гра доіграє за тебе — випадковими рішеннями, тим самим рушієм, що й у грі. Кар’єра вийде справжня: з пам’яттю тижня, флагами й людьми, тільки прожита не тобою. Поточний стан слота збережеться в контрольну точку, щоб можна було повернутися.')}
           </p>
           <button className="danger-btn" onClick={() => wind({ kind: 'vacation' })}>{t('До відпустки (кінець першого сезону)')}</button>
           <button className="danger-btn" onClick={() => wind({ kind: 'ending' })}>{t('До фіналу (кінець другого)')}</button>
@@ -115,21 +113,21 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
       {wound && (
         <div className="sheet" role="status">
           <p>
-            Доіграно турів: {wound.played}.{wound.vacationAuto && t(' Відпустку теж пройдено навмання — у другому сезоні це видно по тому, хто що знає.')}
-            {' '}Повернутися до стану перед перемоткою — у меню гри, «Повернутися до збереження».
+            {tf('Доіграно турів: {0}.', wound.played)}{wound.vacationAuto && t(' Відпустку теж пройдено навмання — у другому сезоні це видно по тому, хто що знає.')}
+            {' '}{t('Повернутися до стану перед перемоткою — у меню гри, «Повернутися до збереження».')}
           </p>
           <button className="danger-btn" onClick={onWiped}>{t('На головну')}</button>
         </div>
       )}
       {!slot.empty && !confirmWipe && (
         <button className="set set-btn danger" onClick={() => setConfirmWipe(true)}>
-          <span className="l">{t('Стерти кар’єру')}<small>Слот {slot.slot + 1} · {slotLine(slot)}</small></span>
+          <span className="l">{t('Стерти кар’єру')}<small>{tf('Слот {0} · {1}', slot.slot + 1, slotLine(slot))}</small></span>
           <span className="v">›</span>
         </button>
       )}
       {confirmWipe && (
         <div className="sheet" role="dialog" aria-labelledby="wipe-title">
-          <p id="wipe-title">Слот {slot.slot + 1}, {slotLine(slot)}. Після цього — з нуля: нове ім’я в таблиці, старі голоси.</p>
+          <p id="wipe-title">{tf('Слот {0}, {1}. Після цього — з нуля: нове ім’я в таблиці, старі голоси.', slot.slot + 1, slotLine(slot))}</p>
           <button className="danger-btn" onClick={() => { resetSlot(slot.slot); onWiped(); }}>{t('Стерти')}</button>
           <button className="ghost" onClick={() => setConfirmWipe(false)}>{t('Залишити')}</button>
         </div>

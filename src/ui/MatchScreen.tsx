@@ -9,7 +9,7 @@ import { availableOptions, sceneInsights } from '../engine/match';
 import { VOICE_LABEL } from '../engine/voices';
 import { Pitch } from './Pitch';
 import { Icon } from './icons';
-import { t } from '../content/i18n';
+import { plural, t, tf } from '../content/i18n';
 
 // Экран матча по макету А2 (19.09): поле целиком сверху, под ним стрічка подій як діалог —
 // старые строки гаснут и уходят под поле, — сцена (EpisodeCard) или бросок (RollView), внизу
@@ -93,13 +93,13 @@ export function MatchScreen({
         <span className="strip-team">{roster.us.name.nom}</span>
         <b className={`strip-score ${scoreTone}`}>{state.scoreUs} : {state.scoreThem}</b>
         <span className="strip-team r">{roster.them.name.nom}</span>
-        <div className={`stamina-bar thin ${staminaTone}`} title={`сили ${Math.round(stamina)}`} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
+        <div className={`stamina-bar thin ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
       </div> : <div className="pitch-wrap">
         <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench} />
         <div className="score-overlay">
           <span className="score-line">{clock}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
         </div>
-        <div className={`stamina-bar ${staminaTone}`} title={`сили ${Math.round(stamina)}`} aria-hidden="true">
+        <div className={`stamina-bar ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true">
           <b>{t('сили')}</b><i style={{ width: `${stamina}%` }} />
         </div>
       </div>}
@@ -107,7 +107,7 @@ export function MatchScreen({
       {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}`}>
         <div className="tape-shade" />
         {hidden > 0 && !expanded && (
-          <button className="tape-more" onClick={() => setExpanded(true)}>{Icon.list()} ще {hidden} {hidden === 1 ? t('подія') : hidden < 5 ? t('події') : t('подій')}</button>
+          <button className="tape-more" onClick={() => setExpanded(true)}>{Icon.list()} {tf('ще {0} {1}', hidden, plural(hidden, t('подія'), t('події'), t('подій')))}</button>
         )}
         {expanded && <button className="tape-more" onClick={() => setExpanded(false)}>{t('згорнути')}</button>}
         {tape.map((e, i) => {
@@ -138,7 +138,7 @@ export function MatchScreen({
             </span>
           ))}
           {insights.map((v) => (
-            <span key={v.who} className={`chip chip-insight voice-${v.who}`} title={`${VOICE_LABEL[v.who]} бачить`}>{Icon.eye()}<span>{t('бачить')}</span></span>
+            <span key={v.who} className={`chip chip-insight voice-${v.who}`} title={tf('{0} бачить', VOICE_LABEL[v.who])}>{Icon.eye()}<span>{t('бачить')}</span></span>
           ))}
           {mods.length === 0 && insights.length === 0 && episode && <span className="chip chip-none">{t('без поправок')}</span>}
         </span>

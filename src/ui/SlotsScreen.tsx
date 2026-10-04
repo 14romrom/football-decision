@@ -3,7 +3,7 @@ import { PLAYER } from '../content';
 import { readAllSlots, resetSlot, type SlotSummary } from '../telemetry/saves';
 import { activeSlot, setActiveSlot } from '../telemetry/slots';
 import { buildLabel, slotMotto } from './TitleScreen';
-import { t, tf } from '../content/i18n';
+import { ord, t, tf } from '../content/i18n';
 
 // Три слота карьеры (19.09, макет «було / стало» v2) — каждый слот как корешок карьеры: имя капителью
 // (как на плашке стикера), поля «Матчів / Сезон / Місце», девиз доминантного голоса под линией.
@@ -47,7 +47,7 @@ export function SlotsScreen({ onStart, onBack }: Props) {
               >
                 {s.empty ? (
                   <>
-                    <span className="idc-name">Слот {s.slot + 1} <i className="chip">{t('порожньо')}</i></span>
+                    <span className="idc-name">{tf('Слот {0}', s.slot + 1)} <i className="chip">{t('порожньо')}</i></span>
                     <span className="idm">{t('Ніхто ще не виходив на поле. Тап — почати тут.')}</span>
                   </>
                 ) : (
@@ -55,10 +55,10 @@ export function SlotsScreen({ onStart, onBack }: Props) {
                     <span className="idc-name">{PLAYER.name} <i className="chip">{now ? t('зараз') : tf('слот {0}', s.slot + 1)}</i></span>
                     <dl className="idf">
                       <dt>{t('Матчів')}</dt><dd>{s.matches}</dd>
-                      <dt>{t('Сезон')}</dt><dd>{s.over ? `${s.seasonNumber}, завершено` : `${s.seasonNumber}, тур ${s.round} з ${s.rounds}`}</dd>
-                      <dt>{t('Місце')}</dt><dd>{s.position ? `${s.position}-е, ${s.points} ${plural(s.points, t('очко'), t('очки'), t('очок'))}` : '—'}</dd>
+                      <dt>{t('Сезон')}</dt><dd>{s.over ? tf('{0}, завершено', s.seasonNumber) : tf('{0}, тур {1} з {2}', s.seasonNumber, s.round, s.rounds)}</dd>
+                      <dt>{t('Місце')}</dt><dd>{s.position ? tf('{0}, {1} {2}', ord(s.position), s.points, plural(s.points, t('очко'), t('очки'), t('очок'))) : '—'}</dd>
                     </dl>
-                    {motto && <span className="idm"><span className={`voice-name voice-${motto.key}`}>{motto.who}</span>: «{motto.motto}»</span>}
+                    {motto && <span className="idm"><span className={`voice-name voice-${motto.key}`}>{motto.who}</span>{tf(': «{0}»', motto.motto)}</span>}
                   </>
                 )}
               </button>
@@ -71,7 +71,7 @@ export function SlotsScreen({ onStart, onBack }: Props) {
       {askedSlot && (
         <div className="sheet" role="dialog" aria-labelledby="slot-sheet-title">
           <p id="slot-sheet-title">
-            У слоті {askedSlot.slot + 1} — сезон {askedSlot.seasonNumber}, тур {askedSlot.round} з {askedSlot.rounds}{askedSlot.position ? `, ${askedSlot.position}-е місце` : ''}. Нова кар’єра його зітре. Кубик цього не пам’ятатиме, а Реєс — так.
+            {tf('У слоті {0} — сезон {1}, тур {2} з {3}{4}. Нова кар’єра його зітре. Кубик цього не пам’ятатиме, а Реєс — так.', askedSlot.slot + 1, askedSlot.seasonNumber, askedSlot.round, askedSlot.rounds, askedSlot.position ? tf(', {0} місце', ord(askedSlot.position)) : '')}
           </p>
           <button className="danger-btn" onClick={() => start(askedSlot.slot, true)}>{t('Стерти й почати')}</button>
           <button className="ghost" onClick={() => start(askedSlot.slot, false)}>{t('Грати цією кар’єрою')}</button>

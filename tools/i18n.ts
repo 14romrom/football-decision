@@ -58,7 +58,16 @@ const SKIP_KEYS = new Set([
   'rom', 'position', 'result', 'train', 'target', 'episode',
 ]);
 
-const isUkr = (s: string) => /[а-яіїєґА-ЯІЇЄҐ]/.test(s) && s.trim().length > 2;
+// Що вважається українським рядком. Дві поправки, обидві знайдені грою, не звітом (04.10):
+//
+// **Довжини немає навмисно.** Поріг «понад два знаки» викидав шапку таблиці ESPM (`І В Н П М О` —
+// ігри, виграші, нічиї, поразки, мʼячі, очки) і «ок» у стрічці: короткий рядок під ключем прози —
+// такий самий текст, як довгий, а `t('…')` у коді вже сказав, що це текст.
+//
+// **Лапки — теж мова.** `«{0}»` навколо назви клубу не має жодної кириличної літери, тому рядок
+// не потрапляв у карту і лишався з українськими лапками в англійській збірці — поруч із
+// перекладеним рядком, де лапки вже були англійські.
+const isUkr = (s: string) => /[а-яіїєґА-ЯІЇЄҐ«»„“]/.test(s) && s.trim().length > 0;
 
 export type Row = { hash: string; file: string; path: string; src: string };
 
@@ -125,6 +134,66 @@ function walk(v: unknown, file: string, path: string, out: Row[], seen: Set<stri
 }
 
 export const readMap = (): Record<string, string> => JSON.parse(readFileSync(MAP, 'utf8'));
+
+// ——— дві дірки, які `collect` не бачить за визначенням ————————————————————————————
+// Обидві коштували часу 04.10: звіт показував 100%, а в англійській збірці лишався український
+// текст. Тому їх тримає тест (`tests/i18n.test.ts`), а не око.
+
+/** Ключі контенту, яких немає ні в PROSE_KEYS, ні в SKIP_KEYS. `walk` викидає такий рядок **тихо**,
+ *  тому новий ключ із прозою зникає зі звіту замість того, щоб потрапити в переклад. Кожен новий
+ *  ключ має бути віднесений свідомо — до прози або до даних. */
+export function unknownKeys(): { file: string; key: string; sample: string }[] {
+  const out: { file: string; key: string; sample: string }[] = [];
+  const seen = new Set<string>();
+  const look = (v: unknown, file: string, key?: string): void => {
+    if (typeof v === 'string') {
+      if (!isUkr(v) || !key || PROSE_KEYS.has(key) || SKIP_KEYS.has(key)) return;
+      if (seen.has(file + key)) return;
+      seen.add(file + key);
+      out.push({ file, key, sample: v.slice(0, 60) });
+      return;
+    }
+    if (Array.isArray(v)) { for (const x of v) look(x, file, key); return; }
+    if (v && typeof v === 'object') for (const [k, x] of Object.entries(v as Record<string, unknown>)) look(x, file, k);
+  };
+  for (const f of readdirSync(DIR).filter((x) => x.endsWith('.json')).sort()) {
+    look(JSON.parse(readFileSync(join(DIR, f), 'utf8')), f);
+  }
+  return out;
+}
+
+/** Кирилиця в коді, яку `collect` не бере, бо вона не `t('…')`:
+ *  - `literal` — шаблонний рядок із підстановкою (`` `Тур ${a} з ${b}` ``): має бути `tf()`;
+ *  - `jsx` — текст прямо в розмітці (`<h4>Бомбардири «{x}»</h4>`): це взагалі не літерал.
+ *  Виняток позначається коментарем `i18n-skip` у тому ж рядку — повідомлення для розробника,
+ *  українське закінчення для `ord`, пояснення в `CANON_SCENES.why`. */
+export function rawCodeStrings(): { file: string; line: number; kind: 'literal' | 'jsx'; text: string }[] {
+  const out: { file: string; line: number; kind: 'literal' | 'jsx'; text: string }[] = [];
+  const blank = (s: string) => s.replace(/[^\n]/g, ' ');
+  for (const f of srcFiles('src')) {
+    const file = f.split(SEP).join('/');
+    let code = readFileSync(f, 'utf8')
+      .split(NL).map((l) => (l.includes('i18n-skip') ? blank(l) : l)).join(NL)
+      .replace(/\/\*[\s\S]*?\*\//g, blank)
+      .replace(/\/\/[^\n]*/g, blank);
+    const lineOf = (i: number) => code.slice(0, i).split(NL).length;
+    // Літерали збираємо і заразом вибілюємо: те, що лишиться з кирилицею, — розмітка.
+    const masked = code.split('');
+    const LITERAL = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g;
+    for (let m = LITERAL.exec(code); m; m = LITERAL.exec(code)) {
+      for (let i = m.index; i < m.index + m[0].length; i++) if (masked[i] !== NL) masked[i] = ' ';
+      if (!isUkr(m[0])) continue;
+      const before = code.slice(Math.max(0, m.index - 4), m.index);
+      if (/(?:^|[^A-Za-z0-9_$.])tf?\($/.test(before)) continue;
+      out.push({ file, line: lineOf(m.index), kind: 'literal', text: m[0].slice(0, 80) });
+    }
+    // Регулярний літерал — не текст, а патерн (`/⟨ціна⟩/g`). Беремо лише там, де вираз справді
+    // починається: інакше оператор ділення («{x / 1000} с») склеює два слеші і їсть живий текст.
+    code = masked.join('').replace(/(?<=[(,=:[!&|?])\s?\/(?:[^/\\\n]|\\.)+\/[gimsuy]*/g, blank);
+    code.split(NL).forEach((l, i) => { if (isUkr(l)) out.push({ file, line: i + 1, kind: 'jsx', text: l.trim().slice(0, 80) }); });
+  }
+  return out;
+}
 
 // CLI виконується тільки при прямому запуску: тест імпортує `collect` і `srcHash` із цього ж
 // файлу, і запускати команду під час імпорту не можна.

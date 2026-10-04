@@ -5,7 +5,7 @@ import type { Player } from '../engine/types';
 import type { HistoryEntry } from '../telemetry/history';
 import { Banner } from './SeasonScreen';
 import { plural } from './pluralize';
-import { t, tf } from '../content/i18n';
+import { dec, ord, t, tf } from '../content/i18n';
 
 // Профіль гравця на ESPM (28.09, макет «Картка: було / стало») — друга половина листа персонажа.
 // Правило поділу: **картка — це ти, профіль — це те, що про тебе знає місто**. Тому тут матчі, форма,
@@ -23,7 +23,7 @@ const POSITION_LABEL: Record<Player['position'], string> = {
 const RESULT_CLASS: Record<HistoryEntry['result'], string> = { W: 'w', D: 'd', L: 'l' };
 const RESULT_LABEL: Record<HistoryEntry['result'], string> = { W: t('В'), D: t('Н'), L: t('П') };
 
-const fmt = (n: number) => n.toFixed(1).replace('.', ',');
+const fmt = (n: number) => dec(n);
 
 type Props = {
   player: Player;
@@ -53,22 +53,22 @@ export function EspmProfile({ player, career, season, history, club, clubGen, ad
       <div className="browser">
         <div className="chrome"><span className="chrome-tabs">3</span><span className="chrome-url"><b>espm.com</b>/football/players/reyes</span><span aria-hidden="true">⋮</span></div>
         <div className="espm">
-          <div className="espm-mast"><span className="espm-logo"><b>ESPM</b><i>Футбол · {league.name}</i></span><span className="espm-burger" aria-hidden="true" /></div>
+          <div className="espm-mast"><span className="espm-logo"><b>ESPM</b><i>{tf('Футбол · {0}', league.name)}</i></span><span className="espm-burger" aria-hidden="true" /></div>
           <nav className="espm-nav"><span>{t('Головна')}</span><span>{t('Таблиця')}</span><span className="on">{t('Гравці')}</span><span>{t('Трансфери')}</span><span>{t('Відео')}</span></nav>
-          <p className="espm-crumbs">Футбол › {league.name} › «{club}» › {player.name}</p>
+          <p className="espm-crumbs">{tf('Футбол › {0} › «{1}» › {2}', league.name, club, player.name)}</p>
 
           <div className="espm-phead">
             <img src="./img/portrait.webp" width="450" height="600" alt={player.name} decoding="async" />
             <div>
               <h1>{player.name}</h1>
-              <p className="espm-pmeta">{POSITION_LABEL[player.position]} · 10 · «{club}»{row ? tf(' · {0}-е місце', row.position) : ''}</p>
+              <p className="espm-pmeta">{POSITION_LABEL[player.position]}{tf(' · 10 · «{0}»', club)}{row ? tf(' · {0} місце', ord(row.position)) : ''}</p>
               <span className="espm-label">{press.label}</span>
-              <span className="espm-label-why">{press.why}. Ярлик редакції, не клубу.</span>
+              <span className="espm-label-why">{tf('{0}. Ярлик редакції, не клубу.', press.why)}</span>
             </div>
           </div>
 
           <div className="espm-widget">
-            <h4>Сезон {season?.number ?? 1} · {league.name}</h4>
+            <h4>{tf('Сезон {0} · {1}', season?.number ?? 1, league.name)}</h4>
             <table className="espm-tbl espm-own">
               <thead><tr><th>{t('Тур')}</th><th>{t('Матчі')}</th><th>{t('Голи')}</th><th>{t('Передачі')}</th><th>{t('Оцінка')}</th></tr></thead>
               <tbody>
@@ -82,8 +82,8 @@ export function EspmProfile({ player, career, season, history, club, clubGen, ad
               </tbody>
             </table>
             <p className="espm-note">
-              У кар’єрі — {career.matchesPlayed} {plural(career.matchesPlayed, t('матч'), t('матчі'), t('матчів'))}: {wdl.W} — {wdl.D} — {wdl.L}.
-              {last ? tf(' Торік — {0}-е місце в {1}.', last.position, leagueOf(last.number).nameLoc) : ''}
+              {tf('У кар’єрі — {0} {1}: {2} — {3} — {4}.', career.matchesPlayed, plural(career.matchesPlayed, t('матч'), t('матчі'), t('матчів')), wdl.W, wdl.D, wdl.L)}
+              {last ? tf(' Торік — {0} місце в {1}.', ord(last.position), leagueOf(last.number).nameLoc) : ''}
             </p>
           </div>
 
@@ -101,7 +101,7 @@ export function EspmProfile({ player, career, season, history, club, clubGen, ad
 
           {scorers.length > 0 && (
             <div className="espm-widget">
-              <h4>Бомбардири «{clubGen}»</h4>
+              <h4>{tf('Бомбардири «{0}»', clubGen)}</h4>
               <p>{scorers.map(([name, g]) => `${name} — ${g}`).join(' · ')}</p>
               <p className="espm-note">{t('Тільки клуб: поіменної статистики по лізі сайт не веде.')}</p>
             </div>

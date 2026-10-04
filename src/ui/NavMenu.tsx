@@ -4,7 +4,7 @@ import { readSlotSummary } from '../telemetry/saves';
 import { activeSlot } from '../telemetry/slots';
 import { Icon } from './icons';
 import { slotLine } from './TitleScreen';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Навігація в грі (M45, 03.10, скарга тестера: «не можу вийти з матчу на головний екран»).
 // До цього вийти можна було тільки з двох екранів — титул і меню перед матчем, — а всередині матчу,
@@ -66,7 +66,7 @@ export function NavMenu({ go }: Props) {
   // інакше повернення до такої точки тихо дарувало б чистий тур.
   const saveHere = () => {
     const pre = readShot('prematch');
-    if (pre) putShot('save', { ...pre, at: Date.now(), label: `перед матчем — ${here}` });
+    if (pre) putShot('save', { ...pre, at: Date.now(), label: tf('перед матчем — {0}', here) });
     else takeShot('save', here);
     setSavedAt(Date.now());
   };
@@ -128,9 +128,7 @@ export function NavMenu({ go }: Props) {
             {ask?.kind === 'leave' && (<>
               <p className="eyebrow">{t('Матч триває')}</p>
               <p className="nav-warn">
-                Матч ніде не зберігається. Якщо вийти зараз, його наче не було: ти повернешся на екран
-                перед матчем і зіграєш цей тур заново — з тим самим суперником, погодою і установкою.
-                Усе, що сталося на полі за сьогодні, зникне.
+                {t('Матч ніде не зберігається. Якщо вийти зараз, його наче не було: ти повернешся на екран перед матчем і зіграєш цей тур заново — з тим самим суперником, погодою і установкою. Усе, що сталося на полі за сьогодні, зникне.')}
               </p>
               <button className="danger-btn" onClick={confirmLeave}>{t('Вийти, матч не зберігати')}</button>
               <button className="ghost" onClick={() => setAsk(null)}>{t('Лишитися в матчі')}</button>
@@ -139,9 +137,7 @@ export function NavMenu({ go }: Props) {
             {ask?.kind === 'load' && (<>
               <p className="eyebrow">{t('Повернення до точки')}</p>
               <p className="nav-warn">
-                Гра відкотиться до стану «{ask.shot.label}» від {when(ask.shot.at)}. Усе, що сталося
-                після того, зникне назовсім: зіграні матчі, тижні, рішення й те, що про тебе встигли
-                написати. Далі гра піде з тієї точки — можна прожити це інакше.
+                {tf('Гра відкотиться до стану «{0}» від {1}. Усе, що сталося після того, зникне назовсім: зіграні матчі, тижні, рішення й те, що про тебе встигли написати. Далі гра піде з тієї точки — можна прожити це інакше.', ask.shot.label, when(ask.shot.at))}
               </p>
               <button className="danger-btn" onClick={load}>{t('Повернутися до точки')}</button>
               <button className="ghost" onClick={() => setAsk(null)}>{t('Ні, лишити як є')}</button>

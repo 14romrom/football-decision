@@ -5,7 +5,7 @@ import type { Career } from '../engine/career';
 import { ourRow, SEASON_ROUNDS, type Season } from '../engine/season';
 import { VOICES } from './voices-text';
 import { plural } from './pluralize';
-import { t } from '../content/i18n';
+import { ord, t, tf } from '../content/i18n';
 
 // Стикер персонажа (19.09, макет «Картка гравця: було / стало») — по карточке архетипа Disco Elysium:
 // портрет в рамке, чёрная плашка с именем, реплика доминантного голоса, четыре бокса — четыре
@@ -81,21 +81,21 @@ export function Sticker({ player, career, season, club, dominant, compact, brief
     <header className="stk">
       <div className="stk-frame"><img src="./img/portrait.webp" width="450" height="600" alt={player.name} decoding="async" /></div>
       <div className="stk-band">{player.name}</div>
-      <p className="stk-role">{POSITION_LABEL[player.position]}{club ? ` «${club}»` : ''} · 10</p>
+      <p className="stk-role">{POSITION_LABEL[player.position]}{club ? tf(' «{0}»', club) : ''} · 10</p>
       {about
-        ? <p className={`stk-motto voice-${dominant}`}><b>{VOICE_LABEL[dominant!]}</b> — {about.about}</p>
+        ? <p className={`stk-motto voice-${dominant}`}><b>{VOICE_LABEL[dominant!]}</b>{tf(' — {0}', about.about)}</p>
         : <p className="stk-motto muted">{t('Голос ще не визначився — послухай когось кілька разів.')}</p>}
       {brief ? null : boxes}
       {brief ? null : (
         <p className={`stk-sig ${heard ? `voice-${heard.who}` : 'muted'}`}>
-          {heard ? <>+ {VOICE_LABEL[heard.who]}<small>голос, який слухаєш: {heard.n} із {heard.total} {plural(heard.total, t('разу'), t('разів'), t('разів'))}</small></> : <>+ ?<small>{t('голос, який слухаєш, — після першого матчу')}</small></>}
+          {heard ? <>+ {VOICE_LABEL[heard.who]}<small>{tf('голос, який слухаєш: {0} із {1} {2}', heard.n, heard.total, plural(heard.total, t('разу'), t('разів'), t('разів')))}</small></> : <>+ ?<small>{t('голос, який слухаєш, — після першого матчу')}</small></>}
         </p>
       )}
       {brief ? null : (
         <dl className="stk-fields">
           <div><dt>{t('Матчів')}</dt><dd>{career?.matchesPlayed ?? 0}</dd></div>
-          <div><dt>{t('Сезон')}</dt><dd>{season ? `${season.number}, тур ${Math.min(season.round + 1, SEASON_ROUNDS)}` : '—'}</dd></div>
-          <div><dt>{t('Місце')}</dt><dd>{row ? `${row.position}-е` : '—'}</dd></div>
+          <div><dt>{t('Сезон')}</dt><dd>{season ? tf('{0}, тур {1}', season.number, Math.min(season.round + 1, SEASON_ROUNDS)) : '—'}</dd></div>
+          <div><dt>{t('Місце')}</dt><dd>{row ? ord(row.position) : '—'}</dd></div>
         </dl>
       )}
     </header>

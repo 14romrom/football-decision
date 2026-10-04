@@ -7,7 +7,7 @@ import { SEASON_ROUNDS, monthOfRound } from '../engine/season';
 import { Sticker } from './Sticker';
 import { INSTRUCTION, WEATHER, toneLines } from './prematch-text';
 import { plural } from './pluralize';
-import { t } from '../content/i18n';
+import { ord, t, tf } from '../content/i18n';
 
 // Екран перед матчем (28.09, макет «Екран перед матчем», варіант А «Роздягальня»): один аркуш замість
 // двох — меню кар'єри і брифінг злилися. Було: меню з карткою і турами, потім окремий екран зі станом.
@@ -70,22 +70,22 @@ export function PrematchScreen({
 
   const about = [trait, guest].filter(Boolean).join(' ');
   const memory = [
-    lastYear?.length ? `Торік: ${lastYear.map((r) => `${r.scoreUs}:${r.scoreThem} ${r.venue === 'home' ? t('вдома') : t('на виїзді')}`).join(', ')}.` : '',
-    subThere ? `У їхній формі — ${subThere}, торік ваш дублер.` : '',
+    lastYear?.length ? tf('Торік: {0}.', lastYear.map((r) => tf('{0}:{1} {2}', r.scoreUs, r.scoreThem, r.venue === 'home' ? t('вдома') : t('на виїзді'))).join(', ')) : '',
+    subThere ? tf('У їхній формі — {0}, торік ваш дублер.', subThere) : '',
   ].filter(Boolean).join(' ');
 
   return (
     <div className="prematch">
       <div className="pm-head">
-        <span>{t('Тур')} <b>{round}</b> з {SEASON_ROUNDS} · {monthOfRound(round)}</span>
-        {position !== null && <span>{position}-е місце · {points} {plural(points ?? 0, t('очко'), t('очки'), t('очок'))}</span>}
+        <span>{t('Тур')} <b>{round}</b>{tf(' з {0} · {1}', SEASON_ROUNDS, monthOfRound(round))}</span>
+        {position !== null && <span>{tf('{0} місце · {1} {2}', ord(position), points ?? 0, plural(points ?? 0, t('очко'), t('очки'), t('очок')))}</span>}
       </div>
-      <h1 className="pm-fixture">«{opponent.name.nom}»<small>{home ? t('Вдома') : t('На виїзді')}</small></h1>
+      <h1 className="pm-fixture">{tf('«{0}»', opponent.name.nom)}<small>{home ? t('Вдома') : t('На виїзді')}</small></h1>
 
       <Sticker compact player={player} career={career} season={season} dominant={dominant} onOpen={onCard} />
 
       <div className="pm-coach">
-        <b>Установка: {instr.title.toLowerCase()}</b>
+        <b>{tf('Установка: {0}', instr.title.toLowerCase())}</b>
         <p className="pm-said">{instr.quote}</p>
         <p className="pm-means">{instr.note}{coachExtra ? ` ${coachExtra}` : ''}</p>
       </div>

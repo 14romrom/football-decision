@@ -1,7 +1,7 @@
 import { VOICE_LABEL } from '../engine/voices';
 import { VOICES } from './voices-text';
 import { buildLabel } from './TitleScreen';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Про гру (19.09): версия, одна фраза о том, что это за игра, и голоса представляются сами —
 // тексты из VOICES картки, ничего нового не пишем. Ссылка на форму фидбэка появится, когда будет форма.
@@ -50,7 +50,7 @@ export function AboutScreen({ onBack }: Props) {
       <p className="about-lead">{t('Голос — не порада і не підказка. Це те, що Реєс хоче зробити, і кожен хоче свого. За кожним голосом стоять свої характеристики — вони на картці; що вони сильніші, то голос гучніший: спершу підказує, далі бачить те, чого інші не помітять.')}</p>
       <ul className="about-voices">
         {VOICES.map((v) => (
-          <li key={v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b> — {v.about} <i>«{v.motto}»</i></li>
+          <li key={v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b>{tf(' — {0} ', v.about)}<i>{tf('«{0}»', v.motto)}</i></li>
         ))}
       </ul>
 
@@ -64,7 +64,7 @@ export function AboutScreen({ onBack }: Props) {
       <p className="about-refs">{t('Натхнення: Disco Elysium, Football Manager і кожен матч, де ти знав, як треба, і зробив інакше.')}</p>
 
       <button className="row row-back" onClick={onBack}>{t('На головну')}</button>
-      <p className="build">{buildLabel()}. Тексти й код — прототип.</p>
+      <p className="build">{tf('{0}. Тексти й код — прототип.', buildLabel())}</p>
     </div>
   );
 }

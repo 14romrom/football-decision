@@ -3,7 +3,7 @@ import type { LootItem } from '../engine/week';
 import type { Player, VoiceKey } from '../engine/types';
 import { VOICE_LABEL } from '../engine/voices';
 import { voiceMod } from './Sticker';
-import { t } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Лист здобутків (M12, 20.09, макет «Здобутки і підказки», варіант Б, решение пользователя): підсумок
 // тижня і прологу — не список із галочками ручкою, а лист оповідача поверх погаслого зошита. Зошит —
@@ -50,7 +50,7 @@ export function LootSheet({ tab, loot, before, after, empty, button, onNext }: P
   return (
     <div className="moment nb-sheet loot-sheet" ref={ref}><div className="scene">
       <span className="minute-tab">{tab}</span>
-      {n > 0 && <span className="loot-count" style={{ ['--i' as string]: n }}>{words[n] ?? `${n} речей`}</span>}
+      {n > 0 && <span className="loot-count" style={{ ['--i' as string]: n }}>{words[n] ?? tf('{0} речей', n)}</span>}
       {n === 0 ? (
         <p className="setup">{empty}</p>
       ) : (

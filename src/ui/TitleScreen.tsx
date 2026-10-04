@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Film } from './Film';
 import { PLAYER, ROSTER } from '../content';
 import titleJsonRaw from '../content/title.json';
-import { tr, t, tf } from '../content/i18n';
+import { tr, ord, plural, t, tf } from '../content/i18n';
 // Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
 const titleJson = tr(titleJsonRaw);
 import { makeRng } from '../engine/rng';
@@ -22,17 +22,15 @@ import { VOICES } from './voices-text';
 
 export const TITLE_RULES = titleJson as TitleRule[];
 
-const plural = (n: number, one: string, few: string, many: string) => (n === 1 ? one : n < 5 ? few : many);
-
 /** «Сезон 1, тур 4 з 10» / «сезон 1 завершено». */
 export function slotLine(s: SlotSummary): string {
-  return s.over ? `сезон ${s.seasonNumber} завершено` : `сезон ${s.seasonNumber}, тур ${s.round} з ${s.rounds}`;
+  return s.over ? tf('сезон {0} завершено', s.seasonNumber) : tf('сезон {0}, тур {1} з {2}', s.seasonNumber, s.round, s.rounds);
 }
 
 /** Хвост строки карьеры: место, очки, матчи — или клуб, пока таблицы нет. */
 export function slotTail(s: SlotSummary): string {
-  const matches = `${s.matches} ${plural(s.matches, t('матч'), t('матчі'), t('матчів'))}`;
-  return s.position ? `${s.position}-е місце, ${s.points} ${plural(s.points, t('очко'), t('очки'), t('очок'))}, ${matches}` : `«${ROSTER.us.name.nom}», ${matches}`;
+  const matches = tf('{0} {1}', s.matches, plural(s.matches, t('матч'), t('матчі'), t('матчів')));
+  return s.position ? tf('{0} місце, {1} {2}, {3}', ord(s.position), s.points, plural(s.points, t('очко'), t('очки'), t('очок')), matches) : tf('«{0}», {1}', ROSTER.us.name.nom, matches);
 }
 
 export function slotMotto(s: SlotSummary): { who: string; motto: string; key: string } | null {

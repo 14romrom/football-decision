@@ -12,7 +12,7 @@ import { pickMoments, type MatchSummary } from './match';
 import { dominantCareerVoice } from './week';
 import { voiceSees, VOICE_LABEL } from './voices';
 import { ATTRIBUTE_LABEL, type Attribute, type Episode, type MatchState, type Player, type TimelineEvent, type VoiceKey } from './types';
-import { t } from '../content/i18n';
+import { dec, ord, plural, t, tf } from '../content/i18n';
 
 export type BoardRole = 'best' | 'turn' | 'worst';
 export type BoardMoment = {
@@ -120,17 +120,14 @@ const risky = (state: MatchState, episodes: Episode[]) => {
   }).length;
 };
 
-const plural = (n: number, one: string, few: string, many: string) =>
-  n % 10 === 1 && n % 100 !== 11 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
-
 /** Почему доверие сдвинулось — одной фразой из того, что тренер видел за матч: оценка и число рисков.
  *  Между матчами доверие ещё и отходит к среднему (nextMatchCoachTrust); если из-за этого стрелка
  *  смотрит не туда, куда матч, — говорим об этом прямо, иначе «38 → 43 за 4,0» читается как похвала. */
 function trustWhy(summary: MatchSummary, risks: number, inMatch: number, overall: number): string {
-  const rating = summary.coachRating.toFixed(1).replace('.', ',');
+  const rating = dec(summary.coachRating);
   let why: string;
-  if (inMatch < 0) why = risks >= 3 ? `За ${rating} і ${risks} ${plural(risks, t('ризик'), t('ризики'), t('ризиків'))}.` : `За ${rating}.`;
-  else if (inMatch > 0) why = summary.stats.goals + summary.stats.assists > 0 ? `За ${rating} і участь у голах.` : risks === 0 ? `За ${rating} — без зайвого ризику.` : `За ${rating}.`;
+  if (inMatch < 0) why = risks >= 3 ? tf('За {0} і {1} {2}.', rating, risks, plural(risks, t('ризик'), t('ризики'), t('ризиків'))) : tf('За {0}.', rating);
+  else if (inMatch > 0) why = summary.stats.goals + summary.stats.assists > 0 ? tf('За {0} і участь у голах.', rating) : risks === 0 ? tf('За {0} — без зайвого ризику.', rating) : tf('За {0}.', rating);
   else why = t('Матч нічого не змінив.');
   if (sign(overall) !== sign(inMatch)) why += overall > 0 ? t(' До наступного туру тренер трохи відходить.') : t(' До наступного туру запал тренера остигає.');
   return why;
@@ -148,8 +145,8 @@ export function cardDelta(
   let balanceNote: string | undefined;
   if (nowListened && nowListened !== wasListened) {
     balanceNote = wasListened
-      ? `${VOICE_LABEL[nowListened]} тепер перекрикує ${ACC[wasListened]}.`
-      : `${VOICE_LABEL[nowListened]} — голос, який ти слухаєш.`;
+      ? tf('{0} тепер перекрикує {1}.', VOICE_LABEL[nowListened], ACC[wasListened])
+      : tf('{0} — голос, який ти слухаєш.', VOICE_LABEL[nowListened]);
   }
 
   const trust = before.coachTrust !== after.coachTrust
@@ -160,14 +157,14 @@ export function cardDelta(
   const known = new Set((before.carriedFlags ?? []).map((f) => f.flag + '@' + f.mark.minute));
   for (const f of after.carriedFlags ?? []) {
     if (!CARRIED_FLAGS.includes(f.flag) || known.has(f.flag + '@' + f.mark.minute) || f.mark.previousMatch) continue;
-    const label = f.flag === 'keeper_read' && opponentName ? `Воротар «${opponentName}» прочитаний` : TRACE_LABEL[f.flag] ?? f.flag;
+    const label = f.flag === 'keeper_read' && opponentName ? tf('Воротар «{0}» прочитаний', opponentName) : TRACE_LABEL[f.flag] ?? f.flag;
     // Минута 0 — след из брифинга (аналитик про воротаря): поступок есть, минуты нет.
     traces.push({ text: label, minute: f.mark.minute > 0 ? f.mark.minute : undefined, past: f.mark.past });
   }
   if (after.pendingSentOff && !before.pendingSentOff) traces.push({ text: t('Червона картка — наступний матч під наглядом тренера'), minute: state.marks.sent_off?.minute });
   else if (after.careerYellows > before.careerYellows) {
     const n = after.careerYellows;
-    traces.push({ text: n >= 3 ? `Жовта — вже ${n}-я, тренер починає наступний матч насторожі` : t('Жовта картка — тренер пам’ятає'), minute: state.marks.booked?.minute });
+    traces.push({ text: n >= 3 ? tf('Жовта — вже {0}, тренер починає наступний матч насторожі', ord(n, 'я' /* i18n-skip: закінчення «жовта» */)) : t('Жовта картка — тренер пам’ятає'), minute: state.marks.booked?.minute });
   }
   if (after.injuredMatches > before.injuredMatches) traces.push({ text: t('Травма — наступний матч зі свіжим болем'), minute: state.marks.injured?.minute });
 
@@ -176,17 +173,17 @@ export function cardDelta(
   const pAfter = effectivePlayer(base, after);
   for (const who of ['vision', 'instinct', 'body', 'composure'] as VoiceKey[]) {
     const was = voiceSees(who, pBefore); const now = voiceSees(who, pAfter);
-    if (was !== now) voiceNotes.push(now ? `${VOICE_LABEL[who]} тепер бачить.` : `${VOICE_LABEL[who]} більше не бачить.`);
+    if (was !== now) voiceNotes.push(now ? tf('{0} тепер бачить.', VOICE_LABEL[who]) : tf('{0} більше не бачить.', VOICE_LABEL[who]));
   }
   // Ріст від матчу (M18.4): очко за використання — подія на дошці, а не тиха зміна цифри на картці.
   for (const [a2, n] of Object.entries(after.attrPoints) as [Attribute, number][]) {
     const was = (before.attrPoints as Partial<Record<Attribute, number>>)[a2] ?? 0;
-    if (n > was) voiceNotes.push(`${ATTRIBUTE_LABEL[a2]} — ${after.useCounts?.[a2] ?? 0} чистих за кар’єру. Тепер це твоє: +1 назавжди.`);
+    if (n > was) voiceNotes.push(tf('{0} — {1} чистих за кар’єру. Тепер це твоє: +1 назавжди.', ATTRIBUTE_LABEL[a2], after.useCounts?.[a2] ?? 0));
   }
 
   const domBefore = dominantCareerVoice(before);
   const domAfter = dominantCareerVoice(after);
-  if (domAfter && domAfter !== domBefore) voiceNotes.push(`${VOICE_LABEL[domAfter]} тепер говорить з картки.`);
+  if (domAfter && domAfter !== domBefore) voiceNotes.push(tf('{0} тепер говорить з картки.', VOICE_LABEL[domAfter]));
   else if (!domAfter && domBefore) voiceNotes.push(t('Голос картки ще не визначився — двоє нарівні.'));
 
   return { voices, balanceNote, trust, traces, voiceNotes };

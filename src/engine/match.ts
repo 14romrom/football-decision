@@ -14,7 +14,7 @@ import type {
   ApplyEffect, Episode, EpisodeMemory, EpisodeOption, FlagRule, Mark, MatchState, Player, Resolution,
   TimelineEvent, Tier, Voice, VoiceKey,
 } from './types';
-import { t } from '../content/i18n';
+import { ord, plural, t, tf } from '../content/i18n';
 
 export type MatchSession = {
   matchId: string;
@@ -366,7 +366,9 @@ export function createMatch(
   state.log.push({
     minute: 0,
     kind: 'kickoff',
-    text: '«' + roster.us.name.nom + '» — «' + roster.them.name.nom + '». ' + feedLine(session, 'kickoff', rng),
+    // Лапки — частина мови, не оформлення: в англійській вони інші, тому рядок із ними лежить
+    // у карті цілим (M47), а не склеюється з трьох шматків.
+    text: tf('«{0}» — «{1}». {2}', roster.us.name.nom, roster.them.name.nom, feedLine(session, 'kickoff', rng)),
   });
   // Канвові епізоди (M18.0): ставимо в останній слот, чия хвилина підходить під requires, — вони не мусять
   // вигравати у ваги в планувальника. Якщо епізоду немає в пулі цієї ліги, просто пропускаємо.
@@ -426,7 +428,7 @@ function countPeople(state: MatchState, flag: string) {
  *  ошибка контента (у каждого вида есть безусловное правило, тест это проверяет). */
 function feedLine(session: MatchSession, kind: FeedKind, rng: Rng, extra: Record<string, string> = {}): string {
   const raw = pickFeedLine(kind, session.state, session.conditions, rng, session.feedSeen, undefined, session.feedSeenNow);
-  if (!raw) throw new Error(`в feed.json нет строк вида ${kind}`);
+  if (!raw) throw new Error(`в feed.json нет строк вида ${kind}`);  /* i18n-skip: сообщение для разработчика */
   session.feedSeen.add(raw);
   session.feedSeenNow.add(raw);
   return fillNames(raw, session.roster, extra);
@@ -442,7 +444,7 @@ function scorer(roster: Roster, side: 'us' | 'them', rng: Rng): string {
  *  Неизвестный ключ — содержательная ошибка контента, а не тихий откат на случайное имя. */
 function namedScorer(roster: Roster, side: 'us' | 'them', key: string): string {
   const player = roster[side].players[key];
-  if (!player) throw new Error(`apply.scorer «${key}» не найден в ростере ${side}`);
+  if (!player) throw new Error(`apply.scorer «${key}» не найден в ростере ${side}`);  /* i18n-skip: сообщение для разработчика */
   return player.nom;
 }
 
@@ -609,7 +611,10 @@ export function fillMarkNames<M extends { past: string; whenText?: string }>(mar
 
 export function fillTrigger<T>(value: T, mark: { minute: number; past: string; previousMatch?: boolean; whenText?: string }): T {
   if (typeof value === 'string') {
-    const when = mark.whenText ?? (mark.previousMatch ? t('ще минулого матчу') : t('на ') + mark.minute + t('-й'));
+    // Склеювати «на » + число + «-й» не можна: англійською суфікс залежить від самого числа
+    // (1st / 2nd / 3rd), а порядок слів інший. Хвилину збирає `ord` (у нього є англійська гілка і
+    // місцеве закінчення для української), фразу — шаблон (M47).
+    const when = mark.whenText ?? (mark.previousMatch ? t('ще минулого матчу') : tf('на {0}', ord(mark.minute, 'й' /* i18n-skip: місцевий відмінок хвилини */)));
     return value
       .replace(/\{trigger\.past\}/g, mark.past)
       .replace(/\{trigger\.minute\}/g, String(mark.minute))
@@ -747,8 +752,7 @@ function blowWhistle(session: MatchSession, rng: Rng): TimelineEvent[] {
   state.log.push({
     minute: 90,
     kind: 'fulltime',
-    text: t('Фінальний свисток. «') + session.roster.us.name.nom + '» — «' + session.roster.them.name.nom + '» '
-      + state.scoreUs + ':' + state.scoreThem + '.',
+    text: tf('Фінальний свисток. «{0}» — «{1}» {2}:{3}.', session.roster.us.name.nom, session.roster.them.name.nom, state.scoreUs, state.scoreThem),
   });
   session.whistled = true;
   session.ratings = computeRatings(state, session.conditions);
@@ -830,7 +834,7 @@ function chainTarget(session: MatchSession, apply: ApplyEffect | undefined, rng:
   if (!apply?.followUp) return null;
   const c = BALANCE.match.chain;
   const named = session.episodes.find((e) => e.id === apply.followUp);
-  if (!named) throw new Error('followUp «' + apply.followUp + t('» не найден в пуле'));
+  if (!named) throw new Error(`followUp «${apply.followUp}» не найден в пуле`);  /* i18n-skip: сообщение для разработчика */
   if (session.chainLinks >= c.maxLinksPerSlot) return null;
   if (session.chainLinks === 0 && session.chainsUsed >= c.maxChainsPerMatch) return null;
   const minute = session.state.minute;
@@ -1115,13 +1119,6 @@ export function finishMatch(session: MatchSession, rng: Rng): { events: Timeline
 // ——— пересказ ————————————————————————————————————————————————————
 // Главный проверяемый артефакт: если это читается как история, механика работает.
 
-function pluralSuffix(n: number): string {
-  // 1 раз, 2-4 рази, 5+ разів — украинская плюрализация для маленьких чисел (n <= ~9 за матч).
-  if (n % 10 === 1 && n % 100 !== 11) return '';
-  if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return t('и');
-  return t('ів');
-}
-
 const TIER_WEIGHT: Record<Tier, number> = { clean: 3, badFail: 3, cost: 2, fail: 1 };
 
 function importance(e: TimelineEvent): number {
@@ -1134,11 +1131,13 @@ function importance(e: TimelineEvent): number {
 }
 
 function connective(index: number, minute: number, prevMinute: number): string {
-  if (index === 0) return t('На ') + minute + t('-й');
-  if (minute >= 85) return t('На ') + minute + t('-й, уже в кінцівці,');
-  if (minute - prevMinute <= 8) return t('Майже одразу, на ') + minute + t('-й,');
-  if (index % 2 === 0) return t('Ближче до ') + minute + t('-ї');
-  return t('Потім, на ') + minute + t('-й,');
+  // Та сама причина, що у `fillTrigger`: хвилина — цілим словом із `ord`, зв'язка — шаблоном.
+  const m = ord(minute, 'й' /* i18n-skip: місцевий відмінок хвилини */);
+  if (index === 0) return tf('На {0}', m);
+  if (minute >= 85) return tf('На {0}, уже в кінцівці,', m);
+  if (minute - prevMinute <= 8) return tf('Майже одразу, на {0},', m);
+  if (index % 2 === 0) return tf('Ближче до {0}', ord(minute, 'ї' /* i18n-skip: родовий відмінок хвилини */));
+  return tf('Потім, на {0},', m);
 }
 
 export function buildRecap(state: MatchState, coachRating: number, fanRating: number): string[] {
@@ -1157,7 +1156,9 @@ export function buildRecap(state: MatchState, coachRating: number, fanRating: nu
 
   const verdict = state.scoreUs > state.scoreThem ? t('Перемога') : state.scoreUs === state.scoreThem ? t('Нічия') : t('Поразка');
   const dominant = dominantVoice(state.voices);
-  const voiceNote = dominant ? ` Цього матчу найгучніше звучав ${VOICE_LABEL[dominant.who]} — ти слухав його ${dominant.count} раз${pluralSuffix(dominant.count)}.` : '';
+  // Форма «раз / рази / разів» — цілим словом, не суфіксом до кореня: суфікс англійською не
+  // приклеїти, а фразу однаково збирає шаблон (M47).
+  const voiceNote = dominant ? tf(' Цього матчу найгучніше звучав {0} — ти слухав його {1} {2}.', VOICE_LABEL[dominant.who], dominant.count, plural(dominant.count, t('раз'), t('рази'), t('разів'))) : '';
   lines.push(
     verdict + ', ' + state.scoreUs + ':' + state.scoreThem
     + t('. Тренер поставив ') + coachRating.toFixed(1) + t(', трибуни — ') + fanRating.toFixed(1) + '.' + voiceNote,

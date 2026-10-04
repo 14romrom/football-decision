@@ -117,7 +117,7 @@ export type Whistle = { summary: string; promise?: string; crowd: string };
 export function buildWhistle(c: WhistleWhen, rng: Rng, seen: Set<string> = new Set(), rules: WhistleRule[] = WHISTLE_RULES): Whistle {
   const take = (kind: WhistleKind) => {
     const line = pickWhistleLine(kind, c, rng, seen, rules);
-    if (!line) throw new Error(`в whistle.json нет строк вида ${kind}`);
+    if (!line) throw new Error(`в whistle.json нет строк вида ${kind}`);  /* i18n-skip: сообщение для разработчика */
     seen.add(line);
     return line;
   };

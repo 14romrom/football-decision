@@ -6,7 +6,7 @@
 // историю, чтобы за сезон один твит не читался дважды.
 
 import postsJsonRaw from '../content/posts.json';
-import { tr, LANG, t } from '../content/i18n';
+import { tr, LANG, dec, t, tf } from '../content/i18n';
 // Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
 const postsJson = tr(postsJsonRaw);
 import { pickFresh } from './flavor';
@@ -223,14 +223,16 @@ export function minuteOrdinal(n: number, kase: 'nom' | 'acc' = 'nom'): string {
     if (dd >= 11 && dd <= 13) return `${n}th`;
     return `${n}${d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th'}`;
   }
+  // Закінчення — українська граматика, а не текст для гравця: англійська гілка вище, і сюди
+  // не доходить. Тому вони без `t()` і позначені, щоб перевірка перекладу їх не чіпала (M47).
   let end: string;
-  if (dd >= 11 && dd <= 19) end = kase === 'nom' ? t('та') : t('ту');
-  else if (n === 40) end = kase === 'nom' ? t('ва') : t('ву');
-  else if (d === 1) end = kase === 'nom' ? t('ша') : t('шу');
-  else if (d === 2) end = kase === 'nom' ? t('га') : t('гу');
-  else if (d === 3) end = kase === 'nom' ? t('тя') : t('тю');
-  else if (d === 7 || d === 8) end = kase === 'nom' ? t('ма') : t('му');
-  else end = kase === 'nom' ? t('та') : t('ту');
+  if (dd >= 11 && dd <= 19) end = kase === 'nom' ? 'та' : 'ту';            // i18n-skip
+  else if (n === 40) end = kase === 'nom' ? 'ва' : 'ву';                   // i18n-skip
+  else if (d === 1) end = kase === 'nom' ? 'ша' : 'шу';                    // i18n-skip
+  else if (d === 2) end = kase === 'nom' ? 'га' : 'гу';                    // i18n-skip
+  else if (d === 3) end = kase === 'nom' ? 'тя' : 'тю';                    // i18n-skip
+  else if (d === 7 || d === 8) end = kase === 'nom' ? 'ма' : 'му';         // i18n-skip
+  else end = kase === 'nom' ? 'та' : 'ту';                                 // i18n-skip
   return `${n}-${end}`;
 }
 
@@ -412,10 +414,10 @@ export function buildFeed(
 
 /** «2 год», «1 д» — время поста, как в твиттере. */
 export function agoLabel(hours: number): string {
-  return hours < 24 ? `${hours} год` : `${Math.floor(hours / 24)} д`;
+  return hours < 24 ? tf('{0} год', hours) : tf('{0} д', Math.floor(hours / 24));
 }
 
 /** «2,4 тис.» — лайки, как в твиттере. */
 export function countLabel(n: number): string {
-  return n >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + t(' тис.') : String(n);
+  return n >= 1000 ? dec(n / 1000) + t(' тис.') : String(n);
 }

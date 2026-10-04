@@ -404,7 +404,8 @@ function Game() {
   const afterSeason = useCallback((leveledFrom: number, leveledTo: number) => {
     const sn = seasonRef.current;
     if (isSeasonOver(sn)) { afterPosts(leveledFrom, leveledTo); return; }
-    setStage({ k: 'posts', posts: buildPosts(postQuota(sn.number), 3), leveledFrom, leveledTo });
+    // Частка «нашого» в стрічці росте туром кар'єри, не сезоном (posts.ts:POST_QUOTA_BY_CAREER_ROUND).
+    setStage({ k: 'posts', posts: buildPosts(postQuota(sn.number, sn.round), 3), leveledFrom, leveledTo });
   }, [afterPosts, buildPosts]);
 
   const confirmLevelUp = useCallback((attr: Attribute) => {

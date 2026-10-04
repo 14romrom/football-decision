@@ -236,12 +236,48 @@ function pollResults(options: string[], rng: Rng): { text: string; pct: number }
 export const POST_QUOTA: Record<PostGroup, number> = { self: 3, league: 2, world: 3, cross: 1, meta: 1 };
 /** С какой вероятностью в стрічку подмешивается пост, на который можно ответить (если есть подходящий). */
 export const REPLY_CHANCE = 0.5;
-export const POST_QUOTA_BY_SEASON: Record<number, Record<PostGroup, number>> = {
-  1: { self: 2, league: 1, world: 5, cross: 0, meta: 2 },
-  2: POST_QUOTA,
+
+/** «Наш» мир — про Реєса, нашу лігу и наш город; «общее» — великий футбол и мета.
+ *  Тот же раздел, что в `tests/posts.test.ts`: `cross` — это большой мир, который заметил нашу
+ *  дыру на карте, то есть разговор всё равно про нас. */
+export const LOCAL_GROUPS: PostGroup[] = ['self', 'league', 'cross'];
+export const localShare = (q: Record<PostGroup, number>): number => {
+  const all = (Object.values(q) as number[]).reduce((a, b) => a + b, 0);
+  return all ? LOCAL_GROUPS.reduce((n, g) => n + (q[g] ?? 0), 0) / all : 0;
 };
-export function postQuota(season: number): Record<PostGroup, number> {
-  return POST_QUOTA_BY_SEASON[Math.min(season, 2)] ?? POST_QUOTA;
+
+/** Доля «нашего» растёт через всю кар'єру, а не ступенькой на границе сезонов (решение
+ *  пользователя 04.10): початок — стрічка живе без нас, місто про Реєса ще не говорить, і перший
+ *  пост про нього чогось вартий; далі частка росте до стелі **65%** — світ ніколи не стає цілком
+ *  про тебе. Ключ — тур кар'єри (1..20), бо літо місто не стирає: у другому сезоні Реєс
+ *  повертається місцевим, і скидати частку назад означало б, що за три місяці його забули.
+ *
+ *  **Чому саме так, а не інакше.** Нуль «наших» на старті відкинуто: усі реакції стрічки на матч —
+ *  це `self` (гол, оцінка, флаг, пост про конкретний момент), і стрічка, яка два тури поспіль не
+ *  помічає матч, читається як зламана, а не як мовчазне місто. Тому мінімум — один.
+ *  Стеля 6 із 10: 7 було б 70%, а 65% — межа.
+ *
+ *  **Пул тримає саме meta, не self** (замір `npx tsx tools/feed-share.ts`): пам'ять стрічки —
+ *  `POSTS_KEEP` = 400 рядків, тобто вся кар'єра (200 постів), тож рахувати треба за дві сезони,
+ *  а не за одну. У meta всього 29 рядків: по 2 за тур це 27 із 29 — повтор на першій же невдачі.
+ *  Тому meta скрізь 1, а слабину забирає `world` (190 рядків, найбільший запас). */
+export const POST_QUOTA_BY_CAREER_ROUND: { upTo: number; quota: Record<PostGroup, number> }[] = [
+  { upTo: 2, quota: { self: 1, league: 0, world: 8, cross: 0, meta: 1 } },   // 10%
+  { upTo: 4, quota: { self: 2, league: 0, world: 7, cross: 0, meta: 1 } },   // 20%
+  { upTo: 7, quota: { self: 2, league: 1, world: 6, cross: 0, meta: 1 } },   // 30%
+  { upTo: 10, quota: { self: 3, league: 1, world: 5, cross: 0, meta: 1 } },  // 40%
+  { upTo: 14, quota: { self: 3, league: 1, world: 4, cross: 1, meta: 1 } },  // 50%
+  { upTo: Infinity, quota: { self: 4, league: 1, world: 3, cross: 1, meta: 1 } }, // 60% — стеля
+];
+
+/** Тур кар'єри: сезон 1 — 1..10, сезон 2 — 11..20. Стикові йдуть 11-м матчем сезону, тому
+ *  обрізаємо до довжини кола: частку вони не зсувають. */
+export const careerRound = (season: number, round: number): number =>
+  (Math.max(1, season) - 1) * 10 + Math.max(1, Math.min(round, 10));
+
+export function postQuota(season: number, round = 10): Record<PostGroup, number> {
+  const cr = careerRound(season, round);
+  return (POST_QUOTA_BY_CAREER_ROUND.find((s) => cr <= s.upTo) ?? POST_QUOTA_BY_CAREER_ROUND[POST_QUOTA_BY_CAREER_ROUND.length - 1]).quota;
 }
 
 /** Стрічка: по квоте на группу, вес 3^ключей условия, виденные строки уступают свежим;

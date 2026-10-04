@@ -5,7 +5,7 @@ import { makeRng } from '../src/engine/rng';
 import { createSeason, ourFixture, recordRound, US } from '../src/engine/season';
 import { defaultCareer } from '../src/engine/career';
 import { fillNames, opponentTraits } from '../src/engine/names';
-import { buildFeed, buildPostContext, matchesPost, minuteOrdinal, POST_QUOTA, postQuota, POSTS, type PostContext, type PostGroup } from '../src/engine/posts';
+import { buildFeed, buildPostContext, LOCAL_GROUPS, localShare, matchesPost, minuteOrdinal, POST_QUOTA, postQuota, POSTS, type PostContext, type PostGroup } from '../src/engine/posts';
 import { OPPONENTS, rosterFor, OPPONENT_KEYS } from '../src/content';
 
 const keys = OPPONENT_KEYS.second;
@@ -87,15 +87,35 @@ describe('стрічка: контент', () => {
     expect([9, 17, 23, 41, 77].some((s) => buildFeed(ctx({ goals: 1, result: 'win', scoreUs: 2 }), makeRng(s)).some((p) => p.reply))).toBe(true);
   });
 
-  it('первый сезон — 2–3 поста про игровой мир, остальное общее; со второго — половина наша', () => {
-    const q1 = postQuota(1);
-    expect(q1.self + q1.league + q1.cross).toBeLessThanOrEqual(3);
-    expect(q1.world + q1.meta).toBeGreaterThanOrEqual(6);
-    const feed1 = buildFeed(ctx(), makeRng(31), new Set(), POSTS, q1);
-    expect(feed1.filter((p) => p.group === 'self' || p.group === 'league' || p.group === 'cross')).toHaveLength(3);
-    const q2 = postQuota(2);
-    expect(q2.self + q2.league + q2.cross).toBeGreaterThanOrEqual(5);
-    expect(postQuota(7)).toEqual(q2);
+  it('доля «нашого» росте туром кар’єри: старт без міста, стеля 65%, назад не відкочується', () => {
+    // Решение пользователя 04.10: перші тури стрічка живе без нас, далі частка росте через
+    // обидва сезони (літо місто не стирає) і впирається в стелю.
+    const share = (season: number, round: number) => localShare(postQuota(season, round));
+    expect(share(1, 1)).toBeLessThanOrEqual(0.2);
+    expect(share(1, 10)).toBeGreaterThan(share(1, 1));
+    expect(share(2, 1)).toBeGreaterThanOrEqual(share(1, 10));   // через межу сезонів — без відкату
+    expect(share(2, 10)).toBeGreaterThan(share(2, 1));
+    // Монотонність і стеля на всій кар’єрі; у кожному турі рівно десять постів.
+    let prev = 0;
+    for (let cr = 1; cr <= 20; cr++) {
+      const q = postQuota(cr <= 10 ? 1 : 2, cr <= 10 ? cr : cr - 10);
+      const s = localShare(q);
+      expect(s, `тур ${cr}`).toBeGreaterThanOrEqual(prev);
+      expect(s, `тур ${cr} — стеля`).toBeLessThanOrEqual(0.65);
+      expect(GROUPS.reduce((n, g) => n + (q[g] ?? 0), 0), `тур ${cr} — постів у стрічці`).toBe(10);
+      prev = s;
+    }
+    // Один «наш» пост на старті все одно є: стрічка, яка не помічає матч, читається як зламана.
+    expect(postQuota(1, 1).self).toBeGreaterThanOrEqual(1);
+    // Квота віддає рівно те, що просить: перевіряємо на зібраній стрічці, а не тільки на числах.
+    for (const [season, round] of [[1, 1], [1, 10], [2, 10]] as const) {
+      const q = postQuota(season, round);
+      const feed = buildFeed(ctx({ round }), makeRng(31 + round), new Set(), POSTS, q);
+      expect(feed.filter((p) => LOCAL_GROUPS.includes(p.group)), `${season}/${round}`)
+        .toHaveLength(LOCAL_GROUPS.reduce((n, g) => n + (q[g] ?? 0), 0));
+    }
+    // Після двох сезонів кар’єра не триває, але квота має лишатися визначеною.
+    expect(postQuota(3, 5)).toEqual(postQuota(2, 10));
   });
 
   it('форма: опрос в сумме 100, видалений твіт цитируется в ответе, лайв — с минутой и внизу, ответить можно на один пост', () => {

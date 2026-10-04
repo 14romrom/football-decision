@@ -6,7 +6,7 @@
 
 import { makeRng, type Rng } from './rng';
 import { BALANCE } from './balance';
-import type { Strength } from './conditions';
+import type { Period, Strength } from './conditions';
 
 export const US = 'us';
 export const SEASON_ROUNDS = 10;
@@ -94,7 +94,17 @@ export const PROMOTED_WITH = 2;
 /** Місяць туру (1-based): серпень → травень із зимовою перервою після 5-го. */
 export const MONTHS = ['серпень', 'вересень', 'жовтень', 'листопад', 'грудень', 'лютий', 'березень', 'квітень', 'квітень', 'травень'];
 export const monthOfRound = (round: number): string => MONTHS[Math.max(0, Math.min(MONTHS.length - 1, round - 1))];
-/** Зимова перерва — між 5-м і 6-м туром (round — зіграних матчів). */
+/** Пора року туру (M37, 04.10): календар у грі був, і з ним не радилися — «Пляжний футбол» міг лягти
+ *  в грудень, а спека випасти в лютому. Тепер місяць віддає пору, а пора вирішує дві речі: які справи
+ *  тижня взагалі пропонуються (`ActivityWhen.period`) і з якою вагою тягнеться погода матчу
+ *  (`BALANCE.conditions.weatherByPeriod`). Теплих блоків два — серпень-вересень і травень: пора про
+ *  температуру, не про порядок у календарі. Січня в сезоні немає, він з'їдений перервою. */
+export const PERIOD_BY_ROUND: Period[] = ['warm', 'warm', 'autumn', 'autumn', 'cold', 'cold', 'spring', 'spring', 'spring', 'warm'];
+export const periodOfRound = (round: number): Period => PERIOD_BY_ROUND[Math.max(0, Math.min(PERIOD_BY_ROUND.length - 1, round - 1))];
+/** Зимова перерва — між 5-м і 6-м туром (round — зіграних матчів). Це **не те саме, що холодна пора**:
+ *  перерва — один тиждень, коли ліга стоїть і є два вільних тижні (збори, чужа ліга в телевізорі),
+ *  а холод — грудень і лютий, два тижні, коли за базою замерзає поле. Справа має вибирати, що з двох
+ *  їй потрібне: `winter: true` — перерву, `period: ['cold']` — холод. */
 export const WINTER_BREAK_AFTER = 5;
 
 export type Promotion = {

@@ -58,7 +58,7 @@ import { SettingsScreen } from './ui/SettingsScreen';
 import { AboutScreen } from './ui/AboutScreen';
 import { readSlotSummary } from './telemetry/saves';
 import {
-  createSeason, firstSeasonVerdict, secondSeasonVerdict, isSeasonOver, monthOfRound, nextSeasonFrom, ourFixture, ourRow, playoffPending, promotion, recordPlayoff, recordRound, seasonVerdict, SEASON_ROUNDS, US, WINTER_BREAK_AFTER, withPlayoff, type Season,
+  createSeason, firstSeasonVerdict, secondSeasonVerdict, isSeasonOver, monthOfRound, nextSeasonFrom, periodOfRound, ourFixture, ourRow, playoffPending, promotion, recordPlayoff, recordRound, seasonVerdict, SEASON_ROUNDS, US, WINTER_BREAK_AFTER, withPlayoff, type Season,
 } from './engine/season';
 import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
@@ -258,7 +258,8 @@ function Game() {
     const fixture = ourFixture(seasonRef.current) ?? undefined;
     const grip = coachGrip(careerRef.current.coachTrust);
     return {
-      ...generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)), fixture),
+      // Пора року — туру, який зараз грається (стикові йдуть як 11-й матч і теж у травні).
+      ...generateConditions(rng, OPPONENTS, toneFromHistory(readHistory().map((h) => h.result)), fixture, periodOfRound((fixture?.round ?? seasonRef.current.round) + 1)),
       league: seasonRef.current.number >= 2 ? 'top' as const : 'second' as const,
       ...(grip.hold ? { instruction: 'hold' as const } : {}),
       ...(grip.noSetPieces ? { noSetPieces: true } : {}),

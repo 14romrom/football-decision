@@ -9,7 +9,8 @@
 
 import { BALANCE } from './balance';
 import { arcStage, clampTrust, nightKnowledge, peopleFlags, POINT_VALUE, type Career, type CarriedFlag, type NextMatchPrep } from './career';
-import { WINTER_BREAK_AFTER, type Season } from './season';
+import { WINTER_BREAK_AFTER, periodOfRound, type Season } from './season';
+import type { Period } from './conditions';
 import type { Rng } from './rng';
 import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
 import { VOICE_LABEL, voiceSees } from './voices';
@@ -34,8 +35,13 @@ export type ActivityWhen = {
   injured?: boolean;
   /** Флаги, принесённые из матча (partner_annoyed, booked…). */
   flags?: string[];
-  /** Зимова перерва (M14): дела, що є тільки взимку, — і навпаки. */
+  /** Зимова перерва (M14): дела, що є тільки взимку, — і навпаки. Це **один тиждень** після 5-го туру:
+   *  збори в горах і чужа ліга в телевізорі бувають лише тоді. Для «холодно надворі» — `period`. */
   winter?: boolean;
+  /** Пора року (M37, `season.ts:periodOfRound`): справа лише в ці пори. Пляж не трапляється в грудні,
+   *  замерзле поле — в травні. Без поля справа всесезонна, і таких більшість: пору питають тільки ті,
+   *  у чиєму тексті вона вже названа (пісок, сонце, лід). */
+  period?: Period[];
   /** Тиждень після червоної картки (M18.0): вибачитися, поговорити, розібрати момент. */
   sentOff?: boolean;
   notFlags?: string[];
@@ -118,6 +124,8 @@ export type WeekContext = {
   arc: number;
   /** Тиждень — зимова перерва (після WINTER_BREAK_AFTER туру); необов’язкове — тести й старі контексти без нього. */
   winter?: boolean;
+  /** Пора року зіграного туру (M37); без неї справи з `period` не підходять — так ходять старі контексти. */
+  period?: Period;
   /** Минулого матчу була червона (career.pendingSentOff) — тиждень це знає. */
   sentOff?: boolean;
 };
@@ -143,6 +151,7 @@ export function weekContext(season: Season, career: Career, position: number): W
     fanRating: last.fanRating,
     arc: arcStage(career),
     winter: season.round === WINTER_BREAK_AFTER,
+    period: periodOfRound(season.round),
     sentOff: career.pendingSentOff,
   };
 }
@@ -171,6 +180,7 @@ export function matchesActivity(w: ActivityWhen | undefined, c: WeekContext): bo
   if (w.arcMin !== undefined && c.arc < w.arcMin) return false;
   if (w.arcMax !== undefined && c.arc > w.arcMax) return false;
   if (w.winter !== undefined && w.winter !== !!c.winter) return false;
+  if (w.period && (!c.period || !w.period.includes(c.period))) return false;
   return true;
 }
 

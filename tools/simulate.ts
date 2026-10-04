@@ -15,7 +15,7 @@ import { BALANCE, POSITION_ORDER } from '../src/engine/balance';
 import type { EpisodeMemory, EpisodeOption, Tier } from '../src/engine/types';
 import { ACTIVITIES, WEEK_SCENES } from '../src/content';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, type Career } from '../src/engine/career';
-import { createSeason, isSeasonOver, ourFixture, ourRow, playoffPending, recordPlayoff, recordRound, seasonVerdict, withPlayoff, type Season, type Verdict } from '../src/engine/season';
+import { createSeason, isSeasonOver, periodOfRound, ourFixture, ourRow, playoffPending, recordPlayoff, recordRound, seasonVerdict, withPlayoff, type Season, type Verdict } from '../src/engine/season';
 import { finishWeek, planWeek, sceneFor, sceneOptionsFor, seenScenes, weekContext, weekVoiceSees, type Activity, type WeekPick } from '../src/engine/week';
 import { dominantVoice } from '../src/engine/voices';
 
@@ -257,7 +257,8 @@ export function runCareer(seed: number, policy: WeekPolicy, matchPolicy: PolicyN
   while (!isSeasonOver(season)) {
     const fixture = ourFixture(season)!;
     const rng = makeRng(seed * 31 + season.round);
-    const conditions = { ...generateConditions(rng, OPPONENTS, { confidence: 0, fatigue: 0 }, fixture), league: top ? 'top' as const : 'second' as const };
+    // Пора року (M37): режим --season єдиний, у кого є календар, тому погода тут така сама, як у грі.
+    const conditions = { ...generateConditions(rng, OPPONENTS, { confidence: 0, fatigue: 0 }, fixture, periodOfRound(fixture.round + 1)), league: top ? 'top' as const : 'second' as const };
     const { career: consumed, penalty } = consumeStartPenalty(career);
     career = consumed;
     if (penalty.fromBench) benchedMatches += 1;

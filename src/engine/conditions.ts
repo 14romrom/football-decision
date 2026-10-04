@@ -18,6 +18,9 @@ export type Instruction = 'hold' | 'press' | 'free' | 'none';
  *  `when.strength`, который в сетапах уже работает. */
 export const FORMATION_BY_STRENGTH: Record<Strength, string> = { weak: '4-4-2', even: '4-2-3-1', strong: '4-3-3' };
 export type Weather = 'clear' | 'rain' | 'heat' | 'wind';
+/** Пора року (M37): таблиця «тур → пора» живе в `season.ts:PERIOD_BY_ROUND`, сюда она приходит
+ *  значением — иначе conditions пришлось бы импортировать season, а season уже импортирует нас. */
+export type Period = 'warm' | 'autumn' | 'cold' | 'spring';
 
 export type Tone = {
   /** −2..+2 по результатам последних матчей. */
@@ -60,19 +63,21 @@ export function toneFromHistory(results: MatchResult[]): Tone {
 }
 
 /** Условия матча. Соперник и поле — из расписания сезона, если оно есть (fixture);
- *  без него — случайные, как в прогоне. Установка тренера и погода случайны всегда. */
+ *  без него — случайные, как в прогоне. Установка тренера случайна всегда, погода — по поре года
+ *  (M37): без `period` веса прежние, одинаковые на весь сезон, — так ходят тесты и прогон. */
 export function generateConditions(
   rng: Rng, opponents: Record<string, { strength: Strength }>, tone: Tone,
-  fixture?: { opponentKey: string; venue: 'home' | 'away' },
+  fixture?: { opponentKey: string; venue: 'home' | 'away' }, period?: Period,
 ): MatchConditions {
   const opponentKey = fixture?.opponentKey ?? rng.pick(Object.keys(opponents));
   const venue: Venue = fixture?.venue ?? (rng.chance(0.5) ? 'home' : 'away');
+  const weights = period ? BALANCE.conditions.weatherByPeriod[period] : BALANCE.conditions.weatherAnyTime;
   return {
     venue,
     opponentKey,
     strength: opponents[opponentKey].strength,
     instruction: rng.pick<Instruction>(['hold', 'press', 'free']),
-    weather: rng.weighted<Weather>(['clear', 'rain', 'heat', 'wind'], (w) => (w === 'clear' ? 3 : 1)),
+    weather: rng.weighted<Weather>(['clear', 'rain', 'heat', 'wind'], (w) => weights[w]),
     tone,
     keeperTip: rng.chance(BALANCE.keeperRead.analystChance),
   };

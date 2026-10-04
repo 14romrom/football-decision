@@ -19,7 +19,7 @@ import { generateConditions, type MatchConditions, type Strength } from './condi
 import { applyMatchToCareer, arcStage, coachGrip, consumeStartPenalty, effectivePlayer, spendPoint, type Career } from './career';
 import { finishPrologue, prologuePending, type PrologueSpread } from './prologue';
 import { finishVacation, vacationPending, type VacationSpread } from './vacation';
-import { createSeason, isSeasonOver, nextSeasonFrom, ourFixture, ourRow, playoffPending, promotion, recordPlayoff, recordRound, withPlayoff, type Season } from './season';
+import { createSeason, isSeasonOver, nextSeasonFrom, ourFixture, ourRow, periodOfRound, playoffPending, promotion, recordPlayoff, recordRound, withPlayoff, type Season } from './season';
 import { finishWeek, planWeek, weekContext, type Activity, type WeekPick, type WeekScene } from './week';
 import { dominantVoice } from './voices';
 import type { Attribute, Episode, FlagRule, Player } from './types';
@@ -60,7 +60,7 @@ function playMatch(career: Career, season: Season, c: AutoContent, rng: Rng, see
   const fixture = ourFixture(season)!;
   const grip = coachGrip(career.coachTrust);
   const conditions: MatchConditions = {
-    ...generateConditions(rng, c.opponents as never, { confidence: 0, fatigue: 0 }, fixture),
+    ...generateConditions(rng, c.opponents as never, { confidence: 0, fatigue: 0 }, fixture, periodOfRound(fixture.round + 1)),
     league: season.number >= 2 ? 'top' : 'second',
     ...(grip.hold ? { instruction: 'hold' as const } : {}),
     ...(grip.noSetPieces ? { noSetPieces: true } : {}),

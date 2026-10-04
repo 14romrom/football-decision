@@ -4,7 +4,7 @@ import { Spotlight, type Hint } from './Spotlight';
 import { VOICE_LABEL, voiceAudible } from '../engine/voices';
 import type { MatchConditions } from '../engine/conditions';
 import { computeContext } from '../engine/context';
-import { availableOptions, sceneInsights } from '../engine/match';
+import { availableOptions, CHAIN_NEXT, sceneInsights } from '../engine/match';
 import { catastropheBand, POSITION_LABEL } from '../engine/resolve';
 import { cleanTarget } from '../engine/balance';
 
@@ -35,13 +35,12 @@ type Props = {
   onChoose: (option: EpisodeOption) => void;
 };
 
-/** Куда ведёт вариант при удаче — подпись в скобке: решение не последнее. */
-const CHAIN_LABEL: Record<string, string> = {
-  fin_shot: 'удар', fin_penalty: 'удар з позначки', fin_penalty_wait: 'гра нервів', ep_free_kick_close: 'штрафний', ep_rebound_follow_up: 'добивання',
-};
+/** Куда ведёт вариант при удаче — подпись в скобке: решение не последнее. Имена берём из того же
+ *  `CHAIN_NEXT`, что и кнопка «Далі → …»: здесь жил свой список на пять целей, и всё, чего в нём не
+ *  было, падало в «далі» — та сама «Далі → далі» з плейтесту 27.09, тільки в скобці. */
 function chainHint(o: EpisodeOption): string | null {
   const target = o.outcomes.clean.apply?.followUp ?? o.outcomes.cost.apply?.followUp;
-  return target ? (CHAIN_LABEL[target] ?? 'далі') : null;
+  return target ? (CHAIN_NEXT[target] ?? 'далі') : null;
 }
 
 export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, link, hint, onChoose }: Props) {
@@ -95,9 +94,12 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                       катастрофа — на яких кубиках усе піде не так. До цього видно було тільки ціль, і гравець
                       добудовував правило сам («катастрофа — це коли випала одиниця»). */}
                   <span className={`bracket risk-${ctx.position}`}>
-                    [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)} · катастрофа {catastropheBand(ctx.position, ctx.attrMod)}{chain ? ` → ${chain}` : ''}]
-                    {origin && <i className="origin">{origin}</i>}
+                    [{POSITION_LABEL[ctx.position]} {cleanTarget(ctx.position, o.difficulty)} · катастрофа {catastropheBand(ctx.position, ctx.attrMod)}]
                   </span>
+                  {/* Куди веде варіант — окремим елементом, не всередині скобки: скобка `nowrap`, і з
+                      довгим ім'ям ланки («м'яч між лініями») рядок вилазив за екран на 47 px. */}
+                  {chain && <i className={`chain-next risk-${ctx.position}`}>→ {chain}</i>}
+                  {origin && <i className="origin">{origin}</i>}
                 </span>
                 <span className="choice-go" aria-hidden="true">›</span>
               </button>

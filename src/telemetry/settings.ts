@@ -13,13 +13,18 @@ export type Settings = {
   textSize: 'normal' | 'large';
   /** Підказки-прожектори першого матчу (M12); тестерам, що знають гру, — вимкнути. */
   hints: boolean;
+  /** Мова контенту (M47). Головної версії немає: українська й англійська рівні. Читається один
+   *  раз при завантаженні (content/i18n.ts), тому зміна вимагає перезавантаження сторінки. */
+  lang: 'uk' | 'en';
 };
 
 const KEY = 'football-decision.settings.v1';
 const TITLE_SEEN_KEY = 'football-decision.title-seen.v1';
 const TITLE_SEEN_KEEP = 24;
 
-export const DEFAULT_SETTINGS: Settings = { dice: 'reel', haptics: true, reduceMotion: false, textSize: 'normal', hints: true };
+// Мова за умовчанням — українська, навіть якщо пристрій англійський: екран вибору мови
+// (M46) ставить її явно при першому запуску, і доти гра не має вгадувати за гравця.
+export const DEFAULT_SETTINGS: Settings = { dice: 'reel', haptics: true, reduceMotion: false, textSize: 'normal', hints: true, lang: 'uk' };
 
 export function readSettings(): Settings {
   try {

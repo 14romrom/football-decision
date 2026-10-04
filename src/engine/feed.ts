@@ -8,7 +8,10 @@
 // контента» ни в тестах, ни в прогоне, а тянуть правила через createMatch (54 вызова)
 // ради этого не стоит. Тесты подменяют пул через параметр rules.
 
-import feedJson from '../content/feed.json';
+import feedJsonRaw from '../content/feed.json';
+import { tr } from '../content/i18n';
+// Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
+const feedJson = tr(feedJsonRaw);
 import type { MatchConditions } from './conditions';
 import { matchesSituation, pickFresh } from './flavor';
 import type { Rng } from './rng';

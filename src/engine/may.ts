@@ -2,7 +2,10 @@
 // Один розворот зошита після останнього матчу першого сезону — за тим, як саме сезон закінчився:
 // чемпіон / вихід у двійці / стикові виграні / стикові програні / мимо (і те, й те — «за регламентом»).
 // Розворот той самий формат, що пролог і відпустка (PrologueScreen), наслідки — через applyWeek.
-import mayJson from '../content/may.json';
+import mayJsonRaw from '../content/may.json';
+import { tr } from '../content/i18n';
+// Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
+const mayJson = tr(mayJsonRaw);
 import type { PrologueSpread } from './prologue';
 import { playoffWon, promotion, standings, US, type Season } from './season';
 

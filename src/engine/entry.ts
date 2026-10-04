@@ -5,7 +5,10 @@
 // стан арки, зимовий дзвінок, коліно, кураж. Вибір — matchesSituation, як у сетапів: конкретніше перемагає.
 // Контент — content/entry.json; екран — ui/EntryCard.tsx; момент — App.proceed (перед nextEpisode).
 
-import entryJson from '../content/entry.json';
+import entryJsonRaw from '../content/entry.json';
+import { tr } from '../content/i18n';
+// Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
+const entryJson = tr(entryJsonRaw);
 import { matchesSituation } from './flavor';
 import type { MatchConditions } from './conditions';
 import type { MatchState, SituationWhen, Voice, VoiceKey } from './types';

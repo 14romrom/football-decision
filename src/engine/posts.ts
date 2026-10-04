@@ -5,7 +5,10 @@
 // карьере; выбор тот же, что у реплик и ленты матча (flavor.ts:pickFresh), с памятью через
 // историю, чтобы за сезон один твит не читался дважды.
 
-import postsJson from '../content/posts.json';
+import postsJsonRaw from '../content/posts.json';
+import { tr } from '../content/i18n';
+// Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
+const postsJson = tr(postsJsonRaw);
 import { pickFresh } from './flavor';
 import type { Rng } from './rng';
 import { peopleFlags, type Career, arcStage, metLastYear, nightKnowledge } from './career';

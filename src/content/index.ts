@@ -1,19 +1,40 @@
-import episodesJson from './episodes.json';
-import playerJson from './player.json';
-import rosterJson from './roster.json';
-import flavorJson from './flavor.json';
-import flagsJson from './flags.json';
-import activitiesJson from './activities.json';
-import weekscenesJson from './weekscenes.json';
-import adsJson from './ads.json';
-import prologueJson from './prologue.json';
-import vacationJson from './vacation.json';
-import endingJson from './ending.json';
-import firstmatchJson from './firstmatch.json';
-import agentJson from './agent.json';
-import espmJson from './espm.json';
-import shotsJson from './shots.json';
-import chaptersJson from './chapters.json';
+import episodesJsonRaw from './episodes.json';
+import playerJsonRaw from './player.json';
+import rosterJsonRaw from './roster.json';
+import flavorJsonRaw from './flavor.json';
+import flagsJsonRaw from './flags.json';
+import activitiesJsonRaw from './activities.json';
+import weekscenesJsonRaw from './weekscenes.json';
+import adsJsonRaw from './ads.json';
+import prologueJsonRaw from './prologue.json';
+import vacationJsonRaw from './vacation.json';
+import endingJsonRaw from './ending.json';
+import firstmatchJsonRaw from './firstmatch.json';
+import agentJsonRaw from './agent.json';
+import espmJsonRaw from './espm.json';
+import shotsJsonRaw from './shots.json';
+import chaptersJsonRaw from './chapters.json';
+import { tr } from './i18n';
+
+// Переклад — одна точка на весь проєкт (M47): контент підміняється тут, при завантаженні модуля,
+// тому рушій, UI і тести отримують уже потрібну мову і про неї не знають нічого. Для української
+// `tr` повертає той самий об'єкт, без копіювання.
+const episodesJson = tr(episodesJsonRaw);
+const playerJson = tr(playerJsonRaw);
+const rosterJson = tr(rosterJsonRaw);
+const flavorJson = tr(flavorJsonRaw);
+const flagsJson = tr(flagsJsonRaw);
+const activitiesJson = tr(activitiesJsonRaw);
+const weekscenesJson = tr(weekscenesJsonRaw);
+const adsJson = tr(adsJsonRaw);
+const prologueJson = tr(prologueJsonRaw);
+const vacationJson = tr(vacationJsonRaw);
+const endingJson = tr(endingJsonRaw);
+const firstmatchJson = tr(firstmatchJsonRaw);
+const agentJson = tr(agentJsonRaw);
+const espmJson = tr(espmJsonRaw);
+const shotsJson = tr(shotsJsonRaw);
+const chaptersJson = tr(chaptersJsonRaw);
 import { fillNamesDeep, type Roster, type TeamRoster, type NameForms } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';

@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { Film } from './Film';
 import { PLAYER, ROSTER } from '../content';
-import titleJson from '../content/title.json';
+import titleJsonRaw from '../content/title.json';
+import { tr } from '../content/i18n';
+// Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
+const titleJson = tr(titleJsonRaw);
 import { makeRng } from '../engine/rng';
 import { pickTitleLine, titleContext, type TitleRule } from '../engine/title';
 import { VOICE_LABEL } from '../engine/voices';

@@ -4,7 +4,10 @@
 // була, і трибуни — як розходяться і чи будуть затори. Правила — content/whistle.json, вибір той
 // самий, що в реплік і ленти: вага 3^ключів, виденные строки уступают свежим (pickFresh).
 
-import whistleJson from '../content/whistle.json';
+import whistleJsonRaw from '../content/whistle.json';
+import { tr } from '../content/i18n';
+// Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
+const whistleJson = tr(whistleJsonRaw);
 import type { MatchConditions } from './conditions';
 import { pickFresh } from './flavor';
 import type { MatchSummary } from './match';

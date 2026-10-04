@@ -11,6 +11,7 @@ import { finishVacation, vacationPending } from './engine/vacation';
 import { endingPending, endingSpreads, finishEnding, partnerBonded, prologueVoice } from './engine/ending';
 import { HUNTER, hunterRound } from './engine/programme';
 import { maySpread } from './engine/may';
+import { t } from './content/i18n';
 /** Тур другого сезону (0-based, після зими), у якому агент сидить на трибуні (rx_top_agent_in_stands). */
 const AGENT_IN_STANDS_ROUND = 6;
 /** Тур другого сезону (0-based), у якому тренер міняє тебе на Марена — канвовий показ ep_subbed_off. */
@@ -300,23 +301,23 @@ function Game() {
         // «Зустрічалися торік» (M14): флаг матчу для сетапів і реплік, коли суперник був у минулому сезоні.
         flags: [
           ...penalty.flags,
-          ...(metLastYear(consumedCareer, conditions.opponentKey) ? [{ flag: 'met_last_year', mark: { minute: 0, episodeId: 'season', optionId: 'met', past: 'грали з ними торік' } }] : []),
+          ...(metLastYear(consumedCareer, conditions.opponentKey) ? [{ flag: 'met_last_year', mark: { minute: 0, episodeId: 'season', optionId: 'met', past: t('грали з ними торік') } }] : []),
           // Колишній дублер у їхній формі (M15): сетапи й репліки знають, хто дихав у спину торік.
-          ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey ? [{ flag: 'sub_there', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: 'грав проти колишнього дублера' } }] : []),
+          ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey ? [{ flag: 'sub_there', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: t('грав проти колишнього дублера') } }] : []),
           // Єдиний свідок липневої ночі (M28): він бачив, як тебе знімали з газону, — тільки в матчах із його
           // клубом і тільки якщо ти не дійшов сам. Знання міняє не стик, а розмову: варіант `knee_between_us`.
           ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey && nightKnowledge(consumedCareer).saw
-            ? [{ flag: 'larsson_saw', mark: { minute: 0, episodeId: 'season', optionId: 'night', past: 'грав проти єдиного свідка тієї ночі' } }] : []),
+            ? [{ flag: 'larsson_saw', mark: { minute: 0, episodeId: 'season', optionId: 'night', past: t('грав проти єдиного свідка тієї ночі') } }] : []),
           // Другий матч із його клубом (M17): Ларссон виходить з їхньої лави — реактивна сцена rx_top_larsson_from_bench.
           ...(consumedCareer.subLeft && consumedCareer.subClub === conditions.opponentKey && seasonRef.current.played.some((f) => (f.home === US && f.away === consumedCareer.subClub) || (f.away === US && f.home === consumedCareer.subClub))
-            ? [{ flag: 'sub_there_again', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: 'грав проти колишнього дублера вдруге' } }] : []),
+            ? [{ flag: 'sub_there_again', mark: { minute: 0, episodeId: 'season', optionId: 'sub', past: t('грав проти колишнього дублера вдруге') } }] : []),
           // Мандраж (M18.3): перші два тури першого сезону і перший тур у вищій лізі — поки в сезоні немає
           // жодної результативної дії. Гол або асист знімає його достроково: страх лікується не часом.
           ...((seasonRef.current.number === 1 ? seasonRef.current.round < NERVES_ROUNDS : seasonRef.current.round === 0)
             && (seasonRef.current.player.goals + seasonRef.current.player.assists) === 0
-            ? [{ flag: 'nerves', mark: { minute: 0, episodeId: 'season', optionId: 'nerves', past: 'виходив із мандражем' } }] : []),
+            ? [{ flag: 'nerves', mark: { minute: 0, episodeId: 'season', optionId: 'nerves', past: t('виходив із мандражем') } }] : []),
           // Весна другого сезону (M17, канва): агент на трибуні з чужим шарфом — один матч, після зими, абстрактно.
-          ...(seasonRef.current.number >= 2 && seasonRef.current.round === AGENT_IN_STANDS_ROUND ? [{ flag: 'agent_in_stands', mark: { minute: 0, episodeId: 'season', optionId: 'agent', past: 'бачив агента на трибуні' } }] : []),
+          ...(seasonRef.current.number >= 2 && seasonRef.current.round === AGENT_IN_STANDS_ROUND ? [{ flag: 'agent_in_stands', mark: { minute: 0, episodeId: 'season', optionId: 'agent', past: t('бачив агента на трибуні') } }] : []),
         ],
         flavorSeen: recentFlavor(BALANCE.match.memory.horizon), feedSeen: recentFeed(BALANCE.match.memory.horizon), setupSeen: allSetups(),
         seenEpisodes: allEpisodes(),
@@ -529,7 +530,7 @@ function Game() {
     return (<>{film}
       <PrologueScreen
         spreads={fillNamesDeep(PROLOGUE, ROSTER)}
-        film="Пролог"
+        film={t('Пролог')}
         onFinish={(picks: ProloguePick[]) => {
           // Наслідки — по контенту без імен: id ті самі, у флагах і бирках імена не потрібні.
           const before = careerRef.current;
@@ -548,11 +549,11 @@ function Game() {
       <PrologueScreen
         key="may"
         spreads={fillNamesDeep([spread], ROSTER)}
-        film="Травень"
-        lootTab="ЩО ЛИШИЛОСЯ"
-        lootButton="Далі"
-        lootEmpty="Травень минув, і нічого не лишилося."
-        labels={{ open: 'Вирішити', pick: 'Обери, як вчинити', confirm: 'Так і зробити' }}
+        film={t('Травень')}
+        lootTab={t('ЩО ЛИШИЛОСЯ')}
+        lootButton={t('Далі')}
+        lootEmpty={t('Травень минув, і нічого не лишилося.')}
+        labels={{ open: t('Вирішити'), pick: t('Обери, як вчинити'), confirm: t('Так і зробити') }}
         arc={arcStage(career)}
         onFinish={(picks: ProloguePick[]) => {
           const before = careerRef.current;
@@ -563,7 +564,7 @@ function Game() {
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => {
-          if (vacationPending(careerRef.current, season.number, true)) { takeShot('auto', 'відпустка між сезонами'); setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
+          if (vacationPending(careerRef.current, season.number, true)) { takeShot('auto', t('відпустка між сезонами')); setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           const mode = agentPending(careerRef.current, season, seasonVerdict(season, career.coachTrust));
           if (mode) { setStage({ k: 'agent', mode, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           newSeason(); setStage({ k: 'menu' });
@@ -578,11 +579,11 @@ function Game() {
       <PrologueScreen
         key="vacation"
         spreads={fillNamesDeep(VACATION, ROSTER)}
-        film="Відпустка"
-        lootTab="ДО НОВОГО СЕЗОНУ"
-        lootButton="На базу"
-        lootEmpty="Три місяці — і жодної відповіді."
-        labels={{ open: 'Вирішити', pick: 'Обери, як вчинити', confirm: 'Так і зробити' }}
+        film={t('Відпустка')}
+        lootTab={t('ДО НОВОГО СЕЗОНУ')}
+        lootButton={t('На базу')}
+        lootEmpty={t('Три місяці — і жодної відповіді.')}
+        labels={{ open: t('Вирішити'), pick: t('Обери, як вчинити'), confirm: t('Так і зробити') }}
         arc={arcStage(career)}
         onFinish={(picks: ProloguePick[]) => {
           const before = careerRef.current;
@@ -600,13 +601,13 @@ function Game() {
       <PrologueScreen
         key="ending"
         spreads={fillNamesDeep(endingSpreads(ENDING, career.scoutSaw), ROSTER)}
-        film="Останній тиждень"
-        lootButton="Далі буде"
+        film={t('Останній тиждень')}
+        lootButton={t('Далі буде')}
         arc={arcStage(career)}
         firstVoice={prologueVoice(career, PROLOGUE)}
         cold={!partnerBonded(career)}
         epilogue={fillNamesDeep(ENDING.epilogue, ROSTER)}
-        labels={{ open: 'Вирішити', pick: 'Обери, як попрощатися', confirm: 'Так і зробити' }}
+        labels={{ open: t('Вирішити'), pick: t('Обери, як попрощатися'), confirm: t('Так і зробити') }}
         onFinish={(picks: ProloguePick[]) => {
           const before = careerRef.current;
           const { career: after } = finishEnding(before, fillNamesDeep(ENDING.spreads, ROSTER), picks, seasonRef.current.number);
@@ -628,13 +629,13 @@ function Game() {
     return (
       <div className="menu">
         {film}
-        <div className="card-minute">епілог</div>
+        <div className="card-minute">{t('епілог')}</div>
         <section className="moment"><div className="scene">
           <span className="minute-tab">{career.ending ? ENDING.epilogue.tab.toUpperCase() : `СЕЗОН ${career.ended.season} · ІНШЕ МІСТО`}</span>
           {career.ending
             ? <>{ENDING.epilogue.text.map((t, k) => <p key={k} className="setup" style={k ? { paddingTop: 0 } : undefined}>{fillNames(t, ROSTER)}</p>)}<p className="nb-aside"><b>{ENDING.epilogue.sign}</b></p></>
             : <p className="setup">{fillNames(AGENT.epilogue, ROSTER)}</p>}
-          <button className="primary menu-primary nb-sheet-btn" onClick={() => { location.hash = '#/slots'; }}>Нова кар’єра</button>
+          <button className="primary menu-primary nb-sheet-btn" onClick={() => { location.hash = '#/slots'; }}>{t('Нова кар’єра')}</button>
         </div></section>
       </div>
     );
@@ -648,8 +649,8 @@ function Game() {
           {film}
           <Sticker compact player={effectivePlayer(PLAYER, career)} career={career} season={season} dominant={dominantCareerVoice(career)} onOpen={() => { location.hash = '#/player'; }} />
           <p className="season-line menu-fixture"><b>Сезон {season.number} завершено.</b></p>
-          <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>Підсумки сезону</button>
-          <ul className="rows"><li><a className="row" href="#/">Головна</a></li></ul>
+          <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>{t('Підсумки сезону')}</button>
+          <ul className="rows"><li><a className="row" href="#/">{t('Головна')}</a></li></ul>
         </div>
       );
     }
@@ -762,7 +763,7 @@ function Game() {
         // Реклама по сиду сезона и туру: перезагрузка не меняет банеры; виденные тексты — общая память медиа со стрічкою.
         ads={pickAds(ADS, adContext(season, career.coachTrust), new Set(recentPosts()), makeRng(season.seed + season.round * 6007 + 3))}
         verdict={over ? (season.number === 1 ? firstSeasonVerdict(season, career.coachTrust) : secondSeasonVerdict(season, career.coachTrust)) : undefined}
-        nextLabel={season.number >= 2 ? 'Далі' : 'Новий сезон'}
+        nextLabel={season.number >= 2 ? t('Далі') : t('Новий сезон')}
         // Колонка видання про Реєса за станом арки (M13); імена — під наш ростер, пам’ять медіа спільна з постами.
         column={(() => { const c = playerColumn(ESPM_COLUMNS.column, arcStage(career), makeRng(season.seed + season.round * 7331 + 5), new Set(recentPosts())); return c ? fillNamesDeep(c, ROSTER) : undefined; })()}
         onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
@@ -778,7 +779,7 @@ function Game() {
           // Перед останнім тижнем точки немає (03.10): слот `auto` один, і фінал затирав відпустку —
           // дорожчу з двох. Прощання ж не веде нікуди: кар'єра на ньому закінчується, усі три
           // розвороти сходяться в той самий епілог, і переграти їх можна лише щоб перечитати.
-          if (vacationPending(careerRef.current, season.number, over)) { takeShot('auto', 'відпустка між сезонами'); setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
+          if (vacationPending(careerRef.current, season.number, over)) { takeShot('auto', t('відпустка між сезонами')); setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           if (endingPending(careerRef.current, season.number, over)) {
             setStage(seenChapter(careerRef.current, 'epilogue') ? { k: 'ending' } : { k: 'chapter', id: 'epilogue', then: 'ending' });
             return;
@@ -820,7 +821,7 @@ function Game() {
         onReply={(_post, option) => {
           // Ответ в стрічці — последствия как у дела недели: через applyWeek, чтобы бирки,
           // флаги и старт следующего матча считались в одном месте. Неделя потом дольёт своё.
-          const activity: Activity = { id: 'reply', voice: 'ego', title: 'Відповідь у стрічці', line: option.text, effect: option.effect };
+          const activity: Activity = { id: 'reply', voice: 'ego', title: t('Відповідь у стрічці'), line: option.text, effect: option.effect };
           const { career: after, tags } = applyWeek(careerRef.current, [{ activity }]);
           // Місто пам'ятає тільки названі відповіді (`ReplyOption.id`) — і тільки щоб потім
           // пролунати в стрічці (`PostWhen.said`). Ні в голоси, ні в баланс це не йде.
@@ -858,7 +859,7 @@ function Game() {
         anchor={anchor}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
         locked={stage.locked}
-        month={sn.round === WINTER_BREAK_AFTER ? 'зимова перерва · січень' : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
+        month={sn.round === WINTER_BREAK_AFTER ? t('зимова перерва · січень') : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
         seen={seenNow}
         seed={sn.seed + sn.round}
         onFinish={(picks: WeekPick[], anchor?: { id: string; option: string }) => {

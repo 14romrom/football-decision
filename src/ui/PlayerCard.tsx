@@ -125,7 +125,7 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
                     {ATTRIBUTE_LABEL[a]}
                     {/* Тренировки недели копятся к очку: точки — сколько из BALANCE.week.trainToPoint уже есть. */}
                     {trained > 0 && (
-                      <i className="arow-train" title="тренувань до +1">
+                      <i className="arow-train" title={t('тренувань до +1')}>
                         {Array.from({ length: BALANCE.week.trainToPoint }, (_, k) => <b key={k} className={k < trained ? 'on' : ''} />)}
                       </i>
                     )}
@@ -140,7 +140,7 @@ export function PlayerCard({ player, career, season, club, onEspm, onBack }: Pro
                   </span>
                   <span className="arow-m">
                     +{mod}
-                    {mod !== steady && <b className="arow-week" title="цього тижня">{mod > steady ? '↑' : '↓'}</b>}
+                    {mod !== steady && <b className="arow-week" title={t('цього тижня')}>{mod > steady ? '↑' : '↓'}</b>}
                   </span>
                 </div>
               );

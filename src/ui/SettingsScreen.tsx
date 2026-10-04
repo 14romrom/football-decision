@@ -46,15 +46,15 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
       <h2 className="sect">{t('Кидок')}</h2>
       <div className="set">
         <div className="l">{t('Барабан')}<small>{t('Кубики крутяться перед зупинкою')}</small></div>
-        <Seg name="Барабан" value={s.dice} options={[['reel', t('барабан')], ['instant', t('одразу')]]} onChange={(v) => set({ dice: v })} />
+        <Seg name={t('Барабан')} value={s.dice} options={[['reel', t('барабан')], ['instant', t('одразу')]]} onChange={(v) => set({ dice: v })} />
       </div>
       <div className="set">
         <div className="l">{t('Вібрація на штампі')}<small>{t('Катастрофу відчуєш долонею')}</small></div>
-        <Toggle name="Вібрація на штампі" on={s.haptics} onChange={(v) => set({ haptics: v })} />
+        <Toggle name={t('Вібрація на штампі')} on={s.haptics} onChange={(v) => set({ haptics: v })} />
       </div>
       <div className="set">
         <div className="l">{t('Підказки в першому матчі')}<small>{t('Прожектор на дужки, кубики, голоси і штамп')}</small></div>
-        <Toggle name="Підказки в першому матчі" on={s.hints} onChange={(v) => set({ hints: v })} />
+        <Toggle name={t('Підказки в першому матчі')} on={s.hints} onChange={(v) => set({ hints: v })} />
       </div>
 
       {/* Мова (M47): українська й англійська рівні, головної версії немає. Контент перекладається
@@ -66,18 +66,18 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
       <h2 className="sect">{t('Мова')}</h2>
       <div className="set">
         <div className="l">{t('Мова гри')}<small>{t('Перемикання перезавантажує гру; кар’єра не втрачається')}</small></div>
-        <Seg name="Мова гри" value={s.lang} options={[['uk', t('українська')], ['en', 'English']]}
+        <Seg name={t('Мова гри')} value={s.lang} options={[['uk', t('українська')], ['en', 'English']]}
           onChange={(v) => { writeSettings({ ...s, lang: v }); location.reload(); }} />
       </div>
 
       <h2 className="sect">{t('Екран')}</h2>
       <div className="set">
         <div className="l">{t('Менше руху')}<small>{t('Без тряски й спалахів; паузи лишаються')}</small></div>
-        <Toggle name="Менше руху" on={s.reduceMotion} onChange={(v) => set({ reduceMotion: v })} />
+        <Toggle name={t('Менше руху')} on={s.reduceMotion} onChange={(v) => set({ reduceMotion: v })} />
       </div>
       <div className="set">
         <div className="l">{t('Розмір тексту')}</div>
-        <Seg name="Розмір тексту" value={s.textSize} options={[['normal', t('звичайний')], ['large', t('більший')]]} onChange={(v) => set({ textSize: v })} />
+        <Seg name={t('Розмір тексту')} value={s.textSize} options={[['normal', t('звичайний')], ['large', t('більший')]]} onChange={(v) => set({ textSize: v })} />
       </div>
 
       <h2 className="sect">{t('Тестерам')}</h2>
@@ -100,7 +100,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         </button>
       )}
       {confirmWind && !wound && (
-        <div className="sheet" role="dialog" aria-label="Перемотати">
+        <div className="sheet" role="dialog" aria-label={t('Перемотати')}>
           <p>
             Гра доіграє за тебе — випадковими рішеннями, тим самим рушієм, що й у грі. Кар’єра вийде
             справжня: з пам’яттю тижня, флагами й людьми, тільки прожита не тобою. Поточний стан слота

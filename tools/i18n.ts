@@ -37,12 +37,16 @@ const PROSE_KEYS = new Set([
   'text', 'line', 'lines', 'label', 'past', 'recap', 'setup', 'sheet', 'say', 'reply', 'reaction',
   'note', 'title', 'sub', 'tab', 'head', 'mark', 'summary', 'blurb', 'short', 'intent', 'name',
   'whenText', 'column', 'sign', 'textCold', 'sheetCold', 'say', 'line',
+  'nom', 'gen', 'dat', 'ins',
 ]);
 /** Ключі, під якими лежать дані, хоч вони і рядки. */
 const SKIP_KEYS = new Set([
   'id', 'voice', 'who', 'attribute', 'account', 'handle', 'kind', 'group', 'focus', 'shot',
   'family', 'phase', 'basePosition', 'effect', 'trait', 'tier', 'scorer', 'followUp', 'flag',
-  'nom', 'gen', 'dat', 'ins', 'rom', 'position', 'result', 'train', 'target', 'episode',
+  // nom/gen/dat/ins — відмінкові форми імен у ростері. Це **не дані**: вони потрапляють у текст
+  // і в англійській збірці інакше лишилися б кирилицею. Усі чотири форми перекладаються в одну
+  // англійську (M47), як і назви ліг.
+  'rom', 'position', 'result', 'train', 'target', 'episode',
 ]);
 
 const isUkr = (s: string) => /[а-яіїєґА-ЯІЇЄҐ]/.test(s) && s.trim().length > 2;

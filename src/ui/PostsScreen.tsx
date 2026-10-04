@@ -48,7 +48,7 @@ function Name({ account, self, when }: { account?: PostAccount; self?: { name: s
   return (
     <div className="x-nm">
       <b>{name}</b>
-      {badge && <span className={`x-badge ${gold ? 'gold' : ''}`} title="верифіковано кимось">✓</span>}
+      {badge && <span className={`x-badge ${gold ? 'gold' : ''}`} title={t('верифіковано кимось')}>✓</span>}
       <span className="x-h">{handle}{when ? ` · ${when}` : ''}</span>
     </div>
   );
@@ -134,12 +134,12 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
                 <>
                   <Avatar self />
                   <div className="x-body x-sub">
-                    <Name self={self} when="щойно" />
+                    <Name self={self} when={t('щойно')} />
                     <p className="x-tx">{replied.option.text}</p>
                   </div>
                   <Avatar account={p.account} />
                   <div className="x-body x-sub">
-                    <Name account={p.account} when="щойно" />
+                    <Name account={p.account} when={t('щойно')} />
                     <p className="x-tx">{replied.option.reaction}</p>
                     {replied.tags.length > 0 && (
                       <ul className="tags">

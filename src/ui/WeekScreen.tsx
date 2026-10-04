@@ -344,8 +344,8 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
         })}
 
         {phase.p === 'summary' && (
-          <LootSheet tab="ДО МАТЧУ" loot={phase.result.loot} before={phase.result.before} after={phase.result.after}
-            empty="Три дні — і жодної справи. Голоси це запам’ятають." button="До матчу" onNext={onNext} />
+          <LootSheet tab={t('ДО МАТЧУ')} loot={phase.result.loot} before={phase.result.before} after={phase.result.after}
+            empty={t('Три дні — і жодної справи. Голоси це запам’ятають.')} button={t('До матчу')} onNext={onNext} />
         )}
       </div>
       {button}

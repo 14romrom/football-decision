@@ -83,10 +83,10 @@ export function NavMenu({ go }: Props) {
 
   return (
     <>
-      <button className="nav-toggle" aria-label="Меню" aria-expanded={open} onClick={() => (open ? close() : setOpen(true))}>{Icon.list()}</button>
+      <button className="nav-toggle" aria-label={t('Меню')} aria-expanded={open} onClick={() => (open ? close() : setOpen(true))}>{Icon.list()}</button>
       {open && (
-        <div className="nav-sheet" role="dialog" aria-label="Меню">
-          <button className="nav-scrim" aria-label="Закрити" onClick={close} />
+        <div className="nav-sheet" role="dialog" aria-label={t('Меню')}>
+          <button className="nav-scrim" aria-label={t('Закрити')} onClick={close} />
           <div className="nav-panel">
             {ask === null && (<>
               <p className="eyebrow">Inside the Box</p>

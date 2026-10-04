@@ -770,11 +770,14 @@ function Game() {
             setStage({ k: 'may', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return;
           }
           // «Дзвонить агент» — не нагорода, а розвилка: спершу сцена, новий сезон — з неї.
-          // Автоточка (M34) перед обома розвилками, які гравець захоче пройти інакше: відпустка з
-          // медоглядом і останній тиждень. Інакше другу гілку видно тільки новою кар'єрою на 20 матчів.
+          // Автоточка (M34) — одна, перед відпусткою: там вибір свідка живе весь другий сезон
+          // (`career.larsson` → три взаємно виключні сцени) і задає форму на старті, тож переграти
+          // її справді є за чим. Інакше другу гілку видно тільки новою кар'єрою на 20 матчів.
+          // Перед останнім тижнем точки немає (03.10): слот `auto` один, і фінал затирав відпустку —
+          // дорожчу з двох. Прощання ж не веде нікуди: кар'єра на ньому закінчується, усі три
+          // розвороти сходяться в той самий епілог, і переграти їх можна лише щоб перечитати.
           if (vacationPending(careerRef.current, season.number, over)) { takeShot('auto', 'відпустка між сезонами'); setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           if (endingPending(careerRef.current, season.number, over)) {
-            takeShot('auto', 'останній тиждень');
             setStage(seenChapter(careerRef.current, 'epilogue') ? { k: 'ending' } : { k: 'chapter', id: 'epilogue', then: 'ending' });
             return;
           }

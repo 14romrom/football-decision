@@ -11,7 +11,7 @@
 // `focus` на кадрах, відмінкові форми ростера — вони не текст, а дані. Помилково перекладений
 // id ламає гру тихо, тому список свідомо вузький: беремо тільки ключі, у яких лежить проза.
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIR = 'src/content';
@@ -242,12 +242,46 @@ if (cmd === 'stat') {
   const todo = rows.filter((r) => (!file || r.file === file) && !map[r.hash]).slice(0, limit);
   console.log(JSON.stringify(Object.fromEntries(todo.map((r) => [r.hash, r.src])), null, 2));
   console.error(`// ${todo.length} рядків з ${file ?? 'усіх файлів'}`);
+} else if (cmd === 'rows') {
+  // Те саме, що `take`, але з контекстом: шлях у JSON каже, чий це рядок — який голос у `flavor`,
+  // який акаунт у `posts`, яка сім'я і який варіант в `episodes`. Без цього регістр не вгадати:
+  // фан пише малими, видання чисто, ЕГО і ТІЛО говорять по-різному.
+  const file = process.argv[3];
+  const limit = Number(process.argv[4] ?? 60);
+  const todo = rows.filter((r) => (!file || r.file === file) && !map[r.hash]).slice(0, limit);
+  for (const r of todo) console.log(`${r.hash}  ${r.path}\n    ${r.src}`);
+  console.error(`// ${todo.length} рядків з ${file ?? 'усіх файлів'}`);
+} else if (cmd === 'merge') {
+  // Єдиний спосіб дописати переклад: ключі рахує сам інструмент, тому зовні хеш рахувати **не
+  // треба й не можна**. Коштувало часу: окремий скрипт рахував хеш по кодових точках, а рушій —
+  // по кодових одиницях UTF-16, і на емодзі (🔥, 🙈) вони розійшлися. Тут такої помилки нема за
+  // побудовою, а ключ без живого оригіналу команда назве одразу.
+  const src = process.argv[3];
+  if (!src) { console.error('merge <файл.json> — карта «хеш → переклад»'); process.exit(1); }
+  const add = JSON.parse(readFileSync(src, 'utf8')) as Record<string, string>;
+  const live = new Map(rows.map((r) => [r.hash, r.src]));
+  const unknown = Object.keys(add).filter((h) => !h.startsWith('_') && !live.has(h));
+  const next: Record<string, string> = { ...map };
+  let added = 0, over = 0;
+  for (const [h, v] of Object.entries(add)) {
+    if (h.startsWith('_') || !live.has(h)) continue;     // `_comment…` можна лишати для себе
+    if (next[h] === undefined) added += 1;
+    else if (next[h] !== v) over += 1;
+    next[h] = v;
+  }
+  writeFileSync(MAP, JSON.stringify(next, null, 2) + NL, 'utf8');
+  console.log(`додано ${added}, перезаписано ${over}, усього ${Object.keys(next).length}`);
+  if (unknown.length) {
+    console.error(`\nключів без живого оригіналу: ${unknown.length} — не записано:`);
+    for (const h of unknown.slice(0, 20)) console.error(`  ${h}`);
+    process.exitCode = 1;
+  }
 } else if (cmd === 'orphans') {
   const live = new Set(rows.map((r) => r.hash));
   const dead = Object.keys(map).filter((h) => !live.has(h));
   console.log(dead.length ? `записів без оригіналу: ${dead.length}\n` + dead.join('\n') : 'сиріт немає');
 } else {
-  console.error('команди: stat | take <файл> [N] | orphans');
+  console.error('команди: stat | take <файл> [N] | rows <файл> [N] | merge <файл.json> | orphans');
   process.exit(1);
 }
 }

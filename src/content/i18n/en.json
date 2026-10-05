@@ -608,8 +608,6 @@
   "f23597f5cbc2": "back in the last match",
   "87626cb08000": "made his move",
   "94d886e254c2": " scores — goal! ",
-  "a053d0eac7e0": "The counter is carried through to a shot — ",
-  "3a125f3e7bf5": " doesn't miss. ",
   "1687bfa305a1": " A minute later the visitors took advantage.",
   "5c48f457557d": "Win",
   "e8f228c694f3": "Draw",
@@ -1875,5 +1873,6 @@
   "9bd0f09c95e7": "the ultras are behind you — the end is pulling",
   "396b9a85e3cd": "the end",
   "249867202f22": "first-round nerves",
-  "8c305b82a6f0": "nerves"
+  "8c305b82a6f0": "nerves",
+  "30062ea26160": "The counter is carried through to a shot — {0} doesn't miss. {1}:{2}."
 }

@@ -6,7 +6,7 @@
 // историю, чтобы за сезон один твит не читался дважды.
 
 import postsJsonRaw from '../content/posts.json';
-import { tr, LANG, dec, t, tf } from '../content/i18n';
+import { tr, dec, langOf, minuteOrdinal, minuteOrdinalIn, t, tf } from '../content/i18n';
 // Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
 const postsJson = tr(postsJsonRaw);
 import { pickFresh } from './flavor';
@@ -214,27 +214,9 @@ export type Post = {
   replyOptions?: ReplyOption[];
 };
 
-/** Порядковое «хвилина» в називному («62-га», «6-та», «41-ша», «40-ва») и знахідному («62-гу», «6-ту»). */
-export function minuteOrdinal(n: number, kase: 'nom' | 'acc' = 'nom'): string {
-  const d = n % 10, dd = n % 100;
-  // Англійська (M47): відмінка немає, суфікс один — st / nd / rd / th. Це той випадок, коли
-  // перекласти рядок не можна: форму слова будує код, і для другої мови потрібна своя гілка.
-  if (LANG === 'en') {
-    if (dd >= 11 && dd <= 13) return `${n}th`;
-    return `${n}${d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : 'th'}`;
-  }
-  // Закінчення — українська граматика, а не текст для гравця: англійська гілка вище, і сюди
-  // не доходить. Тому вони без `t()` і позначені, щоб перевірка перекладу їх не чіпала (M47).
-  let end: string;
-  if (dd >= 11 && dd <= 19) end = kase === 'nom' ? 'та' : 'ту';            // i18n-skip
-  else if (n === 40) end = kase === 'nom' ? 'ва' : 'ву';                   // i18n-skip
-  else if (d === 1) end = kase === 'nom' ? 'ша' : 'шу';                    // i18n-skip
-  else if (d === 2) end = kase === 'nom' ? 'га' : 'гу';                    // i18n-skip
-  else if (d === 3) end = kase === 'nom' ? 'тя' : 'тю';                    // i18n-skip
-  else if (d === 7 || d === 8) end = kase === 'nom' ? 'ма' : 'му';         // i18n-skip
-  else end = kase === 'nom' ? 'та' : 'ту';                                 // i18n-skip
-  return `${n}-${end}`;
-}
+/** Порядковое «хвилина» — форма слова, поэтому живёт в языковом слое (`content/i18n.ts`);
+ *  здесь только ре-экспорт, чтобы старые импорты и тесты не правились. */
+export { minuteOrdinal };
 
 /** {moment.minute} / {moment.ord} («62-га») / {moment.acc} («62-гу») / {moment.past} /
  *  {moment.recap} — момент матча, на который ссылается правило. Родовий и місцевий — «-ї» и «-й»
@@ -242,9 +224,12 @@ export function minuteOrdinal(n: number, kase: 'nom' | 'acc' = 'nom'): string {
 function fillMoment(text: string, rule: PostRule, ctx: PostContext): string {
   const m = rule.when?.moment ? ctx.moments[rule.when.moment] : undefined;
   if (!m) return text;
+  // Хвилина відповідає мовою свого рядка: у неперекладений пост іде базова форма («62-га»), у
+  // перекладений — цільова («62nd»). Інакше переклад мінив би вже написаний текст (M47).
+  const lang = langOf(text);
   return text
-    .replace(/\{moment\.ord\}/g, minuteOrdinal(m.minute, 'nom'))
-    .replace(/\{moment\.acc\}/g, minuteOrdinal(m.minute, 'acc'))
+    .replace(/\{moment\.ord\}/g, minuteOrdinalIn(lang, m.minute, 'nom'))
+    .replace(/\{moment\.acc\}/g, minuteOrdinalIn(lang, m.minute, 'acc'))
     .replace(/\{moment\.minute\}/g, String(m.minute))
     .replace(/\{moment\.past\}/g, m.past).replace(/\{moment\.recap\}/g, m.recap);
 }

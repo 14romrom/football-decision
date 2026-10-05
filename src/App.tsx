@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, AGENT, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING, CHAPTERS } from './content';
+import { ACTIVITIES, ADS, AGENT, clubName, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING, CHAPTERS } from './content';
 import { adContext, pickAds, playerColumn } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick, anchorScene } from './engine/week';
@@ -365,13 +365,18 @@ function Game() {
       ? { opponentKey: fixture.opponentKey, venue: fixture.venue, strength: OPPONENTS[fixture.opponentKey].strength, traits: opponentTraits(roster.them) }
       : null);
     if (!ctx) return [];
-    const club = (key: string) => (key === US ? ROSTER.us.name : OPPONENTS[key].name);
-    const last = ctx.lastOpponentKey ? club(ctx.lastOpponentKey) : club(nextKey);
-    const extra: Record<string, string> = {
-      last: last.nom, 'last.gen': last.gen,
-      leader: club(ctx.leaderKey).nom, 'leader.gen': club(ctx.leaderKey).gen,
-      bottom: club(ctx.bottomKey).nom, 'bottom.gen': club(ctx.bottomKey).gen,
-      score: ctx.scoreUs + ':' + ctx.scoreThem, position: String(ctx.position), round: String(ctx.round),
+    // Назви клубів — такі самі вставки, як імена: пост, який ще не перекладено, має отримати
+    // базові назви. Тому це **функція мови**: яку взяти, вирішує `fillNames` за мовою рядка, а
+    // екран про мови не знає (M47).
+    const extra = (lang: Parameters<typeof clubName>[1]) => {
+      const club = (key: string) => clubName(key, lang);
+      const last = club(ctx.lastOpponentKey ?? nextKey);
+      return {
+        last: last.nom, 'last.gen': last.gen,
+        leader: club(ctx.leaderKey).nom, 'leader.gen': club(ctx.leaderKey).gen,
+        bottom: club(ctx.bottomKey).nom, 'bottom.gen': club(ctx.bottomKey).gen,
+        score: ctx.scoreUs + ':' + ctx.scoreThem, position: String(ctx.position), round: String(ctx.round),
+      };
     };
     const seen = new Set(recentPosts());
     const raw = buildFeed(ctx, rng, seen, undefined, quota);

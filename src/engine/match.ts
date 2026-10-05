@@ -3,7 +3,7 @@
 
 import { BALANCE, TOP_LEAGUE_BOLD, COMPOSURE_CALM, MOMENTUM_BY_BOLDNESS, MOMENTUM_BY_TIER, MOMENTUM_SPEND } from './balance';
 import { attrMod } from './context';
-import { fillNames, fillNamesDeep, opponentTraits, type Roster } from './names';
+import { fillNames, fillNamesDeep, opponentTraits, rosterIn, type Extra, type Roster } from './names';
 import { pickFeedLine, type FeedKind } from './feed';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL, voiceSeesNow } from './voices';
@@ -14,7 +14,8 @@ import type {
   ApplyEffect, Episode, EpisodeMemory, EpisodeOption, FlagRule, Mark, MatchState, Player, Resolution,
   TimelineEvent, Tier, Voice, VoiceKey,
 } from './types';
-import { ord, plural, t, tf } from '../content/i18n';
+import { langOf, ordIn, plural, t, tIn, tf, tfIn, type Lang } from '../content/i18n';
+import { whenTextFor } from './week';
 
 export type MatchSession = {
   matchId: string;
@@ -366,9 +367,14 @@ export function createMatch(
   state.log.push({
     minute: 0,
     kind: 'kickoff',
-    // Лапки — частина мови, не оформлення: в англійській вони інші, тому рядок із ними лежить
-    // у карті цілим (M47), а не склеюється з трьох шматків.
-    text: tf('«{0}» — «{1}». {2}', roster.us.name.nom, roster.them.name.nom, feedLine(session, 'kickoff', rng)),
+    // Лапки — частина мови, не оформлення: рядок із ними лежить у карті цілим (M47), а не
+    // склеюється з трьох шматків. Мова — **мова начинки**: репліка з `feed.json` може бути ще не
+    // перекладена, і тоді вся фраза, разом із назвами клубів, лишається базовою.
+    text: (() => {
+      const line = feedLine(session, 'kickoff', rng);
+      const r = rosterIn(line, roster);
+      return tfIn(langOf(line), '«{0}» — «{1}». {2}', r.us.name.nom, r.them.name.nom, line);
+    })(),
   });
   // Канвові епізоди (M18.0): ставимо в останній слот, чия хвилина підходить під requires, — вони не мусять
   // вигравати у ваги в планувальника. Якщо епізоду немає в пулі цієї ліги, просто пропускаємо.
@@ -426,7 +432,7 @@ function countPeople(state: MatchState, flag: string) {
 
 /** Строка ленты из feed.json: подставленные имена, отмечена как прочитанная. Пустой пул —
  *  ошибка контента (у каждого вида есть безусловное правило, тест это проверяет). */
-function feedLine(session: MatchSession, kind: FeedKind, rng: Rng, extra: Record<string, string> = {}): string {
+function feedLine(session: MatchSession, kind: FeedKind, rng: Rng, extra: Extra = {}): string {
   const raw = pickFeedLine(kind, session.state, session.conditions, rng, session.feedSeen, undefined, session.feedSeenNow);
   if (!raw) throw new Error(`в feed.json нет строк вида ${kind}`);  /* i18n-skip: сообщение для разработчика */
   session.feedSeen.add(raw);
@@ -434,9 +440,8 @@ function feedLine(session: MatchSession, kind: FeedKind, rng: Rng, extra: Record
   return fillNames(raw, session.roster, extra);
 }
 
-function scorer(roster: Roster, side: 'us' | 'them', rng: Rng): string {
-  const team = roster[side];
-  return team.players[rng.pick(team.scorers)].nom;
+function scorerKeyFor(roster: Roster, side: 'us' | 'them', rng: Rng): string {
+  return rng.pick(roster[side].scorers);
 }
 
 /** Конкретный игрок по ключу ростера (apply.scorer) — когда текст исхода уже назвал
@@ -494,7 +499,11 @@ function pushGoal(
   const state = session.state;
   // Если текст исхода уже назвал автора (apply.scorer) — лента называет того же игрока,
   // не случайное имя из scorers. Без ключа поведение прежнее: случайный игрок команды.
-  const name = scorerKey ? namedScorer(session.roster, side, scorerKey) : scorer(session.roster, side, rng);
+  // Автор гола — ключ ростера, а не готовое имя: ленту заполняет `fillNames`, и имя берётся из
+  // ростера того языка, на котором написана строка (M47). Здесь языков нет.
+  const key = scorerKey ?? scorerKeyFor(session.roster, side, rng);
+  const nameIn = (r: Roster) => namedScorer(r, side, key);
+  const name = nameIn(session.roster);
   if (side === 'us') {
     state.scoreUs += 1;
     state.momentum = clamp(state.momentum + 1, -3, 3);
@@ -511,7 +520,7 @@ function pushGoal(
     minute,
     kind: side === 'us' ? 'goalUs' : 'goalThem',
     scorer: name,
-    text: text ?? feedLine(session, kind, rng, { scorer: name }) + ' ' + state.scoreUs + ':' + state.scoreThem + '.',
+    text: text ?? feedLine(session, kind, rng, (_lang, r) => ({ scorer: nameIn(r) })) + ' ' + state.scoreUs + ':' + state.scoreThem + '.',
   });
 }
 
@@ -609,14 +618,19 @@ export function fillMarkNames<M extends { past: string; whenText?: string }>(mar
   return { ...mark, past: fillNames(mark.past, roster), ...(mark.whenText ? { whenText: fillNames(mark.whenText, roster) } : {}) };
 }
 
-export function fillTrigger<T>(value: T, mark: { minute: number; past: string; previousMatch?: boolean; whenText?: string }): T {
+export function fillTrigger<T>(value: T, mark: { minute: number; past: string; previousMatch?: boolean; whenText?: string; whenAfter?: number }): T {
   if (typeof value === 'string') {
-    // Склеювати «на » + число + «-й» не можна: англійською суфікс залежить від самого числа
-    // (1st / 2nd / 3rd), а порядок слів інший. Хвилину збирає `ord` (у нього є англійська гілка і
-    // місцеве закінчення для української), фразу — шаблон (M47).
-    const when = mark.whenText ?? (mark.previousMatch ? t('ще минулого матчу') : tf('на {0}', ord(mark.minute, 'й' /* i18n-skip: місцевий відмінок хвилини */)));
+    // Мітка відповідає мовою речення, у яке потрапляє: сцена може бути ще не перекладена, і тоді
+    // «ще два тури тому» лишається базовим — переклад не змінює вже написаний текст (M47).
+    // Склеювати «на » + число + «-й» не можна й поза цим: англійською суфікс залежить від самого
+    // числа (1st / 2nd / 3rd), а порядок слів інший, тому фразу збирає шаблон.
+    const lang = langOf(value);
+    const when = mark.whenAfter !== undefined ? whenTextFor(mark.whenAfter, lang)
+      : mark.whenText ? tIn(lang, mark.whenText)
+      : mark.previousMatch ? tIn(lang, 'ще минулого матчу')
+      : tfIn(lang, 'на {0}', ordIn(lang, mark.minute, 'й' /* i18n-skip: місцевий відмінок хвилини */));
     return value
-      .replace(/\{trigger\.past\}/g, mark.past)
+      .replace(/\{trigger\.past\}/g, tIn(lang, mark.past))
       .replace(/\{trigger\.minute\}/g, String(mark.minute))
       .replace(/\{trigger\.when\}/g, when)
       .replace(/\{trigger\.When\}/g, when.charAt(0).toUpperCase() + when.slice(1)) as T;
@@ -882,9 +896,12 @@ function applyEffects(
 
   if (apply.concede) pushGoal(session, 'them', minute, rng, undefined, apply.scorer);
   if (apply.counterAttack && !apply.concede && rng.chance(BALANCE.counterAttackConcede)) {
-    pushGoal(session, 'them', minute + 1, rng,
-      t('Контратаку доводять до удару — ') + scorer(session.roster, 'them', rng) + t(' не промахується. ')
-      + state.scoreUs + ':' + (state.scoreThem + 1) + '.');
+    // Фраза цілою, а не з трьох шматків: порядок слів у мовах різний (M47). Ім'я — цільовою
+    // мовою, бо весь рядок складає код.
+    pushGoal(session, 'them', minute + 1, rng, tf(
+      'Контратаку доводять до удару — {0} не промахується. {1}:{2}.',
+      namedScorer(session.roster, 'them', scorerKeyFor(session.roster, 'them', rng)), state.scoreUs, state.scoreThem + 1,
+    ));
     fromCounter = true;
   }
 
@@ -1130,14 +1147,15 @@ function importance(e: TimelineEvent): number {
   return w;
 }
 
-function connective(index: number, minute: number, prevMinute: number): string {
-  // Та сама причина, що у `fillTrigger`: хвилина — цілим словом із `ord`, зв'язка — шаблоном.
-  const m = ord(minute, 'й' /* i18n-skip: місцевий відмінок хвилини */);
-  if (index === 0) return tf('На {0}', m);
-  if (minute >= 85) return tf('На {0}, уже в кінцівці,', m);
-  if (minute - prevMinute <= 8) return tf('Майже одразу, на {0},', m);
-  if (index % 2 === 0) return tf('Ближче до {0}', ord(minute, 'ї' /* i18n-skip: родовий відмінок хвилини */));
-  return tf('Потім, на {0},', m);
+function connective(index: number, minute: number, prevMinute: number, lang: Lang): string {
+  // Зв'язка стоїть перед текстом епізоду і склеюється з ним, тому мова в неї — мова того тексту.
+  // Хвилина — цілим словом із `ordIn`, фраза — шаблоном (англійською суфікс залежить від числа).
+  const m = ordIn(lang, minute, 'й' /* i18n-skip: місцевий відмінок хвилини */);
+  if (index === 0) return tfIn(lang, 'На {0}', m);
+  if (minute >= 85) return tfIn(lang, 'На {0}, уже в кінцівці,', m);
+  if (minute - prevMinute <= 8) return tfIn(lang, 'Майже одразу, на {0},', m);
+  if (index % 2 === 0) return tfIn(lang, 'Ближче до {0}', ordIn(lang, minute, 'ї' /* i18n-skip: родовий відмінок хвилини */));
+  return tfIn(lang, 'Потім, на {0},', m);
 }
 
 export function buildRecap(state: MatchState, coachRating: number, fanRating: number): string[] {
@@ -1148,8 +1166,9 @@ export function buildRecap(state: MatchState, coachRating: number, fanRating: nu
   const lines: string[] = [];
   let prev = 0;
   chosen.forEach((e, i) => {
-    let line = connective(i, e.minute, prev) + ' ' + e.past + ' — ' + e.recap;
-    if (e.causedConcede) line += t(' За хвилину гості цим скористалися.');
+    const lang = langOf((e.past ?? '') + (e.recap ?? ''));
+    let line = connective(i, e.minute, prev, lang) + ' ' + e.past + ' — ' + e.recap;
+    if (e.causedConcede) line += tIn(lang, ' За хвилину гості цим скористалися.');
     lines.push(line);
     prev = e.minute;
   });

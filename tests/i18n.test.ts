@@ -5,6 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { collect, rawCodeStrings, srcHash as toolHash, unknownKeys } from '../tools/i18n';
 import { srcHash } from '../src/content/i18n';
+import { fillNames, type Roster } from '../src/engine/names';
 
 const EN = JSON.parse(readFileSync('src/content/i18n/en.json', 'utf8')) as Record<string, string>;
 const rows = collect();
@@ -68,6 +69,27 @@ describe('переклад', () => {
     // не бачить: 137 таких рядків лишалися українськими, коли DESIGN уже казав «код закрито».
     const raw = rawCodeStrings().map((r) => `${r.file}:${r.line} (${r.kind}) ${r.text}`);
     expect(raw, 'обгорнути в tf() або позначити i18n-skip').toEqual([]);
+  });
+
+  it('вставка відповідає мовою свого рядка', () => {
+    // Паралельна версія, а не правки в базовій: переклад **не має права** змінювати вже написаний
+    // текст. Поки він частковий, у збірці іншою мовою половина рядків базові — і підставити в них
+    // цільове ім'я означає зробити «Their dribbler б'є з-за штрафного». Інваріант перевіряємо на
+    // самому механізмі: ростеру чіпляємо двійника і дивимось, кого візьме `fillNames`.
+    const uk = { nom: 'Мораес', gen: 'Мораеса', dat: 'Мораесу', ins: 'Мораесом' };
+    const en = { nom: 'Moraes', gen: 'Moraes', dat: 'Moraes', ins: 'Moraes' };
+    const team = (p: typeof uk) => ({ name: { nom: 'Вальмара', gen: 'Вальмари' }, players: { partner: p }, scorers: ['partner'] });
+    const base = { us: team(uk), them: team(uk) } as unknown as Roster;
+    const roster = { us: team(en), them: team(en), base } as unknown as Roster;
+
+    expect(fillNames('{partner.dat} віддали м’яч.', roster)).toBe('Мораесу віддали м’яч.');
+    expect(fillNames('They gave the ball to {partner.dat}.', roster)).toBe('They gave the ball to Moraes.');
+    // `extra` як функція мови: назви клубів у стрічці приходять тим самим шляхом.
+    const extra = (_lang: 'uk' | 'en', r: Roster) => ({ leader: r === base ? 'Порту-Бланко' : 'Porto Blanco' });
+    expect(fillNames('Лідер — {leader}.', roster, extra)).toBe('Лідер — Порту-Бланко.');
+    expect(fillNames('The leader is {leader}.', roster, extra)).toBe('The leader is Porto Blanco.');
+    // Без двійника (базова збірка) поведінка та сама, що до появи перекладу.
+    expect(fillNames('{partner.dat} віддали м’яч.', { us: team(uk), them: team(uk) } as unknown as Roster)).toBe('Мораесу віддали м’яч.');
   });
 
   it('словник термінів: ключові слова перекладені однаково скрізь', () => {

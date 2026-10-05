@@ -14,7 +14,7 @@ import agentJsonRaw from './agent.json';
 import espmJsonRaw from './espm.json';
 import shotsJsonRaw from './shots.json';
 import chaptersJsonRaw from './chapters.json';
-import { tr } from './i18n';
+import { BASE_LANG, LANG, tr, type Lang } from './i18n';
 
 // Переклад — одна точка на весь проєкт (M47): контент підміняється тут, при завантаженні модуля,
 // тому рушій, UI і тести отримують уже потрібну мову і про неї не знають нічого. Для української
@@ -55,6 +55,14 @@ import type { EspmColumn } from '../engine/espm';
 
 export type Opponent = TeamRoster & { strength: Strength; blurb: string; /** Вища ліга (M14); без поля — друга. */ tier?: 'top' };
 export const OPPONENTS = rosterJson.opponents as unknown as Record<string, Opponent>;
+/** Той самий ростер базовою мовою — для рядків, які ще не перекладені (`Roster.base`, M47).
+ *  У базовій збірці `tr` віддає той самий об'єкт, тому `BASE_ROSTER_JSON === rosterJson`, і
+ *  `withBase` нічого не чіпляє: код іде тим шляхом, що до появи перекладу. */
+const BASE_ROSTER_JSON = rosterJsonRaw as unknown as typeof rosterJson;
+const OPPONENTS_BASE = BASE_ROSTER_JSON.opponents as unknown as Record<string, Opponent>;
+const parallel = LANG !== BASE_LANG;
+/** Причепити ростеру його базового двійника. Єдине місце, де це робиться. */
+const withBase = (target: Roster, base: Roster): Roster => (parallel ? { ...target, base } : target);
 /** Клуби за лігами (M14): перший сезон — тільки друга ліга; другий — вища плюс ті, хто піднявся з нами. */
 export const OPPONENT_KEYS = {
   second: Object.keys(OPPONENTS).filter((k) => OPPONENTS[k].tier !== 'top'),
@@ -62,24 +70,48 @@ export const OPPONENT_KEYS = {
 };
 export const DEFAULT_OPPONENT = 'sandorea';
 
+/** Назва клубу за ключем і мовою. Стоїть тут, бо тут мовний шов: `fillNames` питає базову назву
+ *  для рядка, який ще не перекладено, і решта коду про мови не знає (M47). Невідомий ключ — це наш
+ *  клуб: у `OPPONENTS` його немає за визначенням. */
+export function clubName(key: string, lang: Lang = LANG): { nom: string; gen: string } {
+  const basic = parallel && lang === BASE_LANG;
+  const opp = basic ? OPPONENTS_BASE : OPPONENTS;
+  return opp[key]?.name ?? ((basic ? BASE_ROSTER_JSON : rosterJson).us as TeamRoster).name;
+}
+
 /** Ростер «мы + соперник по умолчанию» — для прогона, тестов и экрана /stats. */
-export const ROSTER: Roster = { us: rosterJson.us as TeamRoster, them: OPPONENTS[DEFAULT_OPPONENT] };
+const ROSTER_BASE: Roster = { us: BASE_ROSTER_JSON.us as TeamRoster, them: OPPONENTS_BASE[DEFAULT_OPPONENT] };
+export const ROSTER: Roster = withBase({ us: rosterJson.us as TeamRoster, them: OPPONENTS[DEFAULT_OPPONENT] }, ROSTER_BASE);
 // `{oldsub}` — колишній дублер: у чужій формі після відпустки (програмка, пости, сетап проти його клубу); до того —
 // він же, щоб плейсхолдер розв’язувався будь-яким ростером. Ставиться до EPISODES: ті заповнюються при завантаженні.
 const SUB_ORIGINAL: NameForms = { ...(rosterJson.us as TeamRoster).players.sub };
+const SUB_ORIGINAL_BASE: NameForms = { ...(BASE_ROSTER_JSON.us as TeamRoster).players.sub };
 ROSTER.us.players.oldsub = { ...SUB_ORIGINAL };
+if (parallel) ROSTER_BASE.us.players.oldsub = { ...SUB_ORIGINAL_BASE };
 /** Ростер на матч. С rng — у каждой роли соперника выбирается одно из имён (характеристика или
  *  вариант), одно на весь матч; без rng — каноническое, для тестов и /stats. */
 export function rosterFor(opponentKey: string, rng?: Rng): Roster {
-  const them = OPPONENTS[opponentKey] ?? OPPONENTS[DEFAULT_OPPONENT];
-  if (!rng) return { us: ROSTER.us, them };
+  const key = OPPONENTS[opponentKey] ? opponentKey : DEFAULT_OPPONENT;
+  const them = OPPONENTS[key];
+  const themBase = OPPONENTS_BASE[key];
+  if (!rng) return withBase({ us: ROSTER.us, them }, { us: ROSTER_BASE.us, them: themBase });
+  // Варіант ролі вибирається **індексом**, а не об'єктом: обидві мови мають узяти той самий
+  // варіант, інакше в одному матчі українське речення казало б «їхній ветеран», а англійське —
+  // про іншу людину. Для базової збірки гілка нижче не виконується зовсім.
   const players: TeamRoster['players'] = {};
+  const playersBase: TeamRoster['players'] = {};
   for (const [role, p] of Object.entries(them.players)) {
     const pool = [p, ...(p.variants ?? [])];
-    const pick = rng.pick(pool);
+    const i = rng.int(0, pool.length - 1);   // `rng.pick` — це воно і є: той самий виклик, той самий індекс
+    const pick = pool[i];
     players[role] = { nom: pick.nom, gen: pick.gen, dat: pick.dat, ins: pick.ins, trait: p.trait };
+    if (!parallel) continue;
+    const pb = themBase.players[role];
+    const poolBase = [pb, ...(pb.variants ?? [])];
+    const b = poolBase[Math.min(poolBase.length - 1, i)];   // у базовій мові варіантів стільки ж
+    playersBase[role] = { nom: b.nom, gen: b.gen, dat: b.dat, ins: b.ins, trait: pb.trait };
   }
-  return { us: ROSTER.us, them: { ...them, players } };
+  return withBase({ us: ROSTER.us, them: { ...them, players } }, { us: ROSTER_BASE.us, them: { ...themBase, players: playersBase } });
 }
 
 /** Сырой контент с плейсхолдерами: имена подставляет createMatch под соперника матча. */
@@ -109,6 +141,10 @@ export function syncRoster(subLeft: boolean): void {
   const us = rosterJson.us as TeamRoster & { subNext: NameForms };
   const target = subLeft ? us.subNext : SUB_ORIGINAL;
   Object.assign(ROSTER.us.players.sub, { nom: target.nom, gen: target.gen, dat: target.dat, ins: target.ins });
+  if (!parallel) return;
+  const usBase = BASE_ROSTER_JSON.us as TeamRoster & { subNext: NameForms };
+  const tb = subLeft ? usBase.subNext : SUB_ORIGINAL_BASE;
+  Object.assign(ROSTER_BASE.us.players.sub, { nom: tb.nom, gen: tb.gen, dat: tb.dat, ins: tb.ins });
 }
 /** Перший матч кар’єри (M12): чотири фіксовані сцени з лави, кожна з підказкою оповідача (match.ts:Tutorial). */
 export const FIRST_MATCH = firstmatchJson as { scenes: ({ episode: string } & TutorialHint)[] };

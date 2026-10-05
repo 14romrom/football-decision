@@ -8,7 +8,7 @@ import type { Attribute, Mark, MatchState, Player, VoiceKey } from './types';
 import type { MatchSummary } from './match';
 import type { AgentLogEntry } from './agent';
 import { voiceSees, VOICE_LABEL } from './voices';
-import { t } from '../content/i18n';
+import { base, t } from '../content/i18n';
 
 export type Career = {
   xp: number;
@@ -289,9 +289,9 @@ export function nextMatchCoachTrust(endingTrust: number): number {
 export function peopleFlags(career: Career): CarriedFlag[] {
   const p = BALANCE.people;
   const bond = career.partnerBond ?? 0;
-  const mark = (past: string): Mark => ({ minute: 0, episodeId: 'career', optionId: 'partner', past, whenText: t('за ці місяці') });
-  if (bond >= p.partnerBonded) return [{ flag: 'partner_bonded', mark: mark(t('грав із партнером в одне торкання, поки це не стало звичкою')) }];
-  if (bond <= p.partnerCold) return [{ flag: 'partner_cold', mark: mark(t('раз за разом не віддавав партнеру, і він перестав просити')) }];
+  const mark = (past: string): Mark => ({ minute: 0, episodeId: 'career', optionId: 'partner', past, whenText: base('за ці місяці') });
+  if (bond >= p.partnerBonded) return [{ flag: 'partner_bonded', mark: mark(base('грав із партнером в одне торкання, поки це не стало звичкою')) }];
+  if (bond <= p.partnerCold) return [{ flag: 'partner_cold', mark: mark(base('раз за разом не віддавав партнеру, і він перестав просити')) }];
   return [];
 }
 
@@ -300,7 +300,7 @@ export function prologueFlags(career: Career): CarriedFlag[] {
   const tone: Record<string, string> = { call_ego: 'call_tone_ego', call_team: 'call_tone_team', call_vision: 'call_tone_vision' };
   const flag = career.prologue?.call ? tone[career.prologue.call] : undefined;
   if (!flag || career.matchesPlayed > 0) return [];
-  return [{ flag, mark: { minute: 0, episodeId: 'prologue', optionId: 'call', past: t('відповів тренеру по телефону'), whenText: t('ще до сезону') } }];
+  return [{ flag, mark: { minute: 0, episodeId: 'prologue', optionId: 'call', past: base('відповів тренеру по телефону'), whenText: base('ще до сезону') } }];
 }
 
 /** Луна сцени агента (21.09): що Реєс відповів узимку, тренер і Тібо пам’ятають перший матч нового сезону —
@@ -309,14 +309,14 @@ export function agentFlags(career: Career): CarriedFlag[] {
   const echo = career.agentEcho;
   if (!echo) return [];
   const flag = echo === 'leave' ? 'agent_left' : echo === 'stay' ? 'agent_stayed' : 'agent_waited';
-  return [{ flag, mark: { minute: 0, episodeId: 'agent', optionId: echo, past: t('говорив з агентом узимку'), whenText: t('ще взимку') } }];
+  return [{ flag, mark: { minute: 0, episodeId: 'agent', optionId: echo, past: base('говорив з агентом узимку'), whenText: base('ще взимку') } }];
 }
 
 /** Жарт Тібо (M12/M13): перепитав у пролозі, чи це жарт, — Тібо нагнітає сильніше. Маркер для реплік і сетапів,
  *  без модифікатора; системний, як partner_bonded. Живе, поки арка не дійде до «свій» — далі жарт уже спільний. */
 export function tiboFlags(career: Career): CarriedFlag[] {
   if (career.prologue?.base !== 'base_vision' || arcStage(career) >= 3) return [];
-  return [{ flag: 'tibo_asked', mark: { minute: 0, episodeId: 'prologue', optionId: 'base', past: t('перепитав у Тібо, чи мафія — це жарт'), whenText: t('ще до сезону') } }];
+  return [{ flag: 'tibo_asked', mark: { minute: 0, episodeId: 'prologue', optionId: 'base', past: base('перепитав у Тібо, чи мафія — це жарт'), whenText: base('ще до сезону') } }];
 }
 
 /** Трибуни між матчами — та сама регресія, що й довіра: пам'ятають, але не навіки. */

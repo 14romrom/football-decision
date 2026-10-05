@@ -16,8 +16,6 @@ import { join } from 'node:path';
 
 const DIR = 'src/content';
 const MAP = join(DIR, 'i18n/en.json');
-const MARKS = ["t('", "tf('"];
-const END = String.fromCharCode(39);   // закривна лапка: t('…') закінчується «')», а tf('…', x) — «',»
 const SEP = /[\\/]/;
 const NL = String.fromCharCode(10);
 
@@ -69,6 +67,54 @@ const SKIP_KEYS = new Set([
 // перекладеним рядком, де лапки вже були англійські.
 const isUkr = (s: string) => /[а-яіїєґА-ЯІЇЄҐ«»„“]/.test(s) && s.trim().length > 0;
 
+/** Один розбір літералів коду на два питання: що взяти в карту і що лишилося необгорнутим. Раніше
+ *  це були два різні скани, і вони розходилися: карта шукала `t('…')` приклеєним до назви функції й
+ *  не бачила `tIn(lang, '…')`, а перевірка — бачила і сварилася. Тепер правило одне.
+ *
+ *  **Обгорнутий** — літерал, який стоїть першим аргументом `t`/`tf`/`base` або другим у
+ *  `tIn`/`tfIn` (там перший — мова). Перевірка прив'язана до місця літерала, а не «десь у рядку»:
+ *  інакше `ord(n, 'я')` у середині виклику `tf('Жовта — вже {0}…', …)` зійшов би за обгорнутий.
+ *  Попередній рядок теж дивимо — довгий виклик переноситься.
+ *
+ *  **Виняток** — позначка `i18n-skip` у рядку: вона знімає з обліку рівно необгорнуті літерали цього
+ *  рядка (українське закінчення, повідомлення для розробника, пояснення в `CANON_SCENES.why`), а
+ *  рядок гри в тому ж виклику лишається в карті. До цієї точності позначка гасила рядок цілком і
+ *  з'їдала сусіда — так зникли «Жовта — вже 3-я» і «на 62-й». */
+const WRAPPED = new RegExp(
+  '(?:^|[^A-Za-z0-9_$.])(?:t|tf|base)\\(\\s*$'                        // t('…'), tf('…', x), base('…')
+  + '|(?:^|[^A-Za-z0-9_$.])(?:tIn|tfIn)\\([^,]*,\\s*$',               // tIn(lang, '…'), tfIn(langOf(x), '…', y)
+);
+
+export function codeLiterals(source: string): { src: string; line: number; wrapped: boolean; kind: 'literal' | 'jsx' }[] {
+  const blank = (s: string) => s.replace(/[^\n]/g, ' ');
+  // Коментарі вибілюємо, а не викидаємо: довжина збігається з джерелом, тому зсуви й номери рядків
+  // ті самі (приклад `t('…')` у доккоментарі — не рядок гри).
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, blank).replace(/\/\/[^\n]*/g, blank);
+  const lines = source.split(NL);
+  const marked = (line: number) => (lines[line - 1] ?? '').includes('i18n-skip');
+
+  const out: { src: string; line: number; wrapped: boolean; kind: 'literal' | 'jsx' }[] = [];
+  const LITERAL = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g;
+  const masked = code.split('');
+  for (let m = LITERAL.exec(code); m; m = LITERAL.exec(code)) {
+    const end = m.index + m[0].length;
+    for (let i = m.index; i < end; i++) if (masked[i] !== NL) masked[i] = ' ';
+    const line = code.slice(0, m.index).split(NL).length;
+    const from = code.lastIndexOf(NL, Math.max(0, code.lastIndexOf(NL, m.index) - 1)) + 1;
+    const wrapped = WRAPPED.test(code.slice(from, m.index));
+    if (!wrapped && marked(line)) continue;
+    out.push({ src: m[0].slice(1, -1), line, wrapped, kind: 'literal' });
+  }
+  // Те, що лишилося з кирилицею поза літералами, — текст прямо в JSX. Регулярний літерал із
+  // кирилицею (`/⟨ціна⟩/g`) не текст, а патерн, і береться лише там, де вираз справді починається:
+  // інакше оператор ділення («{x / 1000} с») склеює два слеші і з'їдає живий текст між ними.
+  const rest = masked.join('').replace(/(?<=[(,=:[!&|?])\s?\/(?:[^/\\\n]|\\.)+\/[gimsuy]*/g, blank);
+  rest.split(NL).forEach((l, i) => {
+    if (isUkr(l) && !marked(i + 1)) out.push({ src: l.trim(), line: i + 1, wrapped: false, kind: 'jsx' });
+  });
+  return out;
+}
+
 export type Row = { hash: string; file: string; path: string; src: string };
 
 export function collect(): Row[] {
@@ -79,28 +125,16 @@ export function collect(): Row[] {
     walk(data, f, '', out, seen);
   }
   // Рядки, що живуть у коді (ярлики кнопок, назви голосів, шматки фраз, які рушій склеює сам),
-  // позначені викликом `t('…')` у місці літерала. Беремо рівно їх: усе інше в коді — не текст
-  // для гравця, і перекладати його не можна.
+  // позначені викликом функції мовного шару в місці літерала. Беремо рівно їх: усе інше в коді —
+  // не текст для гравця, і перекладати його не можна. Та сама перевірка з іншим знаком стоїть у
+  // `rawCodeStrings`: що не обгорнуте — то дірка, і тест про неї скаже.
   for (const f of srcFiles('src')) {
-    // Коментарі прибираємо: приклад `t('…')` у доккоментарі — не рядок гри.
-    const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/.*/g, ' ');
-    // Без регулярки: шукаємо літерал t('…') посимвольно — так простіше й надійніше, ніж
-    // екранувати лапки в патерні. Перед «t» має стояти не-ідентифікатор, інакше зловимо sort('…').
-    for (const MARK of MARKS) {
-    let i = code.indexOf(MARK);
-    while (i >= 0) {
-      const before = i > 0 ? code[i - 1] : ' ';
-      const close = code.indexOf(END, i + MARK.length);
-      const raw = close < 0 ? '' : code.slice(i + MARK.length, close);
-      if (close >= 0 && !/[A-Za-z0-9_$.]/.test(before) && !raw.includes(NL) && isUkr(raw)) {
-        const hash = srcHash(raw);
-        if (!seen.has(hash)) {
-          seen.add(hash);
-          out.push({ hash, file: f.split(SEP).join('/'), path: 't()', src: raw });
-        }
-      }
-      i = code.indexOf(MARK, i + MARK.length);
-    }
+    for (const lit of codeLiterals(readFileSync(f, 'utf8'))) {
+      if (!lit.wrapped || !isUkr(lit.src)) continue;
+      const hash = srcHash(lit.src);
+      if (seen.has(hash)) continue;
+      seen.add(hash);
+      out.push({ hash, file: f.split(SEP).join('/'), path: 't()', src: lit.src });
     }
   }
   return out;
@@ -169,28 +203,12 @@ export function unknownKeys(): { file: string; key: string; sample: string }[] {
  *  українське закінчення для `ord`, пояснення в `CANON_SCENES.why`. */
 export function rawCodeStrings(): { file: string; line: number; kind: 'literal' | 'jsx'; text: string }[] {
   const out: { file: string; line: number; kind: 'literal' | 'jsx'; text: string }[] = [];
-  const blank = (s: string) => s.replace(/[^\n]/g, ' ');
   for (const f of srcFiles('src')) {
     const file = f.split(SEP).join('/');
-    let code = readFileSync(f, 'utf8')
-      .split(NL).map((l) => (l.includes('i18n-skip') ? blank(l) : l)).join(NL)
-      .replace(/\/\*[\s\S]*?\*\//g, blank)
-      .replace(/\/\/[^\n]*/g, blank);
-    const lineOf = (i: number) => code.slice(0, i).split(NL).length;
-    // Літерали збираємо і заразом вибілюємо: те, що лишиться з кирилицею, — розмітка.
-    const masked = code.split('');
-    const LITERAL = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g;
-    for (let m = LITERAL.exec(code); m; m = LITERAL.exec(code)) {
-      for (let i = m.index; i < m.index + m[0].length; i++) if (masked[i] !== NL) masked[i] = ' ';
-      if (!isUkr(m[0])) continue;
-      const before = code.slice(Math.max(0, m.index - 4), m.index);
-      if (/(?:^|[^A-Za-z0-9_$.])tf?\($/.test(before)) continue;
-      out.push({ file, line: lineOf(m.index), kind: 'literal', text: m[0].slice(0, 80) });
+    for (const lit of codeLiterals(readFileSync(f, 'utf8'))) {
+      if (lit.wrapped || !isUkr(lit.src)) continue;
+      out.push({ file, line: lit.line, kind: lit.kind, text: lit.src.slice(0, 80) });
     }
-    // Регулярний літерал — не текст, а патерн (`/⟨ціна⟩/g`). Беремо лише там, де вираз справді
-    // починається: інакше оператор ділення («{x / 1000} с») склеює два слеші і їсть живий текст.
-    code = masked.join('').replace(/(?<=[(,=:[!&|?])\s?\/(?:[^/\\\n]|\\.)+\/[gimsuy]*/g, blank);
-    code.split(NL).forEach((l, i) => { if (isUkr(l)) out.push({ file, line: i + 1, kind: 'jsx', text: l.trim().slice(0, 80) }); });
   }
   return out;
 }

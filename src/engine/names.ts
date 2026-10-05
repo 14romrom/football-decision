@@ -1,4 +1,4 @@
-import { t } from '../content/i18n';
+import { BASE_LANG, LANG, isBaseText, t, type Lang } from '../content/i18n';
 // Подстановка имён в тексты контента. Имена партнёров и соперников не зашиты
 // в эпизоды: в карьере команда сменится, а эпизод должен остаться.
 // Падежи хранятся в ростере, потому что «віддати {partner.dat}» иначе не собрать.
@@ -24,7 +24,15 @@ export type TeamRoster = {
   keeper?: { trait: string };
 };
 
-export type Roster = { us: TeamRoster; them: TeamRoster };
+export type Roster = {
+  us: TeamRoster; them: TeamRoster;
+  /** Той самий ростер базовою мовою контенту. Його чіпляє мовний шар (`content/index.ts`) і
+   *  **тільки** коли збірка не базова: у базовій мові поля немає, і код іде тим самим шляхом, що
+   *  до M47. Навіщо: переклад частковий, і в неперекладене речення треба підставити ім'я його ж
+   *  мовою, інакше виходить «Their dribbler б'є з-за штрафного» — переклад змінив уже написаний
+   *  текст. Рішення «яким ростером» ухвалює `langOf`, а не рушій: мов рушій не знає. */
+  base?: Roster;
+};
 
 const CASES = new Set(['nom', 'gen', 'dat', 'ins']);
 // Ключи с цифрой (cb2) — тоже плейсхолдеры: плейтест 17.09 показал в ленте сырой «{cb2.gen}».
@@ -38,11 +46,26 @@ const SENTENCE_START = /(^|[.!?…]\s+|«|\n\s*)$/;
 
 /** `extra` — плейсхолдеры вне ростера ({scorer}, {score} в ленте): подставляются раньше имён
  *  и по тем же правилам заглавной буквы. */
-export function fillNames(text: string, roster: Roster, extra: Record<string, string> = {}): string {
+/** Ростер мовою цього рядка. Потрібен там, де **код сам складає фразу навколо контенту** (рядок
+ *  стартового свистка обертає репліку з `feed.json`): обгортка і начинка мусять бути однією мовою,
+ *  інакше виходить «\"Valmara\" — \"Rio Seco\". Свисток.» — половина речення перекладена, половина ні. */
+export const rosterIn = (text: string, roster: Roster): Roster =>
+  (roster.base && isBaseText(text) ? roster.base : roster);
+
+/** `extra` — плейсхолдери поза ростером. Якщо вставки залежать від мови (назви клубів у стрічці),
+ *  передається **функція мови**: так викликач не знає про мови нічого, а вибір робить `langOf`. */
+export type Extra = Record<string, string> | ((lang: Lang, roster: Roster) => Record<string, string>);
+
+export function fillNames(text: string, roster: Roster, extra: Extra = {}): string {
+  // Одна умова на весь проєкт: рядок базовою мовою отримує базові імена. Жодної назви мови тут
+  // немає — її знає `langOf`, тому третя мова цього файлу не торкається.
+  const useBase = !!roster.base && isBaseText(text);
+  const r = useBase ? roster.base! : roster;
+  const ex = typeof extra === 'function' ? extra(useBase ? BASE_LANG : LANG, r) : extra;
   return text.replace(PLACEHOLDER, (whole: string, path: string, offset: number) => {
     // {trigger.*} — след решения, подставляется реактивным эпизодом в момент показа.
     if (path.startsWith('trigger.')) return whole;
-    const value = extra[path] ?? resolveName(path, roster, whole);
+    const value = ex[path] ?? resolveName(path, r, whole);
     // Характеристики соперника пишутся с маленькой («їхній ветеран»), но в начале
     // предложения — с большой, как и фамилии. Фамилиям это ничего не меняет.
     return SENTENCE_START.test(text.slice(0, offset)) ? value.charAt(0).toUpperCase() + value.slice(1) : value;

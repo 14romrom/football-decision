@@ -15,7 +15,7 @@ import type { Rng } from './rng';
 import { ATTRIBUTE_LABEL, type Attribute, type Mark, type Player, type VoiceKey } from './types';
 import { VOICE_LABEL, voiceSees } from './voices';
 import { attrMod } from './attr';
-import { t, tf } from '../content/i18n';
+import { LANG, base, tIn, tfIn, t, tf, type Lang } from '../content/i18n';
 
 /** Условие показа — по итогам сезона и карьеры; побеждает не самое конкретное, а вес:
  *  условия здесь отсекают, а не ранжируют (в отличие от сетапов). */
@@ -422,7 +422,7 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
     if (e.removeFlags?.length) flags = flags.filter((f) => !e.removeFlags!.includes(f.flag));
     for (const f of e.flags ?? []) {
       const after = f.after ?? 0;
-      const mark: Mark = { minute: 0, episodeId: activity.id, optionId: 'week', past: f.past, previousMatch: true, whenText: whenTextFor(after) };
+      const mark: Mark = { minute: 0, episodeId: activity.id, optionId: 'week', past: f.past, previousMatch: true, whenText: whenTextFor(after), whenAfter: after };
       flags = [...flags.filter((x) => x.flag !== f.flag), { flag: f.flag, mark, ...(after > 0 ? { after } : {}) }];
       tags.push({ text: after > 0 ? t('це ще відгукнеться') : t('відгукнеться на полі'), kind: 'flag', where: after > 0 ? whenTextFor(after) : t('на полі') });
     }
@@ -433,11 +433,12 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
   return { career: next, tags: loot.map((x) => x.text), loot };
 }
 
-/** «Когда» для реактивного эпизода от дела недели. */
-export function whenTextFor(after: number): string {
-  if (after <= 0) return t('ще минулого тижня');
-  const words = ['', '', t('два'), t('три'), t('чотири'), t('п’ять')];
-  return tf('ще {0} тури тому', words[after + 1] ?? after + 1);
+/** «Когда» для реактивного эпизода от дела недели. `lang` — язык строки, в которую фраза
+ *  попадёт: метка может лечь в ещё не переведённый эпизод, и тогда она остаётся базовой (M47). */
+export function whenTextFor(after: number, lang: Lang = LANG): string {
+  if (after <= 0) return tIn(lang, 'ще минулого тижня');
+  const words = ['', '', base('два'), base('три'), base('чотири'), base('п’ять')];
+  return tfIn(lang, 'ще {0} тури тому', tIn(lang, words[after + 1] ?? String(after + 1)));
 }
 
 /** Неделя записывается всегда — и с выбором, и без, — чтобы после перезагрузки не искать её заново. */

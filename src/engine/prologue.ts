@@ -12,7 +12,7 @@ import { applyWeek, VOICE_ATTRS, type ActivityEffect, type LootItem } from './we
 import { BALANCE } from './balance';
 import { ATTRIBUTE_LABEL, type Attribute, type VoiceKey } from './types';
 import type { Career } from './career';
-import { t, tf } from '../content/i18n';
+import { base, t, tf } from '../content/i18n';
 
 export type PrologueOption = {
   id: string;
@@ -104,7 +104,7 @@ export function finishPrologue(career: Career, spreads: PrologueSpread[], picks:
   }
 
   const ids = new Set(chosen.map(({ option }) => option.id));
-  next.carriedFlags = (next.carriedFlags ?? []).map((f) => (ids.has(f.mark.episodeId) ? { ...f, mark: { ...f.mark, whenText: t('ще до сезону') } } : f));
+  next.carriedFlags = (next.carriedFlags ?? []).map((f) => (ids.has(f.mark.episodeId) ? { ...f, mark: { ...f.mark, whenText: base('ще до сезону') } } : f));
   next.benched = true;
   next.prologue = Object.fromEntries(chosen.map(({ pick, option }) => [pick.spread, option.id])) as Career['prologue'];
   const uniq = loot.filter((x, i) => loot.findIndex((y) => y.text === x.text) === i);

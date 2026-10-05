@@ -92,6 +92,15 @@ describe('переклад', () => {
     expect(fillNames('{partner.dat} віддали м’яч.', { us: team(uk), them: team(uk) } as unknown as Roster)).toBe('Мораесу віддали м’яч.');
   });
 
+  it('реальних людей по імені немає і в перекладі', () => {
+    // Правило CLAUDE.md діє **в кожній мові окремо**: клуби можна, людей — лише під спотвореними,
+    // але вузнаваними іменами. В українському контенті це тримає `tests/posts.test.ts`; тут —
+    // англійські написання, бо переклад легко повертає правильне ім'я назад (Коналду → Ronaldo).
+    const REAL = /\bMbapp|\bRonaldo|\bMessi|\bHaaland|\bSalah|\bVinicius|\bMaguire|\bFernandes|\bNunez|\bKane\b|\bGuardiola|\bMourinho|\bConte\b|\bLukaku|\bNeymar|\bOnana|\bCasemiro|\bRice\b|\bPulisic|\bEmery|\bPerez\b|\bKlopp|\bArteta|\bAncelotti|\bFlick\b|\bInfantino|\bRomano\b|\bPutin/i;
+    const bad = Object.entries(EN).filter(([, v]) => REAL.test(v)).map(([h, v]) => `${h}: ${v.slice(0, 70)}`);
+    expect(bad, 'спотворити ім\'я, як в українському джерелі').toEqual([]);
+  });
+
   it('словник термінів: ключові слова перекладені однаково скрізь', () => {
     // Єдність на 11 тисячах рядків тримається не старанням, а списком. Розширювати його тоді,
     // коли термін з'являється в перекладі, а не наперед.

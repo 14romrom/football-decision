@@ -381,11 +381,16 @@ function Game() {
     const seen = new Set(recentPosts());
     const raw = buildFeed(ctx, rng, seen, undefined, quota);
     recordPosts(raw.map((p) => p.text));
-    const fill = (t: string) => fillNames(t, roster, extra);
-    return raw.map((p) => ({
-      ...p, text: fill(p.text), account: { ...p.account, name: fill(p.account.name) },
-      reply: p.reply ? { account: { ...p.reply.account, name: fill(p.reply.account.name) }, text: fill(p.reply.text) } : undefined,
-    }));
+    // `p.baseText` — мова **шаблону** поста, бо в нього вже вставлено момент матчу з епізоду, і за
+    // письмом фраза могла стати «базовою», хоч написана цільовою мовою (M47).
+    const fill = (p: { baseText?: boolean }) => (t: string) => fillNames(t, roster, extra, p.baseText);
+    return raw.map((p) => {
+      const f = fill(p);
+      return {
+        ...p, text: f(p.text), account: { ...p.account, name: f(p.account.name) },
+        reply: p.reply ? { account: { ...p.reply.account, name: f(p.reply.account.name) }, text: f(p.reply.text) } : undefined,
+      };
+    });
   }, []);
 
   /** Ещё не закрытая неделя после последнего тура: три дня по три дела и их исходы —

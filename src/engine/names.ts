@@ -56,10 +56,14 @@ export const rosterIn = (text: string, roster: Roster): Roster =>
  *  передається **функція мови**: так викликач не знає про мови нічого, а вибір робить `langOf`. */
 export type Extra = Record<string, string> | ((lang: Lang, roster: Roster) => Record<string, string>);
 
-export function fillNames(text: string, roster: Roster, extra: Extra = {}): string {
+/** `base` — явна відповідь на питання «це рядок базовою мовою?», коли сам рядок на нього вже не
+ *  відповідає: у перекладений пост вставлено ще не перекладений шматок епізоду
+ *  (`{moment.past}`), і за письмом уся фраза виглядає базовою, хоч написана цільовою. Тоді мову
+ *  визначає шаблон — до підстановки, — і відповідь передається сюди. */
+export function fillNames(text: string, roster: Roster, extra: Extra = {}, base?: boolean): string {
   // Одна умова на весь проєкт: рядок базовою мовою отримує базові імена. Жодної назви мови тут
-  // немає — її знає `langOf`, тому третя мова цього файлу не торкається.
-  const useBase = !!roster.base && isBaseText(text);
+  // немає — її знає `isBaseText`, тому третя мова цього файлу не торкається.
+  const useBase = !!roster.base && (base ?? isBaseText(text));
   const r = useBase ? roster.base! : roster;
   const ex = typeof extra === 'function' ? extra(useBase ? BASE_LANG : LANG, r) : extra;
   return text.replace(PLACEHOLDER, (whole: string, path: string, offset: number) => {

@@ -6,7 +6,7 @@
 // историю, чтобы за сезон один твит не читался дважды.
 
 import postsJsonRaw from '../content/posts.json';
-import { tr, dec, langOf, minuteOrdinal, minuteOrdinalIn, t, tf } from '../content/i18n';
+import { tr, dec, isBaseText, langOf, minuteOrdinal, minuteOrdinalIn, t, tf } from '../content/i18n';
 // Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
 const postsJson = tr(postsJsonRaw);
 import { pickFresh } from './flavor';
@@ -207,6 +207,10 @@ export type Post = {
   /** Часы назад и «лайки» — декорация, детерминированная по rng. */
   hoursAgo: number; likes: number; reposts: number;
   kind: PostKind;
+  /** Рядок правила — ще базовою мовою (M47). Пишеться **до** підстановки моменту: вставлений
+   *  `{moment.past}` з неперекладеного епізоду інакше робить англійський пост «базовим» за
+   *  письмом, і `fillNames` дає йому базові імена — «Реєс, explain the 62nd minute». */
+  baseText?: boolean;
   /** Результаты опроса (kind: poll), проценты в сумме 100. */
   poll?: { text: string; pct: number }[];
   /** Минута лайв-твита (kind: live). */
@@ -319,6 +323,7 @@ export function buildFeed(
       const kind: PostKind = pick.rule.kind ?? 'post';
       // Момент матча подставляется здесь: какой именно (best/worst) знает только правило.
       const withMoment = (t: string) => fillMoment(t, pick.rule, ctx);
+      const baseText = isBaseText(pick.text);
       pick.text = withMoment(pick.text);
       // Удалённый твит: на экране «Цей твіт видалено», а оригинал живёт в ответе-скрине.
       const replyText = pick.rule.reply ? withMoment(rng.pick(pick.rule.reply.lines)).replace('{quote}', pick.text) : undefined;
@@ -326,7 +331,7 @@ export function buildFeed(
         ? { account: content.accounts[pick.rule.reply.account], text: replyText }
         : undefined;
       out.push({
-        account, text: kind === 'deleted' ? t('Цей твіт видалено') : pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0, kind,
+        account, text: kind === 'deleted' ? t('Цей твіт видалено') : pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0, kind, baseText,
         ...(kind === 'poll' && pick.rule.poll ? { poll: pollResults(pick.rule.poll, rng) } : {}),
         ...(kind === 'live' && pick.rule.live ? { liveMinute: rng.int(pick.rule.live[0], pick.rule.live[1]) } : {}),
         ...(pick.rule.replyOptions ? { replyOptions: pick.rule.replyOptions.map((o) => ({ ...o, text: withMoment(o.text), reaction: withMoment(o.reaction) })) } : {}),
@@ -347,7 +352,7 @@ export function buildFeed(
       const fill = (t: string) => fillMoment(t, rule, ctx);
       const reply = rule.reply ? { account: content.accounts[rule.reply.account], text: fill(rng.pick(rule.reply.lines)) } : undefined;
       out[slot] = {
-        ...out[slot], account: content.accounts[rule.account], text: fill(text), reply, kind: rule.kind ?? 'post',
+        ...out[slot], account: content.accounts[rule.account], text: fill(text), reply, kind: rule.kind ?? 'post', baseText: isBaseText(text),
         ...(rule.kind === 'poll' && rule.poll ? { poll: pollResults(rule.poll.map(fill), rng) } : {}),
         ...(rule.kind === 'live' && rule.live ? { liveMinute: ctx.moments[which]!.minute } : {}),
         ...(rule.replyOptions ? { replyOptions: rule.replyOptions.map((o) => ({ ...o, text: fill(o.text), reaction: fill(o.reaction) })) } : {}),
@@ -374,7 +379,7 @@ export function buildFeed(
       seen.add(text);
       const fill = (t: string) => fillMoment(t, rule, ctx);
       out[slot] = {
-        ...out[slot], account: content.accounts[rule.account], text: fill(text), reply: undefined, kind: 'post',
+        ...out[slot], account: content.accounts[rule.account], text: fill(text), reply: undefined, kind: 'post', baseText: isBaseText(text),
         replyOptions: rule.replyOptions!.map((o) => ({ ...o, text: fill(o.text), reaction: fill(o.reaction) })),
       };
     }

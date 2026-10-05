@@ -12,7 +12,7 @@ import { SLOT_COUNT, clearSlot } from './slots';
 
 export type SlotSummary = {
   slot: number;
-  /** Ни одного матча и нет сезона — слот пустой, на титуле это «Нова кар’єра». */
+  /** Ни одного матча, нет сезона и пролог не пройден — слот пустой, на титуле это «Нова кар’єра». */
   empty: boolean;
   seasonNumber: number;
   /** Тур, который предстоит (1-based); после последнего — `rounds`, `over` = true. */
@@ -34,7 +34,12 @@ export function readSlotSummary(slot: number): SlotSummary {
   const career = readCareer(slot);
   const history = readHistory(slot);
   // App создаёт сезон при первом же заходе — сезон с нулём туров карьерой не считается.
-  const empty = (!season || season.round === 0) && career.matchesPlayed === 0 && history.length === 0;
+  // Пройденный пролог — уже прогресс, хотя матчей ещё нет: он потрачен (`prologuePending` его
+  // больше не вернёт) и оставил в карьере бирки с тоном ответа тренеру. Без этого условия слот
+  // «пролог пройден, матч не начат» читался пустым, «Нова кар’єра» продолжала ту же карьеру без
+  // стирания — и игрок попадал сразу на брифинг, решив, что вступительной истории в игре нет.
+  const empty = (!season || season.round === 0) && career.matchesPlayed === 0
+    && history.length === 0 && !career.prologue;
   const row = season ? ourRow(season) : null;
   return {
     slot,

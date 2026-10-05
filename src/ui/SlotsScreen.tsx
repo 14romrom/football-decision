@@ -42,7 +42,11 @@ export function SlotsScreen({ onStart, onBack }: Props) {
             <li key={s.slot}>
               <button
                 className={`idc ${s.empty ? 'empty' : ''} ${now ? 'now' : ''}`}
-                onClick={() => (s.empty ? start(s.slot, false) : setAsked(s.slot))}
+                // Пустой тоже стирается: «починає одразу» должно означать чистый лист, а не
+                // «продовжити те, чого сводка не побачила». Для реально пустого слота это пустая
+                // операция, зато слот с недосмотренным остатком (посты, лог решений) не протечёт
+                // в новую карьеру.
+                onClick={() => (s.empty ? start(s.slot, true) : setAsked(s.slot))}
                 aria-current={now ? 'true' : undefined}
               >
                 {s.empty ? (

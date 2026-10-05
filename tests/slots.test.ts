@@ -7,6 +7,7 @@ import { readSeason, writeSeason } from '../src/telemetry/season-storage';
 import { recordResult, readHistory } from '../src/telemetry/history';
 import { readAllSlots, readSlotSummary, resetSlot } from '../src/telemetry/saves';
 import { defaultCareer } from '../src/engine/career';
+import { prologuePending } from '../src/engine/prologue';
 import { createSeason } from '../src/engine/season';
 import { OPPONENT_KEYS } from '../src/content';
 
@@ -70,6 +71,18 @@ describe('слоты карьеры', () => {
     expect(s.matches).toBe(4);
     expect(s.position).toBeGreaterThan(0);
     expect(s.lastAt).not.toBeNull();
+  });
+
+  it('пройденный пролог делает слот занятым — иначе «Нова кар’єра» молча продолжает его', () => {
+    // Баг 05.10 (пользователь: «нет вступительной истории совсем»): пролог пройден, матч не начат —
+    // слот читался пустым, пустой слот стартует без стирания, а `prologuePending` уже false.
+    // Игрок жмёт «Нова кар’єра» и попадает прямо на брифинг.
+    writeSeason(createSeason(1, OPPONENT_KEYS.second));
+    writeCareer({ ...defaultCareer(), prologue: { scout: 'scout_ego', call: 'call_team', base: 'base_body' } });
+    const s = readSlotSummary(0);
+    expect(s.empty).toBe(false);
+    expect(s.matches).toBe(0);
+    expect(prologuePending(readCareer(0))).toBe(false);
   });
 
   it('очистка слота не трогает соседний', () => {

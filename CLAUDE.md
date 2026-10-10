@@ -973,7 +973,11 @@ the freeze spray, брівка — the touchline, стінка (тренувал
 the run-up, перебити — a retake, зупинка в розбігу — stopping in the run-up, паненка — a Panenka,
 дуга штрафного — the D, штатний виконавець — the designated taker, симуляція — diving, затягування —
 time-wasting, винести в аут — put it out of play, підбір — the rebound, екран (VAR) — the screen,
-протокол — the match sheet.
+протокол — the match sheet. **Додано сім'єю `referee`:** стик — a tackle, фол — a foul, «грайте далі» —
+play on, перевага — plays the advantage, спірний м'яч — a drop ball, від воріт — a goal kick, четвертий
+суддя — the fourth official, прямокутник VAR — draws the rectangle, червона пряма — a straight red,
+дублер — understudy (як у справах тижня), роздягальня — the dressing room, форма — kit, у потилицю —
+at the back of your head.
 
 **Перевірка грою — обов'язкова, і ось як:** `npx tsx tools/i18n.ts` нічого не скаже про те, що видно
 на екрані. У консолі браузера поставити мову й перезавантажити:

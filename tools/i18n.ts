@@ -216,6 +216,35 @@ if (cmd === 'stat') {
   const todo = rows.filter((r) => (!file || r.file === file) && !map[r.hash]).slice(0, limit);
   for (const r of todo) console.log(`${r.hash}  ${r.path}\n    ${r.src}`);
   console.error(`// ${todo.length} рядків з ${file ?? 'усіх файлів'}`);
+} else if (cmd === 'fam') {
+  // `episodes.json` перекладається сім'ями (CLAUDE.md), а сім'я в шляху не видно: там лише `[12]`.
+  // Команда зводить індекс сцени до її `family`/`id` і показує рядки однієї сім'ї разом — інакше
+  // доводиться тримати відповідність індексів у голові, а сцена, перекладена наполовину, дає
+  // півмовний пересказ матчу.
+  const fam = process.argv[3];
+  const limit = Number(process.argv[4] ?? 60);
+  const eps = JSON.parse(readFileSync(join(DIR, 'episodes.json'), 'utf8')) as { id: string; family: string }[];
+  if (!fam) {
+    const by = new Map<string, number>();
+    for (const e of eps) by.set(e.family, (by.get(e.family) ?? 0) + 1);
+    for (const [f, n] of [...by].sort((a, b) => a[1] - b[1])) {
+      const left = rows.filter((r) => r.file === 'episodes.json' && !map[r.hash]
+        && eps[Number(/^\[(\d+)\]/.exec(r.path)?.[1] ?? -1)]?.family === f).length;
+      console.log(`${f.padEnd(16)} сцен ${String(n).padStart(2)}   рядків лишилося ${left}`);
+    }
+  } else {
+    const todo = rows.filter((r) => {
+      if (r.file !== 'episodes.json' || map[r.hash]) return false;
+      const i = Number(/^\[(\d+)\]/.exec(r.path)?.[1] ?? -1);
+      return eps[i]?.family === fam;
+    }).slice(0, limit);
+    for (const r of todo) {
+      const i = Number(/^\[(\d+)\]/.exec(r.path)![1]);
+      console.log(`${r.hash}  ${eps[i].id} ${r.path.replace(/^\[\d+\]\.?/, '')}
+    ${r.src}`);
+    }
+    console.error(`// ${todo.length} рядків сім'ї ${fam}`);
+  }
 } else if (cmd === 'merge') {
   // Єдиний спосіб дописати переклад: ключі рахує сам інструмент, тому зовні хеш рахувати **не
   // треба й не можна**. Коштувало часу: окремий скрипт рахував хеш по кодових точках, а рушій —

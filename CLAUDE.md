@@ -1008,7 +1008,11 @@ a knock-down, другий м'яч/підбір — the second ball, удар з
 і **square**, бо це справді клітинка схеми: «we're zonal», «hold your square». Два слова, бо в
 українському це теж два різних значення одного.
 **`flick-on` не писати:** тест на реальних людей ловить його регуляркою `Flick` (тренер), і він
-правий — беремо `knock-down`.
+правий — беремо `knock-down`. **Додано сім'єю `corner_attack`:** скинути головою — head it on,
+скидка — a knock-down, зонний — the zonal marker, підбірник — their man on the second ball,
+заготовка — a routine, дошка — the board, хибний рух — a dummy run, перехресний рух — a crossing run,
+довге вкидання — a long throw, компенсований час — added time, «вперед» воротарю — waves the keeper
+forward, у зеленій формі — in green.
 
 **Перевірка грою — обов'язкова, і ось як:** `npx tsx tools/i18n.ts` нічого не скаже про те, що видно
 на екрані. У консолі браузера поставити мову й перезавантажити:

@@ -126,6 +126,10 @@ describe('переклад', () => {
       // виходить «stamina trained, no stamina left» (знайдено 10.10 перед перекладом activities).
       [uk('витривалість'), /endurance/i],
       [uk('сил[иі]?'), /stamina/i, /^src\/|\.note$/],
+      // Імена транслітеруються, а не англізуються, і це видно саме на Тібо: французьке «Thibault»
+      // написалося саме, і 25 рядків розійшлися з ростером, де «Тібо» → Tibo. На екрані вийшло
+      // «Tibo plays black» у справі і «Thibault says» у наступній — знайдено грою 10.10.
+      [uk('Тібо'), /\bTibo\b/i],
     ];
     const bad: string[] = [];
     for (const [h, v] of Object.entries(EN)) {

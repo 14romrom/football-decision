@@ -1012,7 +1012,13 @@ a knock-down, другий м'яч/підбір — the second ball, удар з
 скидка — a knock-down, зонний — the zonal marker, підбірник — their man on the second ball,
 заготовка — a routine, дошка — the board, хибний рух — a dummy run, перехресний рух — a crossing run,
 довге вкидання — a long throw, компенсований час — added time, «вперед» воротарю — waves the keeper
-forward, у зеленій формі — in green.
+forward, у зеленій формі — in green. **Додано сім'єю `partner`:** десятий/плеймейкер — their
+number ten / the playmaker, адресат — his target, лінія пасу — the passing line, вікно — the window,
+бігун з глибини — the runner from deep, опікун — your marker, підопічний — the man you were given,
+страхувати — to cover, пас у розрив — a ball into the gap, півфланг — the half-space, поза грою —
+offside, шипи — studs, косяк — my fault, борг — a debt. **Хеші списувати не з екрана:** у цій сім'ї
+одна з 457 опечаток пройшла непоміченою до `merge`, і саме він її і зловив («ключів без живого
+оригіналу») — на великій сім'ї ділити переклад на дві партії дешевше, ніж шукати промах у 457 рядках.
 
 **Перевірка грою — обов'язкова, і ось як:** `npx tsx tools/i18n.ts` нічого не скаже про те, що видно
 на екрані. У консолі браузера поставити мову й перезавантажити:

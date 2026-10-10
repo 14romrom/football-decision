@@ -999,7 +999,16 @@ stopping a promising attack, автогол — an own goal, чаша — the bo
 six-yard box, непрямий штрафний — an indirect free kick, навіс/подача — a delivery, накотити — to roll
 it, хибний замах — a dummy, перестрибнути м'яч — step over the ball, перебити — a retake, замах —
 a backswing, вкидання — a throw-in, простріл уздовж воріт — a ball across the face of goal, удар від
-воріт — a goal kick, опікун — his marker, розіграш (стандарту) — a routine.
+воріт — a goal kick, опікун — his marker, розіграш (стандарту) — a routine. **Додано сім'єю
+`corner_defense`:** подавач — the taker, ближня/дальня стійка — the near/far post, квадрат — your
+square, персонально — man-mark, блок (на стандарті) — a screen, блокувальник — the screener, скидка —
+a knock-down, другий м'яч/підбір — the second ball, удар з льоту — a volley, виніс — a clearance,
+кулаком — punches it, «мій» (крик воротаря) — keeper's, зрізати у свої — turn it into your own net.
+**Уточнення до «зони»:** у відкритій грі це **space** (гравець тримає простір), на стандарті — **zone**
+і **square**, бо це справді клітинка схеми: «we're zonal», «hold your square». Два слова, бо в
+українському це теж два різних значення одного.
+**`flick-on` не писати:** тест на реальних людей ловить його регуляркою `Flick` (тренер), і він
+правий — беремо `knock-down`.
 
 **Перевірка грою — обов'язкова, і ось як:** `npx tsx tools/i18n.ts` нічого не скаже про те, що видно
 на екрані. У консолі браузера поставити мову й перезавантажити:

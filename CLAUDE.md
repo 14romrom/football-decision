@@ -1016,7 +1016,11 @@ forward, у зеленій формі — in green. **Додано сім'єю `
 number ten / the playmaker, адресат — his target, лінія пасу — the passing line, вікно — the window,
 бігун з глибини — the runner from deep, опікун — your marker, підопічний — the man you were given,
 страхувати — to cover, пас у розрив — a ball into the gap, півфланг — the half-space, поза грою —
-offside, шипи — studs, косяк — my fault, борг — a debt. **Хеші списувати не з екрана:** у цій сім'ї
+offside, шипи — studs, косяк — my fault, борг — a debt. **Додано сім'єю `wing`:** ножиці — a stepover,
+елястіко — an elástico, прокинути між ніг — **nutmeg** (британський термін із словника голосів),
+обгін — an overlap, по зовнішній — down the outside, бровка — the touchline, лицьова — the byline,
+простріл — a cutback / a ball across, навіс — a cross, зріз — a slice, латераль — a full-back,
+стоппер — a stopper, коридор — a channel, відкат — a lay-off, два ряди — two ranks. **Хеші списувати не з екрана:** у цій сім'ї
 одна з 457 опечаток пройшла непоміченою до `merge`, і саме він її і зловив («ключів без живого
 оригіналу») — на великій сім'ї ділити переклад на дві партії дешевше, ніж шукати промах у 457 рядках.
 

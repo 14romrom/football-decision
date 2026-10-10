@@ -988,7 +988,13 @@ an interception, троє на двох — three on two, за спини — in
 коридор — the channel, лицьова — the byline, за лицьову — out behind, офсайд — offside, прапорець —
 the flag, перекинути — to lob, бігти назад — run back, підстраховка — cover, воротар-ліберо —
 a sweeper-keeper, центральний — a centre-back, крайній — a full-back, опорник — the holding midfielder,
-перевід — a switch, у дотик — first time, пас у розріз — a ball through the gap.
+перевід — a switch, у дотик — first time, пас у розріз — a ball through the gap. **Додано сім'єю
+`last_man`:** останній захисник — the last man, пірнути в підкат — go to ground, тягти до останнього —
+stay on your feet to the last, офсайдна пастка — the offside trap, лінія — the line, ступити вперед —
+step up, лайнсмен — the linesman, підстраховувати — to cover, зона — space (не zone: гравець тримає
+простір, а не клітинку), розігруючий — the playmaker, перевага (суддівська) — plays the advantage,
+позбавив явної можливості — denying a clear goalscoring opportunity, зрив перспективної атаки —
+stopping a promising attack, автогол — an own goal, чаша — the bowl, вдесятьох — down to ten.
 
 **Перевірка грою — обов'язкова, і ось як:** `npx tsx tools/i18n.ts` нічого не скаже про те, що видно
 на екрані. У консолі браузера поставити мову й перезавантажити:

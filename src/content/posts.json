@@ -2573,7 +2573,7 @@
         "moment": "best"
       },
       "lines": [
-        "{moment.ord} хвилина. {self} {moment.past} — і {moment.recap} я переглянув 6 разів. буду переглядати ще",
+        "{moment.ord} хвилина. {self} {moment.past} — {moment.recap} я переглянув 6 разів. буду переглядати ще",
         "{moment.minute}′ {self} {moment.past}. якби я вмів так, я б не сидів на трибуні. хоча сидів би. з пивом",
         "хочу шоб на {moment.minute}-й хвилині завжди було так: {self} {moment.past}. решту матчу можна вирізати"
       ]

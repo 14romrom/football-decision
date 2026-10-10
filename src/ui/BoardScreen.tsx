@@ -31,10 +31,13 @@ function placeMagnets(moments: BoardMoment[]): { m: BoardMoment; cx: number; cy:
   return placed;
 }
 
-/** Телеграф: «Пробив з двадцяти метрів — суддя нічого не побачив». Союз и точка recap — в пересказе, не на доске. */
+/** Телеграф: «Пробив з двадцяти метрів — суддя нічого не побачив». Союз и точка recap — в пересказе, не на доске.
+ *  Союзы обеих языков в одном списке намеренно: правило здесь — «снять союз в начале», а не «снять
+ *  украинский союз». Языка этот файл не знает, а переведённый recap начинается с «and» так же, как
+ *  базовый с «і» — без этого на доске выходит «Flew into the press — and won the ball». */
 function telegraph(m: BoardMoment): string {
   const past = m.past.charAt(0).toUpperCase() + m.past.slice(1);
-  const recap = m.recap.replace(/^(і|й|а|та|але)\s+/i, '').replace(/[.]+$/, '');
+  const recap = m.recap.replace(/^(і|й|а|та|але|and|but)\s+/i, '').replace(/[.]+$/, '');
   return `${past} — ${recap}`;
 }
 

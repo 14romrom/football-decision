@@ -7,7 +7,7 @@ import { SEASON_ROUNDS, monthOfRound } from '../engine/season';
 import { Sticker } from './Sticker';
 import { INSTRUCTION, WEATHER, toneLines } from './prematch-text';
 import { plural } from './pluralize';
-import { ord, t, tf } from '../content/i18n';
+import { clubTitle, ord, t, tf } from '../content/i18n';
 
 // Екран перед матчем (28.09, макет «Екран перед матчем», варіант А «Роздягальня»): один аркуш замість
 // двох — меню кар'єри і брифінг злилися. Було: меню з карткою і турами, потім окремий екран зі станом.
@@ -80,7 +80,7 @@ export function PrematchScreen({
         <span>{t('Тур')} <b>{round}</b>{tf(' з {0} · {1}', SEASON_ROUNDS, monthOfRound(round))}</span>
         {position !== null && <span>{tf('{0} місце · {1} {2}', ord(position), points ?? 0, plural(points ?? 0, t('очко'), t('очки'), t('очок')))}</span>}
       </div>
-      <h1 className="pm-fixture">{tf('«{0}»', opponent.name.nom)}<small>{home ? t('Вдома') : t('На виїзді')}</small></h1>
+      <h1 className="pm-fixture">{clubTitle(opponent.name.nom)}<small>{home ? t('Вдома') : t('На виїзді')}</small></h1>
 
       <Sticker compact player={player} career={career} season={season} dominant={dominant} onOpen={onCard} />
 

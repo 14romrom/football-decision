@@ -30,31 +30,20 @@ export function srcHash(s: string): string {
   return (a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0')).slice(0, 12);
 }
 
-/** Ключі, під якими лежить проза. Усе інше — дані, і перекладати його не можна. */
-const PROSE_KEYS = new Set([
-  'text', 'line', 'lines', 'label', 'past', 'recap', 'setup', 'sheet', 'say', 'reply', 'reaction',
-  'note', 'title', 'sub', 'tab', 'head', 'mark', 'summary', 'blurb', 'short', 'intent', 'name',
-  'whenText', 'column', 'sign', 'textCold', 'sheetCold', 'say', 'line',
-  'nom', 'gen', 'dat', 'ins',
-  // Ключ-голос, під яким лежить варіант листа або луна (`sheetBy.ego`, `scoutLead.team`): проза, а не
-  // дані — сам голос ідентифікатор, але текст під ним гравець читає. Коштувало це дорого: ці ключі
-  // не були ні тут, ні в SKIP, тому `walk` викидав їх **мовчки**, і звіт показував пролог і
-  // відпустку як 100%, хоча 90 рядків прози він ніколи не бачив. Числові `composure: -2` в `effect`
-  // сюди не потрапляють — вони не рядки.
-  'ego', 'team', 'vision', 'body', 'instinct', 'composure',
-  'replyCold',                                    // варіант розв'язки, коли дуету з партнером немає
-  'after', 'medical', 'debts', 'scout', 'epilogue', // причини зриву й епілог у agent.json
-  'poll', 'kicker', 'cta', 'tag',                 // опитування в Y, кікер ESPM, кнопка й ярлик реклами
-]);
-/** Ключі, під якими лежать дані, хоч вони і рядки. */
-const SKIP_KEYS = new Set([
-  'id', 'voice', 'who', 'attribute', 'account', 'handle', 'kind', 'group', 'focus', 'shot',
-  'family', 'phase', 'basePosition', 'effect', 'trait', 'tier', 'scorer', 'followUp', 'flag',
-  // nom/gen/dat/ins — відмінкові форми імен у ростері. Це **не дані**: вони потрапляють у текст
-  // і в англійській збірці інакше лишилися б кирилицею. Усі чотири форми перекладаються в одну
-  // англійську (M47), як і назви ліг.
-  'rom', 'position', 'result', 'train', 'target', 'episode',
-]);
+/** Значення, яке лишається даними, хоч у ньому й кирилиця. Список порожній, і це не недогляд:
+ *  усі кириличні значення в контенті — текст, який гравець читає. Правило тепер зворотне до
+ *  попереднього («проза лише під відомим ключем») — і саме попереднє коштувало шести дірок.
+ *
+ *  Останні три знайдено грою 10.10, уже після того, як п'ять інших закрито тестами. Усі троє —
+ *  один і той самий механізм: ім'я ключа в різних файлах означає різне, тому класифікація за
+ *  іменем промахується мовчки.
+ *    - `rom` у `chapters.json` — не римська цифра, а «Глава I»;
+ *    - `shot` у `ending.json` — не id кадру, а абзац дзвінка скаута;
+ *    - `voice` у `flavor.json` — не ідентифікатор, а підпис капітеллю («ТРИБУНИ»), і він же ключ
+ *      `FLAVOR_CLASS` у `RollView`. Нижче рядок лишався кирилицею **і** втрачав колір голосу.
+ *
+ *  Якщо колись з'явиться кириличний ідентифікатор, його ключ — сюди, і поруч причина. */
+const SKIP_KEYS = new Set<string>([]);
 
 // Що вважається українським рядком. Дві поправки, обидві знайдені грою, не звітом (04.10):
 //
@@ -154,7 +143,6 @@ function walk(v: unknown, file: string, path: string, out: Row[], seen: Set<stri
   if (typeof v === 'string') {
     if (!isUkr(v)) return;
     if (key && SKIP_KEYS.has(key)) return;
-    if (key && !PROSE_KEYS.has(key)) return;
     const hash = srcHash(v);
     if (seen.has(hash)) return;          // однаковий текст — один запис у карті
     seen.add(hash);
@@ -172,29 +160,6 @@ export const readMap = (): Record<string, string> => JSON.parse(readFileSync(MAP
 // ——— дві дірки, які `collect` не бачить за визначенням ————————————————————————————
 // Обидві коштували часу 04.10: звіт показував 100%, а в англійській збірці лишався український
 // текст. Тому їх тримає тест (`tests/i18n.test.ts`), а не око.
-
-/** Ключі контенту, яких немає ні в PROSE_KEYS, ні в SKIP_KEYS. `walk` викидає такий рядок **тихо**,
- *  тому новий ключ із прозою зникає зі звіту замість того, щоб потрапити в переклад. Кожен новий
- *  ключ має бути віднесений свідомо — до прози або до даних. */
-export function unknownKeys(): { file: string; key: string; sample: string }[] {
-  const out: { file: string; key: string; sample: string }[] = [];
-  const seen = new Set<string>();
-  const look = (v: unknown, file: string, key?: string): void => {
-    if (typeof v === 'string') {
-      if (!isUkr(v) || !key || PROSE_KEYS.has(key) || SKIP_KEYS.has(key)) return;
-      if (seen.has(file + key)) return;
-      seen.add(file + key);
-      out.push({ file, key, sample: v.slice(0, 60) });
-      return;
-    }
-    if (Array.isArray(v)) { for (const x of v) look(x, file, key); return; }
-    if (v && typeof v === 'object') for (const [k, x] of Object.entries(v as Record<string, unknown>)) look(x, file, k);
-  };
-  for (const f of readdirSync(DIR).filter((x) => x.endsWith('.json')).sort()) {
-    look(JSON.parse(readFileSync(join(DIR, f), 'utf8')), f);
-  }
-  return out;
-}
 
 /** Кирилиця в коді, яку `collect` не бере, бо вона не `t('…')`:
  *  - `literal` — шаблонний рядок із підстановкою (`` `Тур ${a} з ${b}` ``): має бути `tf()`;

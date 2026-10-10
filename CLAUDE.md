@@ -968,7 +968,12 @@ outside of the foot, на силу — for power, низом між ніг — l
 дуга — the D, підкат — a slide tackle, простріл — the cutback, добивання — the follow-up, сам на сам —
 through on goal, черпак — a chip, нульовий кут — no angle at all, бічна сітка — the side netting,
 трибуна за воротами — the end behind the goal, забита нога — a dead leg, ривок — a sprint, заморозка —
-the freeze spray, брівка — the touchline, стінка (тренувальна) — the rebound wall.
+the freeze spray, брівка — the touchline, стінка (тренувальна) — the rebound wall. **Додано сім'єю
+`penalty`:** позначка/точка — the spot, одинадцять метрів — eleven metres (місто метричне), розбіг —
+the run-up, перебити — a retake, зупинка в розбігу — stopping in the run-up, паненка — a Panenka,
+дуга штрафного — the D, штатний виконавець — the designated taker, симуляція — diving, затягування —
+time-wasting, винести в аут — put it out of play, підбір — the rebound, екран (VAR) — the screen,
+протокол — the match sheet.
 
 **Перевірка грою — обов'язкова, і ось як:** `npx tsx tools/i18n.ts` нічого не скаже про те, що видно
 на екрані. У консолі браузера поставити мову й перезавантажити:

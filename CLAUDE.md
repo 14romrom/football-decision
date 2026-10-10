@@ -994,7 +994,12 @@ stay on your feet to the last, офсайдна пастка — the offside tra
 step up, лайнсмен — the linesman, підстраховувати — to cover, зона — space (не zone: гравець тримає
 простір, а не клітинку), розігруючий — the playmaker, перевага (суддівська) — plays the advantage,
 позбавив явної можливості — denying a clear goalscoring opportunity, зрив перспективної атаки —
-stopping a promising attack, автогол — an own goal, чаша — the bowl, вдесятьох — down to ten.
+stopping a promising attack, автогол — an own goal, чаша — the bowl, вдесятьох — down to ten. **Додано
+сім'єю `free_kick`:** стінка — the wall, стулка — the upright, купина — a divot, вратарська — the
+six-yard box, непрямий штрафний — an indirect free kick, навіс/подача — a delivery, накотити — to roll
+it, хибний замах — a dummy, перестрибнути м'яч — step over the ball, перебити — a retake, замах —
+a backswing, вкидання — a throw-in, простріл уздовж воріт — a ball across the face of goal, удар від
+воріт — a goal kick, опікун — his marker, розіграш (стандарту) — a routine.
 
 **Перевірка грою — обов'язкова, і ось як:** `npx tsx tools/i18n.ts` нічого не скаже про те, що видно
 на екрані. У консолі браузера поставити мову й перезавантажити:

@@ -906,13 +906,13 @@ Didn't work / Disaster; голоси → Ego / Team / Composure / Vision / Insti
 заново.
 
 **З чого починати нову сесію (станом на 10.10):**
-1. `npx tsx tools/i18n.ts stat` — має сказати **9501 з 12 538 (76%)**; `orphans` — «сиріт немає».
+1. `npx tsx tools/i18n.ts stat` — має сказати **10 145 з 12 538 (81%)**; `orphans` — «сиріт немає».
    Якщо цифри інші, хтось уже працював далі: дивитися `fam` і git log, а не цей абзац.
-2. Усе, крім `episodes.json`, закрито. У `episodes.json` закрито **14 сімей із 18** (106 сцен):
+2. Усе, крім `episodes.json`, закрито. У `episodes.json` закрито **15 сімей із 18** (121 сцена):
    `dribble`, `body`, `finishing`, `one_on_one`, `penalty`, `counter`, `referee`, `last_man`,
-   `free_kick`, `corner_defense`, `corner_attack`, `partner`, `wing`, `press`.
-3. **Лишилося чотири сім'ї, у порядку роботи (від меншої):** `through` 643 рядки / 15 сцен →
-   `edge_shot` 741 / 17 → `coach` 787 / 19 → `duel` 866 / 21. Разом ~3037.
+   `free_kick`, `corner_defense`, `corner_attack`, `partner`, `wing`, `press`, `through`.
+3. **Лишилося три сім'ї, у порядку роботи (від меншої):** `edge_shot` 741 рядок / 17 сцен →
+   `coach` 787 / 19 → `duel` 866 / 21. Разом ~2394.
 4. Узяти першу з них і йти «циклом на один файл» нижче. Коміт на сім'ю, `DESIGN.md` — новий відсоток.
 5. **Велику сім'ю (понад ~350 рядків) ділити на дві партії по 5–6 сцен.** Хеші доводиться переносити
    з виводу `fam` руками, і на 457 рядках одна опечатка пройшла непоміченою до `merge` — він сказав
@@ -990,7 +990,7 @@ npx tsx tools/i18n.ts orphans               # записи, яким більш�
 **`episodes.json` — сім'ями, у порядку гри, коміт на сім'ю.** 178 сцен, 597 тис. знаків, 18 сімей:
 `dribble` 1 ✓ · `body` 2 ✓ · `finishing` 3 ✓ · `one_on_one` 5 ✓ · `penalty` 7 ✓ · `counter` 7 ✓ ·
 `last_man` 8 ✓ · `referee` 8 ✓ · `free_kick` 8 ✓ · `corner_defense` 10 ✓ · `corner_attack` 10 ✓ ·
-`wing` 11 ✓ · `partner` 11 ✓ · `press` 15 ✓ · `through` 15 · `edge_shot` 17 · `coach` 19 · `duel` 21
+`wing` 11 ✓ · `partner` 11 ✓ · `press` 15 ✓ · `through` 15 ✓ · `edge_shot` 17 · `coach` 19 · `duel` 21
 (✓ — закрито й перевірено рушієм). Починати з малих: вони задають словник ісходів, на який
 спираються великі. У сцені перекладати все разом — сетапи, варіанти, чотири
 ісходи, `past`/`recap` — інакше пересказ матчу вийде півмовним. Скільки де лишилося — `fam` без
@@ -1061,6 +1061,9 @@ offside, шипи — studs, косяк — my fault, борг — a debt. **Д�
 простріл — a cutback / a ball across, навіс — a cross, зріз — a slice, латераль — a full-back,
 стоппер — a stopper, коридор — a channel, відкат — a lay-off, два ряди — two ranks. **Додано сім'єю `press`:** пресинг — the press / to press, контрпресинг і гегенпресинг — a counter-press / gegenpressing, накрити на прийомі — close him down on the touch, тригер — the trigger, фальшивий пресинг — a fake press, лінія пасу — the passing line, розіграш від воріт — playing out from the back, вибивання — a goal kick, вибити довго — hit it long, у дотик — first time, стінка (розіграш) — a one-two (**не** the wall: стінка на стандарті лишається the wall), напівоберт — the half-turn, прийняти спиною — take it with your back to goal, пропустити м'яч — let it run, крокета — a croqueta, другий м'яч — the second ball, низький блок і «автобус» — a low block / the bus, середній блок — a mid-block, переведення — a switch, трикутник — the triangle, бігти дугою — run a curve, точка опори — the pivot, тягнути час — run down the clock, кутовий прапорець — the corner flag, тікі-така — tiki-taka, втрата — a turnover.
 **Англійський `recap` не має пари виду.** Українською «відступав у лінію» / «і відступив у лінію» — дві форми одного дієслова, і повтор не чути; англійською виходить дослівне заїкання «dropped into the line — and dropped into the line». Перекладати треба наслідок, а не слово: «and held the line — the ball was won in midfield». Перевіряти це разом по всій сім'ї, зіставляючи `past` і всі чотири `recap` на спільний відрізок у 4+ слова (скрипт у консолі, як нижче) — на `press` так знайдено дев'ять.
+**Додано сім'єю `through`:** пас вразріз — a through ball, розрізна — a defence-splitting pass, за спину — in behind, коридор — the channel, кишеня — the pocket, півфланг — the half-space, між лініями — between the lines, лінія офсайду — the offside line, хибний ривок — a dummy run, обман на два — a two-man dummy, зіграти третім — play as the third man, стінка — a one-two, пропустити м'яч — let the ball run, тримати корпусом — hold the ball up, скидка — a lay-off, скидка п'ятою — a backheel, перевід — a switch, другий темп — the second wave, підбір після подачі — the second ball, подача — a cross, компактний блок — a compact block, перша лінія — the first line, дуга — the D, ближня/дальня — the near/far post.
+**Фінт Зідана — a Marseille turn.** Реальних людей в англійському тексті не називаємо (тест ловить їх списком у `i18n.test.ts`), а в англійській у цього руху є своя назва без прізвища. Те саме правило діє на будь-який «фінт <прізвище>» далі.
+**Повтор шукати двічі.** Після першого проходу зіставлення `past`/`recap` лишаються збіги на три слова, які скрипт із порогом у чотири не бачить, а на екрані вони читаються так само погано: «switched it to the flank straight away — and switched it over the block at once». Другий прогін робиться по вже складених рядках, очима. **І плейсхолдери:** переписаний наслідок легко губить `{dm}` чи `{partner}`, тест це валить — множина плейсхолдерів має лишитися тією самою.
 **Хеші списувати не з екрана:** у цій сім'ї
 одна з 457 опечаток пройшла непоміченою до `merge`, і саме він її і зловив («ключів без живого
 оригіналу») — на великій сім'ї ділити переклад на дві партії дешевше, ніж шукати промах у 457 рядках.

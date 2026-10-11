@@ -906,13 +906,12 @@ Didn't work / Disaster; голоси → Ego / Team / Composure / Vision / Insti
 заново.
 
 **З чого починати нову сесію (станом на 10.10):**
-1. `npx tsx tools/i18n.ts stat` — має сказати **10 885 з 12 538 (87%)**; `orphans` — «сиріт немає».
+1. `npx tsx tools/i18n.ts stat` — має сказати **11 672 з 12 538 (93%)**; `orphans` — «сиріт немає».
    Якщо цифри інші, хтось уже працював далі: дивитися `fam` і git log, а не цей абзац.
-2. Усе, крім `episodes.json`, закрито. У `episodes.json` закрито **16 сімей із 18** (138 сцен):
-   `dribble`, `body`, `finishing`, `one_on_one`, `penalty`, `counter`, `referee`, `last_man`,
-   `free_kick`, `corner_defense`, `corner_attack`, `partner`, `wing`, `press`, `through`, `edge_shot`.
-3. **Лишилося дві сім'ї, у порядку роботи (від меншої):** `coach` 787 рядків / 19 сцен →
-   `duel` 866 / 21. Разом ~1653.
+2. Усе, крім однієї сім'ї `episodes.json`, закрито: **17 сімей із 18**, 157 сцен.
+3. **Лишилася `duel` — 866 рядків / 21 сцена.** Це остання. Після неї переклад = 100%,
+   і тоді: прогін усіх 18 сімей у рушії на кирилицю, `npm test`, `npm run sim -- 2000`,
+   повне проходження грою обома мовами, і аж тоді рядок M47 у DESIGN.md закривається.
 4. Узяти першу з них і йти «циклом на один файл» нижче. Коміт на сім'ю, `DESIGN.md` — новий відсоток.
 5. **Велику сім'ю (понад ~350 рядків) ділити на дві партії по 5–6 сцен.** Хеші доводиться переносити
    з виводу `fam` руками, і на 457 рядках одна опечатка пройшла непоміченою до `merge` — він сказав
@@ -990,7 +989,7 @@ npx tsx tools/i18n.ts orphans               # записи, яким більш�
 **`episodes.json` — сім'ями, у порядку гри, коміт на сім'ю.** 178 сцен, 597 тис. знаків, 18 сімей:
 `dribble` 1 ✓ · `body` 2 ✓ · `finishing` 3 ✓ · `one_on_one` 5 ✓ · `penalty` 7 ✓ · `counter` 7 ✓ ·
 `last_man` 8 ✓ · `referee` 8 ✓ · `free_kick` 8 ✓ · `corner_defense` 10 ✓ · `corner_attack` 10 ✓ ·
-`wing` 11 ✓ · `partner` 11 ✓ · `press` 15 ✓ · `through` 15 ✓ · `edge_shot` 17 ✓ · `coach` 19 · `duel` 21
+`wing` 11 ✓ · `partner` 11 ✓ · `press` 15 ✓ · `through` 15 ✓ · `edge_shot` 17 ✓ · `coach` 19 ✓ · `duel` 21
 (✓ — закрито й перевірено рушієм). Починати з малих: вони задають словник ісходів, на який
 спираються великі. У сцені перекладати все разом — сетапи, варіанти, чотири
 ісходи, `past`/`recap` — інакше пересказ матчу вийде півмовним. Скільки де лишилося — `fam` без
@@ -1066,6 +1065,8 @@ offside, шипи — studs, косяк — my fault, борг — a debt. **Д�
 **Повтор шукати двічі.** Після першого проходу зіставлення `past`/`recap` лишаються збіги на три слова, які скрипт із порогом у чотири не бачить, а на екрані вони читаються так само погано: «switched it to the flank straight away — and switched it over the block at once». Другий прогін робиться по вже складених рядках, очима. **І плейсхолдери:** переписаний наслідок легко губить `{dm}` чи `{partner}`, тест це валить — множина плейсхолдерів має лишитися тією самою.
 **Додано сім'єю `edge_shot`:** з ходу — as it comes, з льоту — on the volley, серединою підйому — flush with the laces, носком — a toe-poke, підсікти — to dink it, закрутити — to curl it, закинути — to clip it, незручна і неробоча нога — your weaker foot (робоча — your good foot), перекласти — to shift it onto, добивання — the follow-up, відскок — the rebound, рикошет — a ricochet, натовп ніг — the forest of legs, купа-мала — a pile-up, вратарська — the six-yard box, бічна сітка — the side netting, поперек воріт — across the face of goal, замкнути — to finish it, прийняти на груди — take it on your chest, замах — a shot fake, свічка — a ballooned shot, привідний — your groin, пенальті і точка — a penalty / the spot, АПЗ — an attacking midfielder.
 **Гострий кут — a tight angle, не sharp:** англійською кут до воріт буває tight або narrow; sharp означає інше.
+**Додано сім'єю `coach`:** установка — the instruction, розбір — the team meeting, брівка — the touchline, дублер — your understudy, манішка — a bib, табличка заміни — the board, автобус — the bus, низький блок — a low block, щілина між лініями — the gap between the lines, розкатка — knocking the ball about, діагональ — a diagonal, перевід — a switch, затяжка часу — time-wasting, вкидання — a throw-in, кутовий прапорець — the corner flag, квадрат — a rondo, піротехніка — flares, сектор — the end, планшет — the tablet, чаша — the bowl, десятка — a number ten, тактичний фол — a tactical foul, half-темп — half-pace.
+**Плейсхолдери: не загубити і не вигадати.** Тест порівнює множину в обидва боки. Переписуючи `recap` на наслідок, легко загубити `{dm}` (було двічі) — і так само легко **додати** його там, де в українському рядку його не було (теж було). Друге виглядає нешкідливо й валить збірку так само.
 **Хеші списувати не з екрана:** у цій сім'ї
 одна з 457 опечаток пройшла непоміченою до `merge`, і саме він її і зловив («ключів без живого
 оригіналу») — на великій сім'ї ділити переклад на дві партії дешевше, ніж шукати промах у 457 рядках.

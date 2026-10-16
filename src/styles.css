@@ -1305,3 +1305,39 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 .launch.calm .launch-die-a, .launch.calm .launch-die-b { animation: none; color: #4a4843; border-color: #3a3832; }
 .launch.calm.crit .launch-die-a, .launch.calm.crit .launch-die-b { color: #8a7636; border-color: #6e5d2b; }
 .launch.calm .launch-kicker, .launch.calm .launch-box { animation: none; opacity: 1; transform: none; }
+
+/* ——— Рух: три місця, де статика коштувала (16.10) ——————————————————————————
+   Словник у гри вже є і він не «слайди»: предмети лягають, впечатуються, осідають. Нове
+   говорить тим самим. Усе на `opacity`/`transform` — на слабкому телефоні решта коштує кадрів. */
+
+/* 1. Лист моменту лягає, голоси проступають по черзі. Варіанти не чекають нічого: лист читають
+      сотні разів за кар'єру, і затримка перед кнопкою стала б податком. */
+/* `.roll` сюди не входить: екран кидка теж `.scene`, і проявлення перед кубиками додало б
+   чверть секунди саме там, де потрібна миттєва відповідь на тап. У кидка своя хореографія. */
+.scene:not(.roll) { animation: sheetIn .24s cubic-bezier(.2,.9,.3,1); }
+@keyframes sheetIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.voices .say { animation: sayIn .22s ease-out backwards; }
+.voices .say:nth-child(1) { animation-delay: .10s }
+.voices .say:nth-child(2) { animation-delay: .17s }
+.voices .say:nth-child(3) { animation-delay: .24s }
+.voices .say:nth-child(4) { animation-delay: .31s }
+.voices .say:nth-child(5) { animation-delay: .38s }
+@keyframes sayIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* 2. Перехід між екранами — аркуш кольору фону, що гасне. Не чіпає розкладки, тому плівка й
+      прилиплі кнопки не стрибають (прозорість контейнера зробила б їх відносними до нього). */
+.screen-wipe {
+  position: fixed; inset: 0; z-index: 40; pointer-events: none; background: var(--bg);
+  opacity: 1; animation: wipeOut .22s ease-out forwards;
+}
+@keyframes wipeOut { to { opacity: 0; } }
+
+/* 3. Рядок стрічки приходить, а не з'являється. Клас `age-0` дістається кожному рядку рівно один
+      раз — коли він найновіший, — тож анімація грає на появу і більше не повторюється. */
+.tape-line.age-0 { animation: tapeIn .3s cubic-bezier(.2,.9,.3,1); }
+@keyframes tapeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+.reduce-motion .scene:not(.roll),
+.reduce-motion .voices .say,
+.reduce-motion .tape-line.age-0 { animation: none; }
+.reduce-motion .screen-wipe { display: none; }

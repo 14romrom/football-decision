@@ -54,6 +54,7 @@ import { AgentScene } from './ui/AgentScene';
 import { agentPending, resolveAgent, type AgentChoice } from './engine/agent';
 import { TitleScreen } from './ui/TitleScreen';
 import { LaunchScreen } from './ui/LaunchScreen';
+import { ScreenWipe } from './ui/ScreenWipe';
 import { Sticker } from './ui/Sticker';
 import { SlotsScreen } from './ui/SlotsScreen';
 import { SettingsScreen } from './ui/SettingsScreen';
@@ -172,7 +173,10 @@ function Game() {
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   // Краї плівки (ui/Film.tsx): на екранах гри; матч малює свої. Дошка, ESPM і стрічка — без рамки, це «чужі» екрани.
-  const film = ['result', 'season', 'posts', 'feed', 'episode', 'roll', 'whistle', 'prologue', 'vacation', 'may', 'ending'].includes(stage.k) ? null : <Film />;
+  const film = <>
+    <ScreenWipe on={stage.k} />
+    {['result', 'season', 'posts', 'feed', 'episode', 'roll', 'whistle', 'prologue', 'vacation', 'may', 'ending'].includes(stage.k) ? null : <Film />}
+  </>;
   const [shown, setShown] = useState<TimelineEvent[]>([]);
   // Новий екран — з верху. Хеш-роутер скидає скрол лише на hashchange, а зміни stage всередині #/play — ні:
   // після ESPM з кнопкою внизу стрічка відкривалась прокрученою на 861 px (плейтест 21.09, Б-1).
@@ -976,7 +980,7 @@ export function App() {
   // розчиненням, а не підміною кадру.
   const launch = launching
     ? <LaunchScreen onDone={() => { launched = true; setLaunching(false); }} />
-    : null;
+    : <ScreenWipe on={route} />;
   // Титул — корень (#/); игра живёт на #/play, чтобы «Назад» с картки и статистики вёл в игру, а не на титул.
   if (route === '' || route === '#' || route === '#/') {
     return (
@@ -992,15 +996,16 @@ export function App() {
       </>
     );
   }
-  if (route.startsWith('#/slots')) return <><Film /><SlotsScreen onStart={() => go('#/play')} onBack={() => go('#/')} /></>;
-  if (route.startsWith('#/settings')) return <><Film /><SettingsScreen onBack={() => go('#/')} onWiped={() => go('#/')} /></>;
-  if (route.startsWith('#/about')) return <><Film /><AboutScreen onBack={() => go('#/')} /></>;
-  if (route.startsWith('#/stats')) return <StatsScreen />;
+  if (route.startsWith('#/slots')) return <><ScreenWipe on={route} /><Film /><SlotsScreen onStart={() => go('#/play')} onBack={() => go('#/')} /></>;
+  if (route.startsWith('#/settings')) return <><ScreenWipe on={route} /><Film /><SettingsScreen onBack={() => go('#/')} onWiped={() => go('#/')} /></>;
+  if (route.startsWith('#/about')) return <><ScreenWipe on={route} /><Film /><AboutScreen onBack={() => go('#/')} /></>;
+  if (route.startsWith('#/stats')) return <><ScreenWipe on={route} /><StatsScreen /></>;
   // Карточка вне активного матча читает карьеру напрямую из хранилища — она не
   // синхронизирована «вживую» с сессией Game (там своя копия в рефе), но для
   // самостоятельного экрана свежего чтения при заходе достаточно.
   if (route.startsWith('#/player')) {
     return (<>
+      <ScreenWipe on={route} />
       <Film />
       <PlayerCard
         player={PLAYER} career={readCareer()} season={readSeason()} club={ROSTER.us.name.nom}
@@ -1017,14 +1022,15 @@ export function App() {
     // Реклама і колонка — по сиду сезона и тура, как на таблице: перезагрузка их не перекидывает.
     const seed = (season?.seed ?? 0) + (season?.round ?? 0) * 6007;
     const column = playerColumn(ESPM_COLUMNS.column, arcStage(career), makeRng(seed + 11), new Set(recentPosts()));
-    return (
+    return (<>
+      <ScreenWipe on={route} />
       <EspmProfile
         player={PLAYER} career={career} season={season} history={readHistory()}
         club={ROSTER.us.name.nom} clubGen={ROSTER.us.name.gen}
         ads={pickAds(ADS, adContext(season ?? createSeason(seed, OPPONENT_KEYS.second), career.coachTrust), new Set(recentPosts()), makeRng(seed + 17))}
         column={column ? fillNamesDeep(column, ROSTER) : undefined}
         onBack={() => { location.hash = '#/player'; }}
-      />
+      /></>
     );
   }
   // Слот карьеры (telemetry/slots.ts): Game держит карьеру и сезон в refs, прочитанных при монтировании,

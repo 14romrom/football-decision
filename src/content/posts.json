@@ -31,8 +31,8 @@
       "kind": "news"
     },
     "uefaleaks": {
-      "name": "УЄФА Leaks",
-      "handle": "@uefa_leaks",
+      "name": "UEFO Files",
+      "handle": "@uefo_files",
       "kind": "news"
     },
     "liga": {
@@ -91,8 +91,8 @@
       "kind": "parody"
     },
     "eapr": {
-      "name": "EA Sports PR",
-      "handle": "@ea_definitely_new",
+      "name": "PAY Sports",
+      "handle": "@pay_sports",
       "kind": "parody"
     },
     "rufootball": {
@@ -121,8 +121,8 @@
       "kind": "parody"
     },
     "fifaleaks": {
-      "name": "ФІФА Leaks",
-      "handle": "@fifa_leaks",
+      "name": "FIFO Leaks",
+      "handle": "@fifo_leaks",
       "kind": "news"
     },
     "bettor": {

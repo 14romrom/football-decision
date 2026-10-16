@@ -18,7 +18,21 @@
     </style>
 
 
+    <!-- Пускова тема. Два виправлення по плейтесту релізної збірки 16.10.
+         1. `windowActionBar`/`windowNoTitle` — без них над грою на **кожному** екрані висіла біла
+            смуга із заголовком «Inside the Box». Capacitor перемикає активність на
+            `AppTheme.NoActionBar` у `BridgeActivity.onCreate`, але наш `MainActivity` ще до
+            `super.onCreate` викликає `EdgeToEdge.enable`, а той чіпає decor — і AppCompat встигає
+            зібрати його з заголовком за пусковою темою. Надійніше не перебудовувати порядок
+            виклику, а прибрати заголовок із самої пускової теми: тоді черговість не важлива.
+            `postSplashScreenTheme` додано поруч — штатний спосіб передати керування справжній темі.
+         2. Фон — колір гри замість `@drawable/splash`: та картинка це дефолтна заставка Capacitor
+            (білий аркуш із блакитним логотипом), і запуск починався зі спалаху чужого бренду. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">#12141a</item>
+        <item name="windowSplashScreenBackground">#12141a</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

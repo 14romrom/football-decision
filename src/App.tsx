@@ -53,6 +53,7 @@ import { Film } from './ui/Film';
 import { AgentScene } from './ui/AgentScene';
 import { agentPending, resolveAgent, type AgentChoice } from './engine/agent';
 import { TitleScreen } from './ui/TitleScreen';
+import { LaunchScreen } from './ui/LaunchScreen';
 import { Sticker } from './ui/Sticker';
 import { SlotsScreen } from './ui/SlotsScreen';
 import { SettingsScreen } from './ui/SettingsScreen';
@@ -957,8 +958,13 @@ function Game() {
   );
 }
 
+// Екран запуску показується один раз на завантаження застосунку, а не на кожен повернений титул:
+// прапорець живе в модулі, тому «Назад» із налаштувань не програє заставку знову.
+let launched = false;
+
 export function App() {
   const [route, setRoute] = useState(() => location.hash);
+  const [launching, setLaunching] = useState(() => !launched);
   useEffect(() => {
     applySettings();
     const onHash = () => { setRoute(location.hash); window.scrollTo(0, 0); };
@@ -966,9 +972,16 @@ export function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
   const go = (hash: string) => { location.hash = hash; };
+  // Заставка лежить **поверх** уже змонтованого екрана і гасне в нього: так перехід виходить
+  // розчиненням, а не підміною кадру.
+  const launch = launching
+    ? <LaunchScreen onDone={() => { launched = true; setLaunching(false); }} />
+    : null;
   // Титул — корень (#/); игра живёт на #/play, чтобы «Назад» с картки и статистики вёл в игру, а не на титул.
   if (route === '' || route === '#' || route === '#/') {
     return (
+      <>
+      {launch}
       <TitleScreen
         onContinue={() => go('#/play')}
         // Первый запуск на пустом устройстве — сразу на поле; слоты показываем, когда есть что беречь.
@@ -976,6 +989,7 @@ export function App() {
         onSettings={() => go('#/settings')}
         onAbout={() => go('#/about')}
       />
+      </>
     );
   }
   if (route.startsWith('#/slots')) return <><Film /><SlotsScreen onStart={() => go('#/play')} onBack={() => go('#/')} /></>;

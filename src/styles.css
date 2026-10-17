@@ -1040,7 +1040,10 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .set-btn { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 0; text-align: left; font: inherit; }
 .set-btn:active { background: #131316; }
 .set.danger .l { color: var(--bad-soft); } .set.danger .v { color: var(--bad-soft); }
-.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 4px; overflow: hidden; font-family: var(--font-mono); font-size: 11.5px; }
+/* Перемикач не стискається: з довгим підписом зліва flex ужимав його, і `overflow: hidden` різав другий
+   варіант («українська | E…», 17.10). Ужимається підпис — він переноситься. */
+.seg { display: inline-flex; flex: none; border: 1px solid var(--line-2); border-radius: 4px; overflow: hidden; font-family: var(--font-mono); font-size: 11.5px; }
+.set .l { flex: 1; min-width: 0; }
 .seg button { padding: 7px 10px; min-height: 36px; color: var(--muted); background: none; border: 0; border-radius: 0; font: inherit; }
 .seg button.on { background: var(--cream); color: #141413; }
 .toggle { width: 44px; height: 26px; border-radius: 13px; background: var(--dim); border: 0; padding: 0; position: relative; flex: none; }

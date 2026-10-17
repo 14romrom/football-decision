@@ -96,7 +96,7 @@ describe('реплика знает сцену', () => {
         for (const e of events) {
           if (!e.flavor) continue;
           expect(e.flavor, e.flavor).not.toMatch(/\{[a-z]/);
-          if (/Кнапп|Мораес|Феррейра|Ларссон|Тібо/.test(e.flavor)) sawName = true;
+          if (/Кнапп|Мораес|Майер|Ларссон|Тібо/.test(e.flavor)) sawName = true;
         }
       }
     }

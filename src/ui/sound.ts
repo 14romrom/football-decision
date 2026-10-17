@@ -8,6 +8,7 @@ import type { Tier } from '../engine/types';
 // навмисно (рішення користувача 17.10): тоді треба розводити дім і виїзд, а запис був слабкий.
 // Де тиша навмисно: ESPM, «Y» і дошка аналітика — чужі екрани; прожектори першого матчу.
 // «Менше руху» звуків не вимикає — це окремий перемикач «Звуки» в налаштуваннях.
+// Тема меню (17.10, «Hired Hand», вибір користувача) — безперервна петля поза матчем, свій перемикач «Музика».
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -18,6 +19,10 @@ let amb: { s: AudioBufferSourceNode; g: GainNode } | null = null;
 /** Контекст створюється ліниво на першому звуці: браузер дозволяє звук лише після дотику гравця. */
 function ac(): AudioContext | null {
   if (!readSettings().sound) return null;
+  return context();
+}
+/** Сам контекст — без перевірки «Звуків»: музика вмикається своїм перемикачем. */
+function context(): AudioContext | null {
   try {
     if (!ctx) {
       const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
@@ -155,6 +160,10 @@ export function installUiSounds() {
     else if (el.closest('.nb-note')) sfxPencil();
     else if (el.closest('.nb-sheet-btn, .de-next')) sfxPage();
   }, { capture: true });
+  // Браузер дає звук лише після дотику: перший дотик заодно запускає тему, якщо вона мала грати.
+  document.addEventListener('pointerdown', () => {
+    if (ctx?.state === 'suspended') void ctx.resume().then(refreshMusic); else refreshMusic();
+  }, { capture: true });
   // Згорнули застосунок — тиша, гул не грає з кишені.
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return;
@@ -246,4 +255,41 @@ export function sfxLaunch(calm: boolean): boolean {
   }
   stampAt(t0 + 3.3);
   return true;
+}
+
+// ——— тема меню ———————————————————————————————————————————————————————————————
+/** Петля теми: перший раз трек звучить цілком, із тихим вступом; далі — від LOOP_START до LOOP_END.
+ *  Шов (3 с перехресного згасання) вшито в кінець файла (scratchpad sfx/theme.py: a=3,8, b=170,5,
+ *  найдовша петля, де тембр і гучність на шві збігаються) — повтор раз на 2 хв 47 с. */
+const LOOP_START = 6.8, LOOP_END = 173.5, MUSIC_GAIN = 0.28;
+let musicWanted = false;
+/** Відкрито матч: теми немає, хто б її не вмикав (порядок ефектів React тут не має значення). */
+let inMatch = false;
+let mus: { s: AudioBufferSourceNode; g: GainNode } | null = null;
+
+/** Тема грає скрізь, крім матчу: титул, пролог, зошит, ESPM, «Y», дошка. Матч — гул стадіону. */
+export function music(on: boolean) { musicWanted = on; refreshMusic(); }
+
+/** Матч на екрані: тема поступається гулу стадіону, після матчу повертається. */
+export function matchAudio(on: boolean) { inMatch = on; ambience(on); refreshMusic(); }
+
+/** Звести тему до бажаного стану: перемикач «Музика», чи має вона зараз грати, чи дозволив браузер. */
+export function refreshMusic() {
+  const want = musicWanted && !inMatch && readSettings().music;
+  const c = want ? context() : ctx;
+  if (!want) {
+    if (!mus || !c) return;
+    const m = mus; mus = null; const t = c.currentTime;
+    m.g.gain.cancelScheduledValues(t); m.g.gain.setValueAtTime(m.g.gain.value, t); m.g.gain.linearRampToValueAtTime(0, t + 2);
+    m.s.stop(t + 2.1);
+    return;
+  }
+  if (mus || !c || c.state !== 'running' || !master) return;
+  void buffer(c, 'menu_theme').then((b) => {
+    if (!b || mus || !master || !(musicWanted && !inMatch && readSettings().music)) return;
+    const s = c.createBufferSource(), g = c.createGain();
+    s.buffer = b; s.loop = true; s.loopStart = LOOP_START; s.loopEnd = LOOP_END;
+    g.gain.setValueAtTime(0, c.currentTime); g.gain.linearRampToValueAtTime(MUSIC_GAIN, c.currentTime + 2.5);
+    s.connect(g).connect(master); s.start(); mus = { s, g };
+  });
 }

@@ -9,7 +9,7 @@ import { availableOptions, sceneInsights } from '../engine/match';
 import { VOICE_LABEL } from '../engine/voices';
 import { Pitch } from './Pitch';
 import { useEffect } from 'react';
-import { ambience } from './sound';
+import { matchAudio } from './sound';
 import { Icon } from './icons';
 import { plural, t, tf } from '../content/i18n';
 
@@ -103,7 +103,8 @@ export function MatchScreen({
   const scoreTone = scoreUs > scoreThem ? 'lead' : scoreUs < scoreThem ? 'trail' : '';
 
   // Гул стадіону — поки відкритий матч, і під листами теж: стадіон не затихає, коли Реєс думає.
-  useEffect(() => { ambience(true); return () => ambience(false); }, []);
+  // Тема меню на матчі поступається гулу і повертається після свистка (коли матч знято з екрана).
+  useEffect(() => { matchAudio(true); return () => matchAudio(false); }, []);
   return (
     <div className="match de-match">
       <Film />

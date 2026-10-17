@@ -3,7 +3,7 @@ import { Film } from './Film';
 import { Logo } from './Logo';
 import { readSettings } from '../telemetry/settings';
 import { titleFilmLabels } from './TitleScreen';
-import { sfxLaunch } from './sound';
+import { music, sfxLaunch } from './sound';
 
 // Екран запуску «Звук першим» (17.10, макет «Заставка „Звук первым“», варіант А; затверджено
 // з поправкою «на секунду довше»). Задача заставки — не показати логотип, а задати тон і стати
@@ -51,6 +51,7 @@ export function LaunchScreen({ onDone }: Props) {
     finished.current = true;
     timers.current.forEach((id) => { window.clearTimeout(id); window.clearInterval(id); });
     document.documentElement.classList.remove('launching');
+    music(true);
     onDone();
   };
 
@@ -76,7 +77,7 @@ export function LaunchScreen({ onDone }: Props) {
         add(() => { window.clearInterval(reel); setStage('b'); setShown(roll); if (!played) buzz(18); }, T.dieB - T.dice);
       }, T.dice);
       add(() => { setStage('stamp'); if (!played) buzz(70); }, T.stamp);
-      add(() => setStage('reveal'), T.reveal);
+      add(() => { setStage('reveal'); music(true); }, T.reveal);
       add(() => setStage('settle'), T.settle);
       add(finish, T.done);
     }

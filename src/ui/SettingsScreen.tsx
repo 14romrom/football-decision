@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { readSettings, writeSettings, type Settings } from '../telemetry/settings';
+import { refreshMusic } from './sound';
 import { readSlotSummary, resetSlot } from '../telemetry/saves';
 import { activeSlot } from '../telemetry/slots';
 import { exportLogs } from '../telemetry/log';
@@ -53,7 +54,7 @@ export function SettingsScreen({ onBack, onWiped, backLabel, inMatch = false }: 
   const [wound, setWound] = useState<FastForwardResult | null>(null);
   const wind = (target: AutoTarget) => { setConfirmWind(false); setWound(fastForward(target)); };
   const slot = readSlotSummary(activeSlot());
-  const set = (patch: Partial<Settings>) => { const next = { ...s, ...patch }; setS(next); writeSettings(next); };
+  const set = (patch: Partial<Settings>) => { const next = { ...s, ...patch }; setS(next); writeSettings(next); refreshMusic(); };
   const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
   const [tester, setTester] = useState(testerOpen);
   const [taps, setTaps] = useState(0);
@@ -81,6 +82,10 @@ export function SettingsScreen({ onBack, onWiped, backLabel, inMatch = false }: 
       <div className="set">
         <div className="l">{t('Звуки')}<small>{t('Кубики, штамп, свисток, трибуни, папір')}</small></div>
         <Toggle name={t('Звуки')} on={s.sound} onChange={(v) => set({ sound: v })} />
+      </div>
+      <div className="set">
+        <div className="l">{t('Музика')}<small>{t('Гітара поза матчем')}</small></div>
+        <Toggle name={t('Музика')} on={s.music} onChange={(v) => set({ music: v })} />
       </div>
       <div className="set">
         <div className="l">{t('Гул стадіону')}<small>{t('Тихий фон під матчем')}</small></div>

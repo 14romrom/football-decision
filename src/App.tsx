@@ -54,6 +54,7 @@ import { AgentScene } from './ui/AgentScene';
 import { agentPending, resolveAgent, type AgentChoice } from './engine/agent';
 import { TitleScreen } from './ui/TitleScreen';
 import { LaunchScreen } from './ui/LaunchScreen';
+import { music } from './ui/sound';
 import { ScreenWipe } from './ui/ScreenWipe';
 import { Sticker } from './ui/Sticker';
 import { SlotsScreen } from './ui/SlotsScreen';
@@ -1004,6 +1005,8 @@ export function App() {
   const [launching, setLaunching] = useState(() => !launched);
   useEffect(() => {
     applySettings();
+    // Без заставки (відкрили не титул) тема вмикається одразу; на матчі її притримає matchAudio.
+    if (launched) music(true);
     const onHash = () => { setRoute(location.hash); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);

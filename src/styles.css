@@ -1241,8 +1241,8 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 .prematch .stk-compact { margin: 14px 0 0; background: var(--panel); border: 1px solid var(--line-2); }
 .prematch .stk-compact:hover { border-color: #4a463c; }
 /* Афорданс картки (28.09): шеврон із підписом «картка» — її відкривають рідко, тому вона має сказати
-   про себе сама, без здогадок. */
-.stk-compact::after { content: '› картка'; position: absolute; right: 12px; bottom: 10px;
+   про себе сама, без здогадок. Текст — у `data-hint` через t(): рядок у CSS не перекладається (17.10). */
+.stk-compact::after { content: '› ' attr(data-hint); position: absolute; right: 12px; bottom: 10px;
   font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
 .stk-compact { position: relative; }
 .pm-coach { margin: 16px 0 0; border-left: 3px solid var(--bad); padding: 2px 0 2px 13px; }

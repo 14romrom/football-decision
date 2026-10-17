@@ -67,7 +67,7 @@ export function Sticker({ player, career, season, club, dominant, compact, brief
 
   if (compact) {
     return (
-      <Tag className="stk stk-compact" onClick={onOpen} aria-label={onOpen ? t('Картка гравця') : undefined}>
+      <Tag className="stk stk-compact" onClick={onOpen} aria-label={onOpen ? t('Картка гравця') : undefined} data-hint={t('картка')}>
         <span className="stk-frame"><img src="./img/portrait.webp" width="450" height="600" alt="" decoding="async" /></span>
         <span className="stk-side">
           <span className="stk-band">{player.name}</span>

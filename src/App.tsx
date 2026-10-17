@@ -401,6 +401,10 @@ function Game() {
       return {
         ...p, text: f(p.text), account: { ...p.account, name: f(p.account.name) },
         reply: p.reply ? { account: { ...p.reply.account, name: f(p.reply.account.name) }, text: f(p.reply.text) } : undefined,
+        // Варіанти опитування й відповіді гравця теж текст поста: без цього на екрані лишалися
+        // «{sub} в основу» і «{self}» (17.10, знайдено в трейлері; 6 опитувань і 3 відповіді).
+        ...(p.poll ? { poll: p.poll.map((o) => ({ ...o, text: f(o.text) })) } : {}),
+        ...(p.replyOptions ? { replyOptions: p.replyOptions.map((o) => ({ ...o, text: f(o.text), reaction: f(o.reaction) })) } : {}),
       };
     });
   }, []);

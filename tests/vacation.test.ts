@@ -35,7 +35,7 @@ describe('відпустка', () => {
     expect(window.options).toEqual([]);
     const windowText = window.sheet.join(' ');
     expect(windowText).toMatch(/скасовано/);
-    expect(windowText).toMatch(/три тижні/);
+    expect(windowText).toMatch(/[Тт]ри тижні/);
     expect(windowText).toMatch(/вікн/);
     expect(windowText).toMatch(/[Мм]ісяць/);
     // Канон травми (M35): жодних трансплантатів і швів — тут розтягнення, розрив лишився в пролозі.

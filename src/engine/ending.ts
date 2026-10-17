@@ -24,15 +24,20 @@ export type EndingContent = {
   scoutLead?: Record<'team' | 'shot', string>;
 };
 
-/** Лист дзвінка з рядком про те, кого привело твоє рішення навесні (M28). Без `scoutSaw` — як було. */
+/** Лист дзвінка з рядком про те, кого привело твоє рішення навесні (M28). Без `scoutSaw` — як було.
+ *  Рядок стоїть **другим** листом, після дзвінка скаута, а не першим (17.10): першим він казав «дзвонить
+ *  клуб» / «дзвонить агент», а наступний лист — «дзвонить не агент — скаут», і гравець читав два
+ *  різні дзвінки. Тепер дзвонить завжди скаут, а весняний момент — продовження тієї самої розмови
+ *  (передача) або вечірній дзвінок агента (удар). */
 export function endingSpreads(content: EndingContent, scoutSaw: 'team' | 'shot' | undefined): EndingSpread[] {
   const lead = scoutSaw && content.scoutLead?.[scoutSaw];
   if (!lead) return content.spreads;
+  const withLead = (pages: string[]) => [...pages.slice(0, 1), lead, ...pages.slice(1)];
   return content.spreads.map((s) => (s.id !== 'call' ? s : {
     ...s,
-    sheet: [lead, ...s.sheet],
-    ...(s.sheetBy ? { sheetBy: Object.fromEntries(Object.entries(s.sheetBy).map(([v, pages]) => [v, [lead, ...(pages ?? [])]])) as typeof s.sheetBy } : {}),
-    ...(s.sheetCold ? { sheetCold: [lead, ...s.sheetCold] } : {}),
+    sheet: withLead(s.sheet),
+    ...(s.sheetBy ? { sheetBy: Object.fromEntries(Object.entries(s.sheetBy).map(([v, pages]) => [v, withLead(pages ?? [])])) as typeof s.sheetBy } : {}),
+    ...(s.sheetCold ? { sheetCold: withLead(s.sheetCold) } : {}),
   }));
 }
 export type EndingPick = { spread: string; option: string };

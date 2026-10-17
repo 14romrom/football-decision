@@ -41,10 +41,12 @@ describe('останній дзвінок', () => {
     // Кульмінація через рішення: хто дзвонить — клуб, який бачив передачу, чи агент із вітриною.
     expect(Object.keys(ENDING.scoutLead!).sort()).toEqual(['shot', 'team']);
     const team = endingSpreads(ENDING, 'team')[0];
-    expect(team.sheet[0]).toContain('віддали');
+    // Другим листом, після дзвінка скаута: першим він читався як окремий дзвінок (17.10).
+    expect(team.sheet[0]).toContain('скаут');
+    expect(team.sheet[1]).toContain('віддали');
     expect(team.sheet.length).toBe(ENDING.spreads[0].sheet.length + 1);
-    for (const v of Object.values(team.sheetBy ?? {})) expect(v![0]).toContain('віддали');
-    expect(endingSpreads(ENDING, 'shot')[0].sheet[0]).toContain('агент');
+    for (const v of Object.values(team.sheetBy ?? {})) expect(v![1]).toContain('віддали');
+    expect(endingSpreads(ENDING, 'shot')[0].sheet[1]).toContain('агент');
     expect(endingSpreads(ENDING, undefined)).toBe(ENDING.spreads);
     // M28: журналіст знімає своє слово, а не каже «Ясно», — і слово це справді було в колонці стану арки 1.
     const calm = ENDING.spreads.find((s) => s.id === 'interview')!.options.find((o) => o.id === 'int_calm')!;

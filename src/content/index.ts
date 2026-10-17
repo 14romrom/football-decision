@@ -14,6 +14,7 @@ import agentJsonRaw from './agent.json';
 import espmJsonRaw from './espm.json';
 import shotsJsonRaw from './shots.json';
 import chaptersJsonRaw from './chapters.json';
+import adbreaksJsonRaw from './adbreaks.json';
 import { BASE_LANG, LANG, tr, type Lang } from './i18n';
 
 // Переклад — одна точка на весь проєкт (M47): контент підміняється тут, при завантаженні модуля,
@@ -35,6 +36,7 @@ const agentJson = tr(agentJsonRaw);
 const espmJson = tr(espmJsonRaw);
 const shotsJson = tr(shotsJsonRaw);
 const chaptersJson = tr(chaptersJsonRaw);
+const adbreaksJson = tr(adbreaksJsonRaw);
 import { fillNamesDeep, type Roster, type TeamRoster, type NameForms } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
 import type { Strength } from '../engine/conditions';
@@ -129,6 +131,10 @@ export const ACTIVITIES = activitiesJson as Activity[];
 export const WEEK_SCENES = weekscenesJson as WeekScene[];
 /** Реклама на сторінці ESPM (engine/espm.ts): абсурд у форматах справжньої, без брендів і букмекерів. */
 export const ADS = adsJson as AdRule[];
+/** Паузи в матчі під рекламу (M48, тексти 17.10; показ ще не підключено — чекає AdMob): лист
+ *  оповідача — що сталося, три репліки голосів, підпис під «Чекати». Імена — плейсхолдерами ростера. */
+export type AdBreak = { id: string; setup: string; voices: { voice: string; line: string }[]; note: string };
+export const AD_BREAKS = adbreaksJson as AdBreak[];
 /** Пролог — тиждень нуль (engine/prologue.ts): три розвороти зі стікерами голосів; імена — при показі. */
 export const PROLOGUE = prologueJson as PrologueSpread[];
 export const VACATION = vacationJson as VacationSpread[];

@@ -8,6 +8,8 @@ export type Settings = {
   dice: 'reel' | 'instant';
   /** Вибрация на штампе вердикта (navigator.vibrate — есть в Android WebView, на iOS молчит). */
   haptics: boolean;
+  /** Звуки кидка, штампа, листів і зошита (ui/sound.ts, 17.10). Окремо від «менше руху». */
+  sound: boolean;
   /** Дублирует системный prefers-reduced-motion: на Android его мало кто находит. */
   reduceMotion: boolean;
   textSize: 'normal' | 'large';
@@ -24,7 +26,7 @@ const TITLE_SEEN_KEEP = 24;
 
 // Мова за умовчанням — українська, навіть якщо пристрій англійський: екран вибору мови
 // (M46) ставить її явно при першому запуску, і доти гра не має вгадувати за гравця.
-export const DEFAULT_SETTINGS: Settings = { dice: 'reel', haptics: true, reduceMotion: false, textSize: 'normal', hints: true, lang: 'uk' };
+export const DEFAULT_SETTINGS: Settings = { dice: 'reel', haptics: true, sound: true, reduceMotion: false, textSize: 'normal', hints: true, lang: 'uk' };
 
 export function readSettings(): Settings {
   try {

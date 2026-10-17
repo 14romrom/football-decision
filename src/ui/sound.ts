@@ -1,0 +1,154 @@
+import { readSettings } from '../telemetry/settings';
+import type { Tier } from '../engine/types';
+
+// Звуки гри (17.10, макет «Звуки», затверджено: кидок, катастрофа, критичний успіх, листи й тиждень).
+// Усе синтезується Web Audio прямо тут, без файлів: APK офлайн, і вага не росте. Свисток, трибуни
+// на гол і гул стадіону сюди не входять — для них користувач збирає записи (див. README, «Звуки»).
+// Де тиша навмисно: ESPM, «Y» і дошка аналітика — чужі екрани; прожектори першого матчу.
+// «Менше руху» звуків не вимикає — це окремий перемикач «Звуки» в налаштуваннях.
+
+let ctx: AudioContext | null = null;
+let master: GainNode | null = null;
+const noiseBuf: Record<string, AudioBuffer> = {};
+
+/** Контекст створюється ліниво на першому звуці: браузер дозволяє звук лише після дотику гравця. */
+function ac(): AudioContext | null {
+  if (!readSettings().sound) return null;
+  try {
+    if (!ctx) {
+      const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = 0.8; master.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') void ctx.resume();
+    return ctx;
+  } catch { return null; }
+}
+
+function noise(c: AudioContext, kind: 'white' | 'brown' | 'pink', sec = 2): AudioBuffer {
+  const key = kind + sec;
+  if (noiseBuf[key]) return noiseBuf[key];
+  const n = Math.floor(c.sampleRate * sec), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+  let last = 0, p0 = 0, p1 = 0, p2 = 0;
+  for (let i = 0; i < n; i++) {
+    const w = Math.random() * 2 - 1;
+    if (kind === 'brown') { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; }
+    else if (kind === 'pink') { p0 = 0.99765 * p0 + w * 0.099; p1 = 0.963 * p1 + w * 0.2965; p2 = 0.57 * p2 + w * 1.0527; d[i] = (p0 + p1 + p2 + w * 0.1848) * 0.2; }
+    else d[i] = w;
+  }
+  return (noiseBuf[key] = b);
+}
+
+function env(g: GainNode, t: number, a: number, peak: number, d: number) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + a);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + a + d);
+}
+
+type Burst = { kind?: 'white' | 'brown' | 'pink'; type?: BiquadFilterType; f?: number; q?: number; a?: number; d?: number; peak?: number };
+function burst(c: AudioContext, t: number, { kind = 'white', type = 'bandpass', f = 2000, q = 1, a = 0.002, d = 0.05, peak = 0.3 }: Burst = {}) {
+  const s = c.createBufferSource(); s.buffer = noise(c, kind, 2);
+  const fl = c.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+  const g = c.createGain(); env(g, t, a, peak, d);
+  s.connect(fl).connect(g).connect(master!);
+  s.start(t, Math.random() * 1.5); s.stop(t + a + d + 0.05);
+}
+
+type Tone = { f?: number; f2?: number; type?: OscillatorType; a?: number; d?: number; peak?: number };
+function tone(c: AudioContext, t: number, { f = 440, f2, type = 'sine', a = 0.003, d = 0.2, peak = 0.3 }: Tone = {}) {
+  const o = c.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f, t);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + a + d);
+  const g = c.createGain(); env(g, t, a, peak, d);
+  o.connect(g).connect(master!); o.start(t); o.stop(t + a + d + 0.05);
+}
+
+const at = (c: AudioContext, delaySec = 0) => c.currentTime + 0.02 + delaySec;
+
+/** Барабан: сухий тріск, як у колеса лотереї, поки грані перебираються. */
+export function sfxReel(durSec: number) {
+  const c = ac(); if (!c) return;
+  const t = at(c);
+  for (let x = 0; x < durSec; x += 0.06) burst(c, t + x + Math.random() * 0.006, { f: 2600 + Math.random() * 1400, q: 6, d: 0.012, peak: 0.12 });
+}
+
+/** Кубик ліг — у момент зупинки, кожен окремо. */
+export function sfxDie() {
+  const c = ac(); if (!c) return;
+  const t = at(c);
+  tone(c, t, { f: 210, f2: 95, d: 0.09, peak: 0.45 });
+  burst(c, t, { f: 1300, q: 1.5, d: 0.04, peak: 0.35 });
+  burst(c, t + 0.05, { f: 2200, q: 4, d: 0.02, peak: 0.08 });
+  burst(c, t + 0.09, { f: 2400, q: 4, d: 0.015, peak: 0.04 });
+}
+
+function thump(c: AudioContext, t: number, low: number, peak: number, len: number) {
+  tone(c, t, { f: low * 2, f2: low, d: len, peak });
+  burst(c, t, { type: 'lowpass', f: 900, q: 0.7, d: 0.06, peak: peak * 0.8 });
+  burst(c, t + 0.004, { f: 3200, q: 0.8, d: 0.03, peak: peak * 0.25 });
+}
+function bell(c: AudioContext, t: number, freqs: number[], peak: number, d: number) {
+  freqs.forEach((f, i) => tone(c, t + i * 0.012, { f, d, peak: peak / (1 + i * 0.4), a: 0.004 }));
+}
+/** Трибуна видихає — тільки під катастрофу, як у сцені «Катастрофа» макета. */
+function groan(c: AudioContext, t: number) {
+  const s = c.createBufferSource(); s.buffer = noise(c, 'pink', 4); s.loop = true;
+  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.6;
+  bp.frequency.setValueAtTime(1100, t); bp.frequency.linearRampToValueAtTime(380, t + 2.05);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.15);
+  g.gain.setValueAtTime(0.35, t + 0.45); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.05);
+  const trem = c.createGain(); trem.gain.value = 0.75;
+  const lfo = c.createOscillator(); lfo.frequency.value = 5.5; const lg = c.createGain(); lg.gain.value = 0.25; lfo.connect(lg).connect(trem.gain);
+  s.connect(bp).connect(trem).connect(g).connect(master!); s.start(t); lfo.start(t);
+  s.stop(t + 2.15); lfo.stop(t + 2.15);
+}
+
+/** Штамп ісходу: чотири ваги, як чотири ісходи, і золотий дзвін на криті. */
+export function sfxStamp(tier: Tier, crit: boolean) {
+  const c = ac(); if (!c) return;
+  const t = at(c);
+  if (crit) { thump(c, t, 70, 0.6, 0.16); bell(c, t + 0.02, [880, 1318, 1760, 2637], 0.09, 1.6); return; }
+  if (tier === 'clean') { thump(c, t, 70, 0.6, 0.16); bell(c, t + 0.01, [1318], 0.05, 0.35); }
+  else if (tier === 'cost') thump(c, t, 62, 0.55, 0.16);
+  else if (tier === 'fail') thump(c, t, 52, 0.5, 0.2);
+  else { thump(c, t, 40, 0.75, 0.32); burst(c, t, { kind: 'brown', type: 'lowpass', f: 220, d: 0.6, peak: 0.5 }); groan(c, t + 0.35); }
+}
+
+/** Лист: шерех паперу, ледве чутно. */
+export function sfxPage() {
+  const c = ac(); if (!c) return;
+  const t = at(c);
+  for (let i = 0; i < 5; i++) burst(c, t + i * 0.035 + Math.random() * 0.02, { type: 'highpass', f: 2500 + Math.random() * 2000, q: 0.7, a: 0.01, d: 0.05, peak: 0.05 });
+  burst(c, t + 0.12, { f: 1200, q: 0.8, a: 0.03, d: 0.12, peak: 0.04 });
+}
+
+/** Вибір варіанта — короткий клац, щоб було ясно: натиснуто. */
+export function sfxClick() {
+  const c = ac(); if (!c) return;
+  const t = at(c);
+  burst(c, t, { f: 3800, q: 2, d: 0.008, peak: 0.25 });
+  tone(c, t, { f: 1600, d: 0.02, peak: 0.04 });
+}
+
+/** Олівець у зошиті: справу обведено. */
+export function sfxPencil() {
+  const c = ac(); if (!c) return;
+  const t = at(c);
+  for (let x = 0; x < 0.42; x += 0.028) burst(c, t + x, { f: 4200 + Math.sin(x * 40) * 900, q: 3, a: 0.004, d: 0.025, peak: 0.05 + 0.03 * Math.sin(x * 22) ** 2 });
+}
+
+/** Клац, лист і олівець — одним делегованим слухачем, а не правками в кожному екрані: ті самі класи
+ *  кнопок уже означають ті самі дії скрізь (варіант — `.choice`, «Далі» листа — `.nb-sheet-btn` /
+ *  `.de-next`, справа тижня — `.nb-note`). Кнопки ESPM, «Y» і дошки цих класів не мають — там тиша. */
+export function installUiSounds() {
+  if (typeof document === 'undefined') return;
+  document.addEventListener('click', (e) => {
+    const el = e.target instanceof Element ? e.target : null;
+    if (!el) return;
+    if (el.closest('.choice')) sfxClick();
+    else if (el.closest('.nb-note')) sfxPencil();
+    else if (el.closest('.nb-sheet-btn, .de-next')) sfxPage();
+  }, { capture: true });
+}

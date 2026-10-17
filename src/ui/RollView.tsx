@@ -5,6 +5,7 @@ import { VOICE_LABEL } from '../engine/voices';
 import { pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
 import { Icon } from './icons';
 import { motionReduced, readSettings, vibrate } from '../telemetry/settings';
+import { sfxDie, sfxReel, sfxStamp } from './sound';
 import { t, tf } from '../content/i18n';
 
 // Кидок і результат (правка 19.09 после первой версии Г: «дубли и сложно»). Карточка строится
@@ -91,9 +92,19 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   const critGood = res.critical === 'success';
   useEffect(() => {
     if (stage < S_VERDICT) return;
-    if (stage === S_VERDICT || stage === LAST) { vibrate(critGood ? [30, 40, 30, 40, 70] : (HAPTIC[res.tier] ?? 30)); onVerdict?.(); }
+    if (stage === S_VERDICT || stage === LAST) { vibrate(critGood ? [30, 40, 30, 40, 70] : (HAPTIC[res.tier] ?? 30)); sfxStamp(res.tier, critGood); onVerdict?.(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage >= S_VERDICT]);
+  // Звук кубиків іде за тим самим розкладом, що й картинка: кожен кубик стукає, коли встає. «Одразу» —
+  // обидва стоять із першого кадру, тож і стук один подвійний, без барабана.
+  useEffect(() => {
+    if (!instant && (stage === 1 || stage === 2)) sfxDie();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage]);
+  useEffect(() => {
+    if (instant) { sfxDie(); setTimeout(sfxDie, 90); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [option.id, res.roll]);
   useEffect(() => {
     if (stage >= LAST) return;
     const t = setTimeout(() => setStage((s) => s + 1), schedule[stage + 1] - schedule[stage]);
@@ -111,6 +122,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   // бросок, не на стадию: иначе замедление сбрасывалось бы при каждом шаге расписания.
   useEffect(() => {
     if (motionReduced() || instant) { setSpin([0, 0]); return; }
+    sfxReel(T_DIE2 / 1000);
     const stop1 = reel(res.dice[0], T_DIE1, (v) => setSpin((s) => [v, s[1]]));
     const stop2 = reel(res.dice[1], T_DIE2, (v) => setSpin((s) => [s[0], v]));
     return () => { stop1(); stop2(); };

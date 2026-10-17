@@ -1,6 +1,7 @@
 // Стрічка між матчами (posts.json, engine/posts.ts): реальные клубы — да, реальные люди — нет;
 // посты знают тур, таблицу и следующего соперника; за сезон не повторяются.
 import { describe, it, expect } from 'vitest';
+import { readdirSync } from 'node:fs';
 import { makeRng } from '../src/engine/rng';
 import { createSeason, ourFixture, recordRound, US } from '../src/engine/season';
 import { defaultCareer } from '../src/engine/career';
@@ -42,6 +43,15 @@ describe('стрічка: контент', () => {
     expect(count('world')).toBeGreaterThanOrEqual(60);
     expect(count('cross')).toBeGreaterThanOrEqual(15);
     expect(count('meta')).toBeGreaterThanOrEqual(20);
+  });
+
+  // Аватар шукається за хендлом (ui/PostsScreen.tsx:Avatar), тож перейменований хендл без файлу мовчки
+  // дає літеру на колі: так 16.10 три акаунти-вивіски втратили іконки (знайдено в трейлері 17.10).
+  it('у кожного акаунта є аватар під його хендлом, файлів-сиріт немає', () => {
+    const files = new Set(readdirSync('public/img/avatars').filter((f) => f.endsWith('.webp')).map((f) => f.slice(0, -5)));
+    const handles = new Set(Object.values(POSTS.accounts).map((a) => a.handle.replace(/^@/, '')));
+    expect([...handles].filter((h) => !files.has(h))).toEqual([]);
+    expect([...files].filter((f) => !handles.has(f))).toEqual([]);
   });
 
   it('плейсхолдеры разрешаются любым ростером; реальных людей по имени нет', () => {

@@ -1,6 +1,7 @@
 import type { Stage } from '../engine/feed';
 import type { FinaleKind } from '../engine/finale';
 import type { Kit } from '../engine/names';
+import { sfxBoo, sfxGoal, sfxKick, sfxOoh, sfxPost, sfxWhistle } from './sound';
 
 // Режисер поля (17.10, макет «Постановка стрічки»). Поле — не схема на всі 105 метрів, а камера, що
 // показує третину, де йде гра, і фішки у формах команд. Кожен рядок стрічки приходить із постановкою
@@ -56,6 +57,8 @@ export type DirectorOptions = {
   /** Підписи фішок: id → ім'я. Показуються лише тим, кого називає рядок, і Реєсу завжди. */
   names: Record<string, string>;
   reduced: boolean;
+  /** Вища ліга — рев великого стадіону на гол (ui/sound.ts). */
+  top?: boolean;
 };
 
 type Token = { g: SVGGElement; body: SVGGElement; label?: SVGTextElement; ring?: SVGCircleElement; glow?: SVGCircleElement; p: P };
@@ -73,6 +76,9 @@ export class Director {
   private run = 0;
   private home: Record<string, P>;
   private reduced: boolean;
+  private top: boolean;
+  /** Фоновий розіграш — удари тихіші. */
+  private idling = false;
   private nets: Record<'us' | 'them', SVGRectElement> = {} as Record<'us' | 'them', SVGRectElement>;
   private bars: Record<'us' | 'them', SVGLineElement> = {} as Record<'us' | 'them', SVGLineElement>;
   private flashRect!: SVGRectElement;
@@ -89,6 +95,7 @@ export class Director {
   constructor(svg: SVGSVGElement, opt: DirectorOptions) {
     this.svg = svg;
     this.reduced = opt.reduced;
+    this.top = !!opt.top;
     this.names = opt.names;
     this.home = { ...US_HOME, ...THEM_HOME[opt.formation], ref: [52, 44], med: [44, -3.2], sub: BENCH };
     svg.textContent = '';
@@ -272,6 +279,8 @@ export class Director {
     }
     const arc = o.arc ?? 0;
     const mid: P | null = o.ball ? [(b0[0] + o.ball[0]) / 2, (b0[1] + o.ball[1]) / 2 - arc] : null;
+    // Звук удару — разом із передачею: м'яч пішов далі ніж на 4 м (не перекат біля ніг).
+    if (o.ball && dist(b0, o.ball) > 4) sfxKick(this.idling ? 0.22 : 0.45);
     if (o.ball && dist(b0, o.ball) > 4) { this.trail.setAttribute('d', `M${b0[0]},${b0[1]} Q${mid![0]},${mid![1]} ${o.ball[0]},${o.ball[1]}`); this.trail.setAttribute('opacity', '.55'); }
     await this.tween(dur, (k) => {
       if (my !== this.run) return;
@@ -294,12 +303,13 @@ export class Director {
   private point(at: P, deg: number) { this.pointer.setAttribute('transform', `translate(${at[0] + 1.4},${at[1] - 1}) rotate(${deg})`); this.pointer.setAttribute('opacity', '1'); }
   private showCard(at: P, red: boolean) { this.card.setAttribute('x', String(at[0] - .5)); this.card.setAttribute('y', String(at[1] - 4.6)); this.card.classList.toggle('red', red); this.card.setAttribute('opacity', '1'); }
   private async flashOn(side: 'us' | 'them') {
+    sfxGoal(side === 'us', this.top);
     this.flashRect.classList.toggle('them', side === 'them');
     this.nets[side === 'us' ? 'them' : 'us'].classList.add('hit');
     await this.tween(900, (k) => this.flashRect.setAttribute('opacity', String((1 - k) * .3)));
     this.nets[side === 'us' ? 'them' : 'us'].classList.remove('hit');
   }
-  private async barHit(side: 'us' | 'them') { this.bars[side].classList.add('hit'); await this.sleep(320); this.bars[side].classList.remove('hit'); }
+  private async barHit(side: 'us' | 'them') { sfxPost(); this.bars[side].classList.add('hit'); await this.sleep(320); this.bars[side].classList.remove('hit'); }
 
   // ——— допоміжне: ролі, зони, блоки ——————————————————————————————————————
   private id(role: string | undefined, near: P, side?: 'us' | 'them'): string {
@@ -344,7 +354,10 @@ export class Director {
 
   // ——— розіграш рядка стрічки ————————————————————————————————————————————
   async play(st: Stage, kind?: string) {
+    if (st.act === 'kickoff') sfxWhistle('start');
+    if (st.act === 'half') sfxWhistle('half');
     await this.playAct(st, kind);
+    if (st.tags.includes('stands')) sfxBoo();
     // Перерва — команди в тунелі, фону немає до наступного рядка.
     if (st.act !== 'half') void this.idle(this.run);
   }
@@ -494,11 +507,12 @@ export class Director {
         const blocker = st.act === 'block' ? (a ?? this.id('us', z)) : this.id(side === 'us' ? 'them' : 'us', sp);
         await S({ moves: this.block(z, { [shooter]: sp, [k]: [goal[0] - this.fwd(side, 1.5), 34], [blocker]: [sp[0] + this.fwd(side, 3), sp[1] + .4] }), ball: [sp[0] + this.fwd(side, .9), sp[1]], cam: [(sp[0] + goal[0]) / 2, (sp[1] + 34) / 2], w: Math.max(32, Math.abs(goal[0] - sp[0]) + 14), dur: 600 });
         if (!ok()) return;
-        if (st.act === 'block' || has('blocked')) { await S({ ball: [sp[0] + this.fwd(side, 2.8), sp[1] + .4], dur: 200 }); this.jump(blocker); await S({ ball: [sp[0] + this.fwd(side, 6), sp[1] + 9], dur: 450 }); this.jump(blocker, false); break; }
+        if (st.act === 'block' || has('blocked')) { await S({ ball: [sp[0] + this.fwd(side, 2.8), sp[1] + .4], dur: 200 }); if (side === 'us') sfxOoh(); this.jump(blocker); await S({ ball: [sp[0] + this.fwd(side, 6), sp[1] + 9], dur: 450 }); this.jump(blocker, false); break; }
         const aim: P = has('bar') ? [goal[0], 30.6] : has('post') ? [goal[0], 37.4] : has('wide') ? [goal[0] + this.fwd(side, 1.5), 41] : has('over') ? [goal[0] + this.fwd(side, 3), 33] : has('stand') ? [goal[0] + this.fwd(side, 6), 20] : [goal[0] - this.fwd(side, 1.4), 33.5];
         if (has('dive') || has('saved')) this.lie(k);
         await S({ moves: has('saved') || has('dive') ? { [k]: [goal[0] - this.fwd(side, 1.6), 32] } : {}, ball: aim, arc: has('over') || has('stand') ? 4 : 1, dur: 520 });
         if (!ok()) return;
+        if (side === 'us' && ['bar', 'post', 'wide', 'over', 'stand', 'saved', 'dive'].some(has)) sfxOoh();
         if (has('bar')) { await this.barHit(side === 'us' ? 'them' : 'us'); await S({ ball: [goal[0] - this.fwd(side, 10), 27], arc: 2, dur: 450 }); }
         else if (has('saved')) await S({ ball: [goal[0] - this.fwd(side, 6), 24], dur: 400 });
         break;
@@ -529,6 +543,7 @@ export class Director {
         if (st.act === 'knock' && st.who === undefined) { const me = this.selfId(); await S({ moves: { [me]: [z[0] + this.fwd('us', 2), z[1] - 1] }, dur: 300 }); this.lie(me); await this.sleep(700); this.lie(me, false); break; }
         await S({ moves: { [fouler]: [z[0] + this.fwd(vSide, .8), z[1] + .3] }, dur: 300 });
         if (!ok()) return;
+        if (!has('play')) sfxWhistle('short');
         if (has('hand')) { this.say(z, '!'); this.point(this.pos('ref'), 200); break; }
         this.lie(victim);
         if (has('play')) { this.point(this.pos('ref'), -20); const mate = this.nearest(vSide, [z[0] + this.fwd(vSide, 12), z[1]], 3).find((x) => x !== victim)!; await S({ ball: this.pos(mate), dur: 550 }); }
@@ -593,6 +608,7 @@ export class Director {
       }
       case 'stoppage': case 'slip': {
         const who = a ?? (st.act === 'slip' ? this.id('them', z) : undefined);
+        if (st.act === 'stoppage' && (has('medic') || has('ref') || has('whistle'))) sfxWhistle('short');
         await S({ moves: this.block(z, who ? { [who]: z } : {}), ball: who ? [z[0] + 2, z[1] + 1.5] : z, cam: z, w: W, dur: 600 });
         if (who && (st.act === 'slip' || has('down') || has('medic') || has('none') || st.act === 'stoppage' && st.who === 'them')) this.lie(who);
         if (has('medic')) { this.put('med', this.home.med); this.t.med.g.setAttribute('opacity', '1'); await S({ moves: { med: [z[0] - 2.4, z[1] - 1.6], ref: [z[0] + 4.5, z[1] + 3.5] }, cam: [z[0], z[1] - 6], w: W + 4, dur: 900 }); }
@@ -610,7 +626,7 @@ export class Director {
         // Прапорець лайнсмена — на ближчій бровці, і кадр опускається до неї, щоб його було видно.
         const top = z[1] <= 34;
         await S({ moves: { [runner]: [lineX + this.fwd(side, 6), z[1] + 3] }, ball: [lineX + this.fwd(side, 6), z[1] + 3], arc: 4, cam: [lineX, top ? 20 : 48], w: W + 6, dur: 650 });
-        this.flag.setAttribute('transform', `translate(${lineX},${top ? 1.6 : 67})`); this.flag.setAttribute('opacity', '1');
+        this.flag.setAttribute('transform', `translate(${lineX},${top ? 1.6 : 67})`); this.flag.setAttribute('opacity', '1'); sfxWhistle('short');
         this.say([lineX + 2, top ? 4 : 64], '!');
         break;
       }
@@ -714,12 +730,12 @@ export class Director {
     const goal = THEIR_GOAL;
     switch (kind) {
       case 'goal': await S({ ball: [goal[0] + .6, 33], dur: 550, cam: [(spot[0] + goal[0]) / 2, 34], w: Math.max(32, goal[0] - spot[0] + 14) }); void this.flashOn('us'); await this.celebrate(my, 'us', r); break;
-      case 'save': this.lie('t1'); await S({ moves: { t1: [goal[0] - 1.6, 32] }, ball: [goal[0] - 1.4, 32.5], dur: 500, cam: [(spot[0] + goal[0]) / 2, 34] }); await S({ ball: [goal[0] - 7, 24], dur: 400 }); break;
-      case 'miss': await S({ ball: [goal[0] + 2, 42], dur: 550, cam: [(spot[0] + goal[0]) / 2, 34] }); break;
+      case 'save': sfxOoh(); this.lie('t1'); await S({ moves: { t1: [goal[0] - 1.6, 32] }, ball: [goal[0] - 1.4, 32.5], dur: 500, cam: [(spot[0] + goal[0]) / 2, 34] }); await S({ ball: [goal[0] - 7, 24], dur: 400 }); break;
+      case 'miss': sfxOoh(); await S({ ball: [goal[0] + 2, 42], dur: 550, cam: [(spot[0] + goal[0]) / 2, 34] }); break;
       case 'pass': { const mate = this.nearest('us', [spot[0] + 8, spot[1]], 3).find((x) => x !== r)!; const run: P = [this.pos(mate)[0] + 7, this.pos(mate)[1]]; await S({ moves: { [mate]: run }, ball: run, dur: 650 }); break; }
       case 'loss': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); await S({ moves: { [near]: [spot[0] - 14, spot[1] + 4] }, ball: [spot[0] - 15, spot[1] + 4], cam: [spot[0] - 10, spot[1]], dur: 800 }); break;
       case 'concede': await S({ moves: { [near]: [spot[0] - 20, spot[1]] }, ball: [spot[0] - 21, spot[1]], cam: [spot[0] - 20, 34], w: 50, dur: 700 }); await S({ ball: [-.6, 34], cam: [16, 34], dur: 700 }); void this.flashOn('them'); break;
-      case 'foul': case 'red': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); this.lie(near); this.showCard(spot, kind === 'red'); break;
+      case 'foul': case 'red': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); sfxWhistle('short'); this.lie(near); this.showCard(spot, kind === 'red'); break;
       case 'duel': await S({ moves: { [near]: [spot[0] + .7, spot[1] + .3] }, dur: 300 }); await S({ moves: { [near]: [spot[0] + 6, spot[1] + 5] }, ball: [spot[0] + 3, spot[1] - 1], dur: 450 }); break;
       default: this.jump(r); await this.sleep(350); this.jump(r, false);
     }
@@ -761,7 +777,9 @@ export class Director {
       const recv = bm[to] ?? target;
       const ball: P = [clamp(recv[0], 22, 83), clamp(recv[1], 8, 60)];
       if (first) { for (const id in this.t) if (id !== 'u10') this.t[id].label?.setAttribute('opacity', '0'); first = false; }
+      this.idling = true;
       await this.step(my, { moves: { ...bm, [to]: ball }, ball, cam: ball, w: 52, dur: 1100 + Math.random() * 500 });
+      this.idling = false;
       if (my !== this.run) return;
       await this.sleep(500 + Math.random() * 900);
     }

@@ -4,10 +4,14 @@
 
 import type { Whistle } from '../engine/whistle';
 import { t } from '../content/i18n';
+import { useEffect } from 'react';
+import { sfxWhistle } from './sound';
 
 type Props = { whistle: Whistle; onNext: () => void };
 
 export function WhistleCard({ whistle, onNext }: Props) {
+  // Три свистки — разом із листом фінального свистка, один раз.
+  useEffect(() => { sfxWhistle('final'); }, []);
   return (
     <div className="scene whistle">
       <span className="minute-tab">{t('90′ · фінальний свисток')}</span>

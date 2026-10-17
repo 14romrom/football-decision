@@ -31,6 +31,8 @@ const spotOf = (episode: Episode | null): P => {
 type Props = {
   episode: Episode | null; selfName: string; strength?: Strength;
   roster: Roster;
+  /** Вища ліга — рев великого стадіону на гол. */
+  top?: boolean;
   /** Розв’язка: вид и порядковый номер броска — новый номер запускает хореографию. */
   finale?: { kind: FinaleKind; id: number } | null;
   /** Последняя строка ленты — поле разыгрывает её постановку. */
@@ -45,7 +47,7 @@ type Props = {
   minute: number;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, top = false, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
 
@@ -60,7 +62,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, finale, pu
     }
     names.u10 = selfName;
     const d = new Director(svgRef.current, {
-      usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(),
+      usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(), top,
     });
     d.setBench(onBench, sentOff);
     dir.current = d;

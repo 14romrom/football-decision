@@ -79,8 +79,12 @@ export function SettingsScreen({ onBack, onWiped, backLabel, inMatch = false }: 
         <Toggle name={t('Вібрація на штампі')} on={s.haptics} onChange={(v) => set({ haptics: v })} />
       </div>
       <div className="set">
-        <div className="l">{t('Звуки')}<small>{t('Кубики, штамп, папір і олівець')}</small></div>
+        <div className="l">{t('Звуки')}<small>{t('Кубики, штамп, свисток, трибуни, папір')}</small></div>
         <Toggle name={t('Звуки')} on={s.sound} onChange={(v) => set({ sound: v })} />
+      </div>
+      <div className="set">
+        <div className="l">{t('Гул стадіону')}<small>{t('Тихий фон під матчем')}</small></div>
+        <Toggle name={t('Гул стадіону')} on={s.crowd} onChange={(v) => set({ crowd: v })} />
       </div>
       <div className="set">
         <div className="l">{t('Підказки в першому матчі')}<small>{t('Прожектор на дужки, кубики, голоси і штамп')}</small></div>

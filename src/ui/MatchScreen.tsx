@@ -8,6 +8,8 @@ import { computeContext } from '../engine/context';
 import { availableOptions, sceneInsights } from '../engine/match';
 import { VOICE_LABEL } from '../engine/voices';
 import { Pitch } from './Pitch';
+import { useEffect } from 'react';
+import { ambience } from './sound';
 import { Icon } from './icons';
 import { plural, t, tf } from '../content/i18n';
 
@@ -100,6 +102,8 @@ export function MatchScreen({
   const scoreThem = shown.filter((e) => e.kind === 'goalThem').length;
   const scoreTone = scoreUs > scoreThem ? 'lead' : scoreUs < scoreThem ? 'trail' : '';
 
+  // Гул стадіону — поки відкритий матч, і під листами теж: стадіон не затихає, коли Реєс думає.
+  useEffect(() => { ambience(true); return () => ambience(false); }, []);
   return (
     <div className="match de-match">
       <Film />
@@ -114,7 +118,7 @@ export function MatchScreen({
         <div className={`stamina-bar thin ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
       </div>
       {!moment && (
-        <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} roster={roster}
+        <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} roster={roster} top={conditions.league === 'top'}
           finale={finale} pulse={shown.length ? shown[shown.length - 1] : null}
           // Заміна й червона ставляться кидком сцени — після нього поле вже без Реєса (match.ts: subbed_off / sent_off).
           onBench={onBench || state.flags.includes('subbed_off')} sentOff={state.flags.includes('sent_off')}

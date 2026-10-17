@@ -2,14 +2,18 @@ import { readSettings } from '../telemetry/settings';
 import type { Tier } from '../engine/types';
 
 // Звуки гри (17.10, макет «Звуки», затверджено: кидок, катастрофа, критичний успіх, листи й тиждень).
-// Усе синтезується Web Audio прямо тут, без файлів: APK офлайн, і вага не росте. Свисток, трибуни
-// на гол і гул стадіону сюди не входять — для них користувач збирає записи (див. README, «Звуки»).
+// Кидок, штамп, папір і олівець синтезуються Web Audio прямо тут, без файлів. Матч — записами
+// (public/sounds/*.ogg, 850 КБ, джерела й ліцензії — public/sounds/SOURCES.txt): свисток, удар,
+// сітка, рев на гол (друга / вища ліга), «у-у», свист трибун і гул стадіону. Рева на чужий гол немає
+// навмисно (рішення користувача 17.10): тоді треба розводити дім і виїзд, а запис був слабкий.
 // Де тиша навмисно: ESPM, «Y» і дошка аналітика — чужі екрани; прожектори першого матчу.
 // «Менше руху» звуків не вимикає — це окремий перемикач «Звуки» в налаштуваннях.
 
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 const noiseBuf: Record<string, AudioBuffer> = {};
+const files: Record<string, Promise<AudioBuffer | null>> = {};
+let amb: { s: AudioBufferSourceNode; g: GainNode } | null = null;
 
 /** Контекст створюється ліниво на першому звуці: браузер дозволяє звук лише після дотику гравця. */
 function ac(): AudioContext | null {
@@ -151,4 +155,60 @@ export function installUiSounds() {
     else if (el.closest('.nb-note')) sfxPencil();
     else if (el.closest('.nb-sheet-btn, .de-next')) sfxPage();
   }, { capture: true });
+  // Згорнули застосунок — тиша, гул не грає з кишені.
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return;
+    if (document.hidden) void ctx.suspend(); else void ctx.resume();
+  });
+}
+
+// ——— записи матчу ———————————————————————————————————————————————————————————
+/** Файл вантажиться при першому звуці й кешується; немає файлу чи декодера — тиша, гра не падає. */
+function buffer(c: AudioContext, name: string): Promise<AudioBuffer | null> {
+  return (files[name] ??= fetch(`./sounds/${name}.ogg`).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject())).then((b) => c.decodeAudioData(b)).catch(() => null));
+}
+function sfxFile(name: string, gain = 1, delaySec = 0) {
+  const c = ac(); if (!c) return;
+  void buffer(c, name).then((b) => {
+    if (!b || !master) return;
+    const s = c.createBufferSource(), g = c.createGain(); s.buffer = b; g.gain.value = gain;
+    s.connect(g).connect(master); s.start(c.currentTime + 0.02 + delaySec);
+  });
+}
+const pick = (n: number) => 1 + Math.floor(Math.random() * n);
+
+/** Удар по м'ячу — на кожну передачу поля; фоновий розіграш тихіше, щоб не заважав читати стрічку. */
+export function sfxKick(gain = 0.45) { sfxFile(`ball_kick_${pick(3)}`, gain); }
+/** Гол: сітка й рев трибун; вища ліга — великий стадіон. Чужий гол — тільки сітка. */
+export function sfxGoal(ours: boolean, top: boolean) {
+  sfxFile('net', 0.9);
+  if (ours) sfxFile(top ? 'goal_us_top' : 'goal_us', 0.9, 0.1);
+}
+/** Штанга чи поперечина — металевий удар у каркас воріт. */
+export function sfxPost() { sfxFile('post', 0.8); }
+/** «У-у» — удар мимо, сейв, блок. */
+export function sfxOoh() { sfxFile(`crowd_ooh_${pick(2)}`, 0.7, 0.05); }
+/** Свист трибун — рядки стрічки з поміткою `stands` (затягування, фол, аут на виїзді). */
+export function sfxBoo() { sfxFile(`crowd_boo_${pick(2)}`, 0.5); }
+export type Whistle = 'short' | 'start' | 'half' | 'final';
+export function sfxWhistle(kind: Whistle) { sfxFile(`whistle_${kind}`, 0.7); }
+
+/** Гул стадіону під матчем — окремий перемикач «Гул стадіону»: комусь він заважатиме читати. */
+export function ambience(on: boolean) {
+  const c = on && readSettings().crowd ? ac() : ctx;
+  if (!c) return;
+  if (!on || !readSettings().crowd || !readSettings().sound) {
+    if (!amb) return;
+    const a = amb; amb = null; const t = c.currentTime;
+    a.g.gain.cancelScheduledValues(t); a.g.gain.setValueAtTime(a.g.gain.value, t); a.g.gain.linearRampToValueAtTime(0, t + 0.8);
+    a.s.stop(t + 0.85);
+    return;
+  }
+  if (amb) return;
+  void buffer(c, 'stadium_ambience').then((b) => {
+    if (!b || amb || !master) return;
+    const s = c.createBufferSource(), g = c.createGain(); s.buffer = b; s.loop = true;
+    g.gain.setValueAtTime(0, c.currentTime); g.gain.linearRampToValueAtTime(0.35, c.currentTime + 1.5);
+    s.connect(g).connect(master); s.start(); amb = { s, g };
+  });
 }

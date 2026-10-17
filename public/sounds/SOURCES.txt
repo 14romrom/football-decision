@@ -1,0 +1,14 @@
+Звуки матчу — джерела й ліцензії (нарізка: scratchpad sfx/cut.py, вихідники — images/sounds, у git не їдуть).
+
+stadium_ambience — «Football Stadium Crowd Background Noise (Royalty Free)», YouTube, канал Free Stock Footages and Sound Effects,
+  https://youtu.be/CCQ-3apIPVg — в описі автора: "Feel free to use this anywhere, no attribution required." (16.04.2022)
+goal_us — «Goal!» (freesound_community / blaukreuz), Pixabay Content License, https://pixabay.com/sound-effects/city-goal-22502/
+goal_us_top — «19 Football Crowd - Reaction To Goal» (D.jones), CC0, https://freesound.org/people/D.jones/sounds/528799/
+crowd_ooh_1, crowd_ooh_2 — «CRWDReac-SOCCER_Millerntor Stadium Crowd Reaction» (itmightgetloud), CC0, https://freesound.org/people/itmightgetloud/sounds/829452/
+crowd_boo_1 — «Crowd Booing» (MAXOU-YT), Pixabay Content License, https://pixabay.com/sound-effects/people-crowd-booing-141423/
+crowd_boo_2 — «Crowd, large outrage then booing reaction, hockey game, 2011» (freesound_community), Pixabay Content License,
+  https://pixabay.com/sound-effects/people-crowd-large-outrage-then-booing-reaction-hockey-game-2011-25915/
+whistle_* — «Referee whistle blow, gymnasium» (SpliceSound), CC0, https://freesound.org/people/SpliceSound/sounds/218318/
+ball_kick_1..3 — «Soccer kicks» (freesound_community), Pixabay Content License, https://pixabay.com/sound-effects/film-special-effects-soccer-kicks-65164/
+net — «A football hits the net, goal» (forza1903), Pixabay Content License, https://pixabay.com/sound-effects/film-special-effects-a-football-hits-the-net-goal-313216/
+post — «goal post hit» (файл користувача, 17.10) — джерело й ліцензію дописати

@@ -178,6 +178,9 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .wb-rating .big { font-size: 64px; line-height: .95; } .wb-rating .big small { display: block; font-size: 14px; letter-spacing: .06em; margin-top: 4px; }
 .wb-rating .nums { text-align: right; font-size: 17px; line-height: 1.35; display: grid; }
 .wb-sticky { position: absolute; top: 14px; right: 14px; transform: rotate(-3deg); background: #f2d98a; color: #3a2f10; padding: 6px 9px; font-family: 'Neucha', var(--font-caps); font-size: 14px; letter-spacing: .04em; box-shadow: 0 3px 8px rgba(0,0,0,.25); }
+/* На телефоні правий верхній кут дошки займає кнопка паузи — стікер трибун сходить нижче, поруч із
+   заголовком (у нього праворуч і так залишено місце під стікер). */
+@media (max-width: 660px) { .wb-sticky { top: 58px; } }
 .wb-sticky b { display: block; font-size: 26px; font-weight: 400; line-height: 1; }
 .wb-tray { position: absolute; left: 6px; right: 6px; bottom: 6px; height: 14px; background: #b9bcbd; border-radius: 0 0 3px 3px; }
 .wb-pen { position: absolute; left: 48px; bottom: 9px; width: 70px; height: 7px; background: #23252a; border-radius: 3px; }
@@ -218,28 +221,49 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
    звідси підкладка кольору панелі з рамкою, а не голий знак. Праворуч угорі — там, де її шукають,
    і там, де немає ні рахунку, ні ярлика листа. Нижче прожектора (z-index 100), щоб підказки
    першого матчу перекривали меню, а не навпаки. */
-.nav-toggle {
+/* ——— пауза (17.10, замість бургера M45; макет «Пауза, сезон і головне меню») ———
+   Кнопка — знак паузи з підписом, у ряду зі смугою рахунку (місце під неї звільняє .score-strip нижче).
+   Пауза — на весь екран, з плівкою по краях: це екран гри, а не випадний список сайту. */
+.pause-toggle {
   position: fixed; z-index: 12;
-  top: calc(6px + env(safe-area-inset-top, 0px)); right: calc(6px + env(safe-area-inset-right, 0px));
-  display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0;
-  background: rgba(19,19,22,.78); border: 1px solid var(--line); border-radius: 6px;
-  color: var(--muted); backdrop-filter: blur(3px);
+  /* Верх і правий край — як у смуги рахунку (#root 16 px + її відступ 6 px), щоб у матчі вони стояли
+     одним рядом однакової висоти. */
+  top: calc(22px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  width: 48px; height: 48px; padding: 0;
+  background: #19191d; border: 1px solid #4a4840; border-radius: 4px; color: var(--cream);
 }
-.nav-toggle:active, .nav-toggle[aria-expanded="true"] { color: var(--ink); background: var(--panel); }
-.nav-sheet { position: fixed; inset: 0; z-index: 13; }
-.nav-scrim { position: absolute; inset: 0; width: 100%; height: 100%; background: rgba(8,8,10,.72); border: 0; border-radius: 0; padding: 0; }
-.nav-panel {
-  position: absolute; top: calc(46px + env(safe-area-inset-top, 0px)); right: calc(6px + env(safe-area-inset-right, 0px));
-  width: min(300px, calc(100vw - 24px)); max-height: calc(100dvh - 70px); overflow: auto;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px 14px;
-  box-shadow: 0 18px 40px -12px rgba(0,0,0,.7);
-}
-.nav-panel .rows { margin-top: 8px; }
-.nav-panel .row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 15.5px; }
-.row-note { flex: none; font-family: var(--font-mono); font-size: 11px; color: var(--faint); font-style: normal; white-space: nowrap; }
-.nav-panel .row-back { margin-top: 10px; font-size: 14px; border-bottom: 0; }
+.pause-toggle:active { background: var(--panel); }
+.pz-ico { display: flex; gap: 5px; }
+.pz-ico i { display: block; width: 5px; height: 15px; background: var(--cream); border-radius: 1px; }
+.pause-toggle small { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); line-height: 1; }
+.pause { position: fixed; inset: 0; z-index: 13; background: var(--bg); animation: fadeIn .18s ease-out; }
+html.reduce-motion .pause { animation: none; }
+.pause-scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
+.pause-inner { max-width: 620px; margin: 0 auto;
+  padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)); }
+.pause-menu { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; }
+.pause-head { position: relative; min-height: 170px; margin: calc(-16px - env(safe-area-inset-top)) -16px 0; padding: 0 22px 12px;
+  display: flex; align-items: flex-end; overflow: hidden; }
+.pause-head img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.85) brightness(.75); }
+.pause-head::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,11,13,.15) 0%, rgba(11,11,13,.2) 45%, var(--bg) 100%); }
+.pause-head .chapter-head { position: relative; z-index: 1; }
+.pause-where { margin: 6px 0 0; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; color: var(--muted); }
+.pause-where b { color: var(--ink); font-weight: 500; }
+.pause-go { margin: 14px 0 6px; }
+.pause-rows { list-style: none; margin: 0; padding: 0; }
+.pause-rows li { border-top: 1px solid var(--line); }
+.pause-rows > li > button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 52px; padding: 0 2px;
+  background: none; border: 0; border-radius: 0; color: var(--ink); font: inherit; font-size: 17px; text-align: left; }
+.pause-rows > li > button::after { content: '›'; color: var(--faint); font-size: 19px; }
+.pause-rows > li > button .row-note { margin-left: auto; }
+.pause-rows > li > button:active { background: #131316; }
+.pause-rows > li > button.exit { color: var(--bad-soft); }
+.pause-rows > li > button.exit::after { color: #7a4a42; }
+.pause-lang { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 2px; font-size: 17px; }
+.pause-lang .seg button { min-height: 34px; font-size: 12px; padding: 0 12px; }
+.pause .danger-btn { margin-bottom: 8px; }
 .nav-warn { font-size: 14px; line-height: 1.45; color: var(--ink); margin: 6px 0 14px; }
-.nav-panel .danger-btn { margin-bottom: 8px; }
 
 /* ——— debug ——— */
 .debug { position: fixed; right: 10px; bottom: 10px; z-index: 10; }
@@ -805,9 +829,16 @@ html.reduce-motion .doodle svg { filter: none; }
    і довгий рядок вилазив за край листа (плейтест 26.09). */
 .choice-hint { display: block; width: 100%; margin-top: 3px; font-family: var(--font-text); font-size: 13.5px; font-style: italic; color: var(--muted); white-space: normal; }
 .choice-hint .origin { margin: 0 6px 0 0; }
-/* Кнопка меню висить зверху справа (.nav-toggle, 34 px): на вузькому екрані вона лягала на назву
-   гостей у смужці рахунку. Звільняємо під неї кут — рахунок лишається по центру. */
-@media (max-width: 660px) { .strip-team.r { padding-right: 26px; } }
+/* Кнопка паузи стоїть у ряду зі смугою рахунку (.pause-toggle, 48 px): смуга звільняє під неї місце
+   праворуч, і кнопка читається частиною табло, а не значком поверх нього. */
+@media (max-width: 660px) {
+  /* Назви — в один рядок навіть у найдовшої («Сьєрра-Бланка», «Porto Blanco»): інакше смуга росла до
+     58 px і стояла вище за кнопку. Висота рівно під кнопку. */
+  .match .score-strip { margin-right: 56px; min-height: 48px; gap: 8px; box-sizing: border-box; }
+  .match .strip-team { font-size: 11px; letter-spacing: .04em; }
+  .match .strip-score { font-size: 22px; }
+  .match .score-overlay { right: 58px; }
+}
 
 /* Якір — подія на весь екран (26.09, плейтест на телефоні): лист сам по собі, як сцена в матчі, а не
    колонка всередині розвороту зошита. Папір зошита тут не малюється зовсім — тиждень починається далі. */
@@ -1238,6 +1269,8 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 .pm-head { display: flex; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 10px;
   letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .pm-head b { color: var(--ink); font-weight: 500; }
+/* Кнопка паузи (48 px) займає правий верхній кут: рядок туру й місця йде під неї двома рядками. */
+@media (max-width: 660px) { .pm-head { flex-direction: column; gap: 3px; padding-right: 58px; } }
 .pm-fixture { margin: 10px 0 0; font-family: var(--font-caps); font-weight: 600; text-transform: uppercase;
   font-size: 23px; letter-spacing: .01em; line-height: 1.05; }
 .pm-fixture small { display: block; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .12em;
@@ -1344,3 +1377,68 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 .reduce-motion .voices .say,
 .reduce-motion .tape-line.age-0 { animation: none; }
 .reduce-motion .screen-wipe { display: none; }
+
+/* ——— шапка глави (ChapterHead): розворот глави, пауза, головне меню ——— */
+.chapter-head { display: grid; gap: 9px; }
+.chapter-head.sm { gap: 4px; }
+.chapter-head.sm .chapter-rom { font-size: 11.5px; letter-spacing: .2em; color: #d8d2c4; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.chapter-head.sm .chapter-title { font-size: 30px; }
+
+/* ——— головне меню того, хто повертається ——— */
+.title-art.chapter img { object-position: 50% 58%; filter: saturate(.9) brightness(.72); }
+.title-art.chapter::after { background: linear-gradient(180deg, rgba(11,11,13,.85) 0%, rgba(11,11,13,.35) 30%, rgba(11,11,13,0) 50%, rgba(11,11,13,0) 66%, var(--bg) 100%); }
+.title-chapter { position: absolute; z-index: 2; top: calc(26px + env(safe-area-inset-top, 0px)); left: 30px; right: 30px; }
+
+/* ——— сезон (SeasonOverview) ——— */
+.back-link { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 0; background: none; border: 0;
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+.back-link::before { content: '←'; color: var(--cream); font-size: 16px; }
+.season-ov { gap: 12px; padding-top: 6px; }
+.ov-title { margin: 6px 0 0; font-family: var(--font-caps); font-weight: 500; font-size: 20px; letter-spacing: .08em; text-transform: uppercase; }
+.ov-sub { margin: -8px 0 0; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.ov-ladder { list-style: none; margin: 4px 0 0; padding: 0; display: flex; gap: 5px; }
+.ov-ladder li { flex: 1; text-align: center; padding: 7px 0 0; border-top: 3px solid #2c2c33; font-family: var(--font-caps); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.ov-ladder li.done { border-color: #5a574e; }
+.ov-ladder li.here { border-color: var(--bad); color: var(--ink); }
+.ov-months { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+.ov-months i { height: 6px; background: #2c2c33; border-radius: 1px; }
+.ov-months i.done { background: #6f6b60; } .ov-months i.now { background: var(--cream); }
+.ov-months i.gap { margin-left: 6px; }
+.ov-mlbl { display: flex; justify-content: space-between; margin-top: -6px; font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+.ov-tbl { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.ov-tbl th { font-family: var(--font-mono); font-weight: 400; font-size: 10.5px; color: var(--faint); text-align: right; padding: 0 4px 4px; }
+.ov-tbl td { padding: 7px 4px; border-bottom: 1px solid var(--line); }
+.ov-tbl td.n { width: 20px; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+.ov-tbl td.c { width: 30px; text-align: right; font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.ov-tbl td.p { width: 32px; text-align: right; font-family: var(--font-mono); font-size: 14px; font-weight: 600; }
+.ov-tbl tr.us td { background: #1b1b1f; color: var(--cream); font-weight: 600; }
+.ov-tbl .zone { display: inline-block; width: 3px; height: 13px; vertical-align: -2px; margin-right: 8px; border-radius: 1px; }
+.ov-tbl .zone.up { background: var(--accent); } .ov-tbl .zone.po { background: var(--warn); }
+.ov-sec { margin: 8px 0 0; font-family: var(--font-caps); font-weight: 500; font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.ov-cal { list-style: none; margin: 0; padding: 0; }
+.ov-cal li { display: grid; grid-template-columns: 90px 1fr auto; gap: 3px 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; }
+.ov-cal .when { font-family: var(--font-mono); font-size: 11px; color: var(--faint); line-height: 1.35; }
+.ov-cal .opp { min-width: 0; }
+.ov-cal .res { font-family: var(--font-mono); font-size: 14px; font-weight: 600; }
+.ov-cal .res.w { color: var(--accent); } .ov-cal .res.l { color: var(--bad-soft); }
+.ov-cal .mo { grid-column: 2 / 4; font-size: 13.5px; line-height: 1.45; font-style: italic; color: #b8b2a5; }
+.ov-cal li.next { background: #18181c; border: 1px solid #3a3a40; border-radius: 3px; padding: 9px 8px; margin: 0 -8px; }
+.ov-cal li.next .res { font-family: var(--font-caps); font-weight: 500; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--cream); }
+.ov-cal li.future { color: #8d897d; }
+.ov-cal li.winter { display: block; text-align: center; padding: 7px 0; border-top: 1px dashed #2f3b52; font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; color: var(--v-composure); }
+
+/* ——— варіант, який відкрив голос (17.10, макет «було / стало») ———
+   Раніше відрізнявся тільки кольором тексту й дрібним сірим «відкрив …» — серед чотирьох рядків його
+   пропускали. Тепер підкладка кольору голосу, ячейка номера тим самим кольором і ярлик плашкою.
+   Рамки немає (рішення користувача). Кольори — rgba, не color-mix: старі WebView на Android його не знають. */
+.choice-insight { color: var(--ink); }
+.choice-insight.voice-vision { --vc: var(--v-vision); color: var(--ink); background: rgba(201,165,255,.15); }
+.choice-insight.voice-instinct { --vc: var(--v-instinct); color: var(--ink); background: rgba(242,207,91,.13); }
+.choice-insight.voice-body { --vc: var(--v-body); color: var(--ink); background: rgba(255,138,138,.14); }
+.choice-insight.voice-composure { --vc: var(--v-composure); color: var(--ink); background: rgba(143,184,255,.14); }
+.choice-insight.voice-ego { --vc: var(--v-ego); color: var(--ink); background: rgba(232,163,90,.14); }
+.choice-insight.voice-team { --vc: var(--v-team); color: var(--ink); background: rgba(127,207,154,.13); }
+.choice-insight:hover { filter: brightness(1.12); }
+.choice-insight .choice-num { background: var(--vc); border-color: var(--vc); color: #16121c; }
+.choice-insight .origin { background: var(--vc); color: #16121c; padding: 1px 6px; border-radius: 2px; font-weight: 500; }
+.choice-insight .choice-go { color: var(--vc); }

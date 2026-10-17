@@ -77,7 +77,8 @@ import { DeltaScreen } from './ui/DeltaScreen';
 import { boardMoments, cardDelta } from './engine/board';
 import { StatsScreen } from './ui/StatsScreen';
 import { DebugPanel } from './ui/DebugPanel';
-import { NavMenu } from './ui/NavMenu';
+import { PauseMenu } from './ui/PauseMenu';
+import { setLiveMatch } from './ui/liveMatch';
 import { dropShot, restoreShot, takeShot } from './telemetry/checkpoint';
 
 type Stage =
@@ -177,6 +178,9 @@ function Game() {
     <ScreenWipe on={stage.k} />
     {['result', 'season', 'posts', 'feed', 'episode', 'roll', 'whistle', 'prologue', 'vacation', 'may', 'ending'].includes(stage.k) ? null : <Film />}
   </>;
+  // Табло для шапки паузи (ui/liveMatch.ts): скидається тут, на кожному рендері, і ставиться знову лише
+  // в гілці матчу внизу — інакше пауза на тижні показала б рахунок минулого матчу.
+  setLiveMatch(null);
   const [shown, setShown] = useState<TimelineEvent[]>([]);
   // Новий екран — з верху. Хеш-роутер скидає скрол лише на hashchange, а зміни stage всередині #/play — ні:
   // після ESPM з кнопкою внизу стрічка відкривалась прокрученою на 861 px (плейтест 21.09, Б-1).
@@ -665,7 +669,7 @@ function Game() {
           <Sticker compact player={effectivePlayer(PLAYER, career)} career={career} season={season} dominant={dominantCareerVoice(career)} onOpen={() => { location.hash = '#/player'; }} />
           <p className="season-line menu-fixture"><b>{tf('Сезон {0} завершено.', season.number)}</b></p>
           <button className="primary menu-primary" onClick={() => setStage({ k: 'season', leveledFrom: career.level, leveledTo: career.level })}>{t('Підсумки сезону')}</button>
-          <ul className="rows"><li><a className="row" href="#/">{t('Головна')}</a></li></ul>
+          <ul className="rows"><li><a className="row" href="#/">{t('Головне меню')}</a></li></ul>
         </div>
       );
     }
@@ -893,6 +897,13 @@ function Game() {
   }
 
   const session = sessionRef.current!;
+  setLiveMatch({
+    // Відкритий лист показує свою хвилину (ярлик на кромці) — табло паузи має сказати ту саму.
+    minute: stage.k === 'episode' || stage.k === 'roll' || stage.k === 'entry' ? stage.minute
+      : shown.length ? shown[shown.length - 1].minute : session.state.minute,
+    scoreUs: session.state.scoreUs, scoreThem: session.state.scoreThem,
+    us: session.roster.us.name.nom, them: session.roster.them.name.nom,
+  });
   /** Підказка-прожектор першого матчу з номером кроку; вимикається в налаштуваннях. */
   const hintFor = (episodeId: string): Hint | undefined => {
     const t = session.tutorial;
@@ -1035,10 +1046,10 @@ export function App() {
   }
   // Слот карьеры (telemetry/slots.ts): Game держит карьеру и сезон в refs, прочитанных при монтировании,
   // поэтому смена слота на титуле — это смена key, а не setState внутри.
-  // Меню (M45) живе поруч із грою, а не всередині: Game — ланцюжок ранніх return'ів на двадцять
-  // екранів, і кнопку довелося б дописувати в кожен.
+  // Пауза (17.10, раніше меню M45) живе поруч із грою, а не всередині: Game — ланцюжок ранніх return'ів
+  // на двадцять екранів, і кнопку довелося б дописувати в кожен.
   return (<>
     <Game key={activeSlot()} />
-    <NavMenu go={go} />
+    <PauseMenu go={go} />
   </>);
 }

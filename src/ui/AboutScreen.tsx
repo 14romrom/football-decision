@@ -10,9 +10,9 @@ import { t, tf } from '../content/i18n';
 // игрок замечает это сам по чипам на вариантах, иначе экран превращается в таблицу характеристик.
 // Процентов здесь нет по тому же правилу, что и везде.
 
-type Props = { onBack: () => void };
+type Props = { onBack: () => void; /** Підпис кнопки повернення: з головного меню — «Головне меню», з паузи — «Пауза». */ backLabel?: string };
 
-export function AboutScreen({ onBack }: Props) {
+export function AboutScreen({ onBack, backLabel }: Props) {
   return (
     <div className="about plain-screen">
       <h1>{t('Про гру')}</h1>
@@ -63,7 +63,7 @@ export function AboutScreen({ onBack }: Props) {
 
       <p className="about-refs">{t('Натхнення: Disco Elysium, Football Manager і кожен матч, де ти знав, як треба, і зробив інакше.')}</p>
 
-      <button className="row row-back" onClick={onBack}>{t('На головну')}</button>
+      <button className="row row-back" onClick={onBack}>{backLabel ?? t('Головне меню')}</button>
       <p className="build">{buildLabel()}</p>
     </div>
   );

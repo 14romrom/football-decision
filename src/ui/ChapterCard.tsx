@@ -2,6 +2,7 @@ import type { VoiceKey } from '../engine/types';
 import { VOICE_LABEL } from '../engine/voices';
 import { shotFor } from '../content';
 import { t, tf } from '../content/i18n';
+import { ChapterHead } from './ChapterHead';
 
 // Розділювач глави (M24, 26.09, макет «Лист якоря»): глав чотири, і вони збігаються з сезонами —
 // пролог, перший сезон, другий сезон, епілог. Розворот повторює композицію титулу: кадр, назва
@@ -32,8 +33,7 @@ export function ChapterCard({ chapter, index, total, onNext }: Props) {
           </div>
         )}
         <div className="chapter-body">
-          {chapter.rom && <span className="chapter-rom">{chapter.rom}</span>}
-          <h1 className="chapter-title">{chapter.title}</h1>
+          <ChapterHead chapter={chapter} as="h1" />
           <p className={`chapter-line voice-${chapter.voice}`}><b>{VOICE_LABEL[chapter.voice]}</b> — {chapter.line}</p>
           <div className="chapter-ladder" aria-label={tf('{0} з {1}', index + 1, total)}>
             {Array.from({ length: total }, (_, i) => (

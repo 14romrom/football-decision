@@ -12,7 +12,14 @@ import { t, tf } from '../content/i18n';
 // «Вивантажити логи» переехала сюда с итога матча (там мешала) и отдаёт активный слот.
 // «Стерти кар’єру» — красным, внизу, с подтверждением; после — на титул, там уже «Нова кар’єра».
 
-type Props = { onBack: () => void; onWiped: () => void };
+type Props = {
+  onBack: () => void; onWiped: () => void;
+  /** Підпис кнопки повернення: з головного меню — «Головне меню», з паузи — «Пауза». */
+  backLabel?: string;
+  /** Відкрито з паузи посеред матчу: мова, інструменти тестерів і стирання кар'єри ховаються —
+   *  перше перезавантажує гру, решта переписує слот, і матч, що живе лише в пам'яті, зник би. */
+  inMatch?: boolean;
+};
 
 // Розділ «Тестерам» у релізі прихований (17.10, підготовка до Play): логи, розподіл виборів і
 // перемотка кар'єри — інструменти перевірки, гравцеві з магазину вони кажуть «це ще не гра».
@@ -39,7 +46,7 @@ function Toggle({ on, onChange, name }: { on: boolean; onChange: (v: boolean) =>
   return <button type="button" role="switch" aria-checked={on} aria-label={name} className={`toggle ${on ? 'on' : ''}`} onClick={() => onChange(!on)} />;
 }
 
-export function SettingsScreen({ onBack, onWiped }: Props) {
+export function SettingsScreen({ onBack, onWiped, backLabel, inMatch = false }: Props) {
   const [s, setS] = useState<Settings>(() => readSettings());
   const [confirmWipe, setConfirmWipe] = useState(false);
   const [confirmWind, setConfirmWind] = useState(false);
@@ -82,12 +89,14 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
           посеред кар'єри: збереження мовою не пахне, у ньому ідентифікатори. Рядки, записані до
           перемикання (нотатка брифінгу, сліди флагів, моменти зіграного матчу), лишаються старою
           мовою, доки не згаснуть — це один-два матчі. */}
+      {!inMatch && (<>
       <h2 className="sect">{t('Мова')}</h2>
       <div className="set">
         <div className="l">{t('Мова гри')}<small>{t('Перемикання перезавантажує гру; кар’єра не втрачається')}</small></div>
         <Seg name={t('Мова гри')} value={s.lang} options={[['uk', t('українська')], ['en', 'English']]}
           onChange={(v) => { writeSettings({ ...s, lang: v }); location.reload(); }} />
       </div>
+      </>)}
 
       <h2 className="sect">{t('Екран')}</h2>
       <div className="set">
@@ -99,7 +108,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         <Seg name={t('Розмір тексту')} value={s.textSize} options={[['normal', t('звичайний')], ['large', t('більший')]]} onChange={(v) => set({ textSize: v })} />
       </div>
 
-      {tester && (<>
+      {tester && !inMatch && (<>
       <h2 className="sect">{t('Тестерам')}</h2>
       <button className="set set-btn" onClick={exportLogs}>
         <span className="l">{t('Вивантажити логи')}<small>{t('Рішення цієї кар’єри, JSON')}</small></span>
@@ -134,13 +143,13 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         <div className="sheet" role="status">
           <p>
             {tf('Доіграно турів: {0}.', wound.played)}{wound.vacationAuto && t(' Відпустку теж пройдено навмання — у другому сезоні це видно по тому, хто що знає.')}
-            {' '}{t('Повернутися до стану перед перемоткою — у меню гри, «Повернутися до збереження».')}
+            {' '}{t('Повернутися до стану перед перемоткою — у паузі, «Повернутися до збереження».')}
           </p>
-          <button className="danger-btn" onClick={onWiped}>{t('На головну')}</button>
+          <button className="danger-btn" onClick={onWiped}>{t('Головне меню')}</button>
         </div>
       )}
       </>)}
-      {!slot.empty && !confirmWipe && (
+      {!slot.empty && !confirmWipe && !inMatch && (
         <button className="set set-btn danger" onClick={() => setConfirmWipe(true)}>
           <span className="l">{t('Стерти кар’єру')}<small>{tf('Слот {0} · {1}', slot.slot + 1, slotLine(slot))}</small></span>
           <span className="v">›</span>
@@ -154,7 +163,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         </div>
       )}
 
-      <button className="row row-back" onClick={onBack}>{t('На головну')}</button>
+      <button className="row row-back" onClick={onBack}>{backLabel ?? t('Головне меню')}</button>
       {/* Рядок версії — він же замок розділу «Тестерам» у релізі (див. TESTER_KEY). */}
       <p className="build" onClick={tapVersion}>{releaseName() ? tf('версія {0} · {1}', releaseName(), build) : tf('тестова збірка · {0}', build)}</p>
     </div>

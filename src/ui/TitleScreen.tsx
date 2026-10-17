@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
 import { Film } from './Film';
-import { PLAYER, ROSTER } from '../content';
+import { PLAYER, ROSTER, clubName, shotFor } from '../content';
+import { monthOfRound, ourFixture } from '../engine/season';
+import { readCareer } from '../telemetry/career-storage';
+import { readSeason } from '../telemetry/season-storage';
+import { ChapterHead, currentChapter } from './ChapterHead';
 import titleJsonRaw from '../content/title.json';
 import { tr, ord, plural, t, tf } from '../content/i18n';
 // Контент цього модуля йде повз content/index.ts, тому переклад (M47) вмикається тут же.
@@ -72,13 +76,33 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
   }, [slot]);
 
   const surname = PLAYER.name.split(String.fromCharCode(32)).pop() ?? PLAYER.name;
+  // Головне меню того, хто повертається (17.10, макет «Пауза, сезон і головне меню»): замість кадру
+  // першого запуску — кадр його глави, угорі шапка глави з місяцем, під кнопкою — що попереду.
+  // Логотип той самий і на тому ж місці. Новий гравець бачить головне меню як було: йому ще нема
+  // чого показувати.
+  const back = useMemo(() => {
+    if (slot.empty) return null;
+    const season = readSeason();
+    const chapter = currentChapter(readCareer(), season);
+    const shot = chapter.shot ? shotFor(chapter.shot) : null;
+    const fx = season ? ourFixture(season) : null;
+    const month = season && !slot.over && chapter.id.startsWith('season') ? monthOfRound(slot.round) : '';
+    return { chapter, shot, fx, month };
+  }, [slot]);
   return (
     <div className="title">
       <Film labels={titleFilmLabels()} />
 
-      <div className="title-art" aria-hidden="true">
-        <img src="./img/title.webp" width="800" height="960" alt="" decoding="async" />
-      </div>
+      {back?.shot ? (
+        <div className="title-art chapter" aria-hidden="true">
+          <img src={back.shot.src} alt="" decoding="async" style={{ objectPosition: back.shot.focus }} />
+        </div>
+      ) : (
+        <div className="title-art" aria-hidden="true">
+          <img src="./img/title.webp" width="800" height="960" alt="" decoding="async" />
+        </div>
+      )}
+      {back && <div className="title-chapter"><ChapterHead chapter={back.chapter} after={back.month} size="sm" /></div>}
 
       <div className="title-screen">
         <h1 className="title-logo"><Logo /></h1>
@@ -100,7 +124,11 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
               {/* Девиз голоса картки в строке карьеры убран (19.09, пользователь): на титуле один голос —
                   реплика над кнопкой; второй в корешке дублировал его. slotMotto остаётся для слотов. */}
               <p className="title-career">
-                <b>{PLAYER.name}</b>, {slotLine(slot)} — {slotTail(slot)}.
+                {back?.fx && !slot.over ? (<>
+                  <b>{tf('Тур {0} з {1}', slot.round, slot.rounds)}</b>
+                  {' · '}{tf('{0}, {1}', back.fx.venue === 'home' ? t('вдома') : t('виїзд'), clubName(back.fx.opponentKey).nom)}
+                  {slot.position ? <>{' · '}{tf('{0} місце', ord(slot.position))}</> : null}
+                </>) : (<><b>{PLAYER.name}</b>, {slotLine(slot)} — {slotTail(slot)}.</>)}
               </p>
             </>
           )}

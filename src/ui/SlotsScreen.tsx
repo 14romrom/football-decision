@@ -70,7 +70,7 @@ export function SlotsScreen({ onStart, onBack }: Props) {
           );
         })}
       </ul>
-      {!askedSlot && <button className="row row-back" onClick={onBack}>{t('На головну')}</button>}
+      {!askedSlot && <button className="row row-back" onClick={onBack}>{t('Головне меню')}</button>}
 
       {askedSlot && (
         <div className="sheet" role="dialog" aria-labelledby="slot-sheet-title">

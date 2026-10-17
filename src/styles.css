@@ -1414,6 +1414,11 @@ html.launching .title-menu { transform: translateY(12px); }
 .pc-trail { fill: none; stroke: #e6e1d6; stroke-width: .2; stroke-dasharray: .9 .7; stroke-linecap: round; transition: opacity .35s; }
 .pc-ball { fill: #f4f2ec; stroke: #0b0b0d; stroke-width: .14; }
 .pc-ball-patch { fill: #141414; }
+/* Суддя — схематичний свисток, кремовий на темній підкладці; з'являється лише в своїх моментах. */
+.pc-ref { transition: opacity .35s; }
+.pc-ref-bg { fill: #111114; stroke: #e6e1d6; stroke-width: .14; }
+.pc-ref-ink { fill: none; stroke: #e6e1d6; stroke-width: .2; }
+.pc-ref-mouth { stroke-width: .3; stroke-linecap: round; }
 .pc-num { font-family: var(--font-mono); font-weight: 600; text-anchor: middle; }
 .pc-label { font-family: var(--font-mono); font-size: 1.2px; fill: #e6e1d6; text-anchor: middle; stroke: #0b0b0d; stroke-width: .3; paint-order: stroke; transition: opacity .3s; }
 .pc-ring-bg { fill: none; stroke: #26262b; stroke-width: .42; }

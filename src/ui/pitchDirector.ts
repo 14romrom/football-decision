@@ -184,6 +184,16 @@ export class Director {
     }
     const body = this.el('g', {}, g);
     tk.body = body;
+    // Суддя — схематичний свисток (17.10, зауваження користувача): темне коло з жовтою обводкою без номера
+    // читалося як фішка суперника в жовтій формі, у якої зник номер. Кремовий, нейтральний до будь-якої форми.
+    if (id === 'ref') {
+      g.setAttribute('class', 'pc-ref');
+      this.el('circle', { r: 1.25, class: 'pc-ref-bg' }, body);
+      this.el('circle', { cx: -.25, cy: .22, r: .52, class: 'pc-ref-ink' }, body);
+      this.el('line', { x1: .12, y1: -.15, x2: .9, y2: -.62, class: 'pc-ref-ink pc-ref-mouth' }, body);
+      this.t[id] = tk;
+      return;
+    }
     const fill = id === 'ref' ? '#111114' : id === 'med' ? '#f1eee6' : gk ? (ours ? us.gk : them.gk) : `url(#kit-${ours ? 'us' : 'them'})`;
     const stroke = id === 'ref' ? '#f2cf5b' : gk && ours ? '#e6e1d6' : '#0b0b0d';
     this.el('circle', { r: self ? 1.75 : 1.4, fill, stroke, 'stroke-width': id === 'ref' || (gk && ours) ? .18 : .14 }, body);
@@ -295,7 +305,11 @@ export class Director {
     for (const id in this.t) { this.t[id].body.removeAttribute('transform'); if (this.t[id].label && id !== 'u10') this.t[id].label!.setAttribute('opacity', '0'); }
     for (const e of [this.pointer, this.shout, this.benchMarks, this.flag, this.card]) e.setAttribute('opacity', '0');
     this.t.med?.g.setAttribute('opacity', '0');
+    this.t.ref?.g.setAttribute('opacity', '0');
   }
+  /** Суддя виходить лише в своїх моментах — фол, суперечка, зупинка, перевага, картка, симуляція, —
+   *  як лікар: решту часу він бігав у строю без ролі й плутався з гравцями. */
+  private showRef() { this.t.ref?.g.setAttribute('opacity', '1'); }
   private label(ids: string[]) { for (const id of ids) this.t[id]?.label?.setAttribute('opacity', '1'); }
   private lie(id: string, on = true) { this.t[id]?.body.setAttribute('transform', on ? 'rotate(70) scale(1.25,.6)' : ''); }
   private jump(id: string, on = true) { this.t[id]?.body.setAttribute('transform', on ? 'scale(1.3)' : ''); }
@@ -370,6 +384,7 @@ export class Director {
     const b = st.vs ? this.id(st.vs, z, st.vs.startsWith('them') ? 'them' : 'us') : undefined;
     this.label((st.named ?? []).filter((r) => ROLE_ID[r]).map((r) => this.id(r, z)));
     const has = (t: string) => st.tags.includes(t);
+    if (st.act === 'foul' || st.act === 'argue' || st.who === 'ref' || st.vs === 'ref' || ['ref', 'dive', 'hand', 'whistle', 'foul'].some(has)) this.showRef();
     const W = 44;
     const S = (o: Parameters<Director['step']>[1]) => this.step(my, o);
     const ok = () => my === this.run;
@@ -735,7 +750,7 @@ export class Director {
       case 'pass': { const mate = this.nearest('us', [spot[0] + 8, spot[1]], 3).find((x) => x !== r)!; const run: P = [this.pos(mate)[0] + 7, this.pos(mate)[1]]; await S({ moves: { [mate]: run }, ball: run, dur: 650 }); break; }
       case 'loss': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); await S({ moves: { [near]: [spot[0] - 14, spot[1] + 4] }, ball: [spot[0] - 15, spot[1] + 4], cam: [spot[0] - 10, spot[1]], dur: 800 }); break;
       case 'concede': await S({ moves: { [near]: [spot[0] - 20, spot[1]] }, ball: [spot[0] - 21, spot[1]], cam: [spot[0] - 20, 34], w: 50, dur: 700 }); await S({ ball: [-.6, 34], cam: [16, 34], dur: 700 }); void this.flashOn('them'); break;
-      case 'foul': case 'red': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); sfxWhistle('short'); this.lie(near); this.showCard(spot, kind === 'red'); break;
+      case 'foul': case 'red': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); sfxWhistle('short'); this.showRef(); this.lie(near); this.showCard(spot, kind === 'red'); break;
       case 'duel': await S({ moves: { [near]: [spot[0] + .7, spot[1] + .3] }, dur: 300 }); await S({ moves: { [near]: [spot[0] + 6, spot[1] + 5] }, ball: [spot[0] + 3, spot[1] - 1], dur: 450 }); break;
       default: this.jump(r); await this.sleep(350); this.jump(r, false);
     }
@@ -776,7 +791,7 @@ export class Director {
       const bm = this.block(target);
       const recv = bm[to] ?? target;
       const ball: P = [clamp(recv[0], 22, 83), clamp(recv[1], 8, 60)];
-      if (first) { for (const id in this.t) if (id !== 'u10') this.t[id].label?.setAttribute('opacity', '0'); first = false; }
+      if (first) { for (const id in this.t) if (id !== 'u10') this.t[id].label?.setAttribute('opacity', '0'); this.t.ref?.g.setAttribute('opacity', '0'); first = false; }
       this.idling = true;
       await this.step(my, { moves: { ...bm, [to]: ball }, ball, cam: ball, w: 52, dur: 1100 + Math.random() * 500 });
       this.idling = false;

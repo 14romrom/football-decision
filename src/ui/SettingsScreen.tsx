@@ -5,7 +5,7 @@ import { activeSlot } from '../telemetry/slots';
 import { exportLogs } from '../telemetry/log';
 import { fastForward, type FastForwardResult } from '../telemetry/fastforward';
 import type { AutoTarget } from '../engine/autoplay';
-import { slotLine } from './TitleScreen';
+import { releaseName, slotLine } from './TitleScreen';
 import { t, tf } from '../content/i18n';
 
 // Налаштування (19.09): три группы — кидок, екран, тестерам. Звука в игре нет — строки нет.
@@ -13,6 +13,17 @@ import { t, tf } from '../content/i18n';
 // «Стерти кар’єру» — красным, внизу, с подтверждением; после — на титул, там уже «Нова кар’єра».
 
 type Props = { onBack: () => void; onWiped: () => void };
+
+// Розділ «Тестерам» у релізі прихований (17.10, підготовка до Play): логи, розподіл виборів і
+// перемотка кар'єри — інструменти перевірки, гравцеві з магазину вони кажуть «це ще не гра».
+// Відкривається сім тапами по рядку версії — так само, як параметри розробника в Android, тому
+// тестер із релізною збіркою на телефоні до них дістанеться. Відкрите пам'ятається на пристрої.
+const TESTER_KEY = 'football-decision.tester.v1';
+const TESTER_TAPS = 7;
+const testerOpen = (): boolean => {
+  if (!releaseName()) return true;
+  try { return localStorage.getItem(TESTER_KEY) === '1'; } catch { return false; }
+};
 
 function Seg<T extends string>({ value, options, onChange, name }: { value: T; options: [T, string][]; onChange: (v: T) => void; name: string }) {
   return (
@@ -37,6 +48,14 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
   const slot = readSlotSummary(activeSlot());
   const set = (patch: Partial<Settings>) => { const next = { ...s, ...patch }; setS(next); writeSettings(next); };
   const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
+  const [tester, setTester] = useState(testerOpen);
+  const [taps, setTaps] = useState(0);
+  const tapVersion = () => {
+    if (tester) return;
+    const n = taps + 1;
+    setTaps(n);
+    if (n >= TESTER_TAPS) { try { localStorage.setItem(TESTER_KEY, '1'); } catch { /* приватный режим */ } setTester(true); }
+  };
 
   return (
     <div className="settings plain-screen">
@@ -80,6 +99,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
         <Seg name={t('Розмір тексту')} value={s.textSize} options={[['normal', t('звичайний')], ['large', t('більший')]]} onChange={(v) => set({ textSize: v })} />
       </div>
 
+      {tester && (<>
       <h2 className="sect">{t('Тестерам')}</h2>
       <button className="set set-btn" onClick={exportLogs}>
         <span className="l">{t('Вивантажити логи')}<small>{t('Рішення цієї кар’єри, JSON')}</small></span>
@@ -119,6 +139,7 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
           <button className="danger-btn" onClick={onWiped}>{t('На головну')}</button>
         </div>
       )}
+      </>)}
       {!slot.empty && !confirmWipe && (
         <button className="set set-btn danger" onClick={() => setConfirmWipe(true)}>
           <span className="l">{t('Стерти кар’єру')}<small>{tf('Слот {0} · {1}', slot.slot + 1, slotLine(slot))}</small></span>
@@ -134,7 +155,8 @@ export function SettingsScreen({ onBack, onWiped }: Props) {
       )}
 
       <button className="row row-back" onClick={onBack}>{t('На головну')}</button>
-      <p className="build">{tf('тестова збірка · {0} · ukr', build)}</p>
+      {/* Рядок версії — він же замок розділу «Тестерам» у релізі (див. TESTER_KEY). */}
+      <p className="build" onClick={tapVersion}>{releaseName() ? tf('версія {0} · {1}', releaseName(), build) : tf('тестова збірка · {0}', build)}</p>
     </div>
   );
 }

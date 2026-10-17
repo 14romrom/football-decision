@@ -52,6 +52,9 @@ jobs:
       - name: тесты перед релизом
         run: npx vitest run
       - run: npm run build
+        env:
+          # Номер релізу в бандлі: за ним гра прибирає тестові підписи й розділ «Тестерам».
+          APP_RELEASE: ${{ steps.ver.outputs.name }}
       - run: npx cap sync android
 
       - name: проставить версию

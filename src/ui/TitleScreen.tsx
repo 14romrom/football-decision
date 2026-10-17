@@ -39,9 +39,24 @@ export function slotMotto(s: SlotSummary): { who: string; motto: string; key: st
   return v ? { who: VOICE_LABEL[s.dominant], motto: v.motto, key: s.dominant } : null;
 }
 
+/** Номер релізу («1.0.3») або порожньо — тестова збірка (Pages, debug-APK). */
+export function releaseName(): string {
+  return typeof __APP_RELEASE__ === 'string' ? __APP_RELEASE__ : '';
+}
+
+/** Підпис збірки під меню. У релізі — тільки номер версії: «тестова» на екрані гри з Play читається
+ *  як недороблена гра. Тестерам хеш потрібен, щоб назвати, на чому зіграно, — тому він лишається. */
 export function buildLabel(): string {
+  const rel = releaseName();
+  if (rel) return `v${rel}`;
   const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
   return tf('Тестова збірка {0}', build);
+}
+
+/** Підписи плівки на титулі й на екрані запуску — однакові, бо рамка при розчиненні не сіпається. */
+export function titleFilmLabels() {
+  const rel = releaseName();
+  return { left: [0, 1, 2].map((d) => `01A0${d}`), right: ['Inside the Box', rel ? `v${rel}` : t('тестова'), tf('слот {0}', activeSlot() + 1)] };
 }
 
 type Props = { onContinue: () => void; onNewCareer: () => void; onSettings: () => void; onAbout: () => void };
@@ -59,7 +74,7 @@ export function TitleScreen({ onContinue, onNewCareer, onSettings, onAbout }: Pr
   const surname = PLAYER.name.split(String.fromCharCode(32)).pop() ?? PLAYER.name;
   return (
     <div className="title">
-      <Film labels={{ left: [0, 1, 2].map((d) => `01A0${d}`), right: ['Inside the Box', t('тестова'), tf('слот {0}', activeSlot() + 1)] }} />
+      <Film labels={titleFilmLabels()} />
 
       <div className="title-art" aria-hidden="true">
         <img src="./img/title.webp" width="800" height="960" alt="" decoding="async" />

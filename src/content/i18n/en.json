@@ -161,7 +161,6 @@
   "e824067bf2a8": "Stamina is the price of an option. A sprint and a second effort cost dearly, and by the end of the match you feel it.",
   "71229ccadf79": "The coach and the stands want different things: he looks at discipline, they look at daring. You cannot please both with one decision.",
   "8a09ed38b069": "The week between matches",
-  "99f941a4b1bf": "Six things to do, two of which you can choose. What you choose changes the next match: a voice louder, stamina, composure, the coach's trust.",
   "29d88afaa44d": "Some of them have consequences you didn't order — and then a scene comes that evening. It is a decision too.",
   "716c6d0a6dc3": "A voice is not advice and not a hint. It is what Reyes wants to do, and each one wants its own. Behind every voice stand its attributes — they're on the card; the stronger they are, the louder the voice: first it suggests, later it sees what the others miss.",
   "21fdd50553c3": "Rules the game keeps",
@@ -735,7 +734,6 @@
   "1dfcf462511f": "This tweet was deleted",
   "725fa61edd9d": "k",
   "e11a549b9f85": "before the fast-forward",
-  "aa814553274c": "test build · {0} · eng",
   "60d21e671c26": "top of the table, unbeaten in nine",
   "8eae4767ca56": "the division's second force, play hard and without sentiment",
   "75ffd60ffefe": "mid-table, fight for every ball",
@@ -1563,7 +1561,6 @@
   "aecfddad65dd": "{0} quieter",
   "8194354bb90d": "{0}: {1} of {2}",
   "76be070150a2": "{0} rounds back",
-  "04ad2386eea3": "{0}. Text and code — a prototype.",
   "e9066746d08b": "Dressing room · debrief · round {0}",
   "bc727f4dfd35": "Trust {0} → ",
   "dc974ac67565": "[{0} {1} · disaster {2}]",
@@ -12534,5 +12531,8 @@
   "29a395a91c8e": "A pass into his feet, {partner} under pressure, a turnover a second later. A trick would have been no worse.",
   "f2e763c9306c": "and it went into pressure.",
   "15f8b8954383": "The pass is cut out at once, and the run you had already made forward makes their counter-attack twenty metres shorter.",
-  "e1ae3f8e5505": "and it was cut out at once."
+  "e1ae3f8e5505": "and it was cut out at once.",
+  "fff70e508b5f": "Between matches there's a week: three days, three things to do on each, and you pick one. What you pick changes the next match: a voice louder, stamina, composure, the coach's trust.",
+  "59fa9040c04b": "version {0} · {1}",
+  "36c4ea7c4741": "test build · {0}"
 }

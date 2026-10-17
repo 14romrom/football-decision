@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Film } from './Film';
 import { readSettings } from '../telemetry/settings';
-import { activeSlot } from '../telemetry/slots';
-import { t, tf } from '../content/i18n';
+import { titleFilmLabels } from './TitleScreen';
 
 // Екран запуску (16.10, референс користувача — кінетика на темному). Перший кадр гри: два кубики
 // дрижать і лягають, поверх них впечатується назва, далі все розчиняється в титул.
@@ -60,7 +59,7 @@ export function LaunchScreen({ onDone }: Props) {
 
   return (
     <div className={`launch${out ? ' out' : ''}${crit ? ' crit' : ''}${calm ? ' calm' : ''}`} aria-label="Inside the Box">
-      <Film labels={{ left: [0, 1, 2].map((d) => `01A0${d}`), right: ['Inside the Box', t('тестова'), tf('слот {0}', activeSlot() + 1)] }} />
+      <Film labels={titleFilmLabels()} />
       <div className="launch-dice">
         <i className="die launch-die-a">{shown[0]}</i>
         <i className="die launch-die-b">{shown[1]}</i>

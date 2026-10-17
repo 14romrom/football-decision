@@ -4,7 +4,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // appId менять до первой публикации — после смены телефон считает это другим приложением.
 const config: CapacitorConfig = {
   appId: 'ua.footballdecision.app',
-  appName: 'Football Decision',
+  appName: 'Inside the Box',
   webDir: 'dist',
   android: { allowMixedContent: false },
   plugins: {

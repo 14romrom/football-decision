@@ -11,6 +11,11 @@ function gitVersion(): string {
 export default defineConfig({
   plugins: [react()],
   base: './',
-  define: { __APP_VERSION__: JSON.stringify(gitVersion()) },
+  // Номер релизу (1.0.3) ставить release.yml із тега. Є номер — збірка йде в Play, і тестових
+  // підписів на екранах бути не повинно; немає — це Pages або debug-APK для тестерів.
+  define: {
+    __APP_VERSION__: JSON.stringify(gitVersion()),
+    __APP_RELEASE__: JSON.stringify(process.env.APP_RELEASE ?? ''),
+  },
   test: { globals: true, environment: 'node', include: ['tests/**/*.test.ts'] },
 });

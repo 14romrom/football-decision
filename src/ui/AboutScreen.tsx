@@ -42,7 +42,7 @@ export function AboutScreen({ onBack }: Props) {
 
       <h2>{t('Тиждень між матчами')}</h2>
       <ul className="about-rules">
-        <li>{t('Шість справ, обрати можна дві. Те, що ти обираєш, змінює наступний матч: голос гучніший, сили, спокій, довіра тренера.')}</li>
+        <li>{t('Між матчами — тиждень: три дні, у кожному три справи, обрати можна одну. Те, що ти обираєш, змінює наступний матч: голос гучніший, сили, спокій, довіра тренера.')}</li>
         <li>{t('У справ бувають наслідки, яких ти не замовляв, — і тоді ввечері приходить сцена. Вона теж рішення.')}</li>
       </ul>
 
@@ -64,7 +64,7 @@ export function AboutScreen({ onBack }: Props) {
       <p className="about-refs">{t('Натхнення: Disco Elysium, Football Manager і кожен матч, де ти знав, як треба, і зробив інакше.')}</p>
 
       <button className="row row-back" onClick={onBack}>{t('На головну')}</button>
-      <p className="build">{tf('{0}. Тексти й код — прототип.', buildLabel())}</p>
+      <p className="build">{buildLabel()}</p>
     </div>
   );
 }

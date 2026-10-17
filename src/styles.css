@@ -1262,48 +1262,33 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 .pm-cta { margin-top: 20px; }
 
 
-/* ——— Екран запуску (16.10) ————————————————————————————————————————————————
-   Кубики — ті самі `.die`, що в матчі, тому тут лише розкладка й розклад анімації.
-   Моменти збігаються з константами в `ui/LaunchScreen.tsx`: правити треба обидва разом. */
-.launch {
-  position: fixed; inset: 0; z-index: 50; background: var(--bg);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px;
-  opacity: 1; transition: opacity .42s ease;
-}
-.launch.out { opacity: 0; }              /* титул уже змонтований знизу — розчиняємося в нього */
-.launch-dice { display: flex; align-items: center; justify-content: center; gap: 18px; }
+/* ——— Екран запуску «Звук першим» (17.10) ————————————————————————————————————
+   Шар поверх уже змонтованого титулу: підкладка гасне на `reveal`, і крізь неї проявляється справжній
+   кадр титулу; логотип заставки їде на місце свого двійника (позицію рахує LaunchScreen), меню
+   титулу сховане класом `html.launching` і піднімається, щойно заставка знята. Моменти — `T` у LaunchScreen. */
+.launch { position: fixed; inset: 0; z-index: 50; cursor: pointer; }
+.launch-ground { position: absolute; inset: 0; background: var(--bg); transition: opacity 1.5s ease; }
+.launch.is-reveal .launch-ground, .launch.is-settle .launch-ground { opacity: 0; }
+.launch-dice { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); display: flex; gap: 18px; opacity: 0; transition: opacity .25s; }
+.launch.is-dice .launch-dice, .launch.is-a .launch-dice, .launch.is-b .launch-dice { opacity: 1; }
+.launch.is-stamp .launch-dice, .launch.is-reveal .launch-dice, .launch.is-settle .launch-dice { opacity: 0; transition: opacity .12s; }
 .launch .die { border-color: #6c6a63; color: var(--muted); }
-.launch-die-a { transform: rotate(-8deg); animation: shake .12s linear 0s 5, land .25s ease-out .6s, launchSettle .01s linear .6s forwards, launchDim .45s ease 1.45s forwards; }
-.launch-die-b { transform: rotate(6deg); animation: shake .12s linear 0s 7, land .25s ease-out .84s, launchSettle .01s linear .84s forwards, launchDim .45s ease 1.45s forwards; }
-@keyframes launchSettle { to { color: #fff; border-color: var(--ink); } }
-@keyframes launchDim { to { color: #4a4843; border-color: #3a3832; } }
-
-/* Дубль: кубики лягають кольором криту і не гаснуть у сіре разом із рештою. */
-.launch.crit .launch-die-a, .launch.crit .launch-die-b { animation-name: shake, land, launchSettleGold, launchDimGold; }
-@keyframes launchSettleGold { to { color: var(--v-instinct); border-color: var(--v-instinct); } }
-@keyframes launchDimGold { to { color: #8a7636; border-color: #6e5d2b; } }
-
-.launch-name { text-align: center; line-height: .82; }
-.launch-kicker {
-  display: block; font-family: var(--font-caps); font-weight: 500; font-size: 20px;
-  letter-spacing: .42em; text-indent: .42em; color: var(--ink); opacity: 0;
-  animation: launchFade .3s ease .95s forwards;
-}
-/* Кегль у vw: слово впирається в плівку з обох боків на будь-якій ширині. Назву не ріжемо —
-   контраст масштабу дає сам розмір, а читати її треба цілком. */
-.launch-box {
-  display: block; font-family: var(--font-caps); font-weight: 600; font-size: 53vw;
-  letter-spacing: -.015em; color: var(--bad); white-space: nowrap;
-  opacity: 0; transform: scale(1.14); animation: launchStamp .3s cubic-bezier(.25,1.6,.4,1) 1.1s forwards;
-}
-@media (min-width: 520px) { .launch-box { font-size: 276px; } }
-@keyframes launchFade { to { opacity: 1; } }
-@keyframes launchStamp { to { opacity: 1; transform: none; } }
-
-/* «Менше руху»: лишається останній кадр, розчинення в титул зберігається. */
-.launch.calm .launch-die-a, .launch.calm .launch-die-b { animation: none; color: #4a4843; border-color: #3a3832; }
-.launch.calm.crit .launch-die-a, .launch.calm.crit .launch-die-b { color: #8a7636; border-color: #6e5d2b; }
-.launch.calm .launch-kicker, .launch.calm .launch-box { animation: none; opacity: 1; transform: none; }
+.launch .die.stop { color: #fff; border-color: var(--ink); animation: land .25s ease-out; }
+.launch.crit .die.stop { color: var(--v-instinct); border-color: var(--v-instinct); }
+/* Без звуку кубики — головне, що відбувається: більші, і телефон дрижить у такт. */
+.launch.silent .launch-dice { transform: translate(-50%, -50%) scale(1.3); }
+.launch-logo { position: absolute; opacity: 0; transform: scale(1.35); }
+.launch-logo.on { opacity: 1; transform: none; transition: transform .14s cubic-bezier(.2,1.6,.4,1), opacity .05s, top 1s ease; }
+.launch.is-stamp { animation: launchShake .26s linear; }
+@keyframes launchShake { 20% { transform: translate(-4px, 3px); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, -1px); } }
+/* «Менше руху»: без барабана й тряски — штамп і розчинення. */
+.launch.calm .launch-logo { transform: none; transition: top 1s ease, opacity .3s; }
+.launch.calm .launch-dice { display: none; }
+.launch.calm.is-stamp { animation: none; }
+/* Титул під заставкою: логотип і меню приносить заставка. */
+html.launching .title-logo, html.launching .title-say, html.launching .title-intro, html.launching .title-menu, html.launching .title-chapter { opacity: 0; }
+html.launching .title-menu { transform: translateY(12px); }
+.title-say, .title-intro, .title-menu, .title-chapter { transition: opacity .6s ease, transform .6s ease; }
 
 /* ——— Рух: три місця, де статика коштувала (16.10) ——————————————————————————
    Словник у гри вже є і він не «слайди»: предмети лягають, впечатуються, осідають. Нове

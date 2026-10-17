@@ -212,3 +212,38 @@ export function ambience(on: boolean) {
     s.connect(g).connect(master); s.start(); amb = { s, g };
   });
 }
+
+// ——— заставка ——————————————————————————————————————————————————————————————
+/** Звук заставки за тим самим розкладом, що й `LaunchScreen`: гул трибуни здалеку (фільтр
+ *  відкривається, поки підходиш ближче), барабан 1,6–2,6 с, стуки на 2,6 і 2,9 с, штамп на 3,3 с,
+ *  трибуна коротко вскидається й за дві секунди гасне — у меню тиша. Повертає false, якщо звуку
+ *  не буде (вимкнено в налаштуваннях або браузер не дав грати без дотику): тоді заставка показує
+ *  беззвучну версію. `calm` («менше руху») — тільки штамп. */
+export function sfxLaunch(calm: boolean): boolean {
+  const c = ac();
+  if (!c || c.state !== 'running') return false;
+  const t0 = c.currentTime + 0.02;
+  const stampAt = (t: number) => {
+    tone(c, t, { f: 120, f2: 55, d: 0.2, peak: 0.7 });
+    burst(c, t, { type: 'lowpass', f: 900, q: 0.7, d: 0.07, peak: 0.55 });
+    burst(c, t + 0.004, { f: 3200, q: 0.8, d: 0.03, peak: 0.18 });
+    tone(c, t + 0.015, { f: 1318, d: 0.5, peak: 0.05 });
+  };
+  if (calm) { stampAt(t0 + 0.3); return true; }
+  void buffer(c, 'stadium_ambience').then((b) => {
+    if (!b || !master) return;
+    const t = Math.max(c.currentTime, t0);
+    const s = c.createBufferSource(), g = c.createGain(), lp = c.createBiquadFilter(); s.buffer = b; s.loop = true; lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(350, t); lp.frequency.linearRampToValueAtTime(900, t0 + 3.1); lp.frequency.linearRampToValueAtTime(4000, t0 + 3.4); lp.frequency.linearRampToValueAtTime(1600, t0 + 4.8);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.35, t0 + 1.6); g.gain.linearRampToValueAtTime(0.55, t0 + 3.4); g.gain.linearRampToValueAtTime(0.3, t0 + 4.7); g.gain.linearRampToValueAtTime(0, t0 + 6.8);
+    s.connect(lp).connect(g).connect(master); s.start(t, 3); s.stop(t0 + 7);
+  });
+  for (let x = 0; x < 1.0; x += 0.06) burst(c, t0 + 1.6 + x + Math.random() * 0.006, { f: 2600 + Math.random() * 1400, q: 6, d: 0.012, peak: 0.12 });
+  for (const at of [2.6, 2.9]) {
+    tone(c, t0 + at, { f: 210, f2: 95, d: 0.09, peak: 0.45 });
+    burst(c, t0 + at, { f: 1300, q: 1.5, d: 0.04, peak: 0.35 });
+    burst(c, t0 + at + 0.05, { f: 2200, q: 4, d: 0.02, peak: 0.08 });
+  }
+  stampAt(t0 + 3.3);
+  return true;
+}

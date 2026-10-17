@@ -261,7 +261,7 @@ export function sfxLaunch(calm: boolean): boolean {
 /** Петля теми: перший раз трек звучить цілком, із тихим вступом; далі — від LOOP_START до LOOP_END.
  *  Шов (3 с перехресного згасання) вшито в кінець файла (scratchpad sfx/theme.py: a=3,8, b=170,5,
  *  найдовша петля, де тембр і гучність на шві збігаються) — повтор раз на 2 хв 47 с. */
-const LOOP_START = 6.8, LOOP_END = 173.5, MUSIC_GAIN = 0.28;
+const LOOP_START = 6.8, LOOP_END = 173.5, MUSIC_GAIN = 0.14;  // 0.28 → 0.14 (17.10: користувач попросив удвічі тихіше)
 let musicWanted = false;
 /** Відкрито матч: теми немає, хто б її не вмикав (порядок ефектів React тут не має значення). */
 let inMatch = false;

@@ -207,16 +207,20 @@ export class Director {
     this.setView(this.frame([52.5, 34], 56));
     this.quiet();
     this.t.sub?.g.setAttribute('opacity', this.onBench ? '1' : '0');
+    this.t.u10?.g.setAttribute('opacity', this.onBench ? '0' : '1');
   }
 
   // Дублер на полі лише поки Реєс на лаві; решту часу його фішки немає — біля бровки вона читалась як
-  // Реєс, що стоїть осторонь (зауваження користувача 17.10). Лікар з'являється тільки тоді, коли біжить.
+  // Реєс, що стоїть осторонь (зауваження користувача 17.10). Так само й сам Реєс: на лаві, після заміни
+  // й після червоної його фішки на полі немає зовсім (друге зауваження 17.10), з'являється на виході.
+  // Лікар з'являється тільки тоді, коли біжить.
   setBench(on: boolean, sentOff = false) {
     this.onBench = on || sentOff;
     this.tenMen = sentOff;
     this.put('u10', this.onBench ? BENCH : this.home.u10);
     this.put('sub', on && !sentOff ? this.home.u10 : BENCH);
     this.t.sub?.g.setAttribute('opacity', on && !sentOff ? '1' : '0');
+    this.t.u10?.g.setAttribute('opacity', this.onBench ? '0' : '1');
   }
   /** Фішка, що грає на місці Реєса: він сам або дублер, поки Реєс на лаві. */
   private selfId() { return this.onBench ? 'sub' : 'u10'; }
@@ -340,6 +344,12 @@ export class Director {
 
   // ——— розіграш рядка стрічки ————————————————————————————————————————————
   async play(st: Stage, kind?: string) {
+    await this.playAct(st, kind);
+    // Перерва — команди в тунелі, фону немає до наступного рядка.
+    if (st.act !== 'half') void this.idle(this.run);
+  }
+
+  private async playAct(st: Stage, kind?: string) {
     const my = ++this.run;
     this.quiet();
     const z: P = st.x ? [ZX[st.x], ZY[st.y ?? 'C']] : [52.5, 34];
@@ -623,7 +633,7 @@ export class Director {
       case 'enter': {
         // Вихід завжди починається від лави: прапорець «на лаві» в App знімається тим самим рядком, і без
         // цього Реєс спершу стрибав на позицію, а потім «виходив» назад від бровки.
-        this.put('u10', BENCH); this.put('sub', this.home.u10); this.t.sub?.g.setAttribute('opacity', '1');
+        this.put('u10', BENCH); this.put('sub', this.home.u10); this.t.sub?.g.setAttribute('opacity', '1'); this.t.u10?.g.setAttribute('opacity', '1');
         await S({ cam: [52.5, 4], w: 46, dur: 500 });
         await S({ moves: { u10: [52, 8], sub: BENCH }, dur: 800 });
         this.onBench = false;
@@ -692,7 +702,8 @@ export class Director {
   }
 
   /** Розв'язка після броску — з точки сцени (FAMILY_SPOT) і за видом ісходу (engine/finale.ts). */
-  async finale(kind: FinaleKind, spot: P) {
+  async finale(kind: FinaleKind, at: P) {
+    const spot = this.inPlay(at);
     const my = ++this.run;
     this.quiet();
     const S = (o: Parameters<Director['step']>[1]) => this.step(my, o);
@@ -712,13 +723,48 @@ export class Director {
       case 'duel': await S({ moves: { [near]: [spot[0] + .7, spot[1] + .3] }, dur: 300 }); await S({ moves: { [near]: [spot[0] + 6, spot[1] + 5] }, ball: [spot[0] + 3, spot[1] - 1], dur: 450 }); break;
       default: this.jump(r); await this.sleep(350); this.jump(r, false);
     }
+    if (my === this.run) void this.idle(my);
   }
 
   /** Сцена відкрилася десь на полі — усі на позиції від неї, Реєс у точці, камера туди ж. */
-  async toSpot(spot: P) {
+  async toSpot(at: P) {
+    const spot = this.inPlay(at);
     const my = ++this.run;
     this.quiet();
     await this.step(my, { moves: this.block(spot, this.onBench ? {} : { u10: spot }), ball: [spot[0] + .9, spot[1]], cam: spot, w: 44, dur: 500 });
+    void this.idle(my);
+  }
+
+  /** Точка сцени для фішки Реєса — у грі, а не на лінії: у сцен тренера точка на самій бровці
+   *  (FAMILY_SPOT.coach — так її бачить дошка), і Реєс лишався стояти там на наступних рядках. */
+  private inPlay(p: P): P { return [clamp(p[0], 4, 101), clamp(p[1], 6, 62)]; }
+
+  /** Фон між рядками стрічки (17.10, зауваження користувача: «поле стоїть, коли немає подій»). Формальний
+   *  розіграш: команда катає м'яч у середній третині, блок зсувається за ним — і заодно повертає в стрій
+   *  тих, хто лишився біля бровки чи в кутку після попередньої постановки. Без ударів і без штрафного:
+   *  фон не має вигадувати моментів, яких немає в стрічці. Новий рядок або розв'язка зупиняють його
+   *  (лічильник `run`); при «менше руху» фону немає. */
+  private async idle(my: number) {
+    if (this.reduced) return;
+    await this.sleep(1100);
+    let side: 'us' | 'them' = this.sideOf(this.nearest('us', this.ballP, 1).concat(this.nearest('them', this.ballP, 1))
+      .sort((x, y) => dist(this.pos(x), this.ballP) - dist(this.pos(y), this.ballP))[0] ?? 'u8');
+    let first = true;
+    while (my === this.run) {
+      if (Math.random() < .22) side = side === 'us' ? 'them' : 'us';
+      const near = this.nearest(side, this.ballP, 5).filter((id) => dist(this.pos(id), this.ballP) > 3.5);
+      const to = near[Math.floor(Math.random() * Math.min(3, near.length))];
+      if (!to) return;
+      const p = this.pos(to);
+      const target: P = [clamp(p[0], 22, 83), clamp(p[1], 8, 60)];
+      const bm = this.block(target);
+      const recv = bm[to] ?? target;
+      const ball: P = [clamp(recv[0], 22, 83), clamp(recv[1], 8, 60)];
+      if (first) { for (const id in this.t) if (id !== 'u10') this.t[id].label?.setAttribute('opacity', '0'); first = false; }
+      await this.step(my, { moves: { ...bm, [to]: ball }, ball, cam: ball, w: 52, dur: 1100 + Math.random() * 500 });
+      if (my !== this.run) return;
+      await this.sleep(500 + Math.random() * 900);
+    }
   }
 
   // ——— голи —————————————————————————————————————————————————————————————

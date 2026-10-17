@@ -14,8 +14,16 @@ export type NameForms = {
   variants?: NameForms[];
 };
 
+/** Форма клубу (17.10) — схема на фішці поля й магніті дошки: колір і малюнок, щоб клуби
+ *  розрізнялися не лише кольором. `num` — колір номера, `gk`/`gkNum` — воротар. */
+export type Kit = {
+  pattern: 'solid' | 'stripes' | 'hoops' | 'sash' | 'halves' | 'trim';
+  a: string; b: string; num: string; gk: string; gkNum: string;
+};
+
 export type TeamRoster = {
   name: { nom: string; gen: string };
+  kit?: Kit;
   players: Record<string, NameForms>;
   /** Ключи игроков, чьи фамилии попадают в ленту как авторы голов. */
   scorers: string[];

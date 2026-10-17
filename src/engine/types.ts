@@ -56,6 +56,8 @@ export type TimelineEvent = {
   /** Чёткие теги результата («⚽ Гол!», «Втрата м'яча») — что конкретно произошло,
    *  отдельно от яруса броска (тот про качество попытки, не про итог). См. resolve.ts. */
   badges?: ResultBadge[];
+  /** Постановка рядка стрічки на полі (engine/feed.ts:parseStage) — лише в рядків із feed.json. */
+  stage?: import('./feed').Stage;
 };
 
 export type ResultBadge = { icon: string; label: string; tone: 'good' | 'bad' | 'neutral' };

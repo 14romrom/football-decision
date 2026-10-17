@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Film } from './Film';
 import type { Episode, FlagRule, MatchState, ModLine, Player, TimelineEvent } from '../engine/types';
-import type { Roster } from '../engine/names';
+import type { Kit as KitT, Roster } from '../engine/names';
 import type { MatchConditions } from '../engine/conditions';
 import type { FinaleKind } from '../engine/finale';
 import { computeContext } from '../engine/context';
@@ -24,6 +24,17 @@ import { plural, t, tf } from '../content/i18n';
 // вони повертаються разом із полем після кидка. **Кидок — теж лист** (22.09, плейтест: кубики під стрічкою за згином):
 // смужка й без стрічки, поки не натиснуто «далі»; поле повертається зі стрічкою, і розв’язка (finale) грає при монтуванні
 // поля — тому поле під час стрічки стоїть за останньою сценою (`pitchEpisode`), а не за «нічим».
+
+/** Кружок форми клубу — та сама схема, що на фішках поля (ui/pitchDirector.ts). */
+function Kit({ kit }: { kit?: KitT }) {
+  if (!kit) return null;
+  const bg = kit.pattern === 'stripes' ? `repeating-linear-gradient(90deg, ${kit.a} 0 2px, ${kit.b} 2px 4px)`
+    : kit.pattern === 'hoops' ? `repeating-linear-gradient(0deg, ${kit.a} 0 2px, ${kit.b} 2px 4px)`
+    : kit.pattern === 'halves' ? `linear-gradient(90deg, ${kit.a} 4.5px, ${kit.b} 4.5px)`
+    : kit.pattern === 'sash' ? `linear-gradient(45deg, ${kit.a} 4.8px, ${kit.b} 4.8px 7.8px, ${kit.a} 7.8px)`
+    : kit.a;
+  return <i className="strip-kit" style={{ background: bg, ...(kit.pattern === 'trim' ? { boxShadow: `inset 0 0 0 1.5px ${kit.b}` } : {}) }} aria-hidden="true" />;
+}
 
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
 
@@ -89,20 +100,20 @@ export function MatchScreen({
     <div className="match de-match">
       <Film />
 
-      {moment ? <div className="score-strip">
-        <span className="strip-team">{roster.us.name.nom}</span>
+      {/* Смужка рахунку — завжди зверху (17.10): і над листом, і над полем. Кружок біля назви — форма
+          клубу, та сама, що на фішках поля. Сили — тонка лінія по нижній кромці; на полі вони ще й кільцем
+          навколо фішки Реєса. */}
+      <div className="score-strip">
+        <span className="strip-team"><Kit kit={roster.us.kit} />{roster.us.name.nom}</span>
         <b className={`strip-score ${scoreTone}`}>{state.scoreUs} : {state.scoreThem}</b>
-        <span className="strip-team r">{roster.them.name.nom}</span>
+        <span className="strip-team r">{roster.them.name.nom}<Kit kit={roster.them.kit} /></span>
         <div className={`stamina-bar thin ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
-      </div> : <div className="pitch-wrap">
-        <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench} />
-        <div className="score-overlay">
-          <span className="score-line">{clock}′ &nbsp; {roster.us.name.nom} <b>{state.scoreUs} : {state.scoreThem}</b> {roster.them.name.nom}</span>
-        </div>
-        <div className={`stamina-bar ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true">
-          <b>{t('сили')}</b><i style={{ width: `${stamina}%` }} />
-        </div>
-      </div>}
+      </div>
+      {!moment && (
+        <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} roster={roster}
+          finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench}
+          stamina={stamina} momentum={state.momentum} minute={clock} />
+      )}
 
       {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}`}>
         <div className="tape-shade" />

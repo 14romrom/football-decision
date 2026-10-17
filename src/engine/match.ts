@@ -4,7 +4,7 @@
 import { BALANCE, TOP_LEAGUE_BOLD, COMPOSURE_CALM, MOMENTUM_BY_BOLDNESS, MOMENTUM_BY_TIER, MOMENTUM_SPEND } from './balance';
 import { attrMod } from './context';
 import { fillNames, fillNamesDeep, opponentTraits, rosterIn, type Extra, type Roster } from './names';
-import { pickFeedLine, type FeedKind } from './feed';
+import { pickFeed, type FeedKind, type Stage } from './feed';
 import { hypeScale, neutralConditions, startResources, type MatchConditions } from './conditions';
 import { dominantVoice, initVoiceTrace, recordVoice, VOICE_LABEL, voiceSeesNow } from './voices';
 import { matchesSituation, pickFlavorLine, pickFresh, scoreState, type FlavorRule } from './flavor';
@@ -364,14 +364,16 @@ export function createMatch(
     seen: new Set(carryover.seenEpisodes ?? []),
     injuriesSeason: carryover.injuriesSeason,
   };
+  const kickoff = feedPick(session, 'kickoff', rng);
   state.log.push({
     minute: 0,
     kind: 'kickoff',
+    ...(kickoff.stage ? { stage: kickoff.stage } : {}),
     // Лапки — частина мови, не оформлення: рядок із ними лежить у карті цілим (M47), а не
     // склеюється з трьох шматків. Мова — **мова начинки**: репліка з `feed.json` може бути ще не
     // перекладена, і тоді вся фраза, разом із назвами клубів, лишається базовою.
     text: (() => {
-      const line = feedLine(session, 'kickoff', rng);
+      const line = kickoff.text;
       const r = rosterIn(line, roster);
       return tfIn(langOf(line), '«{0}» — «{1}». {2}', r.us.name.nom, r.them.name.nom, line);
     })(),
@@ -404,8 +406,8 @@ function benchWarmup(session: MatchSession, rng: Rng) {
     const goal = rollFillerGoal(session, rng);
     const minute = rng.int(from + 2, until - 2);
     if (goal) pushGoal(session, goal, minute, rng);
-    else state.log.push({ minute, kind: 'filler', text: feedLine(session, 'filler', rng) });
-    if (until === 45) state.log.push({ minute: 45, kind: 'halftime', text: feedLine(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
+    else state.log.push({ minute, kind: 'filler', ...feedPick(session, 'filler', rng) });
+    if (until === 45) state.log.push({ minute: 45, kind: 'halftime', ...feedPick(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
     state.minute = until;
   }
   if (!session.onBench) benchEnter(session, rng);
@@ -418,7 +420,7 @@ function benchEnter(session: MatchSession, rng: Rng) {
   syncTired(state);
   state.flags = state.flags.filter((f) => f !== 'on_bench');
   session.onBench = false;
-  state.log.push({ minute: BALANCE.bench.entryMinute, kind: 'filler', text: feedLine(session, 'benchIn', rng) });
+  state.log.push({ minute: BALANCE.bench.entryMinute, kind: 'filler', ...feedPick(session, 'benchIn', rng) });
 }
 
 /** Партнер пам’ятає (M11): кожен привід довіряти чи образитися — у лічильник матчу, далі в кар’єру. */
@@ -430,14 +432,14 @@ function countPeople(state: MatchState, flag: string) {
 
 // ——— лента между эпизодами ———————————————————————————————————————————
 
-/** Строка ленты из feed.json: подставленные имена, отмечена как прочитанная. Пустой пул —
- *  ошибка контента (у каждого вида есть безусловное правило, тест это проверяет). */
-function feedLine(session: MatchSession, kind: FeedKind, rng: Rng, extra: Extra = {}): string {
-  const raw = pickFeedLine(kind, session.state, session.conditions, rng, session.feedSeen, undefined, session.feedSeenNow);
-  if (!raw) throw new Error(`в feed.json нет строк вида ${kind}`);  /* i18n-skip: сообщение для разработчика */
-  session.feedSeen.add(raw);
-  session.feedSeenNow.add(raw);
-  return fillNames(raw, session.roster, extra);
+/** Рядок стрічки з feed.json: підставлені імена, позначений прочитаним, разом із постановкою на полі
+ *  (17.10). Порожній пул — помилка контенту (у кожного виду є безумовне правило, тест це перевіряє). */
+function feedPick(session: MatchSession, kind: FeedKind, rng: Rng, extra: Extra = {}): { text: string; stage?: Stage } {
+  const pick = pickFeed(kind, session.state, session.conditions, rng, session.feedSeen, undefined, session.feedSeenNow);
+  if (!pick) throw new Error(`в feed.json нет строк вида ${kind}`);  /* i18n-skip: сообщение для разработчика */
+  session.feedSeen.add(pick.text);
+  session.feedSeenNow.add(pick.text);
+  return { text: fillNames(pick.text, session.roster, extra), ...(pick.stage ? { stage: pick.stage } : {}) };
 }
 
 function scorerKeyFor(roster: Roster, side: 'us' | 'them', rng: Rng): string {
@@ -485,7 +487,8 @@ function pushKnock(session: MatchSession, minute: number, rng: Rng) {
   const state = session.state;
   state.flags.push('knock');
   state.marks.knock = { minute, episodeId: 'feed', optionId: 'knock', past: t('відчув, як тягне нога після стику') };
-  state.log.push({ minute, kind: 'filler', text: feedLine(session, 'knock', rng) + ' 🤕' });
+  const k = feedPick(session, 'knock', rng);
+  state.log.push({ minute, kind: 'filler', text: k.text + ' 🤕', ...(k.stage ? { stage: k.stage } : {}) });
 }
 
 /** Трибуны: дома громче, на выезде глуше. Все изменения fanHype идут через это. */
@@ -516,11 +519,15 @@ function pushGoal(
   // Гол из исхода эпизода (scorerKey) — «эхо»: только кто и счёт, манеру уже описал исход.
   // Гол ленты — с манерой: она и есть событие.
   const kind: FeedKind = side === 'us' ? (scorerKey ? 'goalUsEcho' : 'goalUs') : (scorerKey ? 'goalThemEcho' : 'goalThem');
+  // Гол з ісходу (є text) поле вже розіграло розв'язкою — у стрічці лише відлуння; гол стрічки
+  // приходить зі своєю постановкою (манера удару).
+  const pick = text === undefined ? feedPick(session, kind, rng, (_lang, r) => ({ scorer: nameIn(r) })) : null;
   state.log.push({
     minute,
     kind: side === 'us' ? 'goalUs' : 'goalThem',
     scorer: name,
-    text: text ?? feedLine(session, kind, rng, (_lang, r) => ({ scorer: nameIn(r) })) + ' ' + state.scoreUs + ':' + state.scoreThem + '.',
+    text: text ?? pick!.text + ' ' + state.scoreUs + ':' + state.scoreThem + '.',
+    ...(pick?.stage ? { stage: pick.stage } : text !== undefined ? { stage: { act: 'echo', tags: [] } } : {}),
   });
 }
 
@@ -565,7 +572,7 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   if (from < 45 && until >= 45) {
     state.stamina = clamp(state.stamina + BALANCE.halftimeRecovery, 0, 100);
     syncTired(state);
-    state.log.push({ minute: 45, kind: 'halftime', text: feedLine(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
+    state.log.push({ minute: 45, kind: 'halftime', ...feedPick(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
   }
 
   const gap = until - from;
@@ -581,7 +588,7 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
     tickTime(session, gap / (beats + 1));
     if (i === goalBeat) pushGoal(session, goal!, minute, rng);
     else if (i === knockBeat) pushKnock(session, minute, rng);
-    else state.log.push({ minute, kind: 'filler', text: feedLine(session, 'filler', rng) });
+    else state.log.push({ minute, kind: 'filler', ...feedPick(session, 'filler', rng) });
   }
   tickTime(session, gap / (beats + 1));
   state.minute = until;

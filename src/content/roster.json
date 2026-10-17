@@ -90,7 +90,15 @@
       "cb",
       "winger",
       "cb2"
-    ]
+    ],
+    "kit": {
+      "pattern": "solid",
+      "a": "#b8382a",
+      "b": "#b8382a",
+      "num": "#f3ead9",
+      "gk": "#1d1d22",
+      "gkNum": "#e6e1d6"
+    }
   },
   "opponents": {
     "sandorea": {
@@ -198,6 +206,14 @@
       ],
       "keeper": {
         "trait": "staysBig"
+      },
+      "kit": {
+        "pattern": "trim",
+        "a": "#d9a93a",
+        "b": "#1a1a1a",
+        "num": "#1a1a1a",
+        "gk": "#6b3d8f",
+        "gkNum": "#f1eee6"
       }
     },
     "portoblanco": {
@@ -305,6 +321,14 @@
       ],
       "keeper": {
         "trait": "nearPost"
+      },
+      "kit": {
+        "pattern": "stripes",
+        "a": "#f1eee6",
+        "b": "#2c4f8f",
+        "num": "#10203f",
+        "gk": "#3d8a4c",
+        "gkNum": "#0d1f11"
       }
     },
     "castelrio": {
@@ -412,6 +436,14 @@
       ],
       "keeper": {
         "trait": "divesEarly"
+      },
+      "kit": {
+        "pattern": "hoops",
+        "a": "#7fb0e0",
+        "b": "#f1eee6",
+        "num": "#10203f",
+        "gk": "#e07b2a",
+        "gkNum": "#1a1a1a"
       }
     },
     "terranova": {
@@ -519,6 +551,14 @@
       ],
       "keeper": {
         "trait": "comesOut"
+      },
+      "kit": {
+        "pattern": "sash",
+        "a": "#2f7a45",
+        "b": "#f1eee6",
+        "num": "#f1eee6",
+        "gk": "#d9a93a",
+        "gkNum": "#1a1a1a"
       }
     },
     "olvar": {
@@ -626,6 +666,14 @@
       ],
       "keeper": {
         "trait": "divesEarly"
+      },
+      "kit": {
+        "pattern": "stripes",
+        "a": "#f1eee6",
+        "b": "#18181b",
+        "num": "#b8382a",
+        "gk": "#2c4f8f",
+        "gkNum": "#f1eee6"
       }
     },
     "rioseco": {
@@ -727,6 +775,14 @@
       ],
       "keeper": {
         "trait": "nearPost"
+      },
+      "kit": {
+        "pattern": "solid",
+        "a": "#c9a86a",
+        "b": "#c9a86a",
+        "num": "#2a2118",
+        "gk": "#2f7a45",
+        "gkNum": "#f1eee6"
       }
     },
     "montealto": {
@@ -830,6 +886,14 @@
       ],
       "keeper": {
         "trait": "staysBig"
+      },
+      "kit": {
+        "pattern": "sash",
+        "a": "#1f2f5c",
+        "b": "#f1eee6",
+        "num": "#f1eee6",
+        "gk": "#d9a93a",
+        "gkNum": "#1a1a1a"
       }
     },
     "atlantica": {
@@ -933,6 +997,14 @@
       ],
       "keeper": {
         "trait": "comesOut"
+      },
+      "kit": {
+        "pattern": "hoops",
+        "a": "#2a9c9a",
+        "b": "#f1eee6",
+        "num": "#0f2a2a",
+        "gk": "#e07b2a",
+        "gkNum": "#1a1a1a"
       }
     },
     "sierrablanca": {
@@ -1036,6 +1108,14 @@
       ],
       "keeper": {
         "trait": "nearPost"
+      },
+      "kit": {
+        "pattern": "sash",
+        "a": "#f1eee6",
+        "b": "#c0392b",
+        "num": "#1a1a1a",
+        "gk": "#2f7a45",
+        "gkNum": "#f1eee6"
       }
     },
     "lasdunas": {
@@ -1139,6 +1219,14 @@
       ],
       "keeper": {
         "trait": "divesEarly"
+      },
+      "kit": {
+        "pattern": "halves",
+        "a": "#e07b2a",
+        "b": "#18181b",
+        "num": "#f1eee6",
+        "gk": "#7fb0e0",
+        "gkNum": "#10203f"
       }
     }
   }

@@ -9,6 +9,12 @@
       "Свисток. Трибуна за воротами вже співає, хоча ще нічого не сталося.",
       "Свисток. {coach} сідає — і одразу встає.",
       "Свисток. Перший дотик — наш, перший свист — теж наш, по звичці."
+    ],
+    "stage": [
+      "kickoff mid:C",
+      "kickoff mid:C",
+      "kickoff mid:C",
+      "kickoff mid:C"
     ]
   },
   {
@@ -21,6 +27,12 @@
       "Свисток. Наш сектор чути — маленький, але чути.",
       "Свисток. Стадіон зустрічає перший наш пас так, наче це фол.",
       "Свисток. Диктор називає наш склад швидко і без інтонації."
+    ],
+    "stage": [
+      "kickoff mid:C",
+      "kickoff mid:C",
+      "kickoff mid:C",
+      "kickoff mid:C"
     ]
   },
   {
@@ -28,6 +40,10 @@
     "lines": [
       "Свисток. Гра пішла.",
       "Свисток. М’яч у центрі, усі — на своїх місцях ще секунд десять."
+    ],
+    "stage": [
+      "kickoff mid:C",
+      "kickoff mid:C"
     ]
   },
   {
@@ -91,6 +107,66 @@
       "Їхній лікар виходить на поле і повертається, не зробивши нічого. Ритуал.",
       "{dm} перехоплює, робить три кроки вперед і віддає назад. Обережність — теж рішення.",
       "{them.cb} б’є з сорока метрів. Ніхто не зрозумів, навіщо, і він теж."
+    ],
+    "stage": [
+      "build own:C us",
+      "press mid:C dm>them.mid",
+      "long ownBox:C them.mid>them.striker keeper",
+      "foul mid:C them.mid>dm whistle",
+      "dribble their:L partner>them.rb stopped double",
+      "switch their:C them",
+      "header their:C striker>them.cb lost",
+      "out own:L throw bench",
+      "out their:R rb>winger throw back",
+      "intercept own:C cb2>them.striker",
+      "bench bench coach>cb2",
+      "dribble their:R winger>them.lb foul",
+      "out theirBox:L corner ref bench",
+      "header mid:C cb>them.striker won",
+      "intercept mid:C dm>them.mid",
+      "shot ownBox:L them.winger bar",
+      "keeper ownBox:C keeper wall",
+      "stoppage mid:C them.mid medic ref",
+      "swap their:C partner>striker them.cb",
+      "long their:C keeper>striker away",
+      "back ownBox:C cb>keeper stands",
+      "foul mid:C them.mid>dm play",
+      "wall their:C us wall",
+      "build own:R rb>dm winger",
+      "keeper theirBox:C them.keeper hold ref",
+      "corner theirBox:L us nothing cb",
+      "build mid:C them.striker ignored",
+      "run their:L lb alone",
+      "build their:C them.cb>striker alone",
+      "duel mid:C us>them both",
+      "clear own:R cb2 out",
+      "back own:C us>keeper slow",
+      "bench bench coach>dm",
+      "foul theirBox:C them.cb>striker whistle",
+      "build their:C us shift",
+      "build their:L partner alone",
+      "corner ownBox:R them keeper",
+      "offside their:C striker",
+      "out mid:L stand",
+      "duel mid:C dm>them.mid both",
+      "stoppage mid:C us boots",
+      "cross ownBox:R them.winger2 nobody cb",
+      "dribble theirBox:R winger>them.lb dive ref",
+      "long their:R us>winger out",
+      "block ownBox:C rb",
+      "cross ownBox:L them.winger>lb blocked cb2",
+      "cross theirBox:L partner>striker over",
+      "hold ownBox:L them",
+      "long their:C keeper none",
+      "crowd mid:C",
+      "foul own:C cb hand",
+      "shot ownBox:C them.striker wide dive",
+      "build their:C partner heel",
+      "stoppage mid:C us ball",
+      "argue own:R rb>winger",
+      "stoppage mid:C them medic",
+      "intercept mid:C dm>them.mid back",
+      "shot own:C them.cb over"
     ]
   },
   {
@@ -107,6 +183,16 @@
       "Трибуни ще розсаджуються, а {them.mid} уже встиг сфолити двічі.",
       "Перша пауза: {them.cb} лежить. Встає. Усе гаразд, треба було полежати.",
       "{striker} робить перший ривок за спину — офсайд. Пристрілочний."
+    ],
+    "stage": [
+      "build mid:C us",
+      "foul mid:C them.mid>dm down",
+      "bench bench coach",
+      "corner ownBox:R them nothing",
+      "press own:C them>keeper kick",
+      "foul mid:C them.mid>us whistle",
+      "stoppage their:C them.cb down",
+      "offside their:C striker"
     ]
   },
   {
@@ -125,6 +211,18 @@
       "{dm} тягне м’яч у кут поля. Трибуни — за, суперник — проти.",
       "Хтось із трибун уже пішов — ті, кому на потяг.",
       "{cb} і {them.striker} стоять поруч і дихають в один ритм. Обидва не біжать."
+    ],
+    "stage": [
+      "bench bench fourth",
+      "wide",
+      "stoppage mid:C them.mid down bench",
+      "out mid:R throw slow",
+      "bench bench coach",
+      "long theirBox:C keeper none",
+      "bench bench them",
+      "hold theirBox:L dm",
+      "wide",
+      "duel own:C cb>them.striker idle"
     ]
   },
   {
@@ -136,6 +234,11 @@
       "Суддя показує, скільки додано. Стадіон бачить на дві хвилини менше.",
       "Компенсований час. Кожен їхній аут — із пробіжкою за м’ячем у протилежний бік.",
       "Їхній воротар кладе м’яч, поправляє, кладе знову. Суддя вже поруч."
+    ],
+    "stage": [
+      "bench bench fourth",
+      "out own:R them throw slow",
+      "keeper theirBox:C them.keeper hold ref"
     ]
   },
   {
@@ -156,6 +259,20 @@
       "Кожне їхнє вкидання тепер — на голову {them.striker.dat}. Рахунок диктує.",
       "{winger} тримає м’яч біля кутового прапорця. Двоє суперників — і жодного фолу.",
       "Свисток на затягування. {coach} розводить руками, але рахунок йому подобається."
+    ],
+    "stage": [
+      "bench bench",
+      "clear ownBox:C cb",
+      "push own:C them",
+      "keeper ownBox:C keeper hold ref",
+      "bench bench coach",
+      "bench bench them",
+      "hold mid:C dm",
+      "push own:C them",
+      "back own:C partner>cb",
+      "long ownBox:L them>them.striker won",
+      "hold theirBox:R winger",
+      "bench bench coach"
     ]
   },
   {
@@ -177,6 +294,21 @@
       "Лава вже стоїть. Уся.",
       "Їхній нападник сідає на м’яч біля кутового прапорця і чекає на фол.",
       "{rb} робить довгу подачу в штрафний — {them.cb} виносить головою. Знову."
+    ],
+    "stage": [
+      "wide",
+      "bench bench coach",
+      "shot theirBox:C striker wide",
+      "bench bench coach>dm",
+      "keeper theirBox:C them.keeper hold",
+      "run their:C cb2",
+      "shot their:C partner over",
+      "deep theirBox:C them",
+      "corner theirBox:L us keeperup",
+      "argue their:C striker>winger",
+      "bench bench",
+      "hold ownBox:L them.striker",
+      "cross theirBox:R rb>them.cb cleared"
     ]
   },
   {
@@ -193,6 +325,16 @@
       "Ти біжиш назад, і {dm} тебе обганяє. {dm}.",
       "М’яч летить повз, а ти ще думаєш, чи варто.",
       "Їхній захисник пробігає повз тебе, і ти не впевнений, чи він тебе бачив."
+    ],
+    "stage": [
+      "self mid:C tired",
+      "self mid:C tired",
+      "self their:C partner tired",
+      "self mid:R rest",
+      "bench bench coach>sub",
+      "self own:C dm tired",
+      "self mid:C watch",
+      "self mid:C them.cb tired"
     ]
   },
   {
@@ -207,6 +349,14 @@
       "Калюжа біля кутового прапорця зупиняє м’яч, як стінка.",
       "Дощ пішов косий. Трибуна за воротами розкрила парасолі.",
       "{them.winger} падає сам, без нікого. Газон приймає його м’яко."
+    ],
+    "stage": [
+      "wide rain",
+      "slip their:C them.cb",
+      "keeper ownBox:C keeper wipe",
+      "hold theirBox:L ball",
+      "wide rain",
+      "slip own:R them.winger2"
     ]
   },
   {
@@ -221,6 +371,14 @@
       "Суперник тримає м’яч у тіні від трибуни. Розумно.",
       "Тінь від табло дійшла до центрального кола. Усі двадцять два хочуть у ту тінь.",
       "{dm} перестав бігати за м’ячем і почав чекати, коли м’яч прийде сам. Працює."
+    ],
+    "stage": [
+      "stoppage mid:C us water",
+      "wide",
+      "stoppage own:C cb water",
+      "build mid:L them",
+      "wide",
+      "self mid:C dm"
     ]
   },
   {
@@ -235,6 +393,14 @@
       "Кутовий прапорець лежить. Його ставлять. Він лежить.",
       "Їхній воротар вибиває проти вітру і дивиться, як м’яч зависає над центром.",
       "Подача {partner.gen} завертається у воротаря сама, без чиєїсь участі."
+    ],
+    "stage": [
+      "cross theirBox:R us out",
+      "shot ownBox:C them wide",
+      "long own:C keeper back",
+      "stoppage theirBox:L flag",
+      "long their:C them.keeper hang",
+      "cross theirBox:L partner keeper"
     ]
   },
   {
@@ -249,6 +415,14 @@
       "Диктор оголошує відвідуваність. Цифра більша, ніж здається з поля.",
       "{coach} обертається до трибун і плескає в долоні. Трибуни відповідають.",
       "Суперник вибиває в аут, і м’яч ніяк не повертають. Наш болільник."
+    ],
+    "stage": [
+      "wide",
+      "out own:R rb throw",
+      "foul mid:C us>them whistle stands",
+      "wide",
+      "bench bench coach",
+      "out own:L them throw slow"
     ]
   },
   {
@@ -263,6 +437,14 @@
       "Табло показує повтор фолу {dm.gen} утретє.",
       "Їхній болільник біля лави щось кричить {coach.dat}. {coach} не обертається.",
       "Суддя дає їм штрафний за дотик, якого на нашому полі не помітив би."
+    ],
+    "stage": [
+      "wide",
+      "out own:R rb throw slow",
+      "wide",
+      "wide",
+      "bench bench coach",
+      "foul mid:C us>them whistle"
     ]
   },
   {
@@ -276,6 +458,13 @@
       "Їхні захисники навіть не поспішають — знають, що встигнуть.",
       "{keeper} уже втретє тягне з-під перекладини. Це не гра, це чергування.",
       "Їхній пресинг синхронний: троє на одного, і всі знають, куди піде пас."
+    ],
+    "stage": [
+      "build own:C them",
+      "build own:C them.mid through",
+      "build their:C them slow",
+      "shot ownBox:C them saved",
+      "press own:C them>us double"
     ]
   },
   {
@@ -289,6 +478,13 @@
       "Суперник відсів усією командою біля своїх воріт і чекає на диво.",
       "Їхній воротар кричить на захисників. Захисники кричать один на одного.",
       "{partner} проходить двох, наче їх не було. Їх і не було — вони стояли."
+    ],
+    "stage": [
+      "clear theirBox:C them out",
+      "header their:C striker>them.cb won",
+      "deep theirBox:C them",
+      "keeper theirBox:C them.keeper shout",
+      "dribble their:L partner beat"
     ]
   },
   {
@@ -302,6 +498,11 @@
       "{them.winger} робить чотири фінти на місці і віддає назад. Красиво і без сенсу.",
       "{lb} сідає на газон після фінта {them.winger.gen}. Трибуни бачили. Він — теж.",
       "{them.winger} тримає м’яч, поки не збереться троє. Тоді віддає."
+    ],
+    "stage": [
+      "dribble own:L them.winger back",
+      "dribble own:L them.winger>lb beat",
+      "hold own:L them.winger"
     ]
   },
   {
@@ -315,6 +516,11 @@
       "{them.mid} приймає, дивиться — і віддає туди, куди ніхто не біг. Тепер біжать.",
       "{dm} стоїть до {them.mid.gen} впритул. {them.mid} віддає з першого дотику, і {dm} стоїть уже сам.",
       "Кожен їхній розіграш іде через {them.mid.gen}. Він це знає і не поспішає."
+    ],
+    "stage": [
+      "build mid:C them.mid through",
+      "press mid:C dm>them.mid beaten",
+      "build mid:C them.mid"
     ]
   },
   {
@@ -328,6 +534,11 @@
       "{them.striker} не біжить — стоїть там, куди м’яч прийде. І він приходить.",
       "{them.striker} тримає {cb.gen} рукою так, що суддя цього не бачить. Двадцять років практики.",
       "{them.striker} просить пауз, і суддя дає. Досвід."
+    ],
+    "stage": [
+      "long ownBox:C them>them.striker won",
+      "duel ownBox:C them.striker>cb idle",
+      "stoppage mid:C them.striker talk"
     ]
   },
   {
@@ -341,6 +552,11 @@
       "{them.winger} біжить на все — і на м’яч, і без. Дихання ще вистачає.",
       "{them.winger} робить зайвий фінт і втрачає. Їхній тренер закриває обличчя руками.",
       "{them.winger} сперечається із суддею, і той дивиться на нього, як на дитину."
+    ],
+    "stage": [
+      "run own:L them.winger",
+      "dribble own:L them.winger lost",
+      "argue mid:C them.winger>ref"
     ]
   },
   {
@@ -354,6 +570,11 @@
       "{them.mid} влітає в {partner.gen} на два такти пізніше за м’яч. Свисток. Картки нема.",
       "Після стику з {them.mid.ins} {dm} обмацує гомілку. Ціла. Поки що.",
       "{them.mid} стоїть над {winger.ins} і не подає руки. Такі правила."
+    ],
+    "stage": [
+      "foul mid:L them.mid>partner whistle",
+      "foul mid:C them.mid>dm down",
+      "foul mid:R them.mid>winger down"
     ]
   },
   {
@@ -367,6 +588,11 @@
       "{them.striker} біжить в офсайд уже вчетверте. Прапорець піднімається раніше за нього.",
       "{them.striker} б’є з ходу без підготовки — м’яч на трибуні, а він дивиться на бутси.",
       "Їхній тренер кричить {them.striker.dat} одне й те саме. Той киває і повторює помилку."
+    ],
+    "stage": [
+      "offside own:C them.striker",
+      "shot own:C them.striker stand",
+      "bench bench them"
     ]
   },
   {
@@ -380,6 +606,11 @@
       "{them.striker} отримує м’яч — і стадіон змінює звук.",
       "{cb} і {cb2} обидва йдуть на {them.striker.gen}. {them.winger} відкритий, і всім байдуже.",
       "{them.striker} просить м’яч рукою, і йому віддають одразу — свої бояться не віддати."
+    ],
+    "stage": [
+      "build own:C them.striker",
+      "press ownBox:C cb>them.striker double",
+      "build own:C them.striker"
     ]
   },
   {
@@ -393,6 +624,11 @@
       "Кожен їхній довгий закид — на голову {them.striker.dat}. {cb} уже рахує.",
       "{them.striker} приймає спиною, тримає, чекає. {cb2} висить на ньому і не може зрушити.",
       "Їхній воротар вибиває довго — і {them.striker} виграє верх без стрибка."
+    ],
+    "stage": [
+      "long ownBox:C them>them.striker header",
+      "duel ownBox:C them.striker>cb2 idle",
+      "long own:C them.keeper>them.striker won"
     ]
   },
   {
@@ -406,6 +642,11 @@
       "{them.mid} збирає своїх у коло під час паузи. Суддя чекає.",
       "{them.mid} кричить на воротаря — свого. Той відповідає.",
       "{them.mid} підходить до судді після кожного свистка. Спокійно, без рук. Працює."
+    ],
+    "stage": [
+      "stoppage mid:C them.mid talk",
+      "argue theirBox:C them.mid>them.keeper",
+      "argue mid:C them.mid>ref"
     ]
   },
   {
@@ -419,6 +660,11 @@
       "Їхній сектор скандує ім’я {them.winger.gen} після простого аута.",
       "{them.winger} падає — і всі їхні бачать фол, якого не було.",
       "{them.winger} робить коло біля лицьової і махає сектору. Сектор відповідає."
+    ],
+    "stage": [
+      "out own:L them.winger throw stands",
+      "dribble own:L them.winger dive",
+      "run ownBox:L them.winger"
     ]
   },
   {
@@ -431,6 +677,12 @@
       "Ти отримуєш м’яч, і {them.cb} робить крок назад. Він уже бачив.",
       "{coach} нічого не кричить. Це найкраще, що він може сказати.",
       "Суперник фолить на тобі одразу після прийому. Це комплімент."
+    ],
+    "stage": [
+      "self their:C partner>self ball",
+      "self their:C them.cb ball",
+      "bench bench coach",
+      "self their:C them fouled"
     ]
   },
   {
@@ -443,6 +695,12 @@
       "Ти відкриваєшся, і {rb} дивиться крізь тебе.",
       "{coach} обертається до лави. Ти цього не бачиш, але знаєш.",
       "Трибуни зустрічають твій дотик мовчанням. Мовчання — не найгірше."
+    ],
+    "stage": [
+      "self their:C partner>dm ignored",
+      "self their:R rb ignored",
+      "bench bench coach",
+      "self mid:C ball"
     ]
   },
   {
@@ -455,6 +713,12 @@
       "Суддя проходить повз і дивиться на тебе трохи довше, ніж на інших.",
       "{coach} кричить тобі одне слово: «спокійно». З лави це просто.",
       "{them.mid} падає біля тебе без дотику. Суддя не свистить, але дивиться."
+    ],
+    "stage": [
+      "dribble mid:L them.winger>self",
+      "self mid:C ref",
+      "bench bench coach",
+      "self mid:C them.mid dive"
     ]
   },
   {
@@ -467,6 +731,12 @@
       "{coach} говорить із {sub.ins} і дивиться на поле. На твій фланг.",
       "Ти відкриваєшся, {partner} віддає — {coach} на лаві не реагує ніяк.",
       "Четвертий суддя щось питає у {coach.gen}. Той хитає головою. Поки що ні."
+    ],
+    "stage": [
+      "bench bench sub",
+      "bench bench coach>sub",
+      "self their:C partner>self ball",
+      "bench bench fourth"
     ]
   },
   {
@@ -480,6 +750,11 @@
       "Ти біжиш, і нога нагадує про стик. Не боляче. Помітно.",
       "{coach} питає жестом: як? Ти показуєш великий палець і сам собі не віриш.",
       "На кожному розвороті нога говорить перша."
+    ],
+    "stage": [
+      "self mid:C sore",
+      "bench bench coach",
+      "self their:C sore"
     ]
   },
   {
@@ -492,6 +767,10 @@
     "lines": [
       "Лікар махає з лави: як? Ти не відповідаєш.",
       "Кожен ривок — на пів кроку коротший, і {them.cb} це вже зрозумів."
+    ],
+    "stage": [
+      "bench bench medic",
+      "self their:C them.cb sore"
     ]
   },
   {
@@ -506,6 +785,17 @@
       "Різкий розворот — і щось у паху потягнуло. Ти добігаєш до м’яча, але вже не так.",
       "Підкат {them.winger.gen} ззаду. Суддя показує «грайте», нога показує інше.",
       "Стик плечима з {them.striker.ins} — ти виграв м’яч і програв ребро."
+    ],
+    "stage": [
+      "knock mid:C them",
+      "knock mid:C them",
+      "knock their:L them.mid",
+      "knock their:C them",
+      "knock mid:C them.cb",
+      "knock their:C them.mid",
+      "knock their:C",
+      "knock mid:C them.winger play",
+      "knock mid:C them.striker"
     ]
   },
   {
@@ -513,6 +803,10 @@
     "lines": [
       "Перерва. {score}. Тунель, сходи, роздягальня — і п’ятнадцять хвилин, які минають за п’ять.",
       "Перерва. {score}. {coach} заходить останнім і зачиняє двері сам."
+    ],
+    "stage": [
+      "half",
+      "half"
     ]
   },
   {
@@ -525,6 +819,12 @@
       "Перерва. {score}. {coach} говорить тихо. Це гірше, ніж коли кричить.",
       "Перерва. {score}. У роздягальні — вода, тиша і {dm}, який сперечається сам із собою.",
       "Перерва. {score}. {coach} малює на дошці одну стрілку. Довгу."
+    ],
+    "stage": [
+      "half",
+      "half",
+      "half",
+      "half"
     ]
   },
   {
@@ -537,6 +837,12 @@
       "Перерва. {score}. У роздягальні тихо — ніхто не хоче наврочити.",
       "Перерва. {score}. {keeper} лежить на лавці із заплющеними очима. Не спить.",
       "Перерва. {score}. {coach} говорить про другий тайм так, наче першого не було."
+    ],
+    "stage": [
+      "half",
+      "half",
+      "half",
+      "half"
     ]
   },
   {
@@ -549,6 +855,12 @@
       "Перерва. {score}. У роздягальні говорить тільки один. Це не ти.",
       "Перерва. {score}. {striker} дивиться в підлогу, {partner} — на {striker.gen}.",
       "Перерва. {score}. {coach} дає п’ять хвилин тиші, а потім — усе інше."
+    ],
+    "stage": [
+      "half",
+      "half",
+      "half",
+      "half"
     ]
   },
   {
@@ -569,6 +881,23 @@
       "{scorer} обігрує воротаря і закочує в порожні. Гол без удару.",
       "Довгий закид, {scorer} приймає спиною, розвертається — гол.",
       "Їхній воротар випускає м’яч із рук — {scorer} дякує. Гол."
+    ],
+    "stage": [
+      "goal theirBox:C tap",
+      "goal theirBox:C cutback",
+      "goal theirBox:C low",
+      "goal theirBox:C corner",
+      "goal theirBox:C rebound",
+      "goal theirBox:C solo",
+      "goal theirBox:C rebound",
+      "goal theirBox:C long",
+      "goal theirBox:C error",
+      "goal theirBox:C counter",
+      "goal theirBox:C header",
+      "goal theirBox:C rebound",
+      "goal theirBox:C solo",
+      "goal theirBox:C turn",
+      "goal theirBox:C error"
     ]
   },
   {
@@ -588,6 +917,22 @@
       "{scorer} головою після навісу. Ніхто не стрибнув.",
       "Пенальті. {scorer} б’є в один кут, {keeper} стрибає в інший.",
       "{scorer} б’є з розвороту з лінії штрафного — {keeper} торкається, і цього мало."
+    ],
+    "stage": [
+      "goal ownBox:C counter",
+      "goal ownBox:C cutback",
+      "goal ownBox:C corner",
+      "goal ownBox:C long",
+      "goal ownBox:C counter",
+      "goal ownBox:C error",
+      "goal ownBox:C long",
+      "goal ownBox:C rebound",
+      "goal ownBox:C low",
+      "goal ownBox:C rebound",
+      "goal ownBox:C counter",
+      "goal ownBox:C header",
+      "goal ownBox:C pen",
+      "goal ownBox:C turn"
     ]
   },
   {
@@ -599,6 +944,14 @@
       "{scorer} — і м’яч у сітці. Гол.",
       "Гол. {scorer} біжить до кутового прапорця, решта — за ним.",
       "{scorer} забиває, і {coach} нарешті сідає."
+    ],
+    "stage": [
+      "echo",
+      "echo",
+      "echo",
+      "echo",
+      "echo",
+      "echo"
     ]
   },
   {
@@ -610,6 +963,14 @@
       "{scorer} забиває, і їхня лава вибігає на брівку.",
       "{scorer} забиває. {cb} дивиться на {cb2.gen}, {cb2} — на газон.",
       "{scorer} забиває, і {keeper} довго стоїть, не піднімаючи м’яч."
+    ],
+    "stage": [
+      "echo",
+      "echo",
+      "echo",
+      "echo",
+      "echo",
+      "echo"
     ]
   },
   {
@@ -621,6 +982,11 @@
       "{coach} показує на тебе. Розминка закінчилася раніше, ніж ти встиг зігрітися: рахунок не чекає.",
       "Табло не на нашу користь. {coach} каже два слова, і друге — «давай».",
       "Виходиш. {sub} сідає на твоє місце на лаві і не дивиться в очі."
+    ],
+    "stage": [
+      "enter bench",
+      "enter bench",
+      "enter bench"
     ]
   },
   {
@@ -631,6 +997,10 @@
     "lines": [
       "Ведемо, і {coach} випускає тебе — «дограти». Ти чуєш у цьому інше.",
       "Виходиш при рахунку на нашу користь. Трибуни аплодують заміні — не тобі, заміні."
+    ],
+    "stage": [
+      "enter bench",
+      "enter bench"
     ]
   },
   {
@@ -640,6 +1010,12 @@
       "{coach} кладе руку на плече: «Покажи мені». Не «нам» — «мені».",
       "Виходиш із лави. Ноги свіжі, голова — ні: сорок хвилин дивився, як грають без тебе.",
       "Розминка вздовж бровки скінчилася. Тепер бровка — твоя."
+    ],
+    "stage": [
+      "enter bench",
+      "enter bench",
+      "enter bench",
+      "enter bench"
     ]
   },
   {
@@ -654,6 +1030,12 @@
       "{coach} міняє {partner.gen} на захисника — вдесятьох грають інакше.",
       "Вдесятьох ми віддали м’яч і сіли глибше. Іншого варіанта немає.",
       "Трибуни підтримують тих, хто лишився на полі, довше, ніж зазвичай."
+    ],
+    "stage": [
+      "wide",
+      "bench bench coach>partner",
+      "deep ownBox:C us",
+      "wide"
     ]
   },
   {
@@ -668,6 +1050,12 @@
       "З лави поле виглядає повільнішим. Звідси всі рішення здаються очевидними.",
       "{coach} жодного разу не подивився в твій бік відтоді, як ти сів.",
       "Хтось із трибун свистить — не тобі, судді. Ти все одно приймаєш на свій рахунок."
+    ],
+    "stage": [
+      "build their:C sub",
+      "bench bench",
+      "bench bench coach",
+      "wide"
     ]
   }
 ]

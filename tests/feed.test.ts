@@ -133,3 +133,34 @@ describe('лента между эпизодами', () => {
     expect(repeatsSeason / total, `повторов за сезон ${repeatsSeason}/${total}`).toBeLessThan(0.2);
   });
 });
+
+// Постановка рядка на полі (17.10): поле розігрує те, про що рядок, — отже, у кожного рядка має бути
+// запис, що розбирається словником поля. Опечатка в дії чи ролі дала б фішку, яка стоїть на місці.
+describe('постановка стрічки', () => {
+  it('у кожного рядка є постановка, і вона розбирається словником поля', async () => {
+    const { FEED_RULES, parseStage, STAGE_ACTS, STAGE_ROLES, STAGE_TAGS } = await import('../src/engine/feed');
+    const bad: string[] = [];
+    FEED_RULES.forEach((r, i) => {
+      if (!r.stage || r.stage.length !== r.lines.length) { bad.push(`правило #${i}: постановок ${r.stage?.length ?? 0} на ${r.lines.length} рядків`); return; }
+      r.stage.forEach((src, j) => {
+        const st = parseStage(src);
+        if (!(STAGE_ACTS as readonly string[]).includes(st.act)) bad.push(`#${i}.${j} дія «${st.act}»`);
+        for (const role of [st.who, st.vs]) if (role && !(STAGE_ROLES as readonly string[]).includes(role)) bad.push(`#${i}.${j} роль «${role}»`);
+        for (const t of st.tags) if (!(STAGE_TAGS as readonly string[]).includes(t)) bad.push(`#${i}.${j} уточнення «${t}»`);
+        // Рядок про гру на полі без зони не знає, куди везти камеру.
+        if (!['kickoff', 'wide', 'crowd', 'half', 'echo', 'enter', 'bench'].includes(st.act) && !st.x) bad.push(`#${i}.${j} без зони: ${src}`);
+      });
+    });
+    expect(bad).toEqual([]);
+  });
+
+  it('голи стрічки мають манеру удару, а постановка доходить до події матчу', async () => {
+    const { FEED_RULES, parseStage } = await import('../src/engine/feed');
+    for (const r of FEED_RULES.filter((x) => x.kind === 'goalUs' || x.kind === 'goalThem')) {
+      for (const s of r.stage!) expect(parseStage(s).act, s).toBe('goal');
+    }
+    const s = createMatch('stage', 7, PLAYER, makeRng(7), EPISODES_RAW, ROSTER, neutralConditions(), [], FLAG_RULES);
+    const kick = s.state.log.find((e) => e.kind === 'kickoff');
+    expect(kick?.stage?.act).toBe('kickoff');
+  });
+});

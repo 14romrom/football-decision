@@ -4,6 +4,7 @@ import type { Episode, FlagRule, MatchState, ModLine, Player, TimelineEvent } fr
 import type { Kit as KitT, Roster } from '../engine/names';
 import type { MatchConditions } from '../engine/conditions';
 import type { FinaleKind } from '../engine/finale';
+import type { ReyesAction } from '../engine/action';
 import { computeContext } from '../engine/context';
 import { availableOptions, sceneInsights } from '../engine/match';
 import { VOICE_LABEL } from '../engine/voices';
@@ -81,7 +82,7 @@ export function MatchScreen({
   /** Лист без епізоду — фінальний свисток (WhistleCard): та сама панель, без зони «на кубик». */
   sheet?: boolean;
   /** Розв’язка на поле — приходит со штампом вердикта (App → RollView.onVerdict). */
-  finale?: { kind: FinaleKind; id: number } | null;
+  finale?: { kind: FinaleKind; id: number; action?: ReyesAction } | null;
   children: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);

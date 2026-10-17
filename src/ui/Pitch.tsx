@@ -2,9 +2,10 @@ import { useEffect, useRef } from 'react';
 import type { Episode, TimelineEvent } from '../engine/types';
 import { FORMATION_BY_STRENGTH, type Strength } from '../engine/conditions';
 import type { FinaleKind } from '../engine/finale';
+import { scenePlace, type ReyesAction } from '../engine/action';
 import type { Roster } from '../engine/names';
 import { motionReduced } from '../telemetry/settings';
-import { Director, LABEL_ROLES, PH, PW, formationOf, type P } from './pitchDirector';
+import { Director, LABEL_ROLES, PH, PW, formationOf, placePoint, type P } from './pitchDirector';
 
 // Поле матчу (17.10, макет «Постановка стрічки»; до того — схема 19.09 з трьома шарами руху).
 // Камера показує третину поля, де гра, фішки — у формах команд, м'яч чорно-білий. Кожен рядок стрічки
@@ -23,7 +24,10 @@ export const FAMILY_SPOT: Record<string, Spot> = {
 };
 export const PHASE_SPOT: Record<NonNullable<Episode['phase']>, Spot> = { attack: [0.7, 0.5], defense: [0.3, 0.5], transition: [0.5, 0.5], setpiece: [0.8, 0.4] };
 
+// Місце сцени — зі слів сетапу (engine/action.ts, actions.json); немає — точка сім'ї, як раніше.
 const spotOf = (episode: Episode | null): P => {
+  const own = episode ? placePoint(scenePlace(episode.id)) : null;
+  if (own) return own;
   const s = (episode?.family && FAMILY_SPOT[episode.family]) || PHASE_SPOT[episode?.phase ?? 'transition'];
   return [s[0] * PW, s[1] * PH];
 };
@@ -34,7 +38,7 @@ type Props = {
   /** Вища ліга — рев великого стадіону на гол. */
   top?: boolean;
   /** Розв’язка: вид и порядковый номер броска — новый номер запускает хореографию. */
-  finale?: { kind: FinaleKind; id: number } | null;
+  finale?: { kind: FinaleKind; id: number; action?: ReyesAction } | null;
   /** Последняя строка ленты — поле разыгрывает её постановку. */
   pulse?: TimelineEvent | null;
   /** Реєс на лаві: фішка біля лави, на полі дублер. Так само після заміни по ходу матчу. */
@@ -69,7 +73,9 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     // Лише в dev-збірці: щоб прогнати кожну постановку стрічки руками, не чекаючи її в матчі.
     if (import.meta.env.DEV) (window as unknown as { __pitch?: Director }).__pitch = d;
     // Поле з'являється після листа — усі від місця останньої сцени, а розв'язка грає вже звідти.
-    if (finale) void d.finale(finale.kind, spotOf(episode));
+    // Дія Реєса — шаблоном руху з місця сцени; без неї (старі збереження) — загальна розв'язка за видом.
+    if (finale?.action) void d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target) });
+    else if (finale) void d.finale(finale.kind, spotOf(episode));
     else if (episode) void d.toSpot(spotOf(episode));
     return () => { d.stop(); dir.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

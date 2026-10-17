@@ -46,6 +46,7 @@ import { readCareer, writeCareer } from './telemetry/career-storage';
 import { readSeason, writeSeason } from './telemetry/season-storage';
 import { activeSlot } from './telemetry/slots';
 import { finaleFor, type FinaleKind } from './engine/finale';
+import { reyesAction, type ReyesAction } from './engine/action';
 import { programmeNote, traitNote, type ProgrammeInput, coachGoalWord } from './engine/programme';
 import { applySettings, readSettings } from './telemetry/settings';
 import type { Hint } from './ui/Spotlight';
@@ -190,7 +191,7 @@ function Game() {
   // після ESPM з кнопкою внизу стрічка відкривалась прокрученою на 861 px (плейтест 21.09, Б-1).
   useEffect(() => { window.scrollTo(0, 0); }, [stage.k]);
   // Розв’язка на поле: вид по исходу, id — номер броска; ставится со штампом вердикта.
-  const [finale, setFinale] = useState<{ kind: FinaleKind; id: number } | null>(null);
+  const [finale, setFinale] = useState<{ kind: FinaleKind; id: number; action?: ReyesAction } | null>(null);
   // Остання сцена — для поля між листами (MatchScreen.pitchEpisode): розв’язка грає з її місця після «далі».
   const lastEpisodeRef = useRef<Episode | null>(null);
   const [queue, setQueue] = useState<TimelineEvent[]>([]);
@@ -980,7 +981,7 @@ function Game() {
             chained={stage.chained}
             hint={hintFor(stage.episode.id)}
             onNext={afterRoll}
-            onVerdict={() => setFinale((f) => ({ kind: finaleFor(stage.episode, stage.option, stage.res, stage.events), id: (f?.id ?? 0) + 1 }))}
+            onVerdict={() => setFinale((f) => ({ kind: finaleFor(stage.episode, stage.option, stage.res, stage.events), action: reyesAction(stage.episode, stage.option, stage.res, stage.events), id: (f?.id ?? 0) + 1 }))}
           />
         )}
       </MatchScreen>

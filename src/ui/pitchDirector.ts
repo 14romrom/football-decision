@@ -361,6 +361,30 @@ export class Director {
         if (d < 4.6) { const dx = d ? (p[0] - s[0]) / d : 0, dy = d ? (p[1] - s[1]) / d : 1; out[id] = [clamp(s[0] + dx * 5, 2, 103), clamp(s[1] + dy * 5, 2, 66)]; }
       }
     }
+    return this.separate(out, fixed);
+  }
+
+  /** Розвести фішки, що лягли одна на одну, — усі пари, не лише довкола місця дії (17.10, QA усіх
+   *  постановок: 9 накладень у рядках Реєса, «відходять» ставили по двоє в одну точку). Учасників
+   *  рядка (`fixed`) не чіпаємо: фол, єдиноборство, збитий гравець — дотик і є постановка; воротарі
+   *  стоять на своїх місцях. Реєсу місця більше — у нього кільце сил. */
+  private separate(out: Record<string, P>, fixed: string[] = []): Record<string, P> {
+    const ids = Object.keys(out).filter((id) => id !== 'med');
+    const still = (id: string) => fixed.includes(id) || id === 'u1' || id === 't1';
+    for (let it = 0; it < 4; it++) {
+      for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+        const a = ids[i], b = ids[j];
+        if (still(a) && still(b)) continue;
+        const need = a === 'u10' || b === 'u10' ? 2.7 : 2.0;
+        const pa = out[a], pb = out[b]; const d = dist(pa, pb);
+        if (d >= need) continue;
+        const ux = d ? (pb[0] - pa[0]) / d : Math.cos(i + j), uy = d ? (pb[1] - pa[1]) / d : Math.sin(i + j);
+        const gap = need - d;
+        const ka = still(a) ? 0 : still(b) ? 1 : .5, kb = 1 - ka;
+        out[a] = [clamp(pa[0] - ux * gap * ka, 1, 104), clamp(pa[1] - uy * gap * ka, 1, 67)];
+        out[b] = [clamp(pb[0] + ux * gap * kb, 1, 104), clamp(pb[1] + uy * gap * kb, 1, 67)];
+      }
+    }
     return out;
   }
   private goalOf(attacker: 'us' | 'them'): P { return attacker === 'us' ? THEIR_GOAL : OUR_GOAL; }
@@ -438,10 +462,10 @@ export class Director {
         }
         await S({ moves: this.block([from[0], 34]), ball: [from[0] + this.fwd(side, 1.2), from[1]], cam: [from[0] + this.fwd(side, 12), from[1]], w: W + 6, dur: 450 });
         const land: P = has('out') ? [z[0], z[1] < 34 ? -2 : 70] : z;
-        const runs: Record<string, P> = { [target]: [land[0] - this.fwd(side, 1), land[1]] };
+        const runs: Record<string, P> = { [target]: [land[0] - this.fwd(side, 1), clamp(land[1], 1, 67)] };
         const def = this.id(side === 'us' ? 'them' : 'us', land);
         if (has('keeper')) runs[side === 'us' ? 't1' : 'u1'] = [land[0] + this.fwd(side, 1), land[1]];
-        else runs[def] = [land[0] + this.fwd(side, 1.5), land[1] + 1];
+        else runs[def] = [land[0] + this.fwd(side, 1.5), clamp(land[1] + 1, 1, 67)];
         await S({ moves: runs, ball: has('hang') ? [52.5, 34] : land, arc: has('hang') ? 14 : 9, cam: has('hang') ? [52.5, 34] : land, w: W + 2, dur: has('hang') ? 1000 : 800 });
         if (!ok()) return;
         if (has('won') || has('header')) { this.jump(target); await S({ ball: [land[0] + this.fwd(side, 7), land[1] + 3], dur: 420 }); this.jump(target, false); }
@@ -479,7 +503,7 @@ export class Director {
         const end: P = [clamp(z[0] + this.fwd(side, 4), 2, 103), z[1]];
         const def = b ?? this.id(side === 'us' ? 'them' : 'us', end);
         await S({ moves: this.block(z, { [runner]: start, [def]: [end[0] + this.fwd(side, 3), end[1] + 1.5] }), ball: [start[0] + this.fwd(side, 1), start[1]], cam: z, w: W, dur: 550 });
-        if (st.act === 'run') { await S({ moves: { [runner]: [end[0] + this.fwd(side, 8), end[1]] }, cam: end, dur: 900 }); if (has('alone')) await this.sleep(300); break; }
+        if (st.act === 'run') { await S({ moves: { [runner]: [clamp(end[0] + this.fwd(side, 8), 1.5, 103.5), end[1]] }, cam: end, dur: 900 }); if (has('alone')) await this.sleep(300); break; }
         const meet: Record<string, P> = { [runner]: end, [def]: [end[0] + this.fwd(side, 1.6), end[1] + .6] };
         if (has('double') || has('stopped')) { const d2 = this.nearest(side === 'us' ? 'them' : 'us', end, 3).find((x) => x !== def)!; meet[d2] = [end[0] + this.fwd(side, 1), end[1] - 1.8]; }
         await S({ moves: meet, ball: [end[0] + this.fwd(side, 1), end[1]], dur: 650 });
@@ -594,13 +618,19 @@ export class Director {
         const goal = this.goalOf(att);
         const fl: P = [goal[0], z[1] <= 34 ? 0 : 68];
         const box: Record<string, P> = {};
-        this.nearest(att, [goal[0] - this.fwd(att, 9), 34], 4).forEach((id, i) => { box[id] = [goal[0] - this.fwd(att, 6 + (i % 2) * 3), 28 + i * 4]; });
-        this.nearest(att === 'us' ? 'them' : 'us', [goal[0] - this.fwd(att, 7), 34], 4).forEach((id, i) => { box[id] = [goal[0] - this.fwd(att, 4.5 + (i % 2) * 3), 29 + i * 3.6]; });
+        const attackers = this.nearest(att, [goal[0] - this.fwd(att, 9), 34], 4);
+        attackers.forEach((id, i) => { box[id] = [goal[0] - this.fwd(att, 6 + (i % 2) * 3), 28 + i * 4]; });
         if (has('cb')) { box.u4 = [goal[0] - 7, 33]; box.u5 = [goal[0] - 9, 38]; }
+        // Опікун — поруч зі «своїм», на крок ближче до воріт і збоку, а не на ньому (QA 17.10: стояли впритул).
+        const marked = [...new Set([...attackers, ...(has('cb') ? ['u4', 'u5'] : [])])].slice(-4);
+        this.nearest(att === 'us' ? 'them' : 'us', [goal[0] - this.fwd(att, 7), 34], 4).forEach((id, i) => {
+          const t = box[marked[i]]; if (t) box[id] = [t[0] + this.fwd(att, 2.2), t[1] + 1.4];
+        });
         if (has('keeperup')) box.u1 = [52, 30];
         const taker = this.nearest(att, fl, 1)[0];
         box[taker] = [fl[0] - this.fwd(att, .8), fl[1] + (fl[1] ? -.8 : .8)];
-        await S({ moves: this.block([goal[0] - this.fwd(att, 12), 34], box), ball: [fl[0] - this.fwd(att, .5), fl[1] + (fl[1] ? -.5 : .5)], cam: [goal[0] - this.fwd(att, 12), 30], w: W, dur: 700 });
+        // Закріплені лише подавальник і ті, кого опікають; опікуни й захисники можуть посунутися — від воротаря й один від одного.
+        await S({ moves: this.separate(this.block([goal[0] - this.fwd(att, 12), 34], box), [taker, ...attackers]), ball: [fl[0] - this.fwd(att, .5), fl[1] + (fl[1] ? -.5 : .5)], cam: [goal[0] - this.fwd(att, 12), 30], w: W, dur: 700 });
         const k = att === 'us' ? 't1' : 'u1';
         const land: P = [goal[0] - this.fwd(att, 5), 33];
         await S({ ball: land, arc: 7, moves: has('keeper') ? { [k]: land } : {}, dur: 700 });
@@ -686,7 +716,7 @@ export class Director {
           m[id] = st.act === 'push' ? [clamp(x + this.fwd(side, 18), 3, 102), y] : [side === 'them' ? clamp(x + 14, 82, 100) : clamp(x - 14, 5, 22), 18 + (y - 4) * .55];
         }
         const c: P = st.act === 'deep' ? [side === 'them' ? 86 : 19, 34] : [z[0], 34];
-        await S({ moves: m, ball: [c[0] + (side === 'them' ? -14 : 14), 36], cam: c, w: W + 10, dur: 1000 });
+        await S({ moves: this.separate(m), ball: [c[0] + (side === 'them' ? -14 : 14), 36], cam: c, w: W + 10, dur: 1000 });
         break;
       }
       case 'self': {
@@ -701,7 +731,10 @@ export class Director {
           const others: Record<string, P> = {};
           this.nearest('us', rp, 4).filter((x) => x !== r).forEach((id) => { const p = this.pos(id); others[id] = [p[0] + 12, p[1]]; });
           if (a && a !== r) others[a] = [rp[0] + 10, rp[1] - 3];
-          await S({ moves: others, ball: [rp[0] + 14, rp[1] - 2], dur: 900 });
+          // Партнери біжать уперед — і не мають лягти на суперників, що там стоять (QA 17.10).
+          const field: Record<string, P> = {};
+          for (const id in this.home) if (id !== 'med' && this.playing(id)) field[id] = this.pos(id);
+          await S({ moves: this.separate({ ...field, ...others }, [r, ...Object.keys(others)]), ball: [rp[0] + 14, rp[1] - 2], dur: 900 });
           if (has('sore')) { this.t.u10.ring?.classList.add('blink'); await this.sleep(500); this.t.u10.ring?.classList.remove('blink'); }
         } else if (has('ball')) {
           // «…і {them.cb} робить крок назад»: суперник поруч і відступає, коли м'яч приходить
@@ -748,7 +781,13 @@ export class Director {
       case 'save': sfxOoh(); this.lie('t1'); await S({ moves: { t1: [goal[0] - 1.6, 32] }, ball: [goal[0] - 1.4, 32.5], dur: 500, cam: [(spot[0] + goal[0]) / 2, 34] }); await S({ ball: [goal[0] - 7, 24], dur: 400 }); break;
       case 'miss': sfxOoh(); await S({ ball: [goal[0] + 2, 42], dur: 550, cam: [(spot[0] + goal[0]) / 2, 34] }); break;
       case 'pass': { const mate = this.nearest('us', [spot[0] + 8, spot[1]], 3).find((x) => x !== r)!; const run: P = [this.pos(mate)[0] + 7, this.pos(mate)[1]]; await S({ moves: { [mate]: run }, ball: run, dur: 650 }); break; }
-      case 'loss': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); await S({ moves: { [near]: [spot[0] - 14, spot[1] + 4] }, ball: [spot[0] - 15, spot[1] + 4], cam: [spot[0] - 10, spot[1]], dur: 800 }); break;
+      case 'loss': {
+        // Суперник забирає й веде до наших воріт — але в полі: біля власного кута 15 м назад було за лінією (QA 17.10).
+        const to: P = [clamp(spot[0] - 14, 3, 102), clamp(spot[1] + 4, 3, 65)];
+        await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 });
+        await S({ moves: { [near]: to }, ball: [to[0] - 1, to[1]], cam: [clamp(spot[0] - 10, 3, 102), spot[1]], dur: 800 });
+        break;
+      }
       case 'concede': await S({ moves: { [near]: [spot[0] - 20, spot[1]] }, ball: [spot[0] - 21, spot[1]], cam: [spot[0] - 20, 34], w: 50, dur: 700 }); await S({ ball: [-.6, 34], cam: [16, 34], dur: 700 }); void this.flashOn('them'); break;
       case 'foul': case 'red': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); sfxWhistle('short'); this.showRef(); this.lie(near); this.showCard(spot, kind === 'red'); break;
       case 'duel': await S({ moves: { [near]: [spot[0] + .7, spot[1] + .3] }, dur: 300 }); await S({ moves: { [near]: [spot[0] + 6, spot[1] + 5] }, ball: [spot[0] + 3, spot[1] - 1], dur: 450 }); break;
@@ -889,7 +928,7 @@ export class Director {
   private toTunnel(): Record<string, P> {
     const m: Record<string, P> = {};
     let i = 0;
-    for (const id in this.home) { if (id === 'med' || !this.playing(id)) continue; m[id] = [44 + (i % 8) * 2.4, 2 + Math.floor(i / 8) * 2.2]; i++; }
+    for (const id in this.home) { if (id === 'med' || !this.playing(id)) continue; m[id] = [42 + (i % 8) * 3, 2.5 + Math.floor(i / 8) * 2.8]; i++; }
     return m;
   }
 

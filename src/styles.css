@@ -837,7 +837,9 @@ html.reduce-motion .doodle svg { filter: none; }
   .match .score-strip { margin-right: 56px; min-height: 48px; gap: 8px; box-sizing: border-box; }
   .match .strip-team { font-size: 11px; letter-spacing: .04em; }
   .match .strip-score { font-size: 22px; }
-  .match .score-overlay { right: 58px; }
+  /* Рахунок на полі — зліва й одним рядком: праворуч кут займає пауза, а стиснутий рахунок переносив
+     назву гостей на другий рядок і закривав фішки. */
+  .match .score-overlay { left: 8px; right: auto; justify-items: start; white-space: nowrap; font-size: 12px; }
 }
 
 /* Якір — подія на весь екран (26.09, плейтест на телефоні): лист сам по собі, як сцена в матчі, а не

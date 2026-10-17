@@ -115,7 +115,9 @@ export function MatchScreen({
       </div>
       {!moment && (
         <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} roster={roster}
-          finale={finale} pulse={shown.length ? shown[shown.length - 1] : null} onBench={onBench}
+          finale={finale} pulse={shown.length ? shown[shown.length - 1] : null}
+          // Заміна й червона ставляться кидком сцени — після нього поле вже без Реєса (match.ts: subbed_off / sent_off).
+          onBench={onBench || state.flags.includes('subbed_off')} sentOff={state.flags.includes('sent_off')}
           stamina={stamina} momentum={state.momentum} minute={clock} />
       )}
 

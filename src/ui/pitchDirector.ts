@@ -83,6 +83,8 @@ export class Director {
   private card!: SVGRectElement;
   private names: Record<string, string>;
   private onBench = false;
+  /** Реєса вилучено: він поза полем, і на його місце ніхто не виходить — вдесятьох. */
+  private tenMen = false;
 
   constructor(svg: SVGSVGElement, opt: DirectorOptions) {
     this.svg = svg;
@@ -204,9 +206,22 @@ export class Director {
     this.putBall([52.5, 34]);
     this.setView(this.frame([52.5, 34], 56));
     this.quiet();
+    this.t.sub?.g.setAttribute('opacity', this.onBench ? '1' : '0');
   }
 
-  setBench(on: boolean) { this.onBench = on; this.put('u10', on ? BENCH : this.home.u10); this.put('sub', on ? this.home.u10 : BENCH); }
+  // Дублер на полі лише поки Реєс на лаві; решту часу його фішки немає — біля бровки вона читалась як
+  // Реєс, що стоїть осторонь (зауваження користувача 17.10). Лікар з'являється тільки тоді, коли біжить.
+  setBench(on: boolean, sentOff = false) {
+    this.onBench = on || sentOff;
+    this.tenMen = sentOff;
+    this.put('u10', this.onBench ? BENCH : this.home.u10);
+    this.put('sub', on && !sentOff ? this.home.u10 : BENCH);
+    this.t.sub?.g.setAttribute('opacity', on && !sentOff ? '1' : '0');
+  }
+  /** Фішка, що грає на місці Реєса: він сам або дублер, поки Реєс на лаві. */
+  private selfId() { return this.onBench ? 'sub' : 'u10'; }
+  /** Чи стоїть ця фішка зараз на полі: Реєс — коли не на лаві, дублер — коли грає замість нього. */
+  private playing(id: string) { return id === 'u10' ? !this.onBench : id === 'sub' ? this.onBench && !this.tenMen : true; }
   setStamina(v: number) {
     const ring = this.t.u10.ring; if (!ring) return;
     const C = 2 * Math.PI * 2.35;
@@ -266,6 +281,7 @@ export class Director {
   private quiet() {
     for (const id in this.t) { this.t[id].body.removeAttribute('transform'); if (this.t[id].label && id !== 'u10') this.t[id].label!.setAttribute('opacity', '0'); }
     for (const e of [this.pointer, this.shout, this.benchMarks, this.flag, this.card]) e.setAttribute('opacity', '0');
+    this.t.med?.g.setAttribute('opacity', '0');
   }
   private label(ids: string[]) { for (const id of ids) this.t[id]?.label?.setAttribute('opacity', '1'); }
   private lie(id: string, on = true) { this.t[id]?.body.setAttribute('transform', on ? 'rotate(70) scale(1.25,.6)' : ''); }
@@ -303,7 +319,7 @@ export class Director {
       const [x, y] = this.home[id];
       m[id] = id === 'u1' || id === 't1' ? [x, clamp(34 + (z[1] - 34) * .12, 30, 38)] : [clamp(x + dx, 3, 102), clamp(y + dy, 3, 65)];
     }
-    if (this.onBench) m.sub = [clamp(this.home.u10[0] + dx, 3, 102), this.home.u10[1]];
+    if (this.onBench && !this.tenMen) m.sub = [clamp(this.home.u10[0] + dx, 3, 102), this.home.u10[1]];
     m.ref = [clamp(z[0] - 6, 6, 99), clamp(z[1] + 9, 5, 63)];
     // Хто стоїть там, де відбувається дія рядка, відступає: інакше фішки лягають одна на одну
     // (Реєс у центрі кола накривав того, хто лежить, лікаря й суддю).
@@ -337,7 +353,7 @@ export class Director {
 
     switch (st.act) {
       case 'kickoff': {
-        await S({ moves: this.block([52.5, 34], { u10: [52, 33], u9: [53.6, 35.2] }), ball: [52.5, 34], cam: [52.5, 34], w: 58, dur: 600 });
+        await S({ moves: this.block([52.5, 34], { [this.selfId()]: [52, 33], u9: [53.6, 35.2] }), ball: [52.5, 34], cam: [52.5, 34], w: 58, dur: 600 });
         await S({ ball: this.home.u6, dur: 700 });
         break;
       }
@@ -497,10 +513,10 @@ export class Director {
       }
       case 'foul': case 'knock': {
         const fouler = st.act === 'knock' ? (st.who ? this.id(st.who, z, 'them') : this.id('them', z)) : a ?? this.id('them', z);
-        const victim = st.act === 'knock' ? 'u10' : b ?? this.id(this.sideOf(fouler) === 'us' ? 'them' : 'us', z);
+        const victim = st.act === 'knock' ? this.selfId() : b ?? this.id(this.sideOf(fouler) === 'us' ? 'them' : 'us', z);
         const vSide = this.sideOf(victim);
         await S({ moves: this.block(z, { [victim]: z, [fouler]: [z[0] + this.fwd(vSide, 4), z[1] + 2] }), ball: [z[0] + this.fwd(vSide, .9), z[1]], cam: z, w: W - 4, dur: 550 });
-        if (st.act === 'knock' && st.who === undefined) { await S({ moves: { u10: [z[0] + this.fwd('us', 2), z[1] - 1] }, dur: 300 }); this.lie('u10'); await this.sleep(700); this.lie('u10', false); break; }
+        if (st.act === 'knock' && st.who === undefined) { const me = this.selfId(); await S({ moves: { [me]: [z[0] + this.fwd('us', 2), z[1] - 1] }, dur: 300 }); this.lie(me); await this.sleep(700); this.lie(me, false); break; }
         await S({ moves: { [fouler]: [z[0] + this.fwd(vSide, .8), z[1] + .3] }, dur: 300 });
         if (!ok()) return;
         if (has('hand')) { this.say(z, '!'); this.point(this.pos('ref'), 200); break; }
@@ -569,7 +585,7 @@ export class Director {
         const who = a ?? (st.act === 'slip' ? this.id('them', z) : undefined);
         await S({ moves: this.block(z, who ? { [who]: z } : {}), ball: who ? [z[0] + 2, z[1] + 1.5] : z, cam: z, w: W, dur: 600 });
         if (who && (st.act === 'slip' || has('down') || has('medic') || has('none') || st.act === 'stoppage' && st.who === 'them')) this.lie(who);
-        if (has('medic')) await S({ moves: { med: [z[0] - 2.4, z[1] - 1.6], ref: [z[0] + 4.5, z[1] + 3.5] }, cam: [z[0], z[1] - 6], w: W + 4, dur: 900 });
+        if (has('medic')) { this.put('med', this.home.med); this.t.med.g.setAttribute('opacity', '1'); await S({ moves: { med: [z[0] - 2.4, z[1] - 1.6], ref: [z[0] + 4.5, z[1] + 3.5] }, cam: [z[0], z[1] - 6], w: W + 4, dur: 900 }); }
         else if (has('ref') || has('talk')) await S({ moves: { ref: [z[0] + 4, z[1] + 3] }, dur: 600 });
         if (has('ref')) this.say(this.pos('ref'), '⏱');
         if (has('water')) this.say(z, '~');
@@ -598,15 +614,20 @@ export class Director {
         break;
       }
       case 'bench': {
+        if (has('medic')) { this.put('med', this.home.med); this.t.med.g.setAttribute('opacity', '1'); }
         await S({ cam: [52.5, 2], w: 46, dur: 550 });
         this.benchMarks.setAttribute('opacity', '1');
         if (b && b !== 'sub') { const p = this.pos(b); await S({ moves: { [b]: [46 + Math.random() * 8, 2.5] }, dur: 550 }); await this.sleep(150); await S({ moves: { [b]: p }, dur: 400 }); }
         break;
       }
       case 'enter': {
+        // Вихід завжди починається від лави: прапорець «на лаві» в App знімається тим самим рядком, і без
+        // цього Реєс спершу стрибав на позицію, а потім «виходив» назад від бровки.
+        this.put('u10', BENCH); this.put('sub', this.home.u10); this.t.sub?.g.setAttribute('opacity', '1');
         await S({ cam: [52.5, 4], w: 46, dur: 500 });
         await S({ moves: { u10: [52, 8], sub: BENCH }, dur: 800 });
         this.onBench = false;
+        this.t.sub?.g.setAttribute('opacity', '0');
         await S({ moves: { u10: this.home.u10 }, cam: [52.5, 30], w: 52, dur: 550 });
         break;
       }
@@ -618,9 +639,9 @@ export class Director {
       case 'push': case 'deep': {
         const side = st.who === 'them' ? 'them' : 'us';
         const m: Record<string, P> = {};
-        for (const id in this.home) {
-          if (!id.startsWith(side === 'us' ? 'u' : 't') || id === 'u1' || id === 't1') continue;
-          const [x, y] = this.home[id];
+        for (const id of [...Object.keys(this.home)]) {
+          if (!(side === 'us' ? isUs(id) : id.startsWith('t')) || id === 'u1' || id === 't1' || !this.playing(id)) continue;
+          const [x, y] = id === 'sub' ? this.home.u10 : this.home[id];
           m[id] = st.act === 'push' ? [clamp(x + this.fwd(side, 18), 3, 102), y] : [side === 'them' ? clamp(x + 14, 82, 100) : clamp(x - 14, 5, 22), 18 + (y - 4) * .55];
         }
         const c: P = st.act === 'deep' ? [side === 'them' ? 86 : 19, 34] : [z[0], 34];
@@ -775,7 +796,7 @@ export class Director {
   // ——— вибірки —————————————————————————————————————————————————————————
   private nearest(side: 'us' | 'them', p: P, n: number): string[] {
     return Object.keys(this.t)
-      .filter((id) => (side === 'us' ? isUs(id) : id.startsWith('t')) && !['u1', 't1', 'sub'].includes(id) && !(id === 'u10' && this.onBench))
+      .filter((id) => (side === 'us' ? isUs(id) : id.startsWith('t')) && !['u1', 't1'].includes(id) && this.playing(id))
       .sort((x, y) => dist(this.pos(x), p) - dist(this.pos(y), p))
       .slice(0, n);
   }
@@ -783,13 +804,13 @@ export class Director {
   private crowded(): Record<string, P> {
     const m: Record<string, P> = {};
     let i = 0;
-    for (const id in this.home) { if (['ref', 'med', 'sub', 'u1', 't1'].includes(id) || (id === 'u10' && this.onBench)) continue; const a = i++ * 2.399; const r = 2 + (i % 5) * 1.6; m[id] = [52.5 + Math.cos(a) * r * 1.2, 34 + Math.sin(a) * r]; }
+    for (const id in this.home) { if (['ref', 'med', 'u1', 't1'].includes(id) || !this.playing(id)) continue; const a = i++ * 2.399; const r = 2 + (i % 5) * 1.6; m[id] = [52.5 + Math.cos(a) * r * 1.2, 34 + Math.sin(a) * r]; }
     return m;
   }
   private toTunnel(): Record<string, P> {
     const m: Record<string, P> = {};
     let i = 0;
-    for (const id in this.home) { if (['med', 'sub'].includes(id) || (id === 'u10' && this.onBench)) continue; m[id] = [44 + (i % 8) * 2.4, 2 + Math.floor(i / 8) * 2.2]; i++; }
+    for (const id in this.home) { if (id === 'med' || !this.playing(id)) continue; m[id] = [44 + (i % 8) * 2.4, 2 + Math.floor(i / 8) * 2.2]; i++; }
     return m;
   }
 

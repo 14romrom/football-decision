@@ -35,15 +35,17 @@ type Props = {
   finale?: { kind: FinaleKind; id: number } | null;
   /** Последняя строка ленты — поле разыгрывает её постановку. */
   pulse?: TimelineEvent | null;
-  /** Реєс на лаві: фішка біля лави, на полі дублер. */
+  /** Реєс на лаві: фішка біля лави, на полі дублер. Так само після заміни по ходу матчу. */
   onBench?: boolean;
+  /** Реєса вилучено: фішка біля лави, команда вдесятьох. */
+  sentOff?: boolean;
   /** Сили — кільце навколо фішки Реєса; кураж ≥ 2 — фішка світиться. */
   stamina: number;
   momentum: number;
   minute: number;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, finale, pulse, onBench = false, stamina, momentum, minute }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
 
@@ -60,7 +62,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, finale, pu
     const d = new Director(svgRef.current, {
       usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(),
     });
-    d.setBench(onBench);
+    d.setBench(onBench, sentOff);
     dir.current = d;
     // Лише в dev-збірці: щоб прогнати кожну постановку стрічки руками, не чекаючи її в матчі.
     if (import.meta.env.DEV) (window as unknown as { __pitch?: Director }).__pitch = d;
@@ -71,7 +73,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, finale, pu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { dir.current?.setBench(onBench); }, [onBench]);
+  useEffect(() => { dir.current?.setBench(onBench, sentOff); }, [onBench, sentOff]);
   useEffect(() => { dir.current?.setStamina(stamina); }, [stamina]);
   useEffect(() => { dir.current?.setGlow(momentum >= 2); }, [momentum]);
 

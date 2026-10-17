@@ -70,7 +70,7 @@ export type Stage = {
 /** Постановка разом зі списком тих, кого рядок називає іменем (плейсхолдер ролі в сирому тексті). */
 export function stageFor(src: string, raw: string): Stage {
   const st = parseStage(src);
-  const named = [st.who, st.vs].filter((r): r is string => !!r && new RegExp(`\\{${r.replace('.', '\\.')}[.}]`).test(raw));
+  const named = [st.who, st.vs].filter((r): r is string => !!r && r !== 'us' && r !== 'them' && new RegExp(`\\{${r.replace('.', '\\.')}[.}]`).test(raw));
   return named.length ? { ...st, named } : st;
 }
 

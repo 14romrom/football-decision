@@ -62,6 +62,8 @@ export function Pitch({ episode, selfName, strength = 'even', roster, finale, pu
     });
     d.setBench(onBench);
     dir.current = d;
+    // Лише в dev-збірці: щоб прогнати кожну постановку стрічки руками, не чекаючи її в матчі.
+    if (import.meta.env.DEV) (window as unknown as { __pitch?: Director }).__pitch = d;
     // Поле з'являється після листа — усі від місця останньої сцени, а розв'язка грає вже звідти.
     if (finale) void d.finale(finale.kind, spotOf(episode));
     else if (episode) void d.toSpot(spotOf(episode));

@@ -3,6 +3,7 @@ import type { Roster } from '../engine/names';
 import type { BoardMoment } from '../engine/board';
 import { FAMILY_SPOT, PHASE_SPOT } from './Pitch';
 import { dec, t, tf } from '../content/i18n';
+import { KitPattern } from './KitPattern';
 
 // Дошка аналітика (19.09, макет «Після матчу», кадр 1Б «магнітна дошка») — итог матча вместо
 // протокола с плитками: серо-белая магнитная доска в роздягальні, маркер Neucha (синий — разбор,
@@ -71,6 +72,10 @@ export function BoardScreen({ summary, roster, moments, round, prev, onNext }: P
         <svg className="wb-pitch" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
           <defs>
             <filter id="wb-rough"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="2.4" /></filter>
+            {/* Магніти — у формах команд (17.10), як фішки на полі: інакше «Вальмара» на полі червона,
+                а на дошці через екран — синя. Гол — зелений обідок; поганий момент лишається червоним у списку. */}
+            <KitPattern id="wb-kit-us" kit={roster.us.kit} fallback="#2b4a8a" />
+            <KitPattern id="wb-kit-them" kit={roster.them.kit} fallback="#b23a2a" />
           </defs>
           <g className="wb-lines" filter="url(#wb-rough)">
             <rect x="6" y="6" width="328" height="138" rx="2" /><line x1="170" y1="6" x2="170" y2="144" /><circle cx="170" cy="75" r="20" />
@@ -78,13 +83,13 @@ export function BoardScreen({ summary, roster, moments, round, prev, onNext }: P
           </g>
           {theirGoals.map((g, i) => {
             const [cx, cy] = theirGoalSpot(g.minute + i);
-            return <circle key={`t${i}`} className="mag them" cx={cx} cy={cy} r="5" />;
+            return <circle key={`t${i}`} className="mag" fill="url(#wb-kit-them)" cx={cx} cy={cy} r="5" />;
           })}
           {placeMagnets(moments).map(({ m, cx, cy }) => {
-            const tone = m.concede || m.role === 'worst' ? 'them' : m.goal ? 'goal' : 'us';
+            const tone = m.goal ? 'scored' : m.concede || m.role === 'worst' ? 'bad' : '';
             return (
               <g key={m.role}>
-                <circle className={`mag ${tone}`} cx={cx} cy={cy} r="9" />
+                <circle className={`mag kit ${tone}`} fill="url(#wb-kit-us)" cx={cx} cy={cy} r="9" />
                 <text className="mag-n" x={cx} y={cy + 3}>{m.minute}′</text>
               </g>
             );

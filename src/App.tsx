@@ -122,7 +122,8 @@ type Pending =
 
 /** Пауза на событие ленты: гол должен успеть прозвучать, проходной момент — нет. */
 function delayFor(e: TimelineEvent): number {
-  if (e.kind === 'goalUs' || e.kind === 'goalThem') return 2400;
+  // Гол розігрується на полі (17.10): розбіг, удар, сітка, святкування — йому треба більше часу, ніж рядку.
+  if (e.kind === 'goalUs' || e.kind === 'goalThem') return 3000;
   if (e.kind === 'halftime' || e.kind === 'kickoff') return 1800;
   if (e.kind === 'episode') return 0;   // исход уже показан на экране броска
   return 1900;
@@ -182,6 +183,8 @@ function Game() {
   // в гілці матчу внизу — інакше пауза на тижні показала б рахунок минулого матчу.
   setLiveMatch(null);
   const [shown, setShown] = useState<TimelineEvent[]>([]);
+  const shownRef = useRef<TimelineEvent[]>([]);
+  shownRef.current = shown;
   // Новий екран — з верху. Хеш-роутер скидає скрол лише на hashchange, а зміни stage всередині #/play — ні:
   // після ESPM з кнопкою внизу стрічка відкривалась прокрученою на 861 px (плейтест 21.09, Б-1).
   useEffect(() => { window.scrollTo(0, 0); }, [stage.k]);
@@ -444,17 +447,25 @@ function Game() {
     if (stage.k !== 'feed') return;
     if (queue.length === 0) {
       const p = pendingRef.current;
-      pendingRef.current = null;
       if (!p) return;
-      if (p.kind === 'episode') {
-        shownAtRef.current = performance.now();
-        setStage({ k: 'episode', episode: p.episode, minute: p.minute, link: p.link });
-      } else if (p.kind === 'entry') {
-        setStage({ k: 'entry', entry: p.entry, minute: p.minute, debut: p.debut, lead: p.lead });
-      } else {
-        setStage({ k: 'whistle', whistle: p.whistle, summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo, before: p.before, after: p.after });
-      }
-      return;
+      // Останній рядок стрічки має доіграти на полі, перш ніж поле згорнеться в лист (17.10): без паузи
+      // лист відкривався в ту ж мить, і розіграш цього рядка ніхто не бачив.
+      const last = shownRef.current[shownRef.current.length - 1];
+      const hold = last && last.kind !== 'episode' ? Math.min(1600, delayFor(last)) : 0;
+      const open = () => {
+        pendingRef.current = null;
+        if (p.kind === 'episode') {
+          shownAtRef.current = performance.now();
+          setStage({ k: 'episode', episode: p.episode, minute: p.minute, link: p.link });
+        } else if (p.kind === 'entry') {
+          setStage({ k: 'entry', entry: p.entry, minute: p.minute, debut: p.debut, lead: p.lead });
+        } else {
+          setStage({ k: 'whistle', whistle: p.whistle, summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo, before: p.before, after: p.after });
+        }
+      };
+      if (!hold) { open(); return; }
+      const h = setTimeout(open, hold);
+      return () => clearTimeout(h);
     }
     const t = setTimeout(() => {
       setShown((s) => [...s, queue[0]]);

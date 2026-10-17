@@ -170,6 +170,7 @@ button.link { background: none; border: none; padding: 0; cursor: pointer; text-
 .wb-lines { fill: none; stroke: #23252a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .mag { stroke: rgba(0,0,0,.25); stroke-width: 1; }
 .mag.us { fill: #2b4a8a; } .mag.them { fill: #b23a2a; } .mag.goal { fill: #1f7a4a; }
+.mag.kit { stroke: #23252a; stroke-width: 1.2; } .mag.kit.scored { stroke: #1f7a4a; stroke-width: 3; } .mag.kit.bad { stroke: #23252a; stroke-width: 2.2; stroke-dasharray: 3 2; }
 .mag-n { font-family: 'Neucha', var(--font-caps); font-size: 10px; fill: #fff; text-anchor: middle; }
 .wb-dir { font-family: 'Neucha', var(--font-caps); font-size: 10px; fill: #23252a; letter-spacing: 1px; }
 .wb-notes { margin: 12px 4px 0; padding: 0; list-style: none; font-size: 19px; line-height: 1.3; }
@@ -1440,4 +1441,7 @@ a.set-btn { display: flex; text-decoration: none; color: var(--ink); }
 .pc-card { fill: var(--v-instinct); } .pc-card.red { fill: var(--bad); }
 html.reduce-motion .pc-ring.blink { animation: none; }
 /* Кружок форми біля назви в смужці рахунку. */
-.strip-kit { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: -1px; margin: 0 5px; box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.strip-kit { display: inline-block; flex: none; width: 8px; height: 8px; border-radius: 50%; vertical-align: -1px; margin: 0 4px; box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.score-strip .strip-team { white-space: nowrap; }
+/* Найдовші назви («Сьєрра-Бланка») разом із кружком форми інакше розпирали смужку на другий рядок. */
+.match .score-strip .strip-team.long { font-size: 9.5px; letter-spacing: .02em; }

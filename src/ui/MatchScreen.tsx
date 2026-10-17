@@ -94,7 +94,11 @@ export function MatchScreen({
   const staminaTone = stamina < 25 ? 'low' : stamina < 50 ? 'mid' : '';
   // Лист відкритий — сцена, кидок, вихід, свисток: поле й стрічка не потрібні, все в один екран.
   const moment = !!episode || !!sheet;
-  const scoreTone = state.scoreUs > state.scoreThem ? 'lead' : state.scoreUs < state.scoreThem ? 'trail' : '';
+  // Рахунок — за показаною стрічкою, а не за станом рушія (17.10): рушій рахує матч до наступної сцени
+  // наперед, і табло показувало гол раніше, ніж поле його розіграло, а стрічка — написала.
+  const scoreUs = shown.filter((e) => e.kind === 'goalUs').length;
+  const scoreThem = shown.filter((e) => e.kind === 'goalThem').length;
+  const scoreTone = scoreUs > scoreThem ? 'lead' : scoreUs < scoreThem ? 'trail' : '';
 
   return (
     <div className="match de-match">
@@ -104,9 +108,9 @@ export function MatchScreen({
           клубу, та сама, що на фішках поля. Сили — тонка лінія по нижній кромці; на полі вони ще й кільцем
           навколо фішки Реєса. */}
       <div className="score-strip">
-        <span className="strip-team"><Kit kit={roster.us.kit} />{roster.us.name.nom}</span>
-        <b className={`strip-score ${scoreTone}`}>{state.scoreUs} : {state.scoreThem}</b>
-        <span className="strip-team r">{roster.them.name.nom}<Kit kit={roster.them.kit} /></span>
+        <span className={`strip-team${roster.us.name.nom.length > 11 ? ' long' : ''}`}><Kit kit={roster.us.kit} />{roster.us.name.nom}</span>
+        <b className={`strip-score ${scoreTone}`}>{scoreUs} : {scoreThem}</b>
+        <span className={`strip-team r${roster.them.name.nom.length > 11 ? ' long' : ''}`}>{roster.them.name.nom}<Kit kit={roster.them.kit} /></span>
         <div className={`stamina-bar thin ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
       </div>
       {!moment && (

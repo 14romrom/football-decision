@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { VOICE_LABEL } from '../engine/voices';
+import { FeedbackScreen } from './FeedbackScreen';
 import { VOICES } from './voices-text';
 import { buildLabel } from './TitleScreen';
 import { t, tf } from '../content/i18n';
 
 // Про гру (19.09): версия, одна фраза о том, что это за игра, и голоса представляются сами —
-// тексты из VOICES картки, ничего нового не пишем. Ссылка на форму фидбэка появится, когда будет форма.
+// тексты из VOICES картки, ничего нового не пишем. «Написати розробнику» (18.10) открывает отзыв здесь же.
 // M26 (27.09): экран объясняет механику словами игрока — решение за матч, форма риска, складність,
 // кураж, силы, неделя. **Какие именно умения качает голос — не сказано** (решение пользователя 26.09):
 // игрок замечает это сам по чипам на вариантах, иначе экран превращается в таблицу характеристик.
@@ -13,6 +15,8 @@ import { t, tf } from '../content/i18n';
 type Props = { onBack: () => void; /** Підпис кнопки повернення: з головного меню — «Головне меню», з паузи — «Пауза». */ backLabel?: string };
 
 export function AboutScreen({ onBack, backLabel }: Props) {
+  const [feedback, setFeedback] = useState(false);
+  if (feedback) return <FeedbackScreen onBack={() => setFeedback(false)} backLabel={t('Про гру')} where={t('про гру')} />;
   return (
     <div className="about plain-screen">
       <h1>{t('Про гру')}</h1>
@@ -63,6 +67,7 @@ export function AboutScreen({ onBack, backLabel }: Props) {
 
       <p className="about-refs">{t('Натхнення: Disco Elysium, Football Manager і кожен матч, де ти знав, як треба, і зробив інакше.')}</p>
 
+      <button className="row" onClick={() => setFeedback(true)}>{t('Написати розробнику')}</button>
       <button className="row row-back" onClick={onBack}>{backLabel ?? t('Головне меню')}</button>
       <p className="build">{buildLabel()}</p>
     </div>

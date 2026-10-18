@@ -5,6 +5,7 @@ import { LANG } from './content/i18n';
 import './styles.css';
 import { installUiSounds } from './ui/sound';
 import { installBackButton } from './ui/backButton';
+import { CrashGuard } from './ui/CrashGuard';
 
 installUiSounds();
 installBackButton();
@@ -17,6 +18,6 @@ document.documentElement.lang = LANG;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <CrashGuard><App /></CrashGuard>
   </StrictMode>,
 );

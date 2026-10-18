@@ -8,6 +8,7 @@ import { activeSlot } from '../telemetry/slots';
 import { readSettings, writeSettings } from '../telemetry/settings';
 import { monthOfRound } from '../engine/season';
 import { AboutScreen } from './AboutScreen';
+import { FeedbackScreen } from './FeedbackScreen';
 import { ChapterHead, currentChapter } from './ChapterHead';
 import { Film } from './Film';
 import { liveMatch } from './liveMatch';
@@ -37,7 +38,7 @@ type Props = { go: (hash: string) => void };
 
 /** Назва мови — її ж мовою, як у перемикачах мови будь-якої гри. */
 const LANG_LABEL = { uk: 'УКР', en: 'ENG' }; // i18n-skip: назва мови не перекладається
-type View = 'menu' | 'season' | 'card' | 'about' | 'settings';
+type View = 'menu' | 'season' | 'card' | 'about' | 'settings' | 'feedback';
 type Ask =
   | { kind: 'leave' }
   | { kind: 'load'; name: 'save' | 'auto'; shot: Shot };
@@ -117,6 +118,7 @@ export function PauseMenu({ go }: Props) {
             onBack={() => setView('menu')} />
         )}
         {view === 'about' && <AboutScreen onBack={() => setView('menu')} backLabel={t('Пауза')} />}
+        {view === 'feedback' && <FeedbackScreen onBack={() => setView('menu')} backLabel={t('Пауза')} where={inMatch ? t('пауза в матчі') : t('пауза')} />}
         {view === 'settings' && (
           <SettingsScreen inMatch={inMatch} backLabel={t('Пауза')} onBack={() => setView('menu')} onWiped={() => { close(); go('#/'); }} />
         )}
@@ -153,6 +155,7 @@ export function PauseMenu({ go }: Props) {
                   </li>
                 )}
                 <li><button onClick={() => setView('about')}>{t('Про гру')}</button></li>
+                <li><button onClick={() => setView('feedback')}>{t('Написати розробнику')}</button></li>
                 <li><button onClick={() => setView('settings')}>{t('Налаштування')}</button></li>
                 <li><button className={inMatch ? 'exit' : ''} onClick={toMenu}>{t('Головне меню')}</button></li>
               </ul>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useBanner } from './ads';
 import { isSeasonOver, leagueOf, monthOfRound, SEASON_ROUNDS, standings, US, type Season, type Verdict, PLAYOFF_SPOTS, PROMOTION_SPOTS } from '../engine/season';
 import { plural } from './pluralize';
 import type { AdRule, AdSet, ClubName } from '../engine/espm';
@@ -42,6 +43,8 @@ export function Banner({ ad, dark }: { ad: AdRule; dark?: boolean }) {
 }
 
 export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict, column, onNext, onNewSeason, nextLabel = t('Новий сезон') }: Props) {
+  // Банер Google внизу, поки відкрита сторінка ESPM (M48); наші пародійні оголошення лишаються.
+  useBanner('bannerEspm');
   const rows = standings(season);
   const over = isSeasonOver(season);
   const p = season.player;

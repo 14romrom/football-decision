@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { readSettings, writeSettings, type Settings } from '../telemetry/settings';
 import { refreshMusic } from './sound';
 import { notifyPermission, requestNotify, reviewAvailable, setNotify } from './notify';
+import { adsAvailable, privacyOptionsNeeded, showPrivacyOptions } from './ads';
+import { NoAdsCard } from './NoAdsCard';
 import { readSlotSummary, resetSlot } from '../telemetry/saves';
 import { activeSlot } from '../telemetry/slots';
 import { exportLogs } from '../telemetry/log';
@@ -145,6 +147,18 @@ export function SettingsScreen({ onBack, onWiped, backLabel, inMatch = false }: 
         <div className="l">{t('Розмір тексту')}</div>
         <Seg name={t('Розмір тексту')} value={s.textSize} options={[['normal', t('звичайний')], ['large', t('більший')]]} onChange={(v) => set({ textSize: v })} />
       </div>
+
+      {/* Підтримати гру (M48): «Без реклами» й — де Google вимагає (ЄЕЗ, UK) — зміна згоди на рекламу. */}
+      {adsAvailable() && (<>
+        <h2 className="sect">{t('Підтримати гру')}</h2>
+        <NoAdsCard />
+        {privacyOptionsNeeded() && (
+          <button className="set set-btn" onClick={() => void showPrivacyOptions()}>
+            <span className="l">{t('Конфіденційність реклами')}<small>{t('Змінити згоду на персоналізовану рекламу')}</small></span>
+            <span className="v">›</span>
+          </button>
+        )}
+      </>)}
 
       {tester && !inMatch && (<>
       <h2 className="sect">{t('Тестерам')}</h2>

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, AGENT, clubName, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING, CHAPTERS, NOTIFY } from './content';
+import { ACTIVITIES, ADS, AGENT, clubName, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING, CHAPTERS, NOTIFY, AD_BREAKS, type AdBreak } from './content';
+import { AdBreakCard } from './ui/AdBreakCard';
+import { adPlan, breakIndex, pauseMinute } from './engine/ads';
+import { adReady, prepareInterstitial, showInterstitial } from './ui/ads';
 import { AskSheet } from './ui/AskSheet';
 import { markNotifyAsked, notifyAskDue, requestNotify, requestReview, reviewAvailable, reviewLater, setNotify } from './ui/notify';
 import { reviewDue } from './engine/notify';
@@ -116,7 +119,9 @@ type Stage =
   | { k: 'levelup'; fromLevel: number; toLevel: number }
   // Листи-прохання M51 (18.10): дозвіл на сповіщення після першого матчу, відгук на доброму моменті.
   // `next` — куди гра йшла до листа: прохання вставляється в шлях, а не замінює його.
-  | { k: 'ask'; kind: 'notify' | 'review'; next: () => void };
+  | { k: 'ask'; kind: 'notify' | 'review'; next: () => void }
+  // Пауза в матчі (M48): лист оповідача на хвилині паузи, «Чекати» → ролик → матч із тієї ж хвилини.
+  | { k: 'adbreak'; brk: AdBreak; minute: number; lead: TimelineEvent[] };
 
 /** Розворот глави (M24) показується раз за кар’єру. */
 const seenChapter = (career: Career, id: string): boolean => (career.chaptersSeen ?? []).includes(id);
@@ -124,6 +129,7 @@ const seenChapter = (career: Career, id: string): boolean => (career.chaptersSee
 type Pending =
   | { kind: 'episode'; episode: Episode; minute: number; link: boolean }
   | { kind: 'entry'; entry: Entry; minute: number; debut: boolean; lead: TimelineEvent[] }
+  | { kind: 'adbreak'; brk: AdBreak; minute: number; lead: TimelineEvent[] }
   | { kind: 'result'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career };
 
 /** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
@@ -200,11 +206,29 @@ function Game() {
   const [finale, setFinale] = useState<{ kind: FinaleKind; id: number; action?: ReyesAction } | null>(null);
   // Остання сцена — для поля між листами (MatchScreen.pitchEpisode): розв’язка грає з її місця після «далі».
   const lastEpisodeRef = useRef<Episode | null>(null);
+  /** Пауза на рекламу в цьому матчі (M48): хвилина, сюжет і чи вже була. */
+  const adBreakRef = useRef<{ minute: number; brk: AdBreak; done: boolean } | null>(null);
   const [queue, setQueue] = useState<TimelineEvent[]>([]);
 
   const proceed = useCallback((lead: TimelineEvent[] = []) => {
     const session = sessionRef.current!;
     const rng = rngRef.current!;
+    // Пауза в матчі (M48) — так само, як вихід із лави: стрічка доходить до хвилини паузи й зупиняється
+    // на листі. Перевірка першою, але не далі наступної зупинки — рішення чи виходу з лави, — інакше
+    // пауза перескочила б їх.
+    const ab = adBreakRef.current;
+    if (ab && !ab.done && !session.pendingFollowUp && session.state.minute < ab.minute) {
+      const nextStop = Math.min(session.schedule[session.nextIndex] ?? 999,
+        session.onBench && session.state.minute < BALANCE.bench.entryMinute ? BALANCE.bench.entryMinute : 999);
+      if (ab.minute < nextStop) {
+        ab.done = true;
+        const events = advanceTo(session, ab.minute, rng);
+        pendingRef.current = { kind: 'adbreak', brk: ab.brk, minute: ab.minute, lead: [] };
+        setQueue([...lead, ...events]);
+        setStage({ k: 'feed' });
+        return;
+      }
+    }
     // Вихід із лави — подія: лента доходить до хвилини виходу і зупиняється на листі «Вийти на поле»;
     // далі proceed() продовжує з тієї ж хвилини до наступного рішення.
     const entryMinute = BALANCE.bench.entryMinute;
@@ -356,6 +380,16 @@ function Game() {
     rngRef.current = rng;
     sessionRef.current = session;
     setShown([]);
+    // Реклама цього матчу (M48): пауза — парні матчі з другого, ролик після — кожен третій без паузи.
+    // Хвилина й сюжет — від сиду матчу, тож перезавантаження ставить ту саму паузу. Ролик вантажиться
+    // заздалегідь: поки дійде до паузи чи свистка, він уже готовий або вже точно ні.
+    const matchNo = consumedCareer.matchesPlayed + 1;
+    const plan = adPlan(matchNo);
+    adBreakRef.current = plan.pause
+      ? { minute: pauseMinute(makeRng(seed * 31 + 7)), brk: fillNamesDeep(AD_BREAKS[breakIndex(matchNo, AD_BREAKS.length)], session.roster), done: false }
+      : null;
+    if (plan.pause) prepareInterstitial('interstitialPause');
+    if (plan.post) prepareInterstitial('interstitialAfterMatch');
     // Нотатки тижня і прологу зберігаються з плейсхолдерами ({dm}, {sub}) — імена підставляються тут, під ростер матчу.
     // Розділювач глави (M24) перед першим матчем сезону: глава = сезон, показується раз.
     const chapterId = seasonRef.current.number >= 2 ? 'season2' : 'season1';
@@ -482,6 +516,8 @@ function Game() {
           setStage({ k: 'episode', episode: p.episode, minute: p.minute, link: p.link });
         } else if (p.kind === 'entry') {
           setStage({ k: 'entry', entry: p.entry, minute: p.minute, debut: p.debut, lead: p.lead });
+        } else if (p.kind === 'adbreak') {
+          setStage({ k: 'adbreak', brk: p.brk, minute: p.minute, lead: p.lead });
         } else {
           setStage({ k: 'whistle', whistle: p.whistle, summary: p.summary, xpEarned: p.xpEarned, leveledFrom: p.leveledFrom, leveledTo: p.leveledTo, before: p.before, after: p.after });
         }
@@ -820,7 +856,12 @@ function Game() {
           askOr(stage.after.matchesPlayed, {
             won: s.scoreUs > s.scoreThem, rating: s.coachRating,
             badMoment: session.state.flags.includes('sent_off') || s.moments?.worst?.tier === 'badFail',
-          }, () => setStage({ k: 'season', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }));
+          }, () => {
+            // Ролик після матчу (M48): між дошкою й ESPM — природна точка переходу за правилами AdMob.
+            const toSeason = () => setStage({ k: 'season', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo });
+            if (adPlan(stage.after.matchesPlayed).post && adReady('interstitialAfterMatch')) void showInterstitial('interstitialAfterMatch').then(toSeason);
+            else toSeason();
+          });
         }}
       />
     );
@@ -955,7 +996,7 @@ function Game() {
   const session = sessionRef.current!;
   setLiveMatch({
     // Відкритий лист показує свою хвилину (ярлик на кромці) — табло паузи має сказати ту саму.
-    minute: stage.k === 'episode' || stage.k === 'roll' || stage.k === 'entry' ? stage.minute
+    minute: stage.k === 'episode' || stage.k === 'roll' || stage.k === 'entry' || stage.k === 'adbreak' ? stage.minute
       : shown.length ? shown[shown.length - 1].minute : session.state.minute,
     scoreUs: session.state.scoreUs, scoreThem: session.state.scoreThem,
     us: session.roster.us.name.nom, them: session.roster.them.name.nom,
@@ -978,15 +1019,21 @@ function Game() {
         onSkip={skip}
         episode={stage.k === 'episode' || stage.k === 'roll' ? stage.episode : null}
         pitchEpisode={lastEpisodeRef.current}
-        sheetMinute={stage.k === 'episode' || stage.k === 'roll' || stage.k === 'entry' ? stage.minute : undefined}
+        sheetMinute={stage.k === 'episode' || stage.k === 'roll' || stage.k === 'entry' || stage.k === 'adbreak' ? stage.minute : undefined}
         onBench={!!session.fromBench && (shown.length ? shown[shown.length - 1].minute : 0) < BALANCE.bench.entryMinute}
         player={session.player}
         conditions={session.conditions}
         flagRules={session.flagRules}
         hideDiceZone={stage.k === 'roll'}
-        sheet={stage.k === 'whistle' || stage.k === 'entry'}
+        sheet={stage.k === 'whistle' || stage.k === 'entry' || stage.k === 'adbreak'}
         finale={finale}
       >
+        {stage.k === 'adbreak' && (
+          <AdBreakCard
+            brk={stage.brk} minute={stage.minute} withAd={adReady('interstitialPause')}
+            onWait={() => { const lead = stage.lead; void showInterstitial('interstitialPause').then(() => proceed(lead)); }}
+          />
+        )}
         {stage.k === 'entry' && (
           <EntryCard entry={fillNamesDeep(stage.entry, session.roster)} minute={stage.minute} debut={stage.debut} onNext={() => proceed(stage.lead)} />
         )}

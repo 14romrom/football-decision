@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { VOICE_LABEL } from '../engine/voices';
 import { FeedbackScreen } from './FeedbackScreen';
+import { NoAdsCard } from './NoAdsCard';
 import { VOICES } from './voices-text';
 import { buildLabel } from './TitleScreen';
 import { t, tf } from '../content/i18n';
@@ -64,6 +65,8 @@ export function AboutScreen({ onBack, backLabel }: Props) {
         <li>{t('Переграти не можна. Кубик один, і він уже впав.')}</li>
         <li>{t('Голос, якого слухаєш, стає гучнішим. Голос, якого ігноруєш, ображається.')}</li>
       </ul>
+
+      <NoAdsCard />
 
       <p className="about-refs">{t('Натхнення: Disco Elysium, Football Manager і кожен матч, де ти знав, як треба, і зробив інакше.')}</p>
 

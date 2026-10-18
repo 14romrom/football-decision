@@ -30,6 +30,8 @@ export type Settings = {
    *  `reviewLaterAt` — коли натиснуто «Пізніше» (мс), знову не раніше ніж за 30 днів. */
   reviewDone: boolean;
   reviewLaterAt: number;
+  /** Куплено «Без реклами» (M48). Правда — у Google Play; тут копія, яку `ui/ads.ts` звіряє на старті. */
+  noAds: boolean;
 };
 
 const KEY = 'football-decision.settings.v1';
@@ -37,7 +39,7 @@ const TITLE_SEEN_KEY = 'football-decision.title-seen.v1';
 const TITLE_SEEN_KEEP = 24;
 
 // Мова за умовчанням — українська; на першому запуску її замінює мова пристрою (`deviceLang`).
-export const DEFAULT_SETTINGS: Settings = { dice: 'reel', haptics: true, sound: true, crowd: true, music: true, reduceMotion: false, textSize: 'normal', hints: true, lang: 'uk', notify: true, notifyAsked: false, reviewDone: false, reviewLaterAt: 0 };
+export const DEFAULT_SETTINGS: Settings = { dice: 'reel', haptics: true, sound: true, crowd: true, music: true, reduceMotion: false, textSize: 'normal', hints: true, lang: 'uk', notify: true, notifyAsked: false, reviewDone: false, reviewLaterAt: 0, noAds: false };
 
 export function readSettings(): Settings {
   try {

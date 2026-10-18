@@ -9,6 +9,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <!-- AdMob (M48): ідентифікатор застосунку обов'язковий, без нього SDK валить застосунок на старті.
+             Не секретний; той самий — у src/ui/adIds.ts. Блоки на закритому тесті — тестові Google. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8998219288496303~4470175071" />
+
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"

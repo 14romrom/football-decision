@@ -38,7 +38,7 @@ body {
   max-width: 620px;
   margin: 0 auto;
   /* Вырезы и системные полосы телефона (Capacitor, viewport-fit=cover): контент не под ними. */
-  padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(80px + env(safe-area-inset-bottom) + var(--ad-banner, 0px)) calc(16px + env(safe-area-inset-left));
 }
 
 h1 { font-size: 22px; margin: 0 0 12px; }
@@ -1048,6 +1048,15 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .about-voices .say { margin: 0 0 8px; } .about-voices i { color: var(--muted); }
 .about-rules li { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
 .about-refs { margin: 16px 0 0; color: var(--muted); font-size: 14px; font-style: italic; }
+/* «Без реклами» (M48): картка-лист без іронії, як у макеті; кнопка — звичайна primary. */
+.noads { margin: 16px 0 6px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 6px; padding: 14px; display: grid; gap: 10px; }
+.noads b { font: 500 14px var(--font-caps); letter-spacing: .08em; text-transform: uppercase; }
+.noads p { margin: 0; font-size: 14.5px; line-height: 1.5; }
+.noads-restore { background: none; border: 0; color: var(--muted); font: 12.5px var(--font-mono); text-decoration: underline; padding: 4px; }
+.noads-note { color: var(--muted); font-size: 12.5px; }
+/* Пауза в матчі (M48): чесний підпис під «Чекати» і тихий рядок про «Без реклами». */
+.adbreak-note { margin: 2px 0 0; text-align: center; font: 12px var(--font-mono); color: var(--muted); }
+.adbreak-quiet { margin: 0; text-align: center; font-size: 12.5px; font-style: italic; color: var(--muted); opacity: .8; }
 /* Відгук і екран збою (18.10): той самий службовий екран, поле листа — на папері теми, без рамок браузера. */
 .fb-kind { align-self: flex-start; flex-wrap: wrap; }
 .fb-text { width: 100%; box-sizing: border-box; min-height: 140px; resize: vertical; background: var(--panel-2); color: var(--ink); border: 1px solid var(--line-2); border-radius: 4px; padding: 10px 12px; font: 16px/1.45 var(--font-text); }
@@ -1141,7 +1150,8 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 /* Кнопка наступного кроку прилипає до низу (плейтест 20.09: під довгим зошитом чи листом її доводилось шукати скролом).
    Контейнери листа й зошита — overflow: clip, не hidden: hidden робить їх scroll-контейнером і sticky ламається.
    Тінь угору — замість градієнта-підкладки: текст під кнопкою гасне, а не обрізається. */
-.menu-primary, .nb-sheet-btn, .de-next, .whistle-go { position: sticky; bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 3; box-shadow: 0 -16px 18px -8px rgba(11,11,13,.85); }
+/* `--ad-banner` — висота банера Google внизу (ESPM, «Y»; ставить ui/ads.ts): прилиплі кнопки стоять над ним. */
+.menu-primary, .nb-sheet-btn, .de-next, .whistle-go { position: sticky; bottom: calc(10px + env(safe-area-inset-bottom) + var(--ad-banner, 0px)); z-index: 3; box-shadow: 0 -16px 18px -8px rgba(11,11,13,.85); }
 .menu .rows a.row { text-decoration: none; display: flex; align-items: center; }
 
 /* ——— экран матча, правки 19.09 (макет «Екран матчу: було / стало») ——— */

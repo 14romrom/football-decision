@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useBanner } from './ads';
 import { agoLabel, countLabel, type Post, type PostAccount, type ReplyOption } from '../engine/posts';
 import { t, tf } from '../content/i18n';
 
@@ -67,6 +68,7 @@ function Acts({ p }: { p: Post }) {
 }
 
 export function PostsScreen({ posts, self, onReply, onNext }: Props) {
+  useBanner('bannerY');   // банер Google внизу, поки відкрита стрічка (M48)
   const [replied, setReplied] = useState<{ index: number; option: ReplyOption; tags: string[] } | null>(null);
   const [draft, setDraft] = useState<{ index: number; option: ReplyOption } | null>(null);
 

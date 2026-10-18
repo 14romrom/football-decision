@@ -7,6 +7,7 @@
 //   пролог і перший матч — без реклами. Покупка «Без реклами» вимикає все, паузи лишаються історією.
 
 import type { Rng } from './rng';
+import type { AdBreak, AdBreakDef } from '../content';
 
 /** `matchNo` — номер матчу в кар'єрі, з одиниці (перший матч — 1). */
 export function adPlan(matchNo: number): { pause: boolean; post: boolean } {
@@ -25,4 +26,15 @@ export function pauseMinute(rng: Rng): number {
  *  (2-й матч — перша), тому один сюжет не повторюється раніше ніж за дванадцять матчів. */
 export function breakIndex(matchNo: number, count: number): number {
   return (Math.floor(matchNo / 2) - 1 + count) % count;
+}
+
+/** Сюжет паузи для матчу. Перший сезон — шість сюжетів другої ліги, другий — п'ять своїх, вищої
+ *  (рішення користувача 18.10: у другому сезоні старі паузи повторювались, а дві з них казали
+ *  «друга ліга»). Пауз за сезон п'ять, тож усередині сезону сюжет не повторюється. Погода — з умов
+ *  матчу: «спеки тут немає» в серпневу спеку читалося як помилка. */
+export function adBreakFor(all: AdBreakDef[], matchNo: number, league: 'top' | 'second', weather: string): AdBreak {
+  const pool = all.filter((b) => (b.league ?? 'second') === league);
+  const b = pool[breakIndex(matchNo, pool.length)];
+  const setup = b.weather ? b.setup.replace('{weather}', b.weather[weather] ?? b.weather.clear) : b.setup;
+  return { id: b.id, setup, voices: b.voices, note: b.note };
 }

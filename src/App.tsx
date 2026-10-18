@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ACTIVITIES, ADS, AGENT, clubName, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING, CHAPTERS, NOTIFY, AD_BREAKS, type AdBreak } from './content';
 import { AdBreakCard } from './ui/AdBreakCard';
-import { adPlan, breakIndex, pauseMinute } from './engine/ads';
+import { adBreakFor, adPlan, pauseMinute } from './engine/ads';
 import { adReady, prepareInterstitial, showInterstitial } from './ui/ads';
 import { AskSheet } from './ui/AskSheet';
 import { markNotifyAsked, notifyAskDue, requestNotify, requestReview, reviewAvailable, reviewLater, setNotify } from './ui/notify';
@@ -386,7 +386,7 @@ function Game() {
     const matchNo = consumedCareer.matchesPlayed + 1;
     const plan = adPlan(matchNo);
     adBreakRef.current = plan.pause
-      ? { minute: pauseMinute(makeRng(seed * 31 + 7)), brk: fillNamesDeep(AD_BREAKS[breakIndex(matchNo, AD_BREAKS.length)], session.roster), done: false }
+      ? { minute: pauseMinute(makeRng(seed * 31 + 7)), brk: fillNamesDeep(adBreakFor(AD_BREAKS, matchNo, session.conditions.league ?? 'second', session.conditions.weather), session.roster), done: false }
       : null;
     if (plan.pause) prepareInterstitial('interstitialPause');
     if (plan.post) prepareInterstitial('interstitialAfterMatch');

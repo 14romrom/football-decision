@@ -136,8 +136,12 @@ export const WEEK_SCENES = weekscenesJson as WeekScene[];
 export const ADS = adsJson as AdRule[];
 /** Паузи в матчі під рекламу (M48, тексти 17.10; показ ще не підключено — чекає AdMob): лист
  *  оповідача — що сталося, три репліки голосів, підпис під «Чекати». Імена — плейсхолдерами ростера. */
+/** Пауза, яку бачить гравець: сетап, три голоси, підпис. */
 export type AdBreak = { id: string; setup: string; voices: { voice: string; line: string }[]; note: string };
-export const AD_BREAKS = adbreaksJson as AdBreak[];
+/** Як вона лежить у контенті: `league: 'top'` — лише другий сезон; `weather` — речення на місце `{weather}`
+ *  у сетапі за погодою матчу. Розв'язує `engine/ads.ts:adBreakFor`. */
+export type AdBreakDef = AdBreak & { league?: 'top'; weather?: Record<string, string> };
+export const AD_BREAKS = adbreaksJson as AdBreakDef[];
 /** Сповіщення й листи-прохання M51 (`engine/notify.ts`). */
 export const NOTIFY = notifyJson as NotifyContent;
 /** Пролог — тиждень нуль (engine/prologue.ts): три розвороти зі стікерами голосів; імена — при показі. */

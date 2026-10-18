@@ -61,7 +61,7 @@ import { AgentScene } from './ui/AgentScene';
 import { agentPending, resolveAgent, type AgentChoice } from './engine/agent';
 import { TitleScreen } from './ui/TitleScreen';
 import { LaunchScreen } from './ui/LaunchScreen';
-import { music } from './ui/sound';
+import { music, musicScene } from './ui/sound';
 import { ScreenWipe } from './ui/ScreenWipe';
 import { Sticker } from './ui/Sticker';
 import { SlotsScreen } from './ui/SlotsScreen';
@@ -122,6 +122,10 @@ type Stage =
   | { k: 'ask'; kind: 'notify' | 'review'; next: () => void }
   // Пауза в матчі (M48): лист оповідача на хвилині паузи, «Чекати» → ролик → матч із тієї ж хвилини.
   | { k: 'adbreak'; brk: AdBreak; minute: number; lead: TimelineEvent[] };
+
+/** Етапи, на яких грає тема меню: пролог, глави, лист травня, відпустка, агент, фінал. Решта — тиша
+ *  й звуки гри; матч — стадіон. */
+const MUSIC_STAGES = new Set<Stage['k']>(['prologue', 'chapter', 'may', 'vacation', 'agent', 'ending']);
 
 /** Розворот глави (M24) показується раз за кар’єру. */
 const seenChapter = (career: Career, id: string): boolean => (career.chaptersSeen ?? []).includes(id);
@@ -188,6 +192,8 @@ function Game() {
   const clubForms = useCallback((key: string) => (key === US ? ROSTER.us.name : OPPONENTS[key]?.name ?? { nom: key, gen: key }), []);
 
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
+  // Тема меню лише на моментах історії (ui/sound.ts:musicScene, «Звукова карта кар'єри», 18.10).
+  useEffect(() => { musicScene(MUSIC_STAGES.has(stage.k)); }, [stage.k]);
   // Краї плівки (ui/Film.tsx): на екранах гри; матч малює свої. Дошка, ESPM і стрічка — без рамки, це «чужі» екрани.
   const film = <>
     <ScreenWipe on={stage.k} />
@@ -1102,6 +1108,13 @@ export function App() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+  // Поза грою тема — на титулі й того, що відкривається з нього (слоти, налаштування, «Про гру»);
+  // картка, профіль ESPM і статистика — тиша. У грі (#/play) тему вирішує етап (Game, MUSIC_STAGES):
+  // ефекти дитини спрацьовують раніше за батьківські, тож тут #/play не чіпаємо.
+  useEffect(() => {
+    if (route.startsWith('#/play')) return;
+    musicScene(isTitleRoute(route) || /^#\/(slots|settings|about)/.test(route));
+  }, [route]);
   const go = (hash: string) => { location.hash = hash; };
   // Заставка лежить **поверх** уже змонтованого екрана і гасне в нього: так перехід виходить
   // розчиненням, а не підміною кадру.

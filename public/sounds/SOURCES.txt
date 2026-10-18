@@ -14,3 +14,4 @@ net — «A football hits the net, goal» (forza1903), Pixabay Content License, 
 post — «Metal Whoosh Hit 5», Pixabay Content License, https://pixabay.com/sound-effects/film-special-effects-metal-whoosh-hit-5-201907/
 menu_theme — «Hired Hand. Ambient soundscape.» (ODennehy), Pixabay Content License, https://pixabay.com/music/ambient-hired-hand-ambient-soundscape-165900/ — петля: scratchpad sfx/theme.py
   18.10: прибрано стук — ударне нижче 260 Гц приглушено (sfx/deknock.py), фільтр 140 Гц, вирізано 13,3–24,6 с зі склейкою 1,5 с; 151,4 с
+  18.10, втретє: петля від вступу гітари — 10,8 → 91,3 с, склейка 1,5 с; 80,5 с

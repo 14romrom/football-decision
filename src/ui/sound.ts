@@ -297,8 +297,17 @@ export function sfxLaunch(calm: boolean): boolean {
  *  рев трибун на голі, але безперервно; гул матчу ≈ −25,7. Стало 0.65: тема ≈ −22 — на 3–4 дБ над гулом
  *  матчу й на 5–6 дБ під сплесками трибун. Перше зведення міряло найгучніші 0,4 с і через хвилі теми
  *  (тихі місця −31, наростання −14) недооцінило її середню гучність. */
-const LOOP_START = 3.2, LOOP_END = 151.4, MUSIC_GAIN = 0.65;
+// 18.10, втретє: тема тепер грає лише на моментах історії (`sceneMusic`), і тихий вступ без гітари
+// (перші 12 с) з'їдав більшу частину кожного виходу. Файл — петля «від вступу гітари до вступу гітари»:
+// 10,8 → 91,3 с попереднього файла (тембр на шві 0,91), склейка 1,5 с вшита на початок; 80,5 с.
+const LOOP_START = 0, LOOP_END = 80.5, MUSIC_GAIN = 0.65;
 let musicWanted = false;
+/** Чи грає тема на цьому екрані (18.10, рішення користувача — «музика як подія, а не фон»; макет
+ *  «Звукова карта кар'єри»). Тема лишається на титулі й моментах історії — пролог, глави, лист травня,
+ *  відпустка, агент, фінал, — а в рутині (екран перед матчем, афіша, дошка, ESPM, «Y», зошит тижня)
+ *  тиша й звуки самої гри. Було ≈ 167 хв теми за кар'єру, стало ≈ 31: тема більше не заважає читати
+ *  й не встигає набриднути. Перехід — згасання за 2 с, повернення — наростання 2,5 с. */
+let sceneMusic = true;
 /** Відкрито матч: теми немає, хто б її не вмикав (порядок ефектів React тут не має значення). */
 let inMatch = false;
 let mus: { s: AudioBufferSourceNode; g: GainNode } | null = null;
@@ -306,12 +315,15 @@ let mus: { s: AudioBufferSourceNode; g: GainNode } | null = null;
 /** Тема грає скрізь, крім матчу: титул, пролог, зошит, ESPM, «Y», дошка. Матч — гул стадіону. */
 export function music(on: boolean) { musicWanted = on; refreshMusic(); }
 
-/** Матч на екрані: тема поступається гулу стадіону, після матчу повертається. */
+/** Екран каже, чи потрібна на ньому тема (`sceneMusic`). */
+export function musicScene(on: boolean) { if (sceneMusic === on) return; sceneMusic = on; refreshMusic(); }
+
+/** Матч на екрані: тема поступається гулу стадіону; після матчу повертається лише там, де екран її хоче. */
 export function matchAudio(on: boolean) { inMatch = on; ambience(on); refreshMusic(); }
 
 /** Звести тему до бажаного стану: перемикач «Музика», чи має вона зараз грати, чи дозволив браузер. */
 export function refreshMusic() {
-  const want = musicWanted && !inMatch && readSettings().music;
+  const want = musicWanted && sceneMusic && !inMatch && readSettings().music;
   const c = want ? context() : ctx;
   if (!want) {
     if (!mus || !c) return;
@@ -322,7 +334,7 @@ export function refreshMusic() {
   }
   if (mus || !c || c.state !== 'running' || !master) return;
   void buffer(c, 'menu_theme').then((b) => {
-    if (!b || mus || !master || !(musicWanted && !inMatch && readSettings().music)) return;
+    if (!b || mus || !master || !(musicWanted && sceneMusic && !inMatch && readSettings().music)) return;
     const s = c.createBufferSource(), g = c.createGain();
     s.buffer = b; s.loop = true; s.loopStart = LOOP_START; s.loopEnd = LOOP_END;
     g.gain.setValueAtTime(0, c.currentTime); g.gain.linearRampToValueAtTime(MUSIC_GAIN, c.currentTime + 2.5);

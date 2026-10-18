@@ -1043,11 +1043,15 @@ let launched = !isTitleRoute(location.hash);
 export function App() {
   const [route, setRoute] = useState(() => location.hash);
   const [launching, setLaunching] = useState(() => !launched);
+  /** Маршрут, на якому щойно закінчилася заставка. Заслінка переходу тут не потрібна: заставка вже
+   *  розчинилася в титул, а нова заслінка ставала повністю темною на 0,22 с — на телефоні це читалось
+   *  як «пінг» затемнення перед головним екраном (18.10). Наступна зміна маршруту скидає позначку. */
+  const afterLaunch = useRef<string | null>(null);
   useEffect(() => {
     applySettings();
     // Без заставки (відкрили не титул) тема вмикається одразу; на матчі її притримає matchAudio.
     if (launched) music(true);
-    const onHash = () => { setRoute(location.hash); window.scrollTo(0, 0); };
+    const onHash = () => { afterLaunch.current = null; setRoute(location.hash); window.scrollTo(0, 0); };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -1055,8 +1059,8 @@ export function App() {
   // Заставка лежить **поверх** уже змонтованого екрана і гасне в нього: так перехід виходить
   // розчиненням, а не підміною кадру.
   const launch = launching
-    ? <LaunchScreen onDone={() => { launched = true; setLaunching(false); }} />
-    : <ScreenWipe on={route} />;
+    ? <LaunchScreen onDone={() => { launched = true; afterLaunch.current = route; setLaunching(false); }} />
+    : afterLaunch.current === route ? null : <ScreenWipe on={route} />;
   // Титул — корень (#/); игра живёт на #/play, чтобы «Назад» с картки и статистики вёл в игру, а не на титул.
   if (isTitleRoute(route)) {
     return (

@@ -62,6 +62,16 @@ export function PauseMenu({ go }: Props) {
   });
 
   const close = () => { setAsk(null); setView('menu'); setSaved(false); setOpen(false); };
+
+  // Кнопка «Назад» Android (ui/backButton.ts): закрита пауза — відкрити, відкрита — крок назад, як Escape.
+  useEffect(() => {
+    const onBack = () => {
+      if (!open) { setOpen(true); return; }
+      if (ask) setAsk(null); else if (view !== 'menu') setView('menu'); else close();
+    };
+    window.addEventListener('pause-back', onBack);
+    return () => window.removeEventListener('pause-back', onBack);
+  });
   const toggle = <button className="pause-toggle" aria-label={t('Пауза')} aria-expanded={open} onClick={() => (open ? close() : setOpen(true))}>
     <span className="pz-ico" aria-hidden="true"><i /><i /></span><small>{t('пауза')}</small>
   </button>;

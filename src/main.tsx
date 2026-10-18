@@ -6,9 +6,11 @@ import './styles.css';
 import { installUiSounds } from './ui/sound';
 import { installBackButton } from './ui/backButton';
 import { CrashGuard } from './ui/CrashGuard';
+import { installNotify } from './ui/notify';
 
 installUiSounds();
 installBackButton();
+installNotify();
 
 // `index.html` приходить із `lang="uk"` — мова базової версії. Без цього рядка англійська збірка
 // лишається «українською» для всього, що читає атрибут: читалка екрана озвучує англійський текст

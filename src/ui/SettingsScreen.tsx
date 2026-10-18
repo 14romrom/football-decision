@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { readSettings, writeSettings, type Settings } from '../telemetry/settings';
 import { refreshMusic } from './sound';
+import { notifyPermission, requestNotify, reviewAvailable, setNotify } from './notify';
 import { readSlotSummary, resetSlot } from '../telemetry/saves';
 import { activeSlot } from '../telemetry/slots';
 import { exportLogs } from '../telemetry/log';
@@ -57,6 +58,18 @@ export function SettingsScreen({ onBack, onWiped, backLabel, inMatch = false }: 
   const set = (patch: Partial<Settings>) => { const next = { ...s, ...patch }; setS(next); writeSettings(next); refreshMusic(); };
   const build = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__.slice(0, 7) : 'dev';
   const [tester, setTester] = useState(testerOpen);
+  // Сповіщення (M51): перемикач правдивий лише разом із дозволом Android. Відкликали дозвіл у системі —
+  // показуємо «вимкнено» й кажемо, де його повернути (відкрити системні налаштування з гри не можна).
+  const [notifyOk, setNotifyOk] = useState(true);
+  const [notifyNote, setNotifyNote] = useState('');
+  useEffect(() => { void notifyPermission().then((p) => setNotifyOk(p !== 'denied')); }, []);
+  const toggleNotify = async (on: boolean) => {
+    if (on && (await notifyPermission()) !== 'granted' && !(await requestNotify())) {
+      setNotifyOk(false); setNotifyNote(t('Дозвіл вимкнено в налаштуваннях Android: Застосунки → Inside the Box → Сповіщення'));
+      return;
+    }
+    setNotifyOk(true); setNotifyNote(''); setNotify(on); setS(readSettings());
+  };
   const [taps, setTaps] = useState(0);
   const tapVersion = () => {
     if (tester) return;
@@ -87,6 +100,12 @@ export function SettingsScreen({ onBack, onWiped, backLabel, inMatch = false }: 
         <div className="l">{t('Музика')}<small>{t('Гітара поза матчем')}</small></div>
         <Toggle name={t('Музика')} on={s.music} onChange={(v) => set({ music: v })} />
       </div>
+      {reviewAvailable() && (
+        <div className="set">
+          <div className="l">{t('Сповіщення')}<small>{notifyNote || t('Тренер і місто пишуть, коли тебе немає')}</small></div>
+          <Toggle name={t('Сповіщення')} on={s.notify && notifyOk} onChange={(v) => { void toggleNotify(v); }} />
+        </div>
+      )}
       <div className="set">
         <div className="l">{t('Гул стадіону')}<small>{t('Тихий фон під матчем')}</small></div>
         <Toggle name={t('Гул стадіону')} on={s.crowd} onChange={(v) => set({ crowd: v })} />

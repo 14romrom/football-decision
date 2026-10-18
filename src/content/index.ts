@@ -15,6 +15,7 @@ import espmJsonRaw from './espm.json';
 import shotsJsonRaw from './shots.json';
 import chaptersJsonRaw from './chapters.json';
 import adbreaksJsonRaw from './adbreaks.json';
+import notifyJsonRaw from './notify.json';
 import { BASE_LANG, LANG, tr, type Lang } from './i18n';
 
 // Переклад — одна точка на весь проєкт (M47): контент підміняється тут, при завантаженні модуля,
@@ -37,8 +38,10 @@ const espmJson = tr(espmJsonRaw);
 const shotsJson = tr(shotsJsonRaw);
 const chaptersJson = tr(chaptersJsonRaw);
 const adbreaksJson = tr(adbreaksJsonRaw);
+const notifyJson = tr(notifyJsonRaw);
 import { fillNamesDeep, type Roster, type TeamRoster, type NameForms } from '../engine/names';
 import type { FlavorRule } from '../engine/flavor';
+import type { NotifyContent } from '../engine/notify';
 import type { Strength } from '../engine/conditions';
 import type { Episode, FlagRule, Player } from '../engine/types';
 import type { Rng } from '../engine/rng';
@@ -135,6 +138,8 @@ export const ADS = adsJson as AdRule[];
  *  оповідача — що сталося, три репліки голосів, підпис під «Чекати». Імена — плейсхолдерами ростера. */
 export type AdBreak = { id: string; setup: string; voices: { voice: string; line: string }[]; note: string };
 export const AD_BREAKS = adbreaksJson as AdBreak[];
+/** Сповіщення й листи-прохання M51 (`engine/notify.ts`). */
+export const NOTIFY = notifyJson as NotifyContent;
 /** Пролог — тиждень нуль (engine/prologue.ts): три розвороти зі стікерами голосів; імена — при показі. */
 export const PROLOGUE = prologueJson as PrologueSpread[];
 export const VACATION = vacationJson as VacationSpread[];

@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACTIVITIES, ADS, AGENT, clubName, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING, CHAPTERS } from './content';
+import { ACTIVITIES, ADS, AGENT, clubName, EPISODES_RAW, ESPM_COLUMNS, FIRST_MATCH_TUTORIAL, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, PROLOGUE, ROSTER, WEEK_SCENES, rosterFor, OPPONENT_KEYS, VACATION, syncRoster, ENDING, CHAPTERS, NOTIFY } from './content';
+import { AskSheet } from './ui/AskSheet';
+import { markNotifyAsked, notifyAskDue, requestNotify, requestReview, reviewAvailable, reviewLater, setNotify } from './ui/notify';
+import { reviewDue } from './engine/notify';
 import { adContext, pickAds, playerColumn } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
 import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick, anchorScene } from './engine/week';
@@ -110,7 +113,10 @@ type Stage =
   | { k: 'agent'; mode: 'winter' | 'summer'; leveledFrom: number; leveledTo: number }
   // Розділювач глави (M24): пролог, перший сезон, другий сезон, епілог — маленький титул перед главою.
   | { k: 'chapter'; id: string; then: 'prologue' | 'matchday' | 'ending' }
-  | { k: 'levelup'; fromLevel: number; toLevel: number };
+  | { k: 'levelup'; fromLevel: number; toLevel: number }
+  // Листи-прохання M51 (18.10): дозвіл на сповіщення після першого матчу, відгук на доброму моменті.
+  // `next` — куди гра йшла до листа: прохання вставляється в шлях, а не замінює його.
+  | { k: 'ask'; kind: 'notify' | 'review'; next: () => void };
 
 /** Розворот глави (M24) показується раз за кар’єру. */
 const seenChapter = (career: Career, id: string): boolean => (career.chaptersSeen ?? []).includes(id);
@@ -422,6 +428,17 @@ function Game() {
     return { days, ctx, locked: coachLocksCity(ctx) };
   }, []);
 
+  /** Лист-прохання між екранами (M51): спершу дозвіл (один раз, після першого матчу), потім відгук —
+   *  лише на доброму моменті (`reviewDue`). Нічого не треба — гра йде далі, куди йшла. */
+  const askOr = (matches: number, m: { won: boolean; rating: number; badMoment: boolean; may?: boolean }, cont: () => void) => {
+    if (notifyAskDue(matches)) { setStage({ k: 'ask', kind: 'notify', next: cont }); return; }
+    const st = readSettings();
+    if (reviewAvailable() && reviewDue({ matchesPlayed: matches, ...m, done: st.reviewDone, laterAt: st.reviewLaterAt, now: Date.now() })) {
+      setStage({ k: 'ask', kind: 'review', next: cont }); return;
+    }
+    cont();
+  };
+
   const afterPosts = useCallback((leveledFrom: number, leveledTo: number) => {
     const w = pendingWeek();
     if (w) setStage({ k: 'week', days: w.days, locked: w.locked, leveledFrom, leveledTo });
@@ -579,6 +596,22 @@ function Game() {
     </>);
   }
 
+  if (stage.k === 'ask') {
+    const go = stage.next;
+    const kind = stage.kind;
+    return (
+      <AskSheet
+        key={kind}
+        sheet={fillNamesDeep(NOTIFY.ask[kind], ROSTER)}
+        onYes={() => {
+          if (kind === 'notify') { markNotifyAsked(); void requestNotify().then((ok) => { if (!ok) setNotify(false); go(); }); }
+          else { void requestReview(); go(); }
+        }}
+        onNo={() => { if (kind === 'notify') { markNotifyAsked(); setNotify(false); } else reviewLater(); go(); }}
+      />
+    );
+  }
+
   if (stage.k === 'may') {
     const spread = maySpread(season)!;
     return (<>{film}
@@ -599,12 +632,12 @@ function Game() {
           setCareerBoth(after);
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
-        onNext={() => {
+        onNext={() => askOr(careerRef.current.matchesPlayed, { won: false, rating: 0, badMoment: false, may: true }, () => {
           if (vacationPending(careerRef.current, season.number, true)) { takeShot('auto', t('відпустка між сезонами')); setStage({ k: 'vacation', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           const mode = agentPending(careerRef.current, season, seasonVerdict(season, career.coachTrust));
           if (mode) { setStage({ k: 'agent', mode, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return; }
           newSeason(); setStage({ k: 'menu' });
-        }}
+        })}
       />
     </>);
   }
@@ -782,7 +815,13 @@ function Game() {
         dominant={dominantCareerVoice(stage.after)}
         delta={cardDelta(stage.before, stage.after, session.state, stage.summary, PLAYER, session.episodes, session.roster.them.name.nom)}
         onOpenCard={() => setStage({ ...stage, card: true })}
-        onNext={() => setStage({ k: 'season', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo })}
+        onNext={() => {
+          const s = stage.summary;
+          askOr(stage.after.matchesPlayed, {
+            won: s.scoreUs > s.scoreThem, rating: s.coachRating,
+            badMoment: session.state.flags.includes('sent_off') || s.moments?.worst?.tier === 'badFail',
+          }, () => setStage({ k: 'season', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }));
+        }}
       />
     );
   }

@@ -28,16 +28,33 @@ const KEY = 'football-decision.settings.v1';
 const TITLE_SEEN_KEY = 'football-decision.title-seen.v1';
 const TITLE_SEEN_KEEP = 24;
 
-// Мова за умовчанням — українська, навіть якщо пристрій англійський: екран вибору мови
-// (M46) ставить її явно при першому запуску, і доти гра не має вгадувати за гравця.
+// Мова за умовчанням — українська; на першому запуску її замінює мова пристрою (`deviceLang`).
 export const DEFAULT_SETTINGS: Settings = { dice: 'reel', haptics: true, sound: true, crowd: true, music: true, reduceMotion: false, textSize: 'normal', hints: true, lang: 'uk' };
 
 export function readSettings(): Settings {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) } : DEFAULT_SETTINGS;
+    if (raw) return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (typeof document === 'undefined') return DEFAULT_SETTINGS;   // тести й сим: мова не залежить від машини
+    // Перший запуск: мова з пристрою, і одразу в сховище — далі вона не «пливе» за налаштуваннями телефона.
+    const first = { ...DEFAULT_SETTINGS, lang: deviceLang() };
+    localStorage.setItem(KEY, JSON.stringify(first));
+    return first;
   } catch {
     return DEFAULT_SETTINGS;
+  }
+}
+
+/** Мова пристрою для першого запуску (рішення користувача 18.10): українська й російська → українська,
+ *  будь-яка інша → англійська. Дивимося лише першу мову системи — ту, якою людина читає телефон.
+ *  До цього гра завжди стартувала українською, і гравець з англійської сторінки Play бачив незнайому
+ *  мову в першу ж хвилину. Екрана вибору мови немає навмисно: зайвий крок перед заставкою. */
+export function deviceLang(): Settings['lang'] {
+  try {
+    const first = ((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
+    return /^(uk|ru)([-_]|$)/.test(first) ? 'uk' : 'en';
+  } catch {
+    return 'uk';
   }
 }
 

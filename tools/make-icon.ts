@@ -15,7 +15,7 @@
 //          немає (Play лише скруглює кути), картинка показується як є.
 //
 // Запуск: npx tsx tools/make-icon.ts
-import sharp from 'sharp';
+import sharp, { type Sharp } from 'sharp';
 import { mkdirSync } from 'node:fs';
 
 const SRC = 'store/icon-source.jpg';                   // 1024×1024
@@ -40,7 +40,7 @@ const layer = async () => {
   }]).png().toBuffer();
 };
 
-const finish = (s: sharp.Sharp, px: number) =>
+const finish = (s: Sharp, px: number) =>
   s.modulate({ brightness: BRIGHT }).resize(px, px, { fit: 'cover', kernel: 'lanczos3' }).png({ compressionLevel: 9 });
 const tight = (px: number) => finish(sharp(SRC).extract(TIGHT), px);
 

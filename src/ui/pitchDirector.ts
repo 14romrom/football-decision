@@ -303,7 +303,7 @@ export class Director {
     const arc = o.arc ?? 0;
     const mid: P | null = o.ball ? [(b0[0] + o.ball[0]) / 2, (b0[1] + o.ball[1]) / 2 - arc] : null;
     // Звук удару — разом із передачею: м'яч пішов далі ніж на 4 м (не перекат біля ніг).
-    if (o.ball && dist(b0, o.ball) > 4) sfxKick(this.idling ? 0.22 : 0.45);
+    if (o.ball && dist(b0, o.ball) > 4) sfxKick(this.idling ? 0.5 : 0.8);
     if (o.ball && dist(b0, o.ball) > 4) { this.trail.setAttribute('d', `M${b0[0]},${b0[1]} Q${mid![0]},${mid![1]} ${o.ball[0]},${o.ball[1]}`); this.trail.setAttribute('opacity', '.55'); }
     await this.tween(dur, (k) => {
       if (my !== this.run) return;

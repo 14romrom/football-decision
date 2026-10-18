@@ -75,21 +75,36 @@ function tone(c: AudioContext, t: number, { f = 440, f2, type = 'sine', a = 0.00
 
 const at = (c: AudioContext, delaySec = 0) => c.currentTime + 0.02 + delaySec;
 
+/** Зведення гучності (18.10, замір кожного звуку офлайн-рендером через цей самий модуль: найгучніші
+ *  0,4 с, дБ повної шкали). До зведення розкид був 43 дБ: барабан −56, клац −54, тема меню −51 —
+ *  майже не чути; свистки й рев вищої ліги −12…−14 — перекрикували все. Рівні за роллю звуку:
+ *  події матчу (свисток, гол, «у-у», штанга, штамп) ≈ −20; кубики й удари ≈ −26…−28; інтерфейс
+ *  (лист, клац, олівець) ≈ −34…−36; фон (тема й гул) ≈ −30…−32, на 10–12 дБ під подіями.
+ *  Синтез зводиться множником шини: `burst`/`tone` беруть `master` у мить виклику. */
+function scaled(c: AudioContext, k: number, fn: () => void) {
+  const prev = master; if (!prev) return;
+  const g = c.createGain(); g.gain.value = k; g.connect(prev);
+  master = g;
+  try { fn(); } finally { master = prev; }
+}
+
 /** Барабан: сухий тріск, як у колеса лотереї, поки грані перебираються. */
 export function sfxReel(durSec: number) {
   const c = ac(); if (!c) return;
   const t = at(c);
-  for (let x = 0; x < durSec; x += 0.06) burst(c, t + x + Math.random() * 0.006, { f: 2600 + Math.random() * 1400, q: 6, d: 0.012, peak: 0.12 });
+  scaled(c, 12, () => { for (let x = 0; x < durSec; x += 0.06) burst(c, t + x + Math.random() * 0.006, { f: 2600 + Math.random() * 1400, q: 6, d: 0.012, peak: 0.12 }); });
 }
 
 /** Кубик ліг — у момент зупинки, кожен окремо. */
 export function sfxDie() {
   const c = ac(); if (!c) return;
   const t = at(c);
-  tone(c, t, { f: 210, f2: 95, d: 0.09, peak: 0.45 });
-  burst(c, t, { f: 1300, q: 1.5, d: 0.04, peak: 0.35 });
-  burst(c, t + 0.05, { f: 2200, q: 4, d: 0.02, peak: 0.08 });
-  burst(c, t + 0.09, { f: 2400, q: 4, d: 0.015, peak: 0.04 });
+  scaled(c, 1.6, () => {
+    tone(c, t, { f: 210, f2: 95, d: 0.09, peak: 0.45 });
+    burst(c, t, { f: 1300, q: 1.5, d: 0.04, peak: 0.35 });
+    burst(c, t + 0.05, { f: 2200, q: 4, d: 0.02, peak: 0.08 });
+    burst(c, t + 0.09, { f: 2400, q: 4, d: 0.015, peak: 0.04 });
+  });
 }
 
 function thump(c: AudioContext, t: number, low: number, peak: number, len: number) {
@@ -118,34 +133,41 @@ function groan(c: AudioContext, t: number) {
 export function sfxStamp(tier: Tier, crit: boolean) {
   const c = ac(); if (!c) return;
   const t = at(c);
-  if (crit) { thump(c, t, 70, 0.6, 0.16); bell(c, t + 0.02, [880, 1318, 1760, 2637], 0.09, 1.6); return; }
-  if (tier === 'clean') { thump(c, t, 70, 0.6, 0.16); bell(c, t + 0.01, [1318], 0.05, 0.35); }
-  else if (tier === 'cost') thump(c, t, 62, 0.55, 0.16);
-  else if (tier === 'fail') thump(c, t, 52, 0.5, 0.2);
-  else { thump(c, t, 40, 0.75, 0.32); burst(c, t, { kind: 'brown', type: 'lowpass', f: 220, d: 0.6, peak: 0.5 }); groan(c, t + 0.35); }
+  const k = crit ? 1.4 : tier === 'badFail' ? 1.1 : 1.6;
+  scaled(c, k, () => {
+    if (crit) { thump(c, t, 70, 0.6, 0.16); bell(c, t + 0.02, [880, 1318, 1760, 2637], 0.09, 1.6); return; }
+    if (tier === 'clean') { thump(c, t, 70, 0.6, 0.16); bell(c, t + 0.01, [1318], 0.05, 0.35); }
+    else if (tier === 'cost') thump(c, t, 62, 0.55, 0.16);
+    else if (tier === 'fail') thump(c, t, 52, 0.5, 0.2);
+    else { thump(c, t, 40, 0.75, 0.32); burst(c, t, { kind: 'brown', type: 'lowpass', f: 220, d: 0.6, peak: 0.5 }); groan(c, t + 0.35); }
+  });
 }
 
 /** Лист: шерех паперу, ледве чутно. */
 export function sfxPage() {
   const c = ac(); if (!c) return;
   const t = at(c);
-  for (let i = 0; i < 5; i++) burst(c, t + i * 0.035 + Math.random() * 0.02, { type: 'highpass', f: 2500 + Math.random() * 2000, q: 0.7, a: 0.01, d: 0.05, peak: 0.05 });
-  burst(c, t + 0.12, { f: 1200, q: 0.8, a: 0.03, d: 0.12, peak: 0.04 });
+  scaled(c, 3.2, () => {
+    for (let i = 0; i < 5; i++) burst(c, t + i * 0.035 + Math.random() * 0.02, { type: 'highpass', f: 2500 + Math.random() * 2000, q: 0.7, a: 0.01, d: 0.05, peak: 0.05 });
+    burst(c, t + 0.12, { f: 1200, q: 0.8, a: 0.03, d: 0.12, peak: 0.04 });
+  });
 }
 
 /** Вибір варіанта — короткий клац, щоб було ясно: натиснуто. */
 export function sfxClick() {
   const c = ac(); if (!c) return;
   const t = at(c);
-  burst(c, t, { f: 3800, q: 2, d: 0.008, peak: 0.25 });
-  tone(c, t, { f: 1600, d: 0.02, peak: 0.04 });
+  scaled(c, 10, () => {
+    burst(c, t, { f: 3800, q: 2, d: 0.008, peak: 0.25 });
+    tone(c, t, { f: 1600, d: 0.02, peak: 0.04 });
+  });
 }
 
 /** Олівець у зошиті: справу обведено. */
 export function sfxPencil() {
   const c = ac(); if (!c) return;
   const t = at(c);
-  for (let x = 0; x < 0.42; x += 0.028) burst(c, t + x, { f: 4200 + Math.sin(x * 40) * 900, q: 3, a: 0.004, d: 0.025, peak: 0.05 + 0.03 * Math.sin(x * 22) ** 2 });
+  scaled(c, 5.5, () => { for (let x = 0; x < 0.42; x += 0.028) burst(c, t + x, { f: 4200 + Math.sin(x * 40) * 900, q: 3, a: 0.004, d: 0.025, peak: 0.05 + 0.03 * Math.sin(x * 22) ** 2 }); });
 }
 
 /** Клац, лист і олівець — одним делегованим слухачем, а не правками в кожному екрані: ті самі класи
@@ -187,20 +209,20 @@ function sfxFile(name: string, gain = 1, delaySec = 0) {
 const pick = (n: number) => 1 + Math.floor(Math.random() * n);
 
 /** Удар по м'ячу — на кожну передачу поля; фоновий розіграш тихіше, щоб не заважав читати стрічку. */
-export function sfxKick(gain = 0.45) { sfxFile(`ball_kick_${pick(3)}`, gain); }
+export function sfxKick(gain = 0.8) { sfxFile(`ball_kick_${pick(3)}`, gain); }
 /** Гол: сітка й рев трибун; вища ліга — великий стадіон. Чужий гол — тільки сітка. */
 export function sfxGoal(ours: boolean, top: boolean) {
-  sfxFile('net', 0.9);
-  if (ours) sfxFile(top ? 'goal_us_top' : 'goal_us', 0.9, 0.1);
+  sfxFile('net', 0.85);
+  if (ours) sfxFile(top ? 'goal_us_top' : 'goal_us', top ? 0.47 : 0.67, 0.1);
 }
 /** Штанга чи поперечина — металевий удар у каркас воріт. */
-export function sfxPost() { sfxFile('post', 0.8); }
+export function sfxPost() { sfxFile('post', 1.2); }
 /** «У-у» — удар мимо, сейв, блок. */
-export function sfxOoh() { sfxFile(`crowd_ooh_${pick(2)}`, 0.7, 0.05); }
+export function sfxOoh() { sfxFile(`crowd_ooh_${pick(2)}`, 0.55, 0.05); }
 /** Свист трибун — рядки стрічки з поміткою `stands` (затягування, фол, аут на виїзді). */
 export function sfxBoo() { sfxFile(`crowd_boo_${pick(2)}`, 0.5); }
 export type Whistle = 'short' | 'start' | 'half' | 'final';
-export function sfxWhistle(kind: Whistle) { sfxFile(`whistle_${kind}`, 0.7); }
+export function sfxWhistle(kind: Whistle) { sfxFile(`whistle_${kind}`, 0.35); }
 
 /** Гул стадіону під матчем — окремий перемикач «Гул стадіону»: комусь він заважатиме читати. */
 export function ambience(on: boolean) {
@@ -217,7 +239,7 @@ export function ambience(on: boolean) {
   void buffer(c, 'stadium_ambience').then((b) => {
     if (!b || amb || !master) return;
     const s = c.createBufferSource(), g = c.createGain(); s.buffer = b; s.loop = true;
-    g.gain.setValueAtTime(0, c.currentTime); g.gain.linearRampToValueAtTime(0.35, c.currentTime + 1.5);
+    g.gain.setValueAtTime(0, c.currentTime); g.gain.linearRampToValueAtTime(0.47, c.currentTime + 1.5);
     s.connect(g).connect(master); s.start(); amb = { s, g };
   });
 }
@@ -238,7 +260,8 @@ export function sfxLaunch(calm: boolean): boolean {
     burst(c, t + 0.004, { f: 3200, q: 0.8, d: 0.03, peak: 0.18 });
     tone(c, t + 0.015, { f: 1318, d: 0.5, peak: 0.05 });
   };
-  if (calm) { stampAt(t0 + 0.3); return true; }
+  // Ті самі множники зведення, що в матчі: барабан ×12, кубик ×1,6, штамп ×1,6.
+  if (calm) { scaled(c, 1.6, () => stampAt(t0 + 0.3)); return true; }
   void buffer(c, 'stadium_ambience').then((b) => {
     if (!b || !master) return;
     const t = Math.max(c.currentTime, t0);
@@ -247,13 +270,16 @@ export function sfxLaunch(calm: boolean): boolean {
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.35, t0 + 1.6); g.gain.linearRampToValueAtTime(0.55, t0 + 3.4); g.gain.linearRampToValueAtTime(0.3, t0 + 4.7); g.gain.linearRampToValueAtTime(0, t0 + 6.8);
     s.connect(lp).connect(g).connect(master); s.start(t, 3); s.stop(t0 + 7);
   });
-  for (let x = 0; x < 1.0; x += 0.06) burst(c, t0 + 1.6 + x + Math.random() * 0.006, { f: 2600 + Math.random() * 1400, q: 6, d: 0.012, peak: 0.12 });
-  for (const at of [2.6, 2.9]) {
-    tone(c, t0 + at, { f: 210, f2: 95, d: 0.09, peak: 0.45 });
-    burst(c, t0 + at, { f: 1300, q: 1.5, d: 0.04, peak: 0.35 });
-    burst(c, t0 + at + 0.05, { f: 2200, q: 4, d: 0.02, peak: 0.08 });
-  }
-  stampAt(t0 + 3.3);
+  scaled(c, 12, () => { for (let x = 0; x < 1.0; x += 0.06) burst(c, t0 + 1.6 + x + Math.random() * 0.006, { f: 2600 + Math.random() * 1400, q: 6, d: 0.012, peak: 0.12 }); });
+  scaled(c, 1.6, () => {
+    for (const at of [2.6, 2.9]) {
+      tone(c, t0 + at, { f: 210, f2: 95, d: 0.09, peak: 0.45 });
+      burst(c, t0 + at, { f: 1300, q: 1.5, d: 0.04, peak: 0.35 });
+      burst(c, t0 + at + 0.05, { f: 2200, q: 4, d: 0.02, peak: 0.08 });
+    }
+  });
+  // Штамп заставки збігається з підйомом трибуни — трохи тихіше, щоб пік не впирався в стелю.
+  scaled(c, 1.25, () => stampAt(t0 + 3.3));
   return true;
 }
 
@@ -263,7 +289,7 @@ export function sfxLaunch(calm: boolean): boolean {
  *  грає з початку файла, далі — від LOOP_START до LOOP_END; шов (3 с перехресного згасання) вшито
  *  в кінець файла (scratchpad sfx/theme.py: S=9,3, a=9,5, b=170,5 — найдовша петля після стуку,
  *  тембр на шві 0,97). Повтор раз на 2 хв 41 с. */
-const LOOP_START = 3.2, LOOP_END = 164.2, MUSIC_GAIN = 0.14;  // 0.28 → 0.14 (17.10: користувач попросив удвічі тихіше)
+const LOOP_START = 3.2, LOOP_END = 164.2, MUSIC_GAIN = 1.2;  // 18.10: «вдвічі тихіше» (0.14) зробило тему на 18 дБ тихшою за гул — зведено до фону
 let musicWanted = false;
 /** Відкрито матч: теми немає, хто б її не вмикав (порядок ефектів React тут не має значення). */
 let inMatch = false;

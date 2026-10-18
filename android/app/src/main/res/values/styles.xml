@@ -14,7 +14,7 @@
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
         <!-- Цвет за системными полосами при edge-to-edge = фон игры (styles.css, bg). -->
-        <item name="android:windowBackground">#12141a</item>
+        <item name="android:windowBackground">#0b0b0d</item>
     </style>
 
 
@@ -36,8 +36,10 @@
         <item name="windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">#12141a</item>
-        <item name="windowSplashScreenBackground">#12141a</item>
+        <item name="android:windowBackground">#0b0b0d</item>
+        <item name="windowSplashScreenBackground">#0b0b0d</item>
+        <!-- Колір — той самий, що --bg гри (styles.css): системна заставка = перший кадр нашої, без стрибка. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

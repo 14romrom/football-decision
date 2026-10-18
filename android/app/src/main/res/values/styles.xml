@@ -38,7 +38,7 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">#0b0b0d</item>
         <item name="windowSplashScreenBackground">#0b0b0d</item>
-        <!-- Колір — той самий, що --bg гри (styles.css): системна заставка = перший кадр нашої, без стрибка. -->
+        <!-- Колір — той самий, що змінна bg гри (styles.css): системна заставка = перший кадр нашої, без стрибка. -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>

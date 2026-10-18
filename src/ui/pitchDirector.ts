@@ -92,6 +92,8 @@ export class Director {
   private top: boolean;
   /** Фоновий розіграш — удари тихіші. */
   private idling = false;
+  /** Поле знято (Pitch відмонтовано): більше ні руху, ні звуку — навіть від розіграшу, що вже йшов. */
+  private dead = false;
   private nets: Record<'us' | 'them', SVGRectElement> = {} as Record<'us' | 'them', SVGRectElement>;
   private bars: Record<'us' | 'them', SVGLineElement> = {} as Record<'us' | 'them', SVGLineElement>;
   private flashRect!: SVGRectElement;
@@ -286,7 +288,7 @@ export class Director {
 
   /** Один такт: фішки йдуть у точки, м'яч летить (дугою — якщо arc), камера їде. Старі такти — мовчки виходять. */
   private async step(my: number, o: { moves?: Record<string, P>; ball?: P; arc?: number; cam?: P; w?: number; dur?: number }) {
-    if (my !== this.run) return;
+    if (my !== this.run || this.dead) return;
     const dur = o.dur ?? 600;
     const from: Record<string, P> = {};
     for (const id in o.moves ?? {}) from[id] = this.pos(id);
@@ -407,10 +409,15 @@ export class Director {
   async play(st: Stage, kind?: string) {
     if (st.act === 'kickoff') sfxWhistle('start');
     if (st.act === 'half') sfxWhistle('half');
+    // Номер розіграшу цього рядка (playAct бере ++run першою дією). Фон — лише з ним: якщо поле зняли,
+    // поки рядок догравав, this.run уже інший, і фон із новим номером грав би вічно на невидимому полі
+    // (18.10: удари по м'ячу на титулі й у зошиті — по три одночасно, від трьох «осиротілих» полів).
+    const mine = this.run + 1;
     await this.playAct(st, kind);
+    if (this.dead) return;
     if (st.tags.includes('stands')) sfxBoo();
     // Перерва — команди в тунелі, фону немає до наступного рядка.
-    if (st.act !== 'half') void this.idle(this.run);
+    if (st.act !== 'half' && mine === this.run) void this.idle(mine);
   }
 
   private async playAct(st: Stage, kind?: string) {
@@ -984,12 +991,12 @@ export class Director {
    *  фон не має вигадувати моментів, яких немає в стрічці. Новий рядок або розв'язка зупиняють його
    *  (лічильник `run`); при «менше руху» фону немає. */
   private async idle(my: number) {
-    if (this.reduced) return;
+    if (this.reduced || this.dead) return;
     await this.sleep(1100);
     let side: 'us' | 'them' = this.sideOf(this.nearest('us', this.ballP, 1).concat(this.nearest('them', this.ballP, 1))
       .sort((x, y) => dist(this.pos(x), this.ballP) - dist(this.pos(y), this.ballP))[0] ?? 'u8');
     let first = true;
-    while (my === this.run) {
+    while (my === this.run && !this.dead) {
       if (Math.random() < .22) side = side === 'us' ? 'them' : 'us';
       const near = this.nearest(side, this.ballP, 5).filter((id) => dist(this.pos(id), this.ballP) > 3.5);
       const to = near[Math.floor(Math.random() * Math.min(3, near.length))];
@@ -1102,7 +1109,7 @@ export class Director {
   }
 
   /** Зупинити все, що грається: компонент знято або прийшов новий рядок. */
-  stop() { this.run++; }
+  stop() { this.run++; this.dead = true; }
 }
 
 /** Схема суперника → розстановка на полі (conditions.ts:FORMATION_BY_STRENGTH). */

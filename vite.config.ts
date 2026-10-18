@@ -16,6 +16,9 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(gitVersion()),
     __APP_RELEASE__: JSON.stringify(process.env.APP_RELEASE ?? ''),
+    // Канал (18.10, рішення користувача): `public` — збірка для всіх у Play, без розділу «Тестерам»
+    // (перемотка кар'єри, логи, розподіл виборів); будь-що інше — закритий тест і debug.
+    __APP_CHANNEL__: JSON.stringify(process.env.APP_CHANNEL ?? 'test'),
   },
   // Вихідники кадрів і звуків (images/) у гру не входять — у неї йдуть стиснуті копії з public/.
   // Слідкувати за ними не треба: файл, який саме дописується (звук із браузера), валив dev-сервер з EBUSY.

@@ -25,6 +25,11 @@ on:
       version:
         description: 'versionName, например 1.0.0'
         required: true
+      channel:
+        description: 'test — закрытый тест (раздел «Тестерам» за семью тапами); public — для всех, без него'
+        type: choice
+        options: [test, public]
+        default: test
 permissions:
   contents: write
 concurrency:
@@ -55,6 +60,8 @@ jobs:
         env:
           # Номер релізу в бандлі: за ним гра прибирає тестові підписи й розділ «Тестерам».
           APP_RELEASE: ${{ steps.ver.outputs.name }}
+          # Тег — завжди закритий тест; публічну збірку запускають вручну з channel=public.
+          APP_CHANNEL: ${{ github.event.inputs.channel || 'test' }}
       - run: npx cap sync android
 
       - name: проставить версию

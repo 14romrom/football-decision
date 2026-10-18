@@ -29,7 +29,13 @@ type Props = {
 // тестер із релізною збіркою на телефоні до них дістанеться. Відкрите пам'ятається на пристрої.
 const TESTER_KEY = 'football-decision.tester.v1';
 const TESTER_TAPS = 7;
+/** Публічна збірка (`APP_CHANNEL=public`, 18.10): розділу немає зовсім, і сім тапів його не відкривають.
+ *  Гравець, що знайшов перемотку, проскакує історію за хвилину й потім пише, що сюжет короткий; для
+ *  відгуків у нього є лист розробнику. На закритому тесті розділ потрібен: за 14 днів тестери не
+ *  дійдуть до відпустки й фіналу інакше. */
+const PUBLIC_BUILD = typeof __APP_CHANNEL__ === 'string' && __APP_CHANNEL__ === 'public';
 const testerOpen = (): boolean => {
+  if (PUBLIC_BUILD) return false;
   if (!releaseName()) return true;
   try { return localStorage.getItem(TESTER_KEY) === '1'; } catch { return false; }
 };
@@ -72,7 +78,7 @@ export function SettingsScreen({ onBack, onWiped, backLabel, inMatch = false }: 
   };
   const [taps, setTaps] = useState(0);
   const tapVersion = () => {
-    if (tester) return;
+    if (tester || PUBLIC_BUILD) return;
     const n = taps + 1;
     setTaps(n);
     if (n >= TESTER_TAPS) { try { localStorage.setItem(TESTER_KEY, '1'); } catch { /* приватный режим */ } setTester(true); }

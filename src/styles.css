@@ -1449,6 +1449,8 @@ html.launching .title-menu { transform: translateY(12px); }
 .pc-shadow ellipse { fill: #000; opacity: .38; } .pitch.pc-night .pc-shadow ellipse { opacity: .14; }
 .pc-ball-shadow { fill: #000; }
 .pc-own { fill: none; stroke: #e6e1d6; stroke-width: .18; stroke-dasharray: .5 .35; transition: opacity .2s; }
+/* Святкування: слід ковзання на колінах */
+.pc-skid { stroke: #6f7a52; stroke-width: 1.1; stroke-linecap: round; opacity: .55; fill: none; }
 /* Сітка тремтить на голі */
 .pc-mesh { stroke: #4a5c4c; stroke-width: .12; }
 .pc-netg.shake { animation: netShake .5s ease-out; transform-box: fill-box; transform-origin: center; }

@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { ADS, rosterFor } from '../content';
+import { ADS, EPISODES, rosterFor } from '../content';
+import { reyesAction } from '../engine/action';
+import type { Resolution, TimelineEvent } from '../engine/types';
 import { parseStage } from '../engine/feed';
 import type { ActionResult, ActionTemplate } from '../engine/action';
 import type { Weather } from '../engine/conditions';
-import { Pitch } from './Pitch';
-import { placePoint, type Director } from './pitchDirector';
+import { Pitch, spotOf } from './Pitch';
+import { placePoint, type Celebration, type Director } from './pitchDirector';
 
 // Лабораторія поля (M52, 19.10) — лише в dev-збірці (`#/pitchlab`, App перевіряє import.meta.env.DEV):
 // поле в заданій погоді, часі й лізі та кнопки, що розігрують будь-який рядок стрічки чи дію Реєса з
@@ -16,7 +18,23 @@ const STAGES = [
   'long own:C', 'dribble mid:C self', 'foul mid:C them.mid>self', 'corner theirBox:L', 'build mid:C', 'switch their:R',
 ];
 const TEMPLATES: ActionTemplate[] = ['shot', 'pass', 'cross', 'through', 'switch', 'dribble', 'tackle', 'header', 'run', 'shield', 'hold'];
+const CELEBRATIONS: Celebration[] = ['jump', 'knees', 'flag', 'plane'];
 const RESULTS: ActionResult[] = ['goal', 'ok', 'meh', 'fail', 'lost', 'foul', 'red', 'concede'];
+
+/** Зіграти ісход сцени за ключем «епізод/варіант/ярус» так, як його зіграє матч (App → reyesAction).
+ *  `plain` — без подій кінцівки з тексту: так поле грало до M52, для записів «було / стало». */
+function playOutcome(d: Director | undefined, key: string, plain = false) {
+  const [eid, oid, tier] = key.split('/');
+  const e = EPISODES.find((x) => x.id === eid); const o = e?.options.find((x) => x.id === oid);
+  if (!d || !e || !o) return false;
+  const oc = tier === 'crit' ? o.outcomes.crit! : o.outcomes[tier as 'clean'];
+  const res = { tier: tier === 'crit' ? 'clean' : tier, critical: tier === 'crit' ? 'success' : undefined } as unknown as Resolution;
+  const ap = oc.apply ?? {};
+  const events = [...(ap.goal || ap.teamGoal || ap.assist ? [{ kind: 'goalUs' }] : []), ...(ap.concede ? [{ kind: 'goalThem' }] : [])] as TimelineEvent[];
+  const act = reyesAction(e, o, res, events);
+  void d.action({ template: act.template, result: act.result, place: placePoint(act.place) ?? spotOf(e), target: placePoint(act.target), end: plain ? [] : act.end, by: act.by, counter: act.counter });
+  return true;
+}
 
 export function PitchLab() {
   const [weather, setWeather] = useState<Weather>('clear');
@@ -27,6 +45,7 @@ export function PitchLab() {
   const [tpl, setTpl] = useState<ActionTemplate>('shot');
   const roster = rosterFor('sandorea');
   const d = () => (window as unknown as { __pitch?: Director }).__pitch;
+  (window as unknown as { __outcome?: (k: string, plain?: boolean) => boolean }).__outcome = (k, plain) => playOutcome(d(), k, plain);
   const rebuild = (f: () => void) => { f(); setKey((k) => k + 1); };
   return (
     <div className="pitchlab">
@@ -42,6 +61,9 @@ export function PitchLab() {
       <div className="pitchlab-row">{TEMPLATES.map((x) => <button key={x} className={x === tpl ? 'on' : ''} onClick={() => setTpl(x)}>{x}</button>)}</div>
       <div className="pitchlab-row">{RESULTS.map((r) => (
         <button key={r} onClick={() => void d()?.action({ template: tpl, result: r, place: placePoint('their:C')!, target: null })}>{r}</button>
+      ))}</div>
+      <div className="pitchlab-row">{CELEBRATIONS.map((c) => (
+        <button key={c} onClick={() => { const p = d(); if (!p) return; p.forceCelebration = c; void p.action({ template: 'shot', result: 'goal', place: placePoint('theirBox:L')!, target: null }); }}>{`gol:${c}`}</button>
       ))}</div>
     </div>
   );

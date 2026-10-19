@@ -1,6 +1,6 @@
 import type { Stage } from '../engine/feed';
 import type { FinaleKind } from '../engine/finale';
-import type { ActionTemplate, ActionResult } from '../engine/action';
+import type { ActionBeat, ActionTemplate, ActionResult } from '../engine/action';
 import type { Kit } from '../engine/names';
 import { sfxBoo, sfxGoal, sfxKick, sfxOoh, sfxPost, sfxWhistle } from './sound';
 
@@ -32,6 +32,8 @@ const ZY = { L: 12, C: 34, R: 56 } as const;
 const OUR_GOAL: P = [0, 34];
 const THEIR_GOAL: P = [PW, 34];
 const BENCH: P = [50, -3.4];
+/** Події кінцівки, що закінчують удар (engine/action.ts:ACTION_BEATS). */
+const SHOT_END: ActionBeat[] = ['whiff', 'bar', 'post', 'over', 'wide', 'tip', 'held', 'parry', 'block', 'line'];
 
 /** Зона з actions.json («theirD:C», «farPost») → точка на полі. Невідома — null. */
 export function placePoint(zone: string | null | undefined): P | null {
@@ -89,6 +91,10 @@ export type DirectorOptions = {
 };
 
 type Token = { g: SVGGElement; mv: SVGGElement; body: SVGGElement; label?: SVGTextElement; ring?: SVGCircleElement; glow?: SVGCircleElement; p: P };
+/** Святкування гола (M52, 19.10, прохання користувача: «фішка якось реагує»): стрибки на місці,
+ *  ковзання на колінах, біг до кутового прапорця, «літачок» дугою. */
+export type Celebration = 'jump' | 'knees' | 'flag' | 'plane';
+const CELEBRATIONS: Celebration[] = ['knees', 'flag', 'jump', 'plane'];
 const DEFAULT_SCENE: PitchScene = { weather: 'clear', night: false, cold: false, league: 'second', boards: [] };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -125,6 +131,13 @@ export class Director {
   /** Кільце владіння — під гравцем, біля ніг якого м'яч (M52). */
   private own!: SVGCircleElement;
   private onBench = false;
+  /** Кутові прапорці — святкування біля прапорця смикає його (M52). */
+  private corners: { g: SVGGElement; p: P }[] = [];
+  /** Хвилина на табло: від неї (і від автора) залежить, як святкують, — без випадковості, перезавантаження
+   *  покаже те саме, а наступний гол — інакше. */
+  private clock = 0;
+  /** Лише лабораторія поля: зіграти конкретне святкування. */
+  forceCelebration?: Celebration;
   /** Реєса вилучено: він поза полем, і на його місце ніхто не виходить — вдесятьох. */
   private tenMen = false;
 
@@ -197,8 +210,10 @@ export class Director {
       this.bars[side] = this.el('line', { x1: left ? 0 : PW, y1: 30.34, x2: left ? 0 : PW, y2: 37.66, class: 'pc-bar' });
     }
     for (const [x, y] of [[0, 0], [PW, 0], [0, PH], [PW, PH]] as P[]) {
-      this.el('line', { x1: x, y1: y, x2: x, y2: y - 1.6, class: 'pc-flagpole' });
-      this.el('polygon', { points: `${x},${y - 1.6} ${x + (x ? -1 : 1)},${y - 1.3} ${x},${y - 1}`, class: 'pc-flag' });
+      const cf = this.el('g', {});
+      this.el('line', { x1: x, y1: y, x2: x, y2: y - 1.6, class: 'pc-flagpole' }, cf);
+      this.el('polygon', { points: `${x},${y - 1.6} ${x + (x ? -1 : 1)},${y - 1.3} ${x},${y - 1}`, class: 'pc-flag' }, cf);
+      this.corners.push({ g: cf, p: [x, y] });
     }
     // лави за верхньою бровкою, біля центру
     for (const x of [44, 61]) this.el('rect', { x: x - 5, y: -5.4, width: 10, height: 2.4, rx: .4, class: 'pc-bench' });
@@ -414,6 +429,7 @@ export class Director {
     ring.setAttribute('stroke-dasharray', `${(C * clamp(v, 0, 100) / 100).toFixed(2)} 99`);
     ring.classList.toggle('mid', v < 50 && v >= 25); ring.classList.toggle('low', v < 25);
   }
+  setMinute(m: number) { this.clock = m; }
   setGlow(on: boolean) { this.t.u10.glow?.setAttribute('opacity', on ? '.35' : '0'); }
 
   private frame(c: P, w: number): View {
@@ -988,7 +1004,7 @@ export class Director {
    *  адресат із назви варіанта, кінцівка — за ярусом кидка. ok — вийшло, meh — вийшло з ціною
    *  (суперник поруч), fail — відібрали / воротар узяв / мимо, lost — втрата й їхня контратака.
    *  Гол, пропущений, фол і червона — з ісходу. Замінює загальну розв'язку `finale`. */
-  async action(a: { template: ActionTemplate; result: ActionResult; place: P; target?: P | null }) {
+  async action(a: { template: ActionTemplate; result: ActionResult; place: P; target?: P | null; end?: string[]; by?: string; counter?: boolean }) {
     const my = ++this.run;
     this.quiet();
     const S = (o: Parameters<Director['step']>[1]) => this.step(my, o);
@@ -998,9 +1014,19 @@ export class Director {
     const R = a.result;
     const good = R === 'ok' || R === 'meh' || R === 'goal';
     const near = this.id('them', spot);
-    const goal = THEIR_GOAL;
     const fwd = (m: number) => spot[0] + m;
     const defending = a.template === 'tackle' || a.template === 'foul';
+    // Кінцівка з тексту ісходу (M52, tools/action-ends.ts): хто б'є і чим скінчився удар, далі —
+    // кутовий, аут, офсайд, пенальті. Без подій — кінцівку вирішує ярус, як було.
+    const end = a.end ?? [];
+    const whoTok = end.find((b) => b.startsWith('@'));
+    const beats = end.filter((b) => !b.startsWith('@')) as ActionBeat[];
+    const has = (b: ActionBeat) => beats.includes(b);
+    const shotEnd = beats.find((b) => SHOT_END.includes(b));
+    const mateRole = whoTok && whoTok !== '@them' ? whoTok.slice(1) : undefined;
+    /** Гол Реєса чи партнера показується «одразу в сітку», лише якщо текст не каже про добивання. */
+    const scoresNow = R === 'goal' && !has('rebound');
+    let shown = false;
     // Початок: Реєс у точці сцени; у захисних — м'яч у суперника перед ним.
     const foeAt: P = defending ? [clamp(fwd(-3), 3, 102), spot[1] + .6] : [spot[0] + 2.4, spot[1] + 1.4];
     await S({ moves: this.block(spot, { [r]: spot, [near]: foeAt }), ball: defending ? [foeAt[0] - .9, foeAt[1]] : [spot[0] + .9, spot[1]], cam: spot, w: 44, dur: 450 });
@@ -1014,43 +1040,137 @@ export class Director {
         await S({ moves: { [who]: to }, ball: [to[0] - 1, to[1]], cam: [clamp(at[0] - 10, 3, 102), at[1]], dur: 800 });
       }
     };
-    /** Удар: гол — у сітку; ok/meh — воротар узяв чи відбив на кутовий; fail/lost — мимо. */
-    const shoot = async (from: P) => {
-      if (R === 'goal') {
-        await S({ ball: [goal[0] + .6, 33], cam: [(from[0] + goal[0]) / 2, 34], w: Math.max(32, goal[0] - from[0] + 14), dur: 550 });
-        void this.flashOn('us'); await this.celebrate(my, 'us', r); return;
+    /** Удар із кінцівкою з тексту. `side` — хто б'є (us — по їхніх воротах), `scores` — м'яч у сітці. */
+    const strike = async (from: P, shooter: string, side: 'us' | 'them', how: ActionBeat | undefined, scores: boolean) => {
+      shown = true;
+      const g = this.goalOf(side);
+      const f = (m: number) => g[0] - this.fwd(side, m);
+      const k = side === 'us' ? 't1' : 'u1';
+      const owner = side === 'us' ? 'them' : 'us';
+      const cam: P = [(from[0] + g[0]) / 2, (from[1] + 34) / 2];
+      const w = Math.max(32, Math.abs(g[0] - from[0]) + 14);
+      const net: P = [g[0] + this.fwd(side, .6), from[1] < 34 ? 32.6 : 35.4];
+      const hi = from[1] < 34;
+      // Гол після добивання: перший удар текст не описав — воротар відбиває, добиває інший (after: rebound).
+      if (!how && !scores && (side === 'us' ? R === 'goal' : R === 'concede')) how = 'parry';
+      const finish = async () => { await S({ ball: net, dur: 300 }); void this.flashOn(side); await this.celebrate(my, side, shooter); };
+      if (side === 'us') sfxOoh();
+      switch (how) {
+        case 'whiff':
+          this.lie(shooter);
+          await S({ ball: [from[0] + this.fwd(side, 4), from[1] + 1], dur: 650, cam, w });
+          await S({ moves: { [k]: [f(3), 34] }, ball: [f(3.6), 34], dur: 600 });
+          return;
+        case 'post': case 'bar': {
+          const frame: P = how === 'post' ? [g[0], hi ? 30.5 : 37.5] : [g[0], 34];
+          await S({ ball: frame, arc: how === 'bar' ? 4 : 0, cam, w, dur: 560 });
+          void this.barHit(owner);
+          if (scores) { await finish(); return; }
+          await S({ ball: [f(6), hi ? 37 : 31], dur: 380 });
+          return;
+        }
+        case 'over': await S({ ball: [g[0] + this.fwd(side, 3.5), 33 + (hi ? -2 : 2)], arc: 6, cam, w, dur: 600 }); return;
+        case 'wide': await S({ ball: [g[0] + this.fwd(side, 2), hi ? 27.5 : 40.5], cam, w, dur: 560 }); return;
+        case 'held': {
+          const kp: P = [f(1.8), clamp(from[1], 31, 37)];
+          await S({ moves: { [k]: kp }, ball: [kp[0] - this.fwd(side, .5), kp[1]], cam, w, dur: 560 });
+          return;
+        }
+        case 'parry': case 'tip': {
+          this.lie(k);
+          const kp: P = [f(1.4), hi ? 31.5 : 36.5];
+          await S({ moves: { [k]: kp }, ball: kp, cam, w, dur: 520 });
+          if (scores) { await finish(); return; }
+          // Кінчиками — за лицьову (далі кутовий); відбив — перед собою, у штрафний.
+          await S({ ball: how === 'tip' ? [g[0] + this.fwd(side, 1.5), hi ? 27 : 41] : [f(6), hi ? 37 : 31], dur: 380 });
+          return;
+        }
+        case 'block': {
+          const dp: P = [from[0] + this.fwd(side, 2.6), from[1] + .3];
+          const def = this.id(side === 'us' ? 'them' : 'us', dp);
+          await S({ moves: { [def]: dp }, dur: 220 });
+          this.jump(def);
+          await S({ ball: [dp[0] - this.fwd(side, .5), dp[1]], dur: 200, cam, w });
+          await S({ ball: [dp[0] + this.fwd(side, 2), dp[1] + (hi ? 7 : -7)], dur: 420 });
+          this.jump(def, false);
+          return;
+        }
+        case 'line': {
+          const lp: P = [f(.9), hi ? 32 : 36];
+          const def = this.id(side === 'us' ? 'them' : 'us', lp);
+          this.lie(k);
+          await S({ moves: { [def]: lp, [k]: [f(2.5), hi ? 37 : 31] }, ball: [lp[0] - this.fwd(side, .4), lp[1]], cam, w, dur: 560 });
+          await S({ ball: [f(14), hi ? 12 : 56], arc: 6, dur: 520 });
+          return;
+        }
       }
-      const cam: P = [(from[0] + goal[0]) / 2, 34];
-      sfxOoh();
+      if (scores) { await S({ ball: net, cam, w, dur: 550 }); void this.flashOn(side); await this.celebrate(my, side, shooter); return; }
+      // Подій удару текст не назвав — як було: «вийшло» — воротар узяв, «вийшло, але» — відбив, інакше мимо.
       if (R === 'ok' || R === 'meh') {
-        this.lie('t1');
-        await S({ moves: { t1: [goal[0] - 1.6, 32] }, ball: [goal[0] - 1.4, 32.5], dur: 500, cam });
-        await S({ ball: R === 'meh' ? [goal[0] + 1, 25] : [goal[0] - 7, 24], dur: 400 });
+        this.lie(k);
+        await S({ moves: { [k]: [f(1.6), 32] }, ball: [f(1.4), 32.5], dur: 500, cam, w });
+        await S({ ball: R === 'meh' ? [g[0] + this.fwd(side, 1), 25] : [f(7), 24], dur: 400 });
         return;
       }
-      await S({ ball: [goal[0] + 2, R === 'lost' ? 46 : 41], dur: 550, cam });
+      await S({ ball: [g[0] + this.fwd(side, 2), R === 'lost' ? 46 : 41], dur: 550, cam, w });
     };
+    /** Удар Реєса (шаблон «удар», голова біля воріт, обведення з голом). */
+    const shoot = (from: P) => strike(from, r, 'us', shotEnd, scoresNow);
     /** Передача: ok — прийняв і пішов далі, meh — прийняв під тиском, goal — адресат забиває,
-     *  fail/lost — перехоплення на шляху. */
+     *  fail/lost — перехоплення на шляху. Якщо текст каже, що адресат бив, — його удар з кінцівкою. */
     const deliver = async (target: P, mate: string, arc = 1, dur = 600) => {
       // Адресат не там, де стоїть сам Реєс: «у штрафний» зі штрафного — це вглиб, а не собі під ноги.
       const to: P = dist(target, spot) < 7 ? [clamp(spot[0] + 10, 4, 99), spot[1] < 34 ? spot[1] + 8 : spot[1] - 8] : target;
-      if (good) {
-        await S({ moves: { [mate]: to }, ball: to, arc, cam: [(spot[0] + to[0]) / 2, (spot[1] + to[1]) / 2], w: Math.max(44, Math.abs(to[0] - spot[0]) + 16, (Math.abs(to[1] - spot[1]) + 14) / .92), dur });
+      const receiver = mateRole ? this.id(mateRole, to) : mate;
+      if (good || (shotEnd && whoTok !== '@them')) {
+        await S({ moves: { [receiver]: to }, ball: to, arc, cam: [(spot[0] + to[0]) / 2, (spot[1] + to[1]) / 2], w: Math.max(44, Math.abs(to[0] - spot[0]) + 16, (Math.abs(to[1] - spot[1]) + 14) / .92), dur });
         if (!ok()) return;
-        if (R === 'meh') { const foe = this.id('them', to); await S({ moves: { [foe]: [to[0] + 1.2, to[1] + 1] }, dur: 350 }); }
-        else if (R === 'goal') { await S({ ball: [goal[0] + .6, 33], cam: [(to[0] + goal[0]) / 2, 34], dur: 550 }); void this.flashOn('us'); await this.celebrate(my, 'us', mate); }
-        else await S({ moves: { [mate]: [clamp(to[0] + 4, 2, 103), to[1]] }, ball: [clamp(to[0] + 5, 2, 103), to[1]], dur: 450 });
+        if (shotEnd || R === 'goal') {
+          // Адресат далеко від воріт — спершу доходить до удару.
+          let from = to;
+          if (to[0] < 72) { from = [clamp(to[0] + 14, 4, 90), to[1] + (34 - to[1]) * .4]; await S({ moves: { [receiver]: from }, ball: [from[0] + .8, from[1]], cam: from, dur: 500 }); }
+          if (ok()) await strike(from, receiver, 'us', shotEnd, scoresNow);
+        }
+        else if (R === 'meh') { const foe = this.id('them', to); await S({ moves: { [foe]: [to[0] + 1.2, to[1] + 1] }, dur: 350 }); }
+        else if (good) await S({ moves: { [receiver]: [clamp(to[0] + 4, 2, 103), to[1]] }, ball: [clamp(to[0] + 5, 2, 103), to[1]], dur: 450 });
       } else {
         const mid: P = [(spot[0] + to[0]) / 2, (spot[1] + to[1]) / 2];
         const cut = this.id('them', mid);
-        await S({ moves: { [mate]: to, [cut]: mid }, ball: mid, arc: arc * .5, cam: mid, dur: dur * .7 });
+        await S({ moves: { [receiver]: to, [cut]: mid }, ball: mid, arc: arc * .5, cam: mid, dur: dur * .7 });
         if (ok()) await lose(mid, cut);
       }
     };
     const mateNear = (p: P) => this.nearest('us', p, 4).find((x) => x !== r)!;
 
-    switch (a.template) {
+    if (has('pen')) {
+      // Пенальті (текст: «суддя свистить пенальті», «пенальті є, {striker} б'є у стійку»): Реєса збивають у
+      // штрафному, свисток, суддя показує на позначку — і лише потім удар з позначки, якщо текст його називає.
+      shown = true;
+      // Падає збоку від позначки, не на ній: на позначку потім ставлять м'яч і підходить той, хто б'є.
+      const box: P = [PW - 8.5, spot[1] <= 34 ? 28.5 : 39.5];
+      await S({ moves: this.block(box, { [r]: box, [near]: [box[0] + 1.3, box[1] + .7] }), ball: [box[0] + .9, box[1]], cam: [PW - 15, 34], w: 38, dur: 520 });
+      if (!ok()) return;
+      this.lie(r); sfxWhistle('short'); this.showRef();
+      const pen: P = [PW - 11, 34], refAt: P = [PW - 15, 41];
+      await S({ moves: { ref: refAt }, ball: pen, dur: 600 });
+      this.point(refAt, Math.atan2(pen[1] - refAt[1], pen[0] - refAt[0]) * 180 / Math.PI);
+      await this.sleep(500);
+      if (ok() && (shotEnd || R === 'goal')) {
+        const taker = mateRole ? this.id(mateRole, pen) : a.by ? this.id(a.by, pen) : r;
+        if (taker === r) this.lie(r, false);
+        await S({ moves: { [taker]: [pen[0] - 1.6, 34], t1: [PW - .6, 34] }, dur: 450 });
+        if (ok()) await strike(pen, taker, 'us', shotEnd, scoresNow);
+      }
+    } else if (whoTok === '@them' && shotEnd) {
+      // Їхній удар по наших воротах (текст: «{them.striker} б'є — {keeper} відбиває»): Реєс лишається там,
+      // де програв чи закрив, суперник доходить до удару — і кінцівка з тексту.
+      const shooter = near;
+      const from: P = spot[0] < 34 ? [clamp(spot[0] - 3, 10, 30), spot[1] + (34 - spot[1]) * .4] : [22, spot[1] + (34 - spot[1]) * .5];
+      if (defending || a.template === 'run' || a.template === 'shield') await S({ moves: { [r]: [foeAt[0] - 1.6, foeAt[1]] }, dur: 300 });
+      await S({ moves: { [shooter]: from }, ball: [from[0] - .9, from[1]], cam: [(from[0] + 12) / 2, 34], w: 46, dur: dist(from, this.pos(shooter)) > 10 ? 750 : 400 });
+      if (!ok()) return;
+      await strike(from, shooter, 'them', shotEnd, R === 'concede' && !has('rebound'));
+    } else switch (a.template) {
       case 'pass': case 'back': case 'through': case 'switch': case 'cross': {
         let to: P; let mate: string; let arc = 1; let dur = 600;
         if (a.template === 'through') { mate = this.id('striker', spot); to = [clamp(fwd(20), 8, 99), spot[1] + (34 - spot[1]) * .5]; dur = 750; }
@@ -1060,6 +1180,13 @@ export class Director {
         else { to = [clamp(fwd(9), 4, 101), spot[1] + (spot[1] < 34 ? 4 : -4)]; mate = mateNear(to); }
         // Адресат із назви варіанта («на дугу», «на дальню») важливіший за загальний шаблон.
         if (a.target) { to = a.target; if (a.template !== 'through' && a.template !== 'cross') mate = mateNear(to); }
+        // Воротар знімає подачу (текст: «воротар спокійно знімає м'яч у повітрі») — м'яч до нього, а не на перехоплення.
+        if (shotEnd === 'held' && !mateRole && !good) {
+          shown = true;
+          await S({ moves: { t1: [PW - 4.5, clamp(to[1], 30, 38)] }, ball: [PW - 4.5, clamp(to[1], 30, 38)], arc, cam: [(spot[0] + PW) / 2, 34], w: Math.max(40, PW - spot[0] + 12), dur });
+          if (a.counter && ok()) await S({ ball: this.pos(this.id('them', [70, 34])), arc: 8, cam: [70, 34], dur: 800 });
+          break;
+        }
         await deliver(to, mate, arc, dur);
         break;
       }
@@ -1074,13 +1201,13 @@ export class Director {
       }
       case 'dribble': {
         await S({ moves: { [near]: [fwd(2.6), spot[1]] }, dur: 300 });
-        if (good) {
+        if (good || shotEnd) {
           const side = spot[1] < 34 ? 3 : -3;
           await S({ moves: { [r]: [fwd(3), spot[1] + side] }, ball: [fwd(3.8), spot[1] + side], dur: 350 });
           const done: Record<string, P> = { [r]: [clamp(fwd(9), 3, 103), spot[1] + side * .3], [near]: R === 'meh' ? [fwd(7.5), spot[1] + side * .9] : [fwd(2.6), spot[1] - side * .3] };
           await S({ moves: this.separate({ ...this.field(), ...done }, [r, near]), ball: [clamp(fwd(9.8), 3, 103), spot[1] + side * .3], dur: 450 });
-          if (R === 'ok') this.lie(near);
-          if (R === 'goal') await shoot([fwd(9), spot[1]]);
+          if (R === 'ok' && !shotEnd) this.lie(near);
+          if (R === 'goal' || shotEnd) await shoot([clamp(fwd(9), 3, 99), spot[1]]);
         } else await lose([fwd(2), spot[1]]);
         break;
       }
@@ -1110,7 +1237,8 @@ export class Director {
         const foe = this.id('them', end);
         const dash: Record<string, P> = { [r]: good ? end : [(spot[0] + end[0]) / 2, (spot[1] + end[1]) / 2], [foe]: good ? [end[0] + (back ? -2 : 2), end[1] + 2] : end };
         await S({ moves: this.separate({ ...this.field(), ...dash }, [r, foe]), ball: [end[0] + .9, end[1] + (good ? 0 : .4)], cam: [(spot[0] + end[0]) / 2, end[1]], w: 50, dur: 900 });
-        if (!good) await lose(end, foe);
+        if (mateRole && shotEnd && ok()) await deliver([clamp(end[0] + 10, 4, 99), 34 + (end[1] - 34) * .3], this.id(mateRole, end), 1, 500);
+        else if (!good) await lose(end, foe);
         break;
       }
       case 'foul': {
@@ -1121,16 +1249,74 @@ export class Director {
       }
       case 'hold': case 'talk': {
         if (a.template === 'talk') { this.say(spot, '!'); this.point(spot, spot[1] < 34 ? 60 : -60); }
-        if (good) { await S({ moves: this.block([spot[0] + 4, spot[1]], { [r]: spot }), dur: 700 }); await S({ ball: this.pos(mateNear(spot)), dur: 450 }); }
+        if (mateRole && shotEnd) { await S({ moves: this.block([spot[0] + 4, spot[1]], { [r]: spot }), dur: 500 }); await deliver([clamp(spot[0] + 10, 4, 99), 34 + (spot[1] - 34) * .4], this.id(mateRole, spot), 3, 600); }
+        else if (good) { await S({ moves: this.block([spot[0] + 4, spot[1]], { [r]: spot }), dur: 700 }); await S({ ball: this.pos(mateNear(spot)), dur: 450 }); }
         else await lose([spot[0] + 2, spot[1] + 1.5]);
         break;
       }
     }
     if (!ok()) return;
+    await this.after(my, beats.filter((b) => b !== 'pen'), { shooterSide: whoTok === '@them' ? 'them' : 'us', rebounder: a.by ? this.id(a.by, this.ballP) : undefined, scores: R === 'goal' || R === 'concede', shown });
+    if (!ok()) return;
     // Ісход сильніший за шаблон: червона чи фол — свисток і картка; пропущений — м'яч у наші ворота.
     if ((R === 'red' || R === 'foul') && a.template !== 'foul') { sfxWhistle('short'); this.showRef(); this.lie(near); this.showCard(this.pos(near), R === 'red'); }
-    if (R === 'concede') { await S({ ball: [-.6, 34], cam: [16, 34], w: 50, dur: 800 }); void this.flashOn('them'); }
+    if (R === 'concede' && !(whoTok === '@them' && shotEnd)) { await S({ ball: [-.6, 34], cam: [16, 34], w: 50, dur: 800 }); void this.flashOn('them'); }
+    if (has('down')) this.lie(r);
     if (ok()) void this.idle(my);
+  }
+
+  /** Що було після удару чи передачі — у порядку, в якому це називає текст ісходу (M52):
+   *  добивання, кутовий, аут, офсайд, фол на Реєсі. Пенальті грає `action` — до удару з позначки. */
+  private async after(my: number, beats: ActionBeat[], o: { shooterSide: 'us' | 'them'; rebounder?: string; scores: boolean; shown: boolean }) {
+    const S = (st: Parameters<Director['step']>[1]) => this.step(my, st);
+    const side = o.shooterSide;
+    for (const b of beats) {
+      if (my !== this.run) return;
+      const ball = this.ballP;
+      // Ворота, біля яких усе відбувається: удар — ворота, по яких били; інакше — ближчі до м'яча.
+      const g = o.shown ? this.goalOf(side) : ball[0] > 52.5 ? THEIR_GOAL : OUR_GOAL;
+      const att: 'us' | 'them' = g === THEIR_GOAL ? 'us' : 'them';
+      const hi = ball[1] < 34;
+      switch (b) {
+        case 'rebound': {
+          const who = o.rebounder ?? this.nearest(side, ball, 1)[0];
+          if (!who) break;
+          await S({ moves: { [who]: [ball[0] - this.fwd(side, .8), ball[1]] }, dur: 320 });
+          if (o.scores) {
+            await S({ ball: [this.goalOf(side)[0] + this.fwd(side, .6), 34], dur: 300 });
+            void this.flashOn(side); await this.celebrate(my, side, who);
+          }
+          break;
+        }
+        case 'corner': {
+          // М'яч за лицьову — і хтось із тих, хто атакує, іде до прапорця ставити м'яч.
+          const flag: P = [g[0], hi ? 0 : PH];
+          if (Math.abs(ball[0] - g[0]) > 1) await S({ ball: [g[0] + (g === THEIR_GOAL ? 1.5 : -1.5), hi ? clamp(ball[1], 2, 26) : clamp(ball[1], 42, 66)], dur: 380 });
+          const taker = this.nearest(att, flag, 1)[0];
+          await S({ moves: taker ? { [taker]: [flag[0] + (g === THEIR_GOAL ? -1.2 : 1.2), flag[1] + (hi ? 1.2 : -1.2)] } : {}, ball: [flag[0] + (g === THEIR_GOAL ? -.6 : .6), flag[1] + (hi ? .6 : -.6)], cam: [g[0] + (g === THEIR_GOAL ? -14 : 14), hi ? 14 : 54], w: 40, dur: 750 });
+          break;
+        }
+        case 'out': {
+          // Біля воріт — за лицьову (від воріт); деінде — за бокову, і хтось іде вкидати.
+          const nearGoal = Math.abs(ball[0] - g[0]) < 14 && Math.abs(ball[1] - 34) < 22;
+          const outP: P = nearGoal ? [g[0] + (g === THEIR_GOAL ? 1.6 : -1.6), ball[1] < 34 ? 24 : 44] : [ball[0], hi ? -1.4 : PH + 1.4];
+          await S({ ball: outP, cam: [clamp(outP[0], 20, 85), clamp(outP[1], 14, 54)], dur: 450 });
+          if (!nearGoal) { const thrower = this.nearest(ball[0] > 52.5 ? 'us' : 'them', outP, 1)[0]; if (thrower) await S({ moves: { [thrower]: [outP[0], hi ? .6 : PH - .6] }, dur: 450 }); }
+          break;
+        }
+        case 'offside': {
+          const top = hi;
+          this.flag.setAttribute('transform', `translate(${ball[0]},${top ? 1.6 : 67})`); this.flag.setAttribute('opacity', '1'); sfxWhistle('short');
+          await S({ cam: [ball[0], top ? 20 : 48], dur: 400 });
+          break;
+        }
+        case 'fk': {
+          sfxWhistle('short'); this.showRef(); this.lie('u10');
+          await S({ moves: { ref: [this.pos('u10')[0] - 3, this.pos('u10')[1] + 3] }, ball: [this.pos('u10')[0] + .9, this.pos('u10')[1]], dur: 450 });
+          break;
+        }
+      }
+    }
   }
 
   /** Сцена відкрилася десь на полі — усі на позиції від неї, Реєс у точці, камера туди ж. */
@@ -1248,11 +1434,105 @@ export class Director {
   }
 
   private async celebrate(my: number, side: 'us' | 'them', scorer = side === 'us' ? 'u9' : 't9') {
-    const corner: P = side === 'us' ? [102, 3] : [3, 65];
-    const mates = this.nearest(side, corner, 3).filter((x) => x !== scorer);
-    const m: Record<string, P> = { [scorer]: corner };
-    mates.forEach((id, i) => { m[id] = [corner[0] - this.fwd(side, 3 + i * 2), corner[1] + (side === 'us' ? 2 + i : -2 - i)]; });
-    await this.step(my, { moves: m, cam: [corner[0] - this.fwd(side, 10), corner[1] + (side === 'us' ? 10 : -10)], w: 40, dur: 650 });
+    if (my !== this.run || this.dead || !this.t[scorer]) return;
+    let h = this.clock * 7;
+    for (const c of scorer) h += c.charCodeAt(0);
+    const kind = this.forceCelebration ?? CELEBRATIONS[h & 3];
+    const goal = this.goalOf(side);
+    const from = this.pos(scorer);
+    const up = from[1] < 34;
+    const sc = this.t[scorer];
+    const pose = (tr: string) => sc.body.setAttribute('transform', tr);
+    const mates = this.nearest(side, from, 4).filter((x) => x !== scorer).slice(0, 3);
+    const toward = (p: P, i: number): P => { const a = i * 2.1 + .6; return [clamp(p[0] + Math.cos(a) * 2.3, 1, 104), clamp(p[1] + Math.sin(a) * 2.3, 1, 67)]; };
+    const mateMoves = (at: P, shift: number) => Object.fromEntries(mates.map((m, i) => [m, toward(at, i + shift)]));
+    this.label([scorer]);
+    /** Біг автора кривою (квадратична дуга через `via`) з позою на кожному кадрі; камера — за ним. */
+    const along = (to: P, via: P, dur: number, ease: (k: number) => number, look: (k: number) => string, w = 34) => {
+      const a = this.pos(scorer), v0 = this.view, v1 = this.frame([a[0] + (to[0] - a[0]) * .7, a[1] + (to[1] - a[1]) * .7], w);
+      return this.raw(dur, (k0) => {
+        if (my !== this.run) return;
+        const k = ease(k0), q = 1 - k;
+        this.put(scorer, [q * q * a[0] + 2 * q * k * via[0] + k * k * to[0], q * q * a[1] + 2 * q * k * via[1] + k * k * to[1]]);
+        pose(look(k0));
+        this.setView({ x: v0.x + (v1.x - v0.x) * k0, y: v0.y + (v1.y - v0.y) * k0, w: v0.w + (v1.w - v0.w) * k0, h: v0.h + (v1.h - v0.h) * k0 });
+      });
+    };
+    const lin = (k: number) => k, out = (k: number) => 1 - (1 - k) * (1 - k);
+    switch (kind) {
+      case 'knees': {
+        // Розгін до бровки — і ковзання на колінах: фішка нижча й ширша, за нею слід по газону.
+        const edge = up ? 4 : PH - 4;
+        const run: P = [clamp(from[0] - this.fwd(side, 6), 6, 99), (from[1] + edge) / 2];
+        const end: P = [clamp(run[0] - this.fwd(side, 7), 4, 101), edge];
+        await along(run, [(from[0] + run[0]) / 2, from[1]], 450, lin, () => '');
+        if (my !== this.run) return;
+        const skid = this.el('path', { d: `M${run[0]},${run[1]} L${run[0]},${run[1]}`, class: 'pc-skid' });
+        this.svg.insertBefore(skid, this.ballShadow);
+        void this.step(my, { moves: mateMoves(end, 1), dur: 1100 });
+        const low = (k: number) => Math.min(1, k * 4);
+        await along(end, [(run[0] + end[0]) / 2, (run[1] + end[1]) / 2], 650, out, (k) => {
+          const p = this.pos(scorer);
+          skid.setAttribute('d', `M${run[0]},${run[1]} L${p[0].toFixed(2)},${p[1].toFixed(2)}`);
+          return `translate(0,${(.35 * low(k)).toFixed(2)}) scale(${(1 + .18 * low(k)).toFixed(2)},${(1 - .32 * low(k)).toFixed(2)})`;
+        });
+        await this.sleep(450);
+        skid.remove();
+        break;
+      }
+      case 'flag': {
+        // До кутового прапорця з боку, де забив; біля прапорця — удар по ньому і купа зверху.
+        const c = this.corners.find((x) => x.p[0] === goal[0] && (x.p[1] === 0) === up)!;
+        const end: P = [c.p[0] - this.fwd(side, 3.2), c.p[1] + (up ? 2.6 : -2.6)];
+        void this.step(my, { moves: mateMoves(end, 2), dur: 750 });
+        await along(end, [(from[0] + end[0]) / 2, (from[1] + end[1]) / 2 + (up ? 3 : -3)], 700, lin, () => '', 24);
+        if (my !== this.run) return;
+        const [cx, cy] = c.p;
+        // Прапорець хитається і на мить більшає — інакше під фішкою його не видно.
+        await this.raw(700, (k) => {
+          const z = 1 + .6 * Math.sin(Math.PI * k), t = (z - 1) / z;
+          c.g.setAttribute('transform', `rotate(${(Math.sin(k * Math.PI * 4) * 45 * (1 - k)).toFixed(1)} ${cx} ${cy}) scale(${z.toFixed(3)}) translate(${(-cx * t).toFixed(2)},${(-cy * t).toFixed(2)})`);
+        });
+        c.g.removeAttribute('transform');
+        // Купа: партнери накривають автора майже впритул.
+        await this.step(my, { moves: Object.fromEntries(mates.map((m, i) => { const a = i * 2.1; return [m, [end[0] + Math.cos(a) * 1.1, end[1] + Math.sin(a) * 1.1] as P]; })), dur: 300 });
+        break;
+      }
+      case 'jump': {
+        // Стрибки на місці: тінь лишається на землі, фішка злітає. Партнери підбігають і стрибають теж.
+        const end: P = [clamp(from[0] - this.fwd(side, 4), 4, 101), clamp(from[1] + (34 - from[1]) * .2, 4, 64)];
+        await along(end, [(from[0] + end[0]) / 2, (from[1] + end[1]) / 2], 300, lin, () => '');
+        void this.step(my, { moves: mateMoves(end, 0), dur: 600 });
+        await this.raw(1400, (k) => {
+          if (my !== this.run) return;
+          const hop = (ph: number) => Math.abs(Math.sin((k * 3 + ph) * Math.PI)) * 2.6;
+          const hh = hop(0);
+          pose(`translate(0,${(-hh).toFixed(2)}) scale(${(1 + hh * .08).toFixed(3)})`);
+          if (k > .5) mates.forEach((m, i) => this.t[m].body.setAttribute('transform', `translate(0,${(-hop(i * .3) * .7).toFixed(2)})`));
+        });
+        mates.forEach((m) => this.t[m].body.removeAttribute('transform'));
+        break;
+      }
+      case 'plane': {
+        // «Літачок»: широка дуга до центру з креном — номер на фішці хилиться то в один, то в інший бік.
+        const end: P = [clamp(from[0] - this.fwd(side, 14), 6, 99), 34 + (up ? 6 : -6)];
+        const via: P = [from[0] - this.fwd(side, 3), up ? 2 : PH - 2];
+        void this.step(my, { moves: mateMoves(end, 1), dur: 1300 });
+        await along(end, via, 1300, lin, (k) => `rotate(${(Math.sin(k * Math.PI * 3) * 32).toFixed(1)}) scale(1.12,.92)`, 40);
+        break;
+      }
+    }
+    pose('');
+  }
+
+  /** Твін без «повільно-швидко-повільно» з `tween` — для власних кривих руху святкування. */
+  private raw(dur: number, f: (k: number) => void): Promise<void> {
+    if (this.reduced || dur <= 0) { f(1); return Promise.resolve(); }
+    return new Promise((res) => {
+      const t0 = performance.now();
+      const tick = (now: number) => { const k = Math.min(1, (now - t0) / dur); f(k); if (k < 1 && !this.dead) requestAnimationFrame(tick); else res(); };
+      requestAnimationFrame(tick);
+    });
   }
 
   // ——— вибірки —————————————————————————————————————————————————————————

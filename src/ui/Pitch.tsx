@@ -25,7 +25,7 @@ export const FAMILY_SPOT: Record<string, Spot> = {
 export const PHASE_SPOT: Record<NonNullable<Episode['phase']>, Spot> = { attack: [0.7, 0.5], defense: [0.3, 0.5], transition: [0.5, 0.5], setpiece: [0.8, 0.4] };
 
 // Місце сцени — зі слів сетапу (engine/action.ts, actions.json); немає — точка сім'ї, як раніше.
-const spotOf = (episode: Episode | null): P => {
+export const spotOf = (episode: Episode | null): P => {
   const own = episode ? placePoint(scenePlace(episode.id)) : null;
   if (own) return own;
   const s = (episode?.family && FAMILY_SPOT[episode.family]) || PHASE_SPOT[episode?.phase ?? 'transition'];
@@ -71,12 +71,13 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
       usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(), top, scene,
     });
     d.setBench(onBench, sentOff);
+    d.setMinute(minute);
     dir.current = d;
     // Лише в dev-збірці: щоб прогнати кожну постановку стрічки руками, не чекаючи її в матчі.
     if (import.meta.env.DEV) (window as unknown as { __pitch?: Director }).__pitch = d;
     // Поле з'являється після листа — усі від місця останньої сцени, а розв'язка грає вже звідти.
     // Дія Реєса — шаблоном руху з місця сцени; без неї (старі збереження) — загальна розв'язка за видом.
-    if (finale?.action) void d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target) });
+    if (finale?.action) void d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target), end: finale.action.end, by: finale.action.by, counter: finale.action.counter });
     else if (finale) void d.finale(finale.kind, spotOf(episode));
     else if (episode) void d.toSpot(spotOf(episode));
     return () => { d.stop(); dir.current = null; };
@@ -98,6 +99,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     else if (pulse.kind === 'goalUs' || pulse.kind === 'goalThem') void d.play({ act: 'echo', tags: [] }, pulse.kind);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pulse?.minute, pulse?.text]);
+  useEffect(() => { dir.current?.setMinute(minute); }, [minute]);
 
   return (
     <div className="pitch-cam">

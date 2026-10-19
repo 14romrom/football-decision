@@ -161,6 +161,11 @@ export function computeContext(
     const eased = Math.max(0, Math.min(c.momentumMax, state.momentum)) + (cond.strength === 'weak' ? k.weakOpponent : 0);
     if (eased > 0) mods.push({ label: t('ведемо — розслабилися'), value: -eased, source: 'field', short: t('розслабились') });
   }
+  // Дзеркально: вони ведуть із запасом — розслабилися вони. Наш спад куражу й їхня сила гасяться рядком.
+  if (state.scoreThem - state.scoreUs >= k.relaxLead) {
+    const eased = -Math.min(0, Math.max(c.momentumMin, state.momentum)) + (cond.strength === 'strong' ? -k.strongOpponent : 0);
+    if (eased > 0) mods.push({ label: t('вони ведуть — розслабилися'), value: eased, source: 'field', short: t('вони розслабились') });
+  }
   if (cond.weather === 'rain' && (option.attribute === 'dribbling' || option.attribute === 'passing')) {
     mods.push({ label: t('мокрий газон'), value: k.rainPenalty, source: 'field', short: t('газон') });
   }

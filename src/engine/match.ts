@@ -465,11 +465,14 @@ function rollFillerGoal(session: MatchSession, rng: Rng): 'us' | 'them' | null {
   // Меншість після червоної: команда дограє вдесятьох, і стрічка це знає.
   const short = state.flags.includes('sent_off');
   // Ведемо з запасом — розслабилися: позитивний кураж і перевага над слабким не додають голів (relaxLead).
+  // Дзеркально: вони ведуть із запасом — наш спад і їхня сила не додають їм голів.
   const relaxed = state.scoreUs - state.scoreThem >= BALANCE.conditions.relaxLead;
-  const mom = relaxed ? Math.min(0, state.momentum) : state.momentum;
+  const theyRelaxed = state.scoreThem - state.scoreUs >= BALANCE.conditions.relaxLead;
+  const mom = relaxed ? Math.min(0, state.momentum) : theyRelaxed ? Math.max(0, state.momentum) : state.momentum;
   const weakEdge = s === 'weak' && !relaxed ? edge : 0;
+  const strongEdge = s === 'strong' && !theyRelaxed ? edge : 0;
   const pUs = clamp(m.fillerGoalUs + mom * m.fillerGoalMomentum + weakEdge + (short ? m.shorthandedUs : 0), 0.01, 0.2);
-  const pThem = clamp(m.fillerGoalThem - mom * m.fillerGoalMomentum + (s === 'strong' ? edge : -weakEdge) + (short ? m.shorthandedThem : 0), 0.01, 0.2);
+  const pThem = clamp(m.fillerGoalThem - mom * m.fillerGoalMomentum + strongEdge - weakEdge + (short ? m.shorthandedThem : 0), 0.01, 0.2);
   const r = rng.next();
   if (r < pUs) return 'us';
   if (r < pUs + pThem) return 'them';

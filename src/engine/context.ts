@@ -155,6 +155,12 @@ export function computeContext(
     mods.push({ ...worst, source: 'field' });
   }
   if (cond.strength === 'weak') mods.push({ label: t('слабкий суперник'), value: k.weakOpponent, source: 'field', short: t('слабкі') });
+  // Ведемо з запасом — розслабилися (BALANCE.conditions.relaxLead): кураж і «слабкі» лишаються на екрані,
+  // а окремий рядок їх гасить, щоб гравець бачив, куди вони поділися.
+  if (state.scoreUs - state.scoreThem >= k.relaxLead) {
+    const eased = Math.max(0, Math.min(c.momentumMax, state.momentum)) + (cond.strength === 'weak' ? k.weakOpponent : 0);
+    if (eased > 0) mods.push({ label: t('ведемо — розслабилися'), value: -eased, source: 'field', short: t('розслабились') });
+  }
   if (cond.weather === 'rain' && (option.attribute === 'dribbling' || option.attribute === 'passing')) {
     mods.push({ label: t('мокрий газон'), value: k.rainPenalty, source: 'field', short: t('газон') });
   }

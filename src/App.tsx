@@ -1020,6 +1020,7 @@ function Game() {
     <>
       <MatchScreen
         round={season.round + 1}
+        seed={matchSeed(season)}
         state={session.state}
         roster={session.roster}
         shown={shown}

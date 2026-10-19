@@ -88,6 +88,8 @@ export type DirectorOptions = {
   reduced: boolean;
   /** Вища ліга — рев великого стадіону на гол (ui/sound.ts). */
   top?: boolean;
+  /** Сід матчу: разом із хвилиною вирішує варіації рухів (M52). */
+  seed?: number;
 };
 
 type Token = { g: SVGGElement; mv: SVGGElement; body: SVGGElement; label?: SVGTextElement; ring?: SVGCircleElement; glow?: SVGCircleElement; p: P };
@@ -136,6 +138,7 @@ export class Director {
   /** Хвилина на табло: від неї (і від автора) залежить, як святкують, — без випадковості, перезавантаження
    *  покаже те саме, а наступний гол — інакше. */
   private clock = 0;
+  private seed = 0;
   /** Лише лабораторія поля: зіграти конкретне святкування. */
   forceCelebration?: Celebration;
   /** Реєса вилучено: він поза полем, і на його місце ніхто не виходить — вдесятьох. */
@@ -146,6 +149,7 @@ export class Director {
     this.reduced = opt.reduced;
     this.top = !!opt.top;
     this.names = opt.names;
+    this.seed = opt.seed ?? 0;
     this.scene = { ...DEFAULT_SCENE, league: opt.top ? 'top' : 'second', ...opt.scene };
     this.home = { ...US_HOME, ...THEM_HOME[opt.formation], ref: [52, 44], med: [44, -3.2], sub: BENCH };
     svg.textContent = '';
@@ -430,6 +434,20 @@ export class Director {
     ring.classList.toggle('mid', v < 50 && v >= 25); ring.classList.toggle('low', v < 25);
   }
   setMinute(m: number) { this.clock = m; }
+  /** Детерміноване «випадкове» для одного розіграшу (M52, пункт 2): від сіду матчу, хвилини й того, що
+   *  грається. Перезавантаження покаже той самий рух, а такий самий удар на іншій хвилині — інший.
+   *  Math.random тут не можна: розіграш мав би інший вигляд після кожного монтування поля. */
+  private rng(salt: string): () => number {
+    let h = (Math.imul(this.seed | 0, 0x9e3779b1) ^ Math.imul(this.clock + 1, 0x85ebca6b)) >>> 0;
+    for (let i = 0; i < salt.length; i++) h = Math.imul(h ^ salt.charCodeAt(i), 16777619) >>> 0;
+    return () => {
+      h = (h + 0x6d2b79f5) >>> 0;
+      let t = h;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
   setGlow(on: boolean) { this.t.u10.glow?.setAttribute('opacity', on ? '.35' : '0'); }
 
   private frame(c: P, w: number): View {
@@ -607,14 +625,19 @@ export class Director {
   private async playAct(st: Stage, kind?: string) {
     const my = ++this.run;
     this.quiet();
-    const z: P = st.x ? [ZX[st.x], ZY[st.y ?? 'C']] : [52.5, 34];
+    // Варіації рядка стрічки (M52, пункт 3): та сама постановка на іншій хвилині — в іншому місці зони,
+    // в іншому темпі й з іншим кутом удару. Зона лишається тією, що в рядку: зсув — у її межах.
+    const v = this.rng(`feed/${st.act}/${st.who ?? ''}/${st.vs ?? ''}/${st.x ?? ''}${st.y ?? ''}/${st.tags.join(',')}`);
+    const jit = (m: number) => (v() * 2 - 1) * m;
+    const tempo = .88 + v() * .26;
+    const z: P = st.x ? [clamp(ZX[st.x] + jit(4), 3, 102), clamp(ZY[st.y ?? 'C'] + jit(4), 4, 64)] : [52.5, 34];
     const a = st.who ? this.id(st.who, z, st.who.startsWith('them') ? 'them' : 'us') : undefined;
     const b = st.vs ? this.id(st.vs, z, st.vs.startsWith('them') ? 'them' : 'us') : undefined;
     this.label((st.named ?? []).filter((r) => ROLE_ID[r]).map((r) => this.id(r, z)));
     const has = (t: string) => st.tags.includes(t);
     if (st.act === 'foul' || st.act === 'argue' || st.who === 'ref' || st.vs === 'ref' || ['ref', 'dive', 'hand', 'whistle', 'foul'].some(has)) this.showRef();
     const W = 44;
-    const S = (o: Parameters<Director['step']>[1]) => this.step(my, o);
+    const S = (o: Parameters<Director['step']>[1]) => this.step(my, o.dur ? { ...o, dur: o.dur * tempo } : o);
     const ok = () => my === this.run;
 
     switch (st.act) {
@@ -751,7 +774,8 @@ export class Director {
         await S({ moves: this.block(z, { [shooter]: sp, [k]: [goal[0] - this.fwd(side, 1.5), 34], [blocker]: [sp[0] + this.fwd(side, 3), sp[1] + .4] }), ball: [sp[0] + this.fwd(side, .9), sp[1]], cam: [(sp[0] + goal[0]) / 2, (sp[1] + 34) / 2], w: Math.max(32, Math.abs(goal[0] - sp[0]) + 14), dur: 600 });
         if (!ok()) return;
         if (st.act === 'block' || has('blocked')) { await S({ ball: [sp[0] + this.fwd(side, 2.8), sp[1] + .4], dur: 200 }); if (side === 'us') sfxOoh(); this.jump(blocker); await S({ ball: [sp[0] + this.fwd(side, 6), sp[1] + 9], dur: 450 }); this.jump(blocker, false); break; }
-        const aim: P = has('bar') ? [goal[0], 30.6] : has('post') ? [goal[0], 37.4] : has('wide') ? [goal[0] + this.fwd(side, 1.5), 41] : has('over') ? [goal[0] + this.fwd(side, 3), 33] : has('stand') ? [goal[0] + this.fwd(side, 6), 20] : [goal[0] - this.fwd(side, 1.4), 33.5];
+        const low = v() < .5;
+        const aim: P = has('bar') ? [goal[0], 31 + v() * 6] : has('post') ? [goal[0], low ? 37.4 : 30.6] : has('wide') ? [goal[0] + this.fwd(side, 1.5), low ? 41 + v() * 3 : 27 - v() * 3] : has('over') ? [goal[0] + this.fwd(side, 3), 33 + jit(3)] : has('stand') ? [goal[0] + this.fwd(side, 6), low ? 48 : 20] : [goal[0] - this.fwd(side, 1.4), 33.5 + jit(2.4)];
         if (has('dive') || has('saved')) this.lie(k);
         await S({ moves: has('saved') || has('dive') ? { [k]: [goal[0] - this.fwd(side, 1.6), 32] } : {}, ball: aim, arc: has('over') || has('stand') ? 4 : 1, dur: 520 });
         if (!ok()) return;
@@ -892,7 +916,7 @@ export class Director {
         if (has('medic')) { this.put('med', this.home.med); this.t.med.g.setAttribute('opacity', '1'); }
         await S({ cam: [52.5, 2], w: 46, dur: 550 });
         this.benchMarks.setAttribute('opacity', '1');
-        if (b && b !== 'sub') { const p = this.pos(b); await S({ moves: { [b]: [46 + Math.random() * 8, 2.5] }, dur: 550 }); await this.sleep(150); await S({ moves: { [b]: p }, dur: 400 }); }
+        if (b && b !== 'sub') { const p = this.pos(b); await S({ moves: { [b]: [46 + v() * 8, 2.5] }, dur: 550 }); await this.sleep(150); await S({ moves: { [b]: p }, dur: 400 }); }
         break;
       }
       case 'enter': {
@@ -908,7 +932,7 @@ export class Director {
       }
       case 'wide': case 'crowd': case 'half': {
         const m = st.act === 'crowd' ? this.crowded() : st.act === 'half' ? this.toTunnel() : this.block([52.5, 34]);
-        await S({ moves: m, ball: st.act === 'half' ? [52.5, -1] : [52.5 + (Math.random() - .5) * 10, 34], cam: [52.5, st.act === 'half' ? 28 : 34], w: 104, dur: st.act === 'half' ? 1400 : 900 });
+        await S({ moves: m, ball: st.act === 'half' ? [52.5, -1] : [52.5 + jit(5), 34], cam: [52.5, st.act === 'half' ? 28 : 34], w: 104, dur: st.act === 'half' ? 1400 : 900 });
         break;
       }
       case 'push': case 'deep': {
@@ -1007,10 +1031,16 @@ export class Director {
   async action(a: { template: ActionTemplate; result: ActionResult; place: P; target?: P | null; end?: string[]; by?: string; counter?: boolean }) {
     const my = ++this.run;
     this.quiet();
-    const S = (o: Parameters<Director['step']>[1]) => this.step(my, o);
     const ok = () => my === this.run;
     const r = 'u10';
-    const spot = this.inPlay(a.place);
+    // Варіації (M52, пункт 2): кут удару, бік стрибка воротаря, хто приймає, бік обводки, темп — від сіду
+    // матчу й хвилини. Той самий такт після перезавантаження; такий самий удар на іншій хвилині — інший.
+    const v = this.rng(`${a.template}/${a.result}/${(a.end ?? []).join(' ')}`);
+    const jit = (m: number) => (v() * 2 - 1) * m;
+    const pick = <T,>(xs: T[]): T => xs[Math.floor(v() * xs.length)];
+    const tempo = .88 + v() * .26;
+    const S = (o: Parameters<Director['step']>[1]) => this.step(my, o.dur ? { ...o, dur: o.dur * tempo } : o);
+    const spot = this.inPlay([a.place[0] + jit(2.5), a.place[1] + jit(3)]);
     const R = a.result;
     const good = R === 'ok' || R === 'meh' || R === 'goal';
     const near = this.id('them', spot);
@@ -1036,7 +1066,7 @@ export class Director {
     const lose = async (at: P, who = near) => {
       await S({ moves: { [who]: [at[0] + .8, at[1] + .4] }, ball: at, dur: 350 });
       if (R === 'lost' || R === 'concede') {
-        const to: P = [clamp(at[0] - 16, 3, 102), clamp(at[1] + (34 - at[1]) * .3, 3, 65)];
+        const to: P = [clamp(at[0] - 13 - v() * 6, 3, 102), clamp(at[1] + (34 - at[1]) * (.1 + v() * .4), 3, 65)];
         await S({ moves: { [who]: to }, ball: [to[0] - 1, to[1]], cam: [clamp(at[0] - 10, 3, 102), at[1]], dur: 800 });
       }
     };
@@ -1049,8 +1079,11 @@ export class Director {
       const owner = side === 'us' ? 'them' : 'us';
       const cam: P = [(from[0] + g[0]) / 2, (from[1] + 34) / 2];
       const w = Math.max(32, Math.abs(g[0] - from[0]) + 14);
-      const net: P = [g[0] + this.fwd(side, .6), from[1] < 34 ? 32.6 : 35.4];
-      const hi = from[1] < 34;
+      // Куди летить м'яч: точка в створі, бік стійки, закрутка — свої на кожен удар.
+      const aimY = 31 + v() * 6;
+      const net: P = [g[0] + this.fwd(side, .6), aimY];
+      const hi = v() < .5;
+      const curl = pick([0, 0, 1.8, -1.8]);
       // Гол після добивання: перший удар текст не описав — воротар відбиває, добиває інший (after: rebound).
       if (!how && !scores && (side === 'us' ? R === 'goal' : R === 'concede')) how = 'parry';
       const finish = async () => { await S({ ball: net, dur: 300 }); void this.flashOn(side); await this.celebrate(my, side, shooter); };
@@ -1058,31 +1091,33 @@ export class Director {
       switch (how) {
         case 'whiff':
           this.lie(shooter);
-          await S({ ball: [from[0] + this.fwd(side, 4), from[1] + 1], dur: 650, cam, w });
+          await S({ ball: [from[0] + this.fwd(side, 3 + v() * 3), from[1] + jit(2)], dur: 650, cam, w });
           await S({ moves: { [k]: [f(3), 34] }, ball: [f(3.6), 34], dur: 600 });
           return;
         case 'post': case 'bar': {
-          const frame: P = how === 'post' ? [g[0], hi ? 30.5 : 37.5] : [g[0], 34];
-          await S({ ball: frame, arc: how === 'bar' ? 4 : 0, cam, w, dur: 560 });
+          const frame: P = how === 'post' ? [g[0], hi ? 30.5 : 37.5] : [g[0], aimY];
+          await S({ ball: frame, arc: how === 'bar' ? 4 : curl, cam, w, dur: 560 });
           void this.barHit(owner);
           if (scores) { await finish(); return; }
-          await S({ ball: [f(6), hi ? 37 : 31], dur: 380 });
+          await S({ ball: [f(4 + v() * 5), (hi ? 36 : 32) + jit(4)], dur: 380 });
           return;
         }
-        case 'over': await S({ ball: [g[0] + this.fwd(side, 3.5), 33 + (hi ? -2 : 2)], arc: 6, cam, w, dur: 600 }); return;
-        case 'wide': await S({ ball: [g[0] + this.fwd(side, 2), hi ? 27.5 : 40.5], cam, w, dur: 560 }); return;
+        case 'over': await S({ ball: [g[0] + this.fwd(side, 2.5 + v() * 3), 34 + jit(4)], arc: 5 + v() * 3, cam, w, dur: 600 }); return;
+        case 'wide': await S({ ball: [g[0] + this.fwd(side, 1.5 + v() * 2), hi ? 27.5 - v() * 3 : 40.5 + v() * 3], arc: curl, cam, w, dur: 560 }); return;
         case 'held': {
-          const kp: P = [f(1.8), clamp(from[1], 31, 37)];
-          await S({ moves: { [k]: kp }, ball: [kp[0] - this.fwd(side, .5), kp[1]], cam, w, dur: 560 });
+          // Удар у кут — воротар падає за ним; по центру — забирає стоячи.
+          const kp: P = [f(1.8), aimY];
+          if (Math.abs(aimY - 34) > 1.8) this.lie(k);
+          await S({ moves: { [k]: kp }, ball: [kp[0] - this.fwd(side, .5), kp[1]], arc: curl, cam, w, dur: 560 });
           return;
         }
         case 'parry': case 'tip': {
           this.lie(k);
-          const kp: P = [f(1.4), hi ? 31.5 : 36.5];
-          await S({ moves: { [k]: kp }, ball: kp, cam, w, dur: 520 });
+          const kp: P = [f(1.4), aimY < 34 ? Math.min(aimY, 32) : Math.max(aimY, 36)];
+          await S({ moves: { [k]: kp }, ball: kp, arc: curl, cam, w, dur: 520 });
           if (scores) { await finish(); return; }
-          // Кінчиками — за лицьову (далі кутовий); відбив — перед собою, у штрафний.
-          await S({ ball: how === 'tip' ? [g[0] + this.fwd(side, 1.5), hi ? 27 : 41] : [f(6), hi ? 37 : 31], dur: 380 });
+          // Кінчиками — за лицьову (далі кутовий) збоку чи над поперечиною; відбив — перед собою, у штрафний.
+          await S({ ball: how === 'tip' ? [g[0] + this.fwd(side, 1.5), v() < .4 ? 34 + jit(2) : aimY < 34 ? 27 - v() * 2 : 41 + v() * 2] : [f(4 + v() * 4), 34 + (aimY < 34 ? 1 : -1) * (2 + v() * 5)], arc: how === 'tip' ? 3 : 0, dur: 380 });
           return;
         }
         case 'block': {
@@ -1091,7 +1126,7 @@ export class Director {
           await S({ moves: { [def]: dp }, dur: 220 });
           this.jump(def);
           await S({ ball: [dp[0] - this.fwd(side, .5), dp[1]], dur: 200, cam, w });
-          await S({ ball: [dp[0] + this.fwd(side, 2), dp[1] + (hi ? 7 : -7)], dur: 420 });
+          await S({ ball: [dp[0] + this.fwd(side, jit(3)), dp[1] + (hi ? 1 : -1) * (5 + v() * 4)], dur: 420 });
           this.jump(def, false);
           return;
         }
@@ -1100,19 +1135,19 @@ export class Director {
           const def = this.id(side === 'us' ? 'them' : 'us', lp);
           this.lie(k);
           await S({ moves: { [def]: lp, [k]: [f(2.5), hi ? 37 : 31] }, ball: [lp[0] - this.fwd(side, .4), lp[1]], cam, w, dur: 560 });
-          await S({ ball: [f(14), hi ? 12 : 56], arc: 6, dur: 520 });
+          await S({ ball: [f(10 + v() * 8), hi ? 8 + v() * 8 : 52 + v() * 8], arc: 6, dur: 520 });
           return;
         }
       }
-      if (scores) { await S({ ball: net, cam, w, dur: 550 }); void this.flashOn(side); await this.celebrate(my, side, shooter); return; }
+      if (scores) { await S({ ball: net, arc: curl, cam, w, dur: 550 }); void this.flashOn(side); await this.celebrate(my, side, shooter); return; }
       // Подій удару текст не назвав — як було: «вийшло» — воротар узяв, «вийшло, але» — відбив, інакше мимо.
       if (R === 'ok' || R === 'meh') {
         this.lie(k);
-        await S({ moves: { [k]: [f(1.6), 32] }, ball: [f(1.4), 32.5], dur: 500, cam, w });
-        await S({ ball: R === 'meh' ? [g[0] + this.fwd(side, 1), 25] : [f(7), 24], dur: 400 });
+        await S({ moves: { [k]: [f(1.6), aimY] }, ball: [f(1.4), aimY + .5], arc: curl, dur: 500, cam, w });
+        await S({ ball: R === 'meh' ? [g[0] + this.fwd(side, 1), aimY < 34 ? 25 : 43] : [f(5 + v() * 4), aimY < 34 ? 24 : 44], dur: 400 });
         return;
       }
-      await S({ ball: [g[0] + this.fwd(side, 2), R === 'lost' ? 46 : 41], dur: 550, cam, w });
+      await S({ ball: [g[0] + this.fwd(side, 2), hi ? 27 - v() * 4 : 41 + v() * 4], arc: curl, dur: 550, cam, w });
     };
     /** Удар Реєса (шаблон «удар», голова біля воріт, обведення з голом). */
     const shoot = (from: P) => strike(from, r, 'us', shotEnd, scoresNow);
@@ -1120,7 +1155,8 @@ export class Director {
      *  fail/lost — перехоплення на шляху. Якщо текст каже, що адресат бив, — його удар з кінцівкою. */
     const deliver = async (target: P, mate: string, arc = 1, dur = 600) => {
       // Адресат не там, де стоїть сам Реєс: «у штрафний» зі штрафного — це вглиб, а не собі під ноги.
-      const to: P = dist(target, spot) < 7 ? [clamp(spot[0] + 10, 4, 99), spot[1] < 34 ? spot[1] + 8 : spot[1] - 8] : target;
+      const raw: P = dist(target, spot) < 7 ? [clamp(spot[0] + 10, 4, 99), spot[1] < 34 ? spot[1] + 8 : spot[1] - 8] : target;
+      const to: P = [clamp(raw[0] + jit(a.target ? 1.2 : 2.5), 3, 102), clamp(raw[1] + jit(a.target ? 1.2 : 3), 3, 65)];
       const receiver = mateRole ? this.id(mateRole, to) : mate;
       if (good || (shotEnd && whoTok !== '@them')) {
         await S({ moves: { [receiver]: to }, ball: to, arc, cam: [(spot[0] + to[0]) / 2, (spot[1] + to[1]) / 2], w: Math.max(44, Math.abs(to[0] - spot[0]) + 16, (Math.abs(to[1] - spot[1]) + 14) / .92), dur });
@@ -1132,7 +1168,12 @@ export class Director {
           if (ok()) await strike(from, receiver, 'us', shotEnd, scoresNow);
         }
         else if (R === 'meh') { const foe = this.id('them', to); await S({ moves: { [foe]: [to[0] + 1.2, to[1] + 1] }, dur: 350 }); }
-        else if (good) await S({ moves: { [receiver]: [clamp(to[0] + 4, 2, 103), to[1]] }, ball: [clamp(to[0] + 5, 2, 103), to[1]], dur: 450 });
+        else if (good && a.template === 'pass' && v() < .5) {
+          // Стінка: адресат віддає в дотик назад у хід Реєсу.
+          const run: P = [clamp(to[0] + 5 + v() * 3, 3, 100), spot[1] + (to[1] - spot[1]) * .3];
+          await S({ moves: { [r]: run }, ball: [run[0] + .8, run[1]], cam: run, dur: 520 });
+        }
+        else if (good) await S({ moves: { [receiver]: [clamp(to[0] + 3 + v() * 3, 2, 103), to[1] + jit(2)] }, ball: [clamp(to[0] + 4 + v() * 3, 2, 103), to[1] + jit(2)], dur: 450 });
       } else {
         const mid: P = [(spot[0] + to[0]) / 2, (spot[1] + to[1]) / 2];
         const cut = this.id('them', mid);
@@ -1140,7 +1181,8 @@ export class Director {
         if (ok()) await lose(mid, cut);
       }
     };
-    const mateNear = (p: P) => this.nearest('us', p, 4).find((x) => x !== r)!;
+    /** Хто з двох найближчих партнерів приймає — теж варіація. */
+    const mateNear = (p: P) => pick(this.nearest('us', p, 4).filter((x) => x !== r).slice(0, 2));
 
     if (has('pen')) {
       // Пенальті (текст: «суддя свистить пенальті», «пенальті є, {striker} б'є у стійку»): Реєса збивають у
@@ -1165,7 +1207,7 @@ export class Director {
       // Їхній удар по наших воротах (текст: «{them.striker} б'є — {keeper} відбиває»): Реєс лишається там,
       // де програв чи закрив, суперник доходить до удару — і кінцівка з тексту.
       const shooter = near;
-      const from: P = spot[0] < 34 ? [clamp(spot[0] - 3, 10, 30), spot[1] + (34 - spot[1]) * .4] : [22, spot[1] + (34 - spot[1]) * .5];
+      const from: P = spot[0] < 34 ? [clamp(spot[0] - 3 + jit(3), 10, 30), spot[1] + (34 - spot[1]) * .4 + jit(3)] : [20 + v() * 6, spot[1] + (34 - spot[1]) * .5 + jit(3)];
       if (defending || a.template === 'run' || a.template === 'shield') await S({ moves: { [r]: [foeAt[0] - 1.6, foeAt[1]] }, dur: 300 });
       await S({ moves: { [shooter]: from }, ball: [from[0] - .9, from[1]], cam: [(from[0] + 12) / 2, 34], w: 46, dur: dist(from, this.pos(shooter)) > 10 ? 750 : 400 });
       if (!ok()) return;
@@ -1200,12 +1242,26 @@ export class Director {
         break;
       }
       case 'dribble': {
+        // Обводка йде вперед, тож починається не ближче за край штрафного: сцена «біля воріт» інакше
+        // вела Реєса назад від воріт (запис 19.10).
+        const x0 = Math.min(spot[0], 82);
+        const fwd = (m: number) => x0 + m;
+        if (x0 < spot[0]) await S({ moves: { [r]: [x0, spot[1]] }, ball: [x0 + .9, spot[1]], cam: [x0 + 6, spot[1]], dur: 350 });
         await S({ moves: { [near]: [fwd(2.6), spot[1]] }, dur: 300 });
         if (good || shotEnd) {
-          const side = spot[1] < 34 ? 3 : -3;
-          await S({ moves: { [r]: [fwd(3), spot[1] + side] }, ball: [fwd(3.8), spot[1] + side], dur: 350 });
-          const done: Record<string, P> = { [r]: [clamp(fwd(9), 3, 103), spot[1] + side * .3], [near]: R === 'meh' ? [fwd(7.5), spot[1] + side * .9] : [fwd(2.6), spot[1] - side * .3] };
-          await S({ moves: this.separate({ ...this.field(), ...done }, [r, near]), ball: [clamp(fwd(9.8), 3, 103), spot[1] + side * .3], dur: 450 });
+          // Три обводки: зміщення вбік, прокинути повз і оббігти, розворот на місці. Бік — теж варіація.
+          const side = pick([3, -3]);
+          const how = pick(['cut', 'knock', 'spin'] as const);
+          if (how === 'knock') {
+            await S({ ball: [Math.min(fwd(7), 91), spot[1] + side * .5], dur: 300 });
+            await S({ moves: { [r]: [fwd(3), spot[1] - side * .9] }, dur: 260 });
+          } else if (how === 'spin') {
+            const body = this.t[r].body;
+            await Promise.all([S({ moves: { [r]: [fwd(2), spot[1] + side * .7] }, ball: [fwd(2.6), spot[1] + side * .7], dur: 380 }),
+              this.raw(380, (k) => body.setAttribute('transform', k >= 1 ? '' : `rotate(${(k * 360 * (side > 0 ? 1 : -1)).toFixed(0)})`))]);
+          } else await S({ moves: { [r]: [fwd(3), spot[1] + side] }, ball: [fwd(3.8), spot[1] + side], dur: 350 });
+          const done: Record<string, P> = { [r]: [clamp(fwd(9), 3, 91), spot[1] + side * .3], [near]: R === 'meh' ? [fwd(7.5), spot[1] + side * .9] : [fwd(2.6), spot[1] - side * .3] };
+          await S({ moves: this.separate({ ...this.field(), ...done }, [r, near]), ball: [clamp(fwd(9.8), 3, 92), spot[1] + side * .3], dur: 450 });
           if (R === 'ok' && !shotEnd) this.lie(near);
           if (R === 'goal' || shotEnd) await shoot([clamp(fwd(9), 3, 99), spot[1]]);
         } else await lose([fwd(2), spot[1]]);
@@ -1214,9 +1270,12 @@ export class Director {
       case 'tackle': {
         await S({ moves: { [r]: [foeAt[0] - 1.6, foeAt[1]] }, dur: 350 });
         if (good) {
-          this.lie(near);
-          await S({ moves: { [r]: [foeAt[0] - 1, foeAt[1] + .4] }, ball: [foeAt[0] - .2, foeAt[1] + .6], dur: 250 });
-          await S({ ball: R === 'meh' ? [foeAt[0] + 2, foeAt[1] + 5] : this.pos(mateNear([fwd(6), spot[1]])), dur: 450 });
+          // Відбір стоячи або в підкаті — у підкаті Реєс на газоні, поки м'яч іде партнерові.
+          const slide = v() < .45;
+          if (slide) this.lie(r); else this.lie(near);
+          await S({ moves: { [r]: [foeAt[0] - 1, foeAt[1] + .4] }, ball: [foeAt[0] - .2, foeAt[1] + .6 + jit(.8)], dur: 250 });
+          await S({ ball: R === 'meh' ? [foeAt[0] + 2 + jit(2), foeAt[1] + (v() < .5 ? 5 : -5)] : this.pos(mateNear([fwd(6), spot[1]])), dur: 450 });
+          if (slide) this.lie(r, false);
         } else {
           await S({ moves: { [near]: [clamp(foeAt[0] - 6, 3, 102), foeAt[1] - 2] }, ball: [clamp(foeAt[0] - 6.8, 3, 102), foeAt[1] - 2], dur: 400 });
           if (R === 'lost' || R === 'concede') await lose(this.ballP);
@@ -1233,7 +1292,7 @@ export class Director {
       case 'run': {
         const back = spot[0] < 45;
         // Біля їхньої лицьової вперед бігти нікуди — ривок поперек, у штрафний.
-        const end: P = !back && spot[0] > 80 ? [spot[0] - 2, spot[1] < 34 ? spot[1] + 12 : spot[1] - 12] : [clamp(fwd(back ? -14 : 14), 12, 93), spot[1]];
+        const end: P = !back && spot[0] > 80 ? [spot[0] - 2 + jit(2), spot[1] < 34 ? spot[1] + 10 + v() * 4 : spot[1] - 10 - v() * 4] : [clamp(fwd((back ? -1 : 1) * (11 + v() * 6)), 12, 93), spot[1] + jit(4)];
         const foe = this.id('them', end);
         const dash: Record<string, P> = { [r]: good ? end : [(spot[0] + end[0]) / 2, (spot[1] + end[1]) / 2], [foe]: good ? [end[0] + (back ? -2 : 2), end[1] + 2] : end };
         await S({ moves: this.separate({ ...this.field(), ...dash }, [r, foe]), ball: [end[0] + .9, end[1] + (good ? 0 : .4)], cam: [(spot[0] + end[0]) / 2, end[1]], w: 50, dur: 900 });
@@ -1250,7 +1309,12 @@ export class Director {
       case 'hold': case 'talk': {
         if (a.template === 'talk') { this.say(spot, '!'); this.point(spot, spot[1] < 34 ? 60 : -60); }
         if (mateRole && shotEnd) { await S({ moves: this.block([spot[0] + 4, spot[1]], { [r]: spot }), dur: 500 }); await deliver([clamp(spot[0] + 10, 4, 99), 34 + (spot[1] - 34) * .4], this.id(mateRole, spot), 3, 600); }
-        else if (good) { await S({ moves: this.block([spot[0] + 4, spot[1]], { [r]: spot }), dur: 700 }); await S({ ball: this.pos(mateNear(spot)), dur: 450 }); }
+        else if (good) {
+          // Тримати й віддати: поруч, назад центральному чи на фланг.
+          const toward = pick<P>([spot, [spot[0] - 12, spot[1]], [spot[0] + 2, spot[1] < 34 ? spot[1] + 14 : spot[1] - 14]]);
+          await S({ moves: this.block([spot[0] + 4, spot[1]], { [r]: spot }), dur: 700 });
+          await S({ ball: this.pos(mateNear(toward)), arc: dist(toward, spot) > 10 ? 2 : 0, dur: 450 });
+        }
         else await lose([spot[0] + 2, spot[1] + 1.5]);
         break;
       }
@@ -1375,7 +1439,9 @@ export class Director {
     const goal = this.goalOf(side);
     const k = side === 'us' ? 't1' : 'u1';
     const scorer = side === 'us' ? 'u9' : 't9';
-    const net: P = [goal[0] + this.fwd(side, .6), 33.4];
+    // Гол стрічки теж не однаковий (M52): точка в сітці від сіду матчу й хвилини.
+    const gv = this.rng(`goal/${side}/${manner}`);
+    const net: P = [goal[0] + this.fwd(side, .6), 31.4 + gv() * 5.2];
     const cam = (p: P, w = 40) => ({ cam: p, w });
     const finish = async (from: P, dur = 480) => { await S({ moves: { [scorer]: from }, dur: 200 }); await S({ ball: net, dur, moves: { [k]: [goal[0] - this.fwd(side, 1.6), from[1] < 34 ? 35 : 32] } }); };
     const setup = (p: P, extra: Record<string, P> = {}) => S({ moves: this.block(p, extra), ball: p, ...cam([(p[0] + goal[0]) / 2, 34], Math.max(34, Math.abs(goal[0] - p[0]) + 16)), dur: 420 });

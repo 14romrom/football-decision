@@ -51,9 +51,11 @@ type Props = {
   stamina: number;
   momentum: number;
   minute: number;
+  /** Сід матчу для варіацій рухів (M52). */
+  seed?: number;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
 
@@ -68,7 +70,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     }
     names.u10 = selfName;
     const d = new Director(svgRef.current, {
-      usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(), top, scene,
+      usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(), top, scene, seed,
     });
     d.setBench(onBench, sentOff);
     d.setMinute(minute);
@@ -95,6 +97,8 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     if (!d || !pulse || pulse.kind === 'episode') return;
     // На монтуванні після листа останній показаний рядок — старий: його вже бачили.
     if (first.current) { first.current = false; if (finale || episode) return; }
+    // Хвилина рядка — до розіграшу: від неї варіація постановки (M52), а ефект хвилини нижче спрацює пізніше.
+    if (pulse.minute !== undefined) d.setMinute(pulse.minute);
     if (pulse.stage) void d.play(pulse.stage, pulse.kind);
     else if (pulse.kind === 'goalUs' || pulse.kind === 'goalThem') void d.play({ act: 'echo', tags: [] }, pulse.kind);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -62,7 +62,7 @@ function stateMods(episode: Episode, state: MatchState, player: Player, conditio
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, flagRules, hideDiceZone, finale, sheet, children,
+  state, roster, shown, waiting, onSkip, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, seed, flagRules, hideDiceZone, finale, sheet, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -82,6 +82,8 @@ export function MatchScreen({
   conditions: MatchConditions;
   /** Тур (як на афіші): місяць вирішує, чи вже темно о часі свистка і чи холодно (M52). */
   round?: number;
+  /** Сід матчу — від нього (і хвилини) варіації рухів на полі (M52): перезавантаження покаже те саме. */
+  seed?: number;
   flagRules: FlagRule[];
   /** На экране броска зона «на кубик» прячется: она про следующее решение. */
   hideDiceZone?: boolean;
@@ -139,7 +141,7 @@ export function MatchScreen({
           finale={finale} pulse={shown.length ? shown[shown.length - 1] : null}
           // Заміна й червона ставляться кидком сцени — після нього поле вже без Реєса (match.ts: subbed_off / sent_off).
           onBench={onBench || state.flags.includes('subbed_off')} sentOff={state.flags.includes('sent_off')}
-          stamina={stamina} momentum={state.momentum} minute={clock} />
+          stamina={stamina} momentum={state.momentum} minute={clock} seed={seed} />
       )}
 
       {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}`}>

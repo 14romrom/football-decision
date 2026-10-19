@@ -554,7 +554,7 @@
   "ep_two_v_one_lead/draw_and_release": "shield",
   "ep_two_v_one_lead/release_early": "pass",
   "ep_two_v_one_lead/go_alone_shoot": "shot",
-  "ep_far_post_arrival/tap_in_first_time": "pass",
+  "ep_far_post_arrival/tap_in_first_time": "shot",
   "ep_far_post_arrival/cushion_and_place": "shot",
   "ep_far_post_arrival/square_back_to_striker": "pass",
   "ep_striker_dummy_for_you/shoot_early_low": "shot",

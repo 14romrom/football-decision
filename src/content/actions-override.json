@@ -61,6 +61,7 @@
   "ep_top_cut_pass/take_touch_then": "pass",
   "ep_corner_keeper_blocked/pull_him_off": "shield",
   "ep_free_kick_dummy/fake_and_let_dm": "pass",
-  "ep_free_kick_dummy/roll_it_sideways": "pass"
+  "ep_free_kick_dummy/roll_it_sideways": "pass",
+  "ep_far_post_arrival/tap_in_first_time": "shot"
  }
 }

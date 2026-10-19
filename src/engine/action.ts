@@ -23,6 +23,8 @@ export type ActionBeat = typeof ACTION_BEATS[number];
  *  `end` — події кінцівки з тексту ісходу; `by` — хто забиває, якщо гол не Реєса (ключ ростера з `apply.scorer`);
  *  `counter` — ісход каже про їхню контратаку (воротар вводить уперед, вони біжать). */
 export type ReyesAction = { template: ActionTemplate; place: string | null; target: string | null; result: ActionResult; end?: ActionBeat[]; by?: string; counter?: boolean };
+/** Шаблони, у яких Реєс сам не б'є: якщо ісход каже «твій гол», поле має показати удар, а не передачу. */
+const NOT_A_STRIKE = new Set<ActionTemplate>(['pass', 'back', 'through', 'switch', 'cross', 'hold', 'talk', 'shield', 'tackle', 'foul']);
 const ENDS = endsJson as Record<string, string>;
 
 const ACTIONS = actionsJson as { places: Record<string, string>; options: Record<string, ActionTemplate>; targets?: Record<string, string> };
@@ -45,5 +47,8 @@ export function reyesAction(episode: Episode, option: EpisodeOption, res: Resolu
     : apply?.foul || apply?.addFlags?.includes('booked') ? 'foul'
     : (apply?.losses ?? 0) > 0 || apply?.counterAttack ? 'lost'
     : res.tier === 'clean' ? 'ok' : res.tier === 'cost' ? 'meh' : res.tier === 'fail' ? 'fail' : 'lost';
-  return { template, place, target, result, end, by: apply?.scorer && apply.scorer !== 'self' ? apply.scorer : undefined, counter: !!apply?.counterAttack };
+  // Свій гол Реєса (`apply.goal`) — завжди удар (плейтест 19.10: «замкнути в дотик» з голом виглядало як пас).
+  // Шаблон виводиться з назви варіанта («в дотик» — передача), а ісход знає, хто забив: 34 таких ісходи.
+  const own = !!apply?.goal && (result === 'goal');
+  return { template: own && NOT_A_STRIKE.has(template) ? 'shot' : template, place, target, result, end, by: apply?.scorer && apply.scorer !== 'self' ? apply.scorer : undefined, counter: !!apply?.counterAttack };
 }

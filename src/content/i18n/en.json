@@ -3775,15 +3775,9 @@
   "19d95af88e84": "Nodded to the driver first: Team louder, the town a little closer.",
   "7e9bc7379512": "For That Goal",
   "8b31de5ec3f5": "THE KIOSK BY THE GROUND",
-  "1ad8b7e3ae1c": "The café by the training ground has stopped asking what you're having. They just pour it. And today the kiosk by the ground didn't give you your change. You stand there waiting. The seller looks past you: \"For that goal.\" The queue behind you hears it.",
   "950abebebcfd": "Don't argue. Take the paper and go",
-  "7ead2b186ac3": "You didn't argue. Took the paper, nodded, left. Behind you somebody said \"one of ours\", and you didn't turn round — not because you hadn't heard. Because you had.",
-  "d86af0d36abd": "Left the change, heard \"one of ours\": Team louder, the stands a little closer.",
   "365d88513e6f": "Pay double. So they remember",
-  "e63d5ccf34da": "You put down another note. \"For the next one.\" The seller won't take it, and you leave it on the counter. Next time they give you your change in full. You get the feeling you've broken something.",
-  "95c903498e07": "Paid double at the kiosk — they give you your change again. Ego louder, the town one step further away.",
   "e0c94a811c61": "Stop reaching for your wallet",
-  "743729b89757": "They don't give change to the people they've stopped charging. It isn't a present. It's a bill.",
   "2fe541ae3512": "You stop reaching for your wallet at the kiosk. It isn't free — it's a debt, and round here they collect it in goals. You know what you're paying with.",
   "e1a8efa8a56f": "Stopped reaching for your wallet at the kiosk: Composure up, and a debt to be paid in goals.",
   "0fe43ca58daf": "The Winter Break",
@@ -12683,5 +12677,11 @@
   "a42b6b25e057": "It knows where the offside was. You don't. That's humiliating.",
   "f60b08def7bc": "The whole stadium is looking for it. Nobody ever looked for you like that.",
   "6f0a91e55908": "Fine. Thirty seconds to get your breath back.",
-  "6c56c9573003": "Next: an advert, until the ball gets back in touch"
+  "6c56c9573003": "Next: an advert, until the ball gets back in touch",
+  "4f5a1d7f373d": "The café by the training ground has stopped asking what you're having. They just pour it. And today the kiosk by the ground wouldn't take your money for the paper. You hold out a note — the seller pushes it back and looks past you: \"For that goal.\" The queue behind you hears it.",
+  "e4e00c75f721": "You didn't argue. Put the note away, took the paper, nodded, left. Behind you somebody said \"one of ours\", and you didn't turn round — not because you hadn't heard. Because you had.",
+  "a151f9d65f31": "They wouldn't take your money, you heard \"one of ours\": Team louder, the stands a little closer.",
+  "6294e025455e": "You put two notes on the counter. \"For this one and the next.\" The seller won't take them, and you leave them under the papers. Next time they charge you like everyone else. You get the feeling you've broken something.",
+  "61d82e7d1215": "Paid double at the kiosk — now they charge you like everyone else. Ego louder, the town one step further away.",
+  "bc2a6f14b473": "They don't take money from the people they take something else from. It isn't a present. It's a bill."
 }

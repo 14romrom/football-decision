@@ -245,6 +245,20 @@ export function ambience(on: boolean) {
 }
 
 // ——— заставка ——————————————————————————————————————————————————————————————
+/** Дочекатися, поки звук прокинеться (19.10, плейтест: «на заставці немає кубиків і шуму поля»). На
+ *  холодному старті Android контекст створюється призупиненим, `resume()` асинхронний, а `sfxLaunch`
+ *  перевіряв стан одразу — і заставка щоразу йшла в беззвучну версію. Чекаємо до `ms`; браузер без
+ *  дотику так і не дасть грати — тоді false, як і раніше. */
+export function audioReady(ms = 400): Promise<boolean> {
+  const c = ac();
+  if (!c) return Promise.resolve(false);
+  if (c.state === 'running') return Promise.resolve(true);
+  return new Promise((res) => {
+    const t = window.setTimeout(() => res(c.state === 'running'), ms);
+    c.resume().then(() => { window.clearTimeout(t); res(c.state === 'running'); }).catch(() => { window.clearTimeout(t); res(false); });
+  });
+}
+
 /** Звук заставки за тим самим розкладом, що й `LaunchScreen`: гул трибуни здалеку (фільтр
  *  відкривається, поки підходиш ближче), барабан 1,6–2,6 с, стуки на 2,6 і 2,9 с, штамп на 3,3 с,
  *  трибуна коротко вскидається й за дві секунди гасне — у меню тиша. Повертає false, якщо звуку

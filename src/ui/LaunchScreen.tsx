@@ -3,7 +3,7 @@ import { Film } from './Film';
 import { Logo } from './Logo';
 import { readSettings } from '../telemetry/settings';
 import { titleFilmLabels } from './TitleScreen';
-import { music, sfxLaunch } from './sound';
+import { audioReady, music, sfxLaunch } from './sound';
 
 // Екран запуску «Звук першим» (17.10, макет «Заставка „Звук первым“», варіант А; затверджено
 // з поправкою «на секунду довше»). Задача заставки — не показати логотип, а задати тон і стати
@@ -56,17 +56,22 @@ export function LaunchScreen({ onDone }: Props) {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    // Розклад стартує, коли звук прокинувся (або стало ясно, що не прокинеться), — тоді барабан і кубики
+    // лягають точно на свої кадри. Перші 1,6 с заставки темні, тож очікування до 0,4 с непомітне.
+    void audioReady().then((ready) => { if (!cancelled) start(ready); });
+    const start = (ready: boolean) => {
     const add = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
     const buzz = (p: number | number[]) => { try { navigator.vibrate?.(p); } catch { /* немає мотора */ } };
     if (calm) {
-      const played = sfxLaunch(true);
+      const played = ready && sfxLaunch(true);
       if (!played) buzz(70);
       setShown(roll);
       add(() => setStage('reveal'), CALM.reveal);
       add(() => setStage('settle'), CALM.settle);
       add(finish, CALM.done);
     } else {
-      const played = sfxLaunch(false);
+      const played = ready && sfxLaunch(false);
       setSilent(!played);
       add(() => {
         setStage('dice');
@@ -81,7 +86,8 @@ export function LaunchScreen({ onDone }: Props) {
       add(() => setStage('settle'), T.settle);
       add(finish, T.done);
     }
-    return () => { timers.current.forEach((id) => { window.clearTimeout(id); window.clearInterval(id); }); };
+    };
+    return () => { cancelled = true; timers.current.forEach((id) => { window.clearTimeout(id); window.clearInterval(id); }); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

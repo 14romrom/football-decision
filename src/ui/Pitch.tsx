@@ -25,6 +25,9 @@ export const FAMILY_SPOT: Record<string, Spot> = {
 export const PHASE_SPOT: Record<NonNullable<Episode['phase']>, Spot> = { attack: [0.7, 0.5], defense: [0.3, 0.5], transition: [0.5, 0.5], setpiece: [0.8, 0.4] };
 
 // Місце сцени — зі слів сетапу (engine/action.ts, actions.json); немає — точка сім'ї, як раніше.
+/** Розв'язки, які поле вже зіграло (об'єкт `finale` з App — один на кидок). */
+const PLAYED = new WeakSet<object>();
+
 export const spotOf = (episode: Episode | null): P => {
   const own = episode ? placePoint(scenePlace(episode.id)) : null;
   if (own) return own;
@@ -79,10 +82,17 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     if (import.meta.env.DEV) (window as unknown as { __pitch?: Director }).__pitch = d;
     // Поле з'являється після листа — усі від місця останньої сцени, а розв'язка грає вже звідти.
     // Дія Реєса — шаблоном руху з місця сцени; без неї (старі збереження) — загальна розв'язка за видом.
-    if (finale?.action) void d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target), end: finale.action.end, by: finale.action.by, counter: finale.action.counter });
-    else if (finale) void d.finale(finale.kind, spotOf(episode));
+    // Розв'язка грає один раз (плейтест 19.10: святкування гола при 0:0 без сцени). Поле перемонтовується
+    // після кожного листа — виходу, паузи, свистка, — а `finale` у App лишається тим самим об'єктом аж до
+    // наступного кидка, тож без цієї позначки кожен лист повторював останній гол, навіть із минулого матчу.
+    const fresh = !!finale && !PLAYED.has(finale);
+    if (finale) PLAYED.add(finale);
+    if (fresh && finale?.action) void d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target), end: finale.action.end, by: finale.action.by, counter: finale.action.counter });
+    else if (fresh && finale) void d.finale(finale.kind, spotOf(episode));
     else if (episode) void d.toSpot(spotOf(episode));
-    return () => { d.stop(); dir.current = null; };
+    // Поле, зняте одразу (подвійний монтаж StrictMode у dev), розв'язку не бачило — позначку знімаємо.
+    const born = performance.now();
+    return () => { d.stop(); dir.current = null; if (fresh && finale && performance.now() - born < 300) PLAYED.delete(finale); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

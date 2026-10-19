@@ -138,6 +138,10 @@ export class Director {
   /** Хвилина на табло: від неї (і від автора) залежить, як святкують, — без випадковості, перезавантаження
    *  покаже те саме, а наступний гол — інакше. */
   private clock = 0;
+  /** Коли востаннє розводили з центру: луна гола в стрічці не повторює розвід, який уже відбувся. */
+  private restartedAt = -Infinity;
+  /** Хто в поточному розіграші вже має свою роль — без дрейфу (див. step). */
+  private pinned = new Set<string>();
   private seed = 0;
   /** Лише лабораторія поля: зіграти конкретне святкування. */
   forceCelebration?: Celebration;
@@ -474,8 +478,25 @@ export class Director {
   private async step(my: number, o: { moves?: Record<string, P>; ball?: P; arc?: number; cam?: P; w?: number; dur?: number }) {
     if (my !== this.run || this.dead) return;
     const dur = o.dur ?? 600;
+    // Рух без м'яча (плейтест 19.10: «фішки занадто статичні — ворушаться тільки учасники моменту, і ті
+    // з аномальним прискоренням»). Коли такт рухає лише кількох, решта теж живе: кожен підтягується до
+    // свого місця в блоці, що зсувається за м'ячем (як у 2D-рушії FM), з власним відхиленням. Хто лежить,
+    // воротарі й суддя — на місці; такт, що й так переставляє всю команду, цього не потребує.
+    const moves: Record<string, P> = { ...(o.moves ?? {}) };
+    const named = Object.keys(moves);
+    // Учасники розіграшу (кого цей розіграш уже ставив окремо) не дрейфують: інакше захисник, поставлений
+    // на відбір, відпливав би до свого місця в блоці, поки Реєс до нього біжить.
+    if (named.length < 8) for (const id of named) this.pinned.add(id);
+    if (!this.reduced && named.length < 8) {
+      const anchor = this.block(o.ball ?? this.ballP);
+      for (const id in anchor) {
+        if (id in moves || this.pinned.has(id) || id === 'ref' || id === 'u1' || id === 't1' || !this.playing(id) || this.t[id]?.body.getAttribute('transform')) continue;
+        const p = this.pos(id), a = anchor[id];
+        moves[id] = [clamp(p[0] + (a[0] - p[0]) * .3 + (Math.random() - .5) * 1.8, 1, 104), clamp(p[1] + (a[1] - p[1]) * .3 + (Math.random() - .5) * 1.4, 1, 67)];
+      }
+    }
     const from: Record<string, P> = {};
-    for (const id in o.moves ?? {}) from[id] = this.pos(id);
+    for (const id in moves) from[id] = this.pos(id);
     const b0 = this.ballP;
     const v0 = this.view;
     // Камера трохи випереджає напрям гри (M52): дивимось туди, куди летить м'яч, а не туди, де він був.
@@ -494,13 +515,13 @@ export class Director {
     const mid: P | null = o.ball ? [(b0[0] + o.ball[0]) / 2, (b0[1] + o.ball[1]) / 2 - (H ? H * 2 : arc)] : null;
     // Розтяг на бігу (M52): фішка, що біжить далі за 2 м, трохи витягується вздовж руху.
     const runs: Record<string, number> = {};
-    if (!this.reduced) for (const id in from) { const z = o.moves![id], a = from[id]; const d = dist(a, z); if (d > 2) runs[id] = Math.atan2(z[1] - a[1], z[0] - a[0]) * 180 / Math.PI; }
+    if (!this.reduced) for (const id of named) { const z = moves[id], a = from[id]; const d = dist(a, z); if (d > 2) runs[id] = Math.atan2(z[1] - a[1], z[0] - a[0]) * 180 / Math.PI; }
     // Звук удару — разом із передачею: м'яч пішов далі ніж на 4 м (не перекат біля ніг).
     if (o.ball && dist(b0, o.ball) > 4) sfxKick(this.idling ? 0.5 : 0.8);
     if (o.ball && dist(b0, o.ball) > 4) { this.trail.setAttribute('d', `M${b0[0]},${b0[1]} Q${mid![0]},${mid![1]} ${o.ball[0]},${o.ball[1]}`); this.trail.setAttribute('opacity', '.55'); }
     await this.tween(dur, (k) => {
       if (my !== this.run) return;
-      for (const id in from) { const a = from[id], z = o.moves![id]; this.put(id, [a[0] + (z[0] - a[0]) * k, a[1] + (z[1] - a[1]) * k]); }
+      for (const id in from) { const a = from[id], z = moves[id]; this.put(id, [a[0] + (z[0] - a[0]) * k, a[1] + (z[1] - a[1]) * k]); }
       for (const id in runs) {
         const s = Math.sin(Math.PI * k) * .13, a = runs[id];
         this.t[id].mv.setAttribute('transform', k >= 1 ? '' : `rotate(${a.toFixed(1)}) scale(${(1 + s).toFixed(3)},${(1 - s * .6).toFixed(3)}) rotate(${(-a).toFixed(1)})`);
@@ -508,13 +529,14 @@ export class Director {
       if (o.ball && mid) {
         if (H) this.putBall([b0[0] + (o.ball[0] - b0[0]) * k, b0[1] + (o.ball[1] - b0[1]) * k], 4 * H * k * (1 - k));
         else { const q = 1 - k; this.putBall([q * q * b0[0] + 2 * q * k * mid[0] + k * k * o.ball[0], q * q * b0[1] + 2 * q * k * mid[1] + k * k * o.ball[1]]); }
-      } else if (Object.keys(from).length) this.markOwner(this.ballP);
+      } else if (named.length) this.markOwner(this.ballP);
       if (v1 !== v0) this.setView({ x: v0.x + (v1.x - v0.x) * k, y: v0.y + (v1.y - v0.y) * k, w: v0.w + (v1.w - v0.w) * k, h: v0.h + (v1.h - v0.h) * k });
     });
     setTimeout(() => this.trail.setAttribute('opacity', '0'), 380);
   }
 
   private quiet() {
+    this.pinned.clear();
     for (const id in this.t) { this.t[id].body.removeAttribute('transform'); if (this.t[id].label && id !== 'u10') this.t[id].label!.setAttribute('opacity', '0'); }
     for (const e of [this.pointer, this.shout, this.benchMarks, this.flag, this.card]) e.setAttribute('opacity', '0');
     this.t.med?.g.setAttribute('opacity', '0');
@@ -986,7 +1008,10 @@ export class Director {
       }
       case 'goal': case 'echo': {
         const side: 'us' | 'them' = kind === 'goalThem' ? 'them' : 'us';
-        if (st.act === 'echo') { void this.flashOn(side); await this.celebrate(my, side); break; }
+        // Луна гола з ісходу сцени: сам гол поле вже показало розв'язкою (з тим автором, якого назвав текст).
+        // Повторювати його не можна (плейтест 19.10: другий гол із фішкою 9 після гола Реєса), — лишається
+        // те, що після гола буває завжди: усі на свої половини, розіграш із центру.
+        if (st.act === 'echo') { if (performance.now() - this.restartedAt > 10000) await this.restart(my, side); break; }
         await this.goal(my, side, st.tags[0] ?? 'tap');
         break;
       }
@@ -1016,7 +1041,7 @@ export class Director {
         await S({ moves: { [near]: to }, ball: [to[0] - 1, to[1]], cam: [clamp(spot[0] - 10, 3, 102), spot[1]], dur: 800 });
         break;
       }
-      case 'concede': await S({ moves: { [near]: [spot[0] - 20, spot[1]] }, ball: [spot[0] - 21, spot[1]], cam: [spot[0] - 20, 34], w: 50, dur: 700 }); await S({ ball: [-.6, 34], cam: [16, 34], dur: 700 }); void this.flashOn('them'); break;
+      case 'concede': await S({ moves: { [near]: [spot[0] - 20, spot[1]] }, ball: [spot[0] - 21, spot[1]], cam: [spot[0] - 20, 34], w: 50, dur: 700 }); await S({ ball: [-.6, 34], cam: [16, 34], dur: 700 }); void this.flashOn('them'); await this.celebrate(my, 'them', near); break;
       case 'foul': case 'red': await S({ moves: { [near]: [spot[0] + .8, spot[1] + .3] }, dur: 300 }); sfxWhistle('short'); this.showRef(); this.lie(near); this.showCard(spot, kind === 'red'); break;
       case 'duel': await S({ moves: { [near]: [spot[0] + .7, spot[1] + .3] }, dur: 300 }); await S({ moves: { [near]: [spot[0] + 6, spot[1] + 5] }, ball: [spot[0] + 3, spot[1] - 1], dur: 450 }); break;
       default: this.jump(r); await this.sleep(350); this.jump(r, false);
@@ -1157,7 +1182,10 @@ export class Director {
       // Адресат не там, де стоїть сам Реєс: «у штрафний» зі штрафного — це вглиб, а не собі під ноги.
       const raw: P = dist(target, spot) < 7 ? [clamp(spot[0] + 10, 4, 99), spot[1] < 34 ? spot[1] + 8 : spot[1] - 8] : target;
       const to: P = [clamp(raw[0] + jit(a.target ? 1.2 : 2.5), 3, 102), clamp(raw[1] + jit(a.target ? 1.2 : 3), 3, 65)];
-      const receiver = mateRole ? this.id(mateRole, to) : mate;
+      // Адресат — той, кого називає текст: хто б'є (`@роль`), а для гола з передачі — автор (`by`, плейтест
+      // 19.10: пас на Тібо з голом показував удар нападника, бо шаблон за замовчуванням віддає нападнику).
+      const receiver = mateRole ? this.id(mateRole, to) : a.by && R === 'goal' ? this.id(a.by, to) : mate;
+      if (receiver !== mate) this.label([receiver]);
       if (good || (shotEnd && whoTok !== '@them')) {
         await S({ moves: { [receiver]: to }, ball: to, arc, cam: [(spot[0] + to[0]) / 2, (spot[1] + to[1]) / 2], w: Math.max(44, Math.abs(to[0] - spot[0]) + 16, (Math.abs(to[1] - spot[1]) + 14) / .92), dur });
         if (!ok()) return;
@@ -1297,6 +1325,9 @@ export class Director {
         const dash: Record<string, P> = { [r]: good ? end : [(spot[0] + end[0]) / 2, (spot[1] + end[1]) / 2], [foe]: good ? [end[0] + (back ? -2 : 2), end[1] + 2] : end };
         await S({ moves: this.separate({ ...this.field(), ...dash }, [r, foe]), ball: [end[0] + .9, end[1] + (good ? 0 : .4)], cam: [(spot[0] + end[0]) / 2, end[1]], w: 50, dur: 900 });
         if (mateRole && shotEnd && ok()) await deliver([clamp(end[0] + 10, 4, 99), 34 + (end[1] - 34) * .3], this.id(mateRole, end), 1, 500);
+        // Ривок, що закінчився власним голом («втік за спину — і в кут»): після ривка — удар.
+        else if (R === 'goal' && !a.by && ok()) await shoot([Math.max(end[0], 84), end[1] + (34 - end[1]) * .5]);
+        else if (R === 'goal' && a.by && ok()) await deliver([clamp(end[0] + 8, 4, 96), 34 + (end[1] - 34) * .4], this.id(a.by, end), 1, 500);
         else if (!good) await lose(end, foe);
         break;
       }
@@ -1324,7 +1355,11 @@ export class Director {
     if (!ok()) return;
     // Ісход сильніший за шаблон: червона чи фол — свисток і картка; пропущений — м'яч у наші ворота.
     if ((R === 'red' || R === 'foul') && a.template !== 'foul') { sfxWhistle('short'); this.showRef(); this.lie(near); this.showCard(this.pos(near), R === 'red'); }
-    if (R === 'concede' && !(whoTok === '@them' && shotEnd)) { await S({ ball: [-.6, 34], cam: [16, 34], w: 50, dur: 800 }); void this.flashOn('them'); }
+    if (R === 'concede' && !(whoTok === '@them' && shotEnd)) {
+      const scorer = this.nearest('them', this.ballP, 1)[0] ?? near;
+      await S({ moves: { [scorer]: [this.ballP[0] - 6, this.ballP[1] + (34 - this.ballP[1]) * .4] }, ball: [-.6, 34], cam: [16, 34], w: 50, dur: 800 });
+      void this.flashOn('them'); await this.celebrate(my, 'them', scorer);
+    }
     if (has('down')) this.lie(r);
     if (ok()) void this.idle(my);
   }
@@ -1422,6 +1457,8 @@ export class Director {
       const p = this.pos(to);
       const target: P = [clamp(p[0], 22, 83), clamp(p[1], 8, 60)];
       const bm = this.block(target);
+      // Кожен у фоні бігає по-своєму: відкривається, підстраховує, повертається — не стоїть точкою в блоці.
+      for (const id in bm) if (id !== 'u1' && id !== 't1' && id !== 'ref' && id !== to) bm[id] = [clamp(bm[id][0] + (Math.random() - .5) * 5, 2, 103), clamp(bm[id][1] + (Math.random() - .5) * 4, 2, 66)];
       const recv = bm[to] ?? target;
       const ball: P = [clamp(recv[0], 22, 83), clamp(recv[1], 8, 60)];
       if (first) { for (const id in this.t) if (id !== 'u10') this.t[id].label?.setAttribute('opacity', '0'); this.t.ref?.g.setAttribute('opacity', '0'); first = false; }
@@ -1589,6 +1626,35 @@ export class Director {
       }
     }
     pose('');
+    await this.restart(my, side);
+  }
+
+  /** Після гола (плейтест 19.10: «немає розводу м'яча в центрі»): пауза на святкування, усі
+   *  повертаються на свої половини, двоє тих, хто пропустив, стають біля м'яча в центрі — свисток,
+   *  відкат назад. Без цього наступний рядок стрічки починався з купи гравців біля кутового. */
+  private async restart(my: number, scored: 'us' | 'them') {
+    this.restartedAt = performance.now();
+    await this.sleep(500);
+    if (my !== this.run || this.dead) return;
+    const kick: 'us' | 'them' = scored === 'us' ? 'them' : 'us';
+    const m = this.block([52.5, 34]);
+    const front = Object.keys(m).filter((id) => (kick === 'us' ? isUs(id) : id.startsWith('t')) && id !== 'u1' && id !== 't1' && this.playing(id))
+      .sort((x, y) => dist(m[x], [52.5, 34]) - dist(m[y], [52.5, 34])).slice(0, 2);
+    const back = kick === 'us' ? -1 : 1;
+    if (front[0]) m[front[0]] = [52.5 + back * .9, 34];
+    if (front[1]) m[front[1]] = [52.5 + back * .3, 36.2];
+    // Ті, хто забив, — на своїй половині, за колом.
+    for (const id of Object.keys(m)) {
+      if (id === 'ref' || (kick === 'us' ? isUs(id) : id.startsWith('t'))) continue;
+      m[id] = [kick === 'us' ? Math.max(m[id][0], 62.5) : Math.min(m[id][0], 42.5), m[id][1]];
+    }
+    for (const id of Object.keys(m)) if (id !== 'ref' && (kick === 'us' ? isUs(id) : id.startsWith('t'))) m[id] = [kick === 'us' ? Math.min(m[id][0], 52) : Math.max(m[id][0], 53), m[id][1]];
+    for (const id in this.t) this.t[id].label?.setAttribute('opacity', id === 'u10' ? '1' : '0');
+    await this.step(my, { moves: m, ball: [52.5, 34], cam: [52.5, 34], w: 62, dur: 1300 });
+    if (my !== this.run) return;
+    sfxWhistle('start');
+    const mate = front[0] ? this.nearest(kick, [52.5 + back * 12, 34], 1)[0] : undefined;
+    if (mate) await this.step(my, { ball: this.pos(mate), dur: 600 });
   }
 
   /** Твін без «повільно-швидко-повільно» з `tween` — для власних кривих руху святкування. */

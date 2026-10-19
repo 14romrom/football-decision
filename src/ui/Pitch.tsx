@@ -5,7 +5,7 @@ import type { FinaleKind } from '../engine/finale';
 import { scenePlace, type ReyesAction } from '../engine/action';
 import type { Roster } from '../engine/names';
 import { motionReduced } from '../telemetry/settings';
-import { Director, LABEL_ROLES, PH, PW, formationOf, placePoint, type P } from './pitchDirector';
+import { Director, LABEL_ROLES, PH, PW, formationOf, placePoint, type P, type PitchScene } from './pitchDirector';
 
 // Поле матчу (17.10, макет «Постановка стрічки»; до того — схема 19.09 з трьома шарами руху).
 // Камера показує третину поля, де гра, фішки — у формах команд, м'яч чорно-білий. Кожен рядок стрічки
@@ -37,6 +37,8 @@ type Props = {
   roster: Roster;
   /** Вища ліга — рев великого стадіону на гол. */
   top?: boolean;
+  /** Погода, час і ліга — газон, світло, трибуни (M52). */
+  scene?: PitchScene;
   /** Розв’язка: вид и порядковый номер броска — новый номер запускает хореографию. */
   finale?: { kind: FinaleKind; id: number; action?: ReyesAction } | null;
   /** Последняя строка ленты — поле разыгрывает её постановку. */
@@ -51,7 +53,7 @@ type Props = {
   minute: number;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, top = false, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
 
@@ -66,7 +68,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     }
     names.u10 = selfName;
     const d = new Director(svgRef.current, {
-      usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(), top,
+      usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(), top, scene,
     });
     d.setBench(onBench, sentOff);
     dir.current = d;
@@ -100,6 +102,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
   return (
     <div className="pitch-cam">
       <svg ref={svgRef} className="pitch" preserveAspectRatio="xMidYMid slice" aria-hidden="true" />
+      {scene?.weather === 'rain' && <div className="pitch-rain" aria-hidden="true" />}
       <span className="pitch-clock">{minute}′</span>
     </div>
   );

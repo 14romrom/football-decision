@@ -65,7 +65,21 @@ const isUs = (id: string) => id.startsWith('u') || id === 'sub';
 const FALLBACK_US: Kit = { pattern: 'solid', a: '#b8382a', b: '#b8382a', num: '#f3ead9', gk: '#1d1d22', gkNum: '#e6e1d6' };
 const FALLBACK_THEM: Kit = { pattern: 'solid', a: '#5d6272', b: '#5d6272', num: '#f1eee6', gk: '#3d8a4c', gkNum: '#0d1f11' };
 
+/** Що навколо гри (M52, 19.10): погода й час матчу, ліга — для газону, трибун і світла. */
+export type PitchScene = {
+  weather: 'clear' | 'rain' | 'heat' | 'wind';
+  /** Під прожекторами: стартовий свисток з афіші пізніше, ніж за годину до заходу сонця в місяці туру
+   *  (`prematch-text.ts:floodlit`) — поле показує той самий вечір, що надрукований на афіші. */
+  night: boolean;
+  /** Холод (грудень, лютий) без дощу: іній по краях. Під дощем інею немає — афіша каже «дощ». */
+  cold: boolean;
+  league: 'top' | 'second';
+  /** Написи на рекламних щитах уздовж бровки — пародійна реклама ESPM. */
+  boards: string[];
+};
+
 export type DirectorOptions = {
+  scene?: PitchScene;
   usKit?: Kit; themKit?: Kit; formation: Formation;
   /** Підписи фішок: id → ім'я. Показуються лише тим, кого називає рядок, і Реєсу завжди. */
   names: Record<string, string>;
@@ -74,7 +88,8 @@ export type DirectorOptions = {
   top?: boolean;
 };
 
-type Token = { g: SVGGElement; body: SVGGElement; label?: SVGTextElement; ring?: SVGCircleElement; glow?: SVGCircleElement; p: P };
+type Token = { g: SVGGElement; mv: SVGGElement; body: SVGGElement; label?: SVGTextElement; ring?: SVGCircleElement; glow?: SVGCircleElement; p: P };
+const DEFAULT_SCENE: PitchScene = { weather: 'clear', night: false, cold: false, league: 'second', boards: [] };
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const dist = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1]);
@@ -98,11 +113,17 @@ export class Director {
   private bars: Record<'us' | 'them', SVGLineElement> = {} as Record<'us' | 'them', SVGLineElement>;
   private flashRect!: SVGRectElement;
   private benchMarks!: SVGGElement;
+  private flashes!: SVGGElement;
   private shout!: SVGTextElement;
   private pointer!: SVGGElement;
   private flag!: SVGGElement;
   private card!: SVGRectElement;
   private names: Record<string, string>;
+  private scene: PitchScene;
+  /** М'яч: малюнок угорі на висоті, тінь — на землі. `ballP` — точка на землі (під тінню). */
+  private ballShadow!: SVGEllipseElement;
+  /** Кільце владіння — під гравцем, біля ніг якого м'яч (M52). */
+  private own!: SVGCircleElement;
   private onBench = false;
   /** Реєса вилучено: він поза полем, і на його місце ніхто не виходить — вдесятьох. */
   private tenMen = false;
@@ -112,6 +133,7 @@ export class Director {
     this.reduced = opt.reduced;
     this.top = !!opt.top;
     this.names = opt.names;
+    this.scene = { ...DEFAULT_SCENE, league: opt.top ? 'top' : 'second', ...opt.scene };
     this.home = { ...US_HOME, ...THEM_HOME[opt.formation], ref: [52, 44], med: [44, -3.2], sub: BENCH };
     svg.textContent = '';
     this.drawPitch(opt.usKit ?? FALLBACK_US, opt.themKit ?? FALLBACK_THEM);
@@ -140,9 +162,23 @@ export class Director {
     const defs = this.el('defs', {});
     this.pattern(defs, 'kit-us', us);
     this.pattern(defs, 'kit-them', them);
+    const sc = this.scene;
+    this.svg.classList.toggle('pc-night', sc.night);
+    this.svg.classList.toggle('pc-cold', sc.cold);
+    this.svg.classList.toggle('pc-wind', sc.weather === 'wind');
+    this.svg.classList.toggle('pc-rain', sc.weather === 'rain');
+    this.svg.classList.toggle('pc-heat', sc.weather === 'heat');
+    this.svg.classList.toggle('pc-top', sc.league === 'top');
     this.el('rect', { x: -12, y: -12, width: PW + 24, height: PH + 24, class: 'pc-surround' });
+    this.stands(defs);
+    this.boards();
     this.el('rect', { x: 0, y: 0, width: PW, height: PH, class: 'pc-grass' });
+    // Смуги покосу (M52): ширші й помітніші, ніж були; у вищій лізі газон рівніший і світліший.
     for (let i = 1; i < 10; i += 2) this.el('rect', { x: i * 10.5, y: 0, width: 10.5, height: PH, class: 'pc-stripe' });
+    this.wear(defs);
+    if (sc.night) this.floodlights(defs);
+    if (sc.weather === 'rain') this.puddles(defs);
+    if (sc.cold) this.frost(defs);
     const g = this.el('g', { class: 'pc-lines' });
     this.el('rect', { x: 0, y: 0, width: PW, height: PH }, g);
     this.el('line', { x1: 52.5, y1: 0, x2: 52.5, y2: PH }, g);
@@ -154,7 +190,10 @@ export class Director {
       this.el('circle', { cx: left ? 11 : PW - 11, cy: 34, r: .25, class: 'pc-spot' }, g);
       this.el('path', { d: left ? 'M16.5,26.7 A9.15,9.15 0 0 1 16.5,41.3' : 'M88.5,26.7 A9.15,9.15 0 0 0 88.5,41.3' }, g);
       const side = left ? 'us' : 'them';
-      this.nets[side] = this.el('rect', { x: left ? -2 : PW, y: 30.34, width: 2, height: 7.32, class: 'pc-net' });
+      const ng = this.el('g', { class: 'pc-netg' });
+      this.nets[side] = this.el('rect', { x: left ? -2 : PW, y: 30.34, width: 2, height: 7.32, class: 'pc-net' }, ng);
+      for (let y = 31.6; y < 37.6; y += 1.25) this.el('line', { x1: left ? -2 : PW, y1: y, x2: left ? 0 : PW + 2, y2: y, class: 'pc-mesh' }, ng);
+      for (const x of left ? [-1.35, -.7] : [PW + .7, PW + 1.35]) this.el('line', { x1: x, y1: 30.34, x2: x, y2: 37.66, class: 'pc-mesh' }, ng);
       this.bars[side] = this.el('line', { x1: left ? 0 : PW, y1: 30.34, x2: left ? 0 : PW, y2: 37.66, class: 'pc-bar' });
     }
     for (const [x, y] of [[0, 0], [PW, 0], [0, PH], [PW, PH]] as P[]) {
@@ -168,6 +207,8 @@ export class Director {
     this.flashRect = this.el('rect', { x: 0, y: 0, width: PW, height: PH, class: 'pc-flash', opacity: 0 });
     this.trail = this.el('path', { class: 'pc-trail', opacity: 0 });
 
+    this.ballShadow = this.el('ellipse', { rx: .78, ry: .42, class: 'pc-ball-shadow' });
+    this.own = this.el('circle', { r: 2.05, class: 'pc-own', opacity: 0 });
     const ids = ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 'u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9', 'u11', 'sub', 'ref', 'med', 'u10'];
     for (const id of ids) this.token(id, us, them);
     // м'яч — класичний чорно-білий: білий круг, п'ятикутник і п'ять плям по краю
@@ -185,19 +226,104 @@ export class Director {
     this.card = this.el('rect', { width: 1, height: 1.4, rx: .15, class: 'pc-card', opacity: 0 });
   }
 
+  /** Трибуни (M52): смуга глядачів за лавами; у другій лізі — одна дерев'яна трибуна в центрі, у вищій —
+   *  повний стадіон довкола. Глядачі — візерунок крапок, а не сотні вузлів: поле має лишатися легким. */
+  private stands(defs: SVGDefsElement) {
+    const pat = this.el('pattern', { id: 'crowd', patternUnits: 'userSpaceOnUse', width: 4.2, height: 2.1 }, defs);
+    const dots: [number, number, string][] = [[.4, .5, 'a'], [1.5, .3, 'b'], [2.6, .6, 'c'], [3.6, .4, 'a'], [.9, 1.5, 'c'], [2.0, 1.6, 'a'], [3.1, 1.4, 'b'], [4.0, 1.7, 'c']];
+    for (const [x, y, c] of dots) this.el('circle', { cx: x, cy: y, r: .34, class: `pc-fan pc-fan-${c}` }, pat);
+    const top = this.scene.league === 'top';
+    const blocks: [number, number, number, number][] = top
+      ? [[-12, -12, PW + 24, 5.4], [-12, PH + 2.6, PW + 24, 9.4], [-12, -6.6, 4.8, PH + 9.2], [PW + 7.2, -6.6, 4.8, PH + 9.2]]
+      : [[30, -11, 45, 4.2], [-12, PH + 3.6, 22, 3], [PW - 10, PH + 3.6, 22, 3]];
+    for (const [x, y, w, h] of blocks) {
+      this.el('rect', { x, y, width: w, height: h, class: 'pc-stand' });
+      this.el('rect', { x, y, width: w, height: h, fill: 'url(#crowd)', class: 'pc-crowd' });
+    }
+    this.flashes = this.el('g', { class: 'pc-flashes', opacity: 0 });
+    for (let i = 0; i < 28; i++) {
+      const b = blocks[i % blocks.length];
+      this.el('circle', { cx: b[0] + ((i * 37) % 100) / 100 * b[2], cy: b[1] + ((i * 61) % 100) / 100 * b[3], r: .28, class: 'pc-phone' }, this.flashes);
+    }
+  }
+
+  /** Рекламні щити вздовж бровок — та сама пародійна реклама, що на ESPM (M52). */
+  private boards() {
+    const words = this.scene.boards.length ? this.scene.boards : ['ESPM'];
+    const g = this.el('g', { class: 'pc-boards' });
+    let i = 0;
+    for (const y of [-2.2, PH + 1.1]) {
+      for (let x = 1; x < PW - 1; x += 15) {
+        this.el('rect', { x, y, width: 14.2, height: 1.1, class: `pc-board pc-board-${i % 3}` }, g);
+        const t = this.el('text', { x: x + 7.1, y: y + .8, class: 'pc-board-t' }, g);
+        t.textContent = words[i % words.length].toUpperCase();
+        i++;
+      }
+    }
+  }
+
+  /** Витоптаний газон: біля воріт, у центральному колі й на точках. У другій лізі помітніше. */
+  private wear(defs: SVGDefsElement) {
+    const rg = this.el('radialGradient', { id: 'wear' }, defs);
+    this.el('stop', { offset: '0', class: 'pc-wear-0' }, rg);
+    this.el('stop', { offset: '1', class: 'pc-wear-1' }, rg);
+    const g = this.el('g', { class: 'pc-wear' });
+    for (const [cx, cy, rx, ry] of [[4.5, 34, 5, 9], [PW - 4.5, 34, 5, 9], [52.5, 34, 6, 5], [11, 34, 2.4, 2.4], [PW - 11, 34, 2.4, 2.4]] as [number, number, number, number][]) {
+      this.el('ellipse', { cx, cy, rx, ry, fill: 'url(#wear)' }, g);
+    }
+  }
+
+  /** Вечір: чотири щогли за кутами, світлі плями на газоні й темніші краї. */
+  private floodlights(defs: SVGDefsElement) {
+    const rg = this.el('radialGradient', { id: 'flood' }, defs);
+    this.el('stop', { offset: '0', class: 'pc-flood-0' }, rg);
+    this.el('stop', { offset: '1', class: 'pc-flood-1' }, rg);
+    const g = this.el('g', { class: 'pc-floods' });
+    for (const [x, y] of [[-4, -4], [PW + 4, -4], [-4, PH + 4], [PW + 4, PH + 4]] as P[]) {
+      this.el('ellipse', { cx: x + (x < 0 ? 22 : -22), cy: y + (y < 0 ? 16 : -16), rx: 34, ry: 26, fill: 'url(#flood)' }, g);
+      this.el('circle', { cx: x, cy: y, r: 1.1, class: 'pc-mast' });
+    }
+  }
+
+  /** Дощ: калюжі блищать світлом (самі краплі — шар над полем у Pitch.tsx, у координатах екрана). */
+  private puddles(defs: SVGDefsElement) {
+    const rg = this.el('radialGradient', { id: 'puddle' }, defs);
+    this.el('stop', { offset: '0', class: 'pc-puddle-0' }, rg);
+    this.el('stop', { offset: '1', class: 'pc-puddle-1' }, rg);
+    for (const [cx, cy, rx, ry] of [[8, 40, 3.5, 1.4], [30, 22, 4, 1.2], [56, 48, 3, 1], [74, 30, 4.5, 1.5], [97, 26, 3, 1.2], [44, 60, 3.6, 1.1]] as [number, number, number, number][]) {
+      this.el('ellipse', { cx, cy, rx, ry, fill: 'url(#puddle)' });
+    }
+  }
+
+  /** Холод: іній біля бровок і в кутах, де сонце не дістає. */
+  private frost(defs: SVGDefsElement) {
+    const lg = this.el('linearGradient', { id: 'frost', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    this.el('stop', { offset: '0', class: 'pc-frost-0' }, lg);
+    this.el('stop', { offset: '1', class: 'pc-frost-1' }, lg);
+    this.el('rect', { x: 0, y: 0, width: PW, height: 7, fill: 'url(#frost)' });
+    this.el('rect', { x: 0, y: PH - 7, width: PW, height: 7, fill: 'url(#frost)', transform: `rotate(180 ${PW / 2} ${PH - 3.5})` });
+  }
+
   private token(id: string, us: Kit, them: Kit) {
     const self = id === 'u10';
     const ours = isUs(id);
     const kit = ours ? us : them;
     const gk = id === 'u1' || id === 't1';
     const g = this.el('g', {});
-    const tk: Token = { g, body: undefined as unknown as SVGGElement, p: [0, 0] };
+    // Тінь (M52): удень одна, від сонця; уночі — чотири бліді від щогл прожекторів, як на справжньому стадіоні.
+    if (id !== 'med') {
+      const sh = this.el('g', { class: 'pc-shadow' }, g);
+      const offs: P[] = this.scene.night ? [[.55, .5], [-.55, .5], [.55, -.4], [-.55, -.4]] : [[.45, .6]];
+      for (const [x, y] of offs) this.el('ellipse', { cx: x, cy: y, rx: self ? 1.7 : 1.35, ry: self ? .95 : .75 }, sh);
+    }
+    const mv = this.el('g', {}, g);
+    const tk: Token = { g, mv, body: undefined as unknown as SVGGElement, p: [0, 0] };
     if (self) {
       this.el('circle', { r: 2.35, class: 'pc-ring-bg' }, g);
       tk.ring = this.el('circle', { r: 2.35, class: 'pc-ring', transform: 'rotate(-90)', 'stroke-dasharray': `${2 * Math.PI * 2.35} 99` }, g);
       tk.glow = this.el('circle', { r: 2.95, class: 'pc-glow', opacity: 0 }, g);
     }
-    const body = this.el('g', {}, g);
+    const body = this.el('g', {}, mv);
     tk.body = body;
     // Суддя — схематичний свисток (17.10, зауваження користувача): темне коло з жовтою обводкою без номера
     // читалося як фішка суперника в жовтій формі, у якої зник номер. Кремовий, нейтральний до будь-якої форми.
@@ -211,7 +337,8 @@ export class Director {
     }
     const fill = id === 'ref' ? '#111114' : id === 'med' ? '#f1eee6' : gk ? (ours ? us.gk : them.gk) : `url(#kit-${ours ? 'us' : 'them'})`;
     const stroke = id === 'ref' ? '#f2cf5b' : gk && ours ? '#e6e1d6' : '#0b0b0d';
-    this.el('circle', { r: self ? 1.75 : 1.4, fill, stroke, 'stroke-width': id === 'ref' || (gk && ours) ? .18 : .14 }, body);
+    const r = self ? 1.75 : 1.4;
+    this.el('circle', { r, fill, stroke, 'stroke-width': id === 'ref' || (gk && ours) ? .18 : .14 }, body);
     const num = NUM[id] ?? id.slice(1);
     if (num) {
       const color = id === 'ref' ? '#f2cf5b' : id === 'med' ? '#be3c1c' : gk ? (ours ? us.gkNum : them.gkNum) : kit.num;
@@ -226,7 +353,30 @@ export class Director {
 
   // ——— стан і рух —————————————————————————————————————————————————————
   private put(id: string, p: P) { const tk = this.t[id]; if (!tk) return; tk.p = p; tk.g.setAttribute('transform', `translate(${p[0].toFixed(2)},${p[1].toFixed(2)})`); }
-  private putBall(p: P) { this.ballP = p; this.ball.setAttribute('transform', `translate(${p[0].toFixed(2)},${p[1].toFixed(2)})`); }
+  private putBall(p: P, h = 0) {
+    this.ballP = p;
+    // Висота (M52, як у 2D-рушії FM): м'яч у повітрі вищий за свою тінь і трохи більший — навіс, довгий
+    // пас і свічка читаються об'ємом. Тінь лишається на землі, світлішає й меншає з висотою.
+    this.ball.setAttribute('transform', `translate(${p[0].toFixed(2)},${(p[1] - h).toFixed(2)}) scale(${(1 + h * .07).toFixed(3)})`);
+    this.ballShadow.setAttribute('cx', p[0].toFixed(2)); this.ballShadow.setAttribute('cy', (p[1] + .45).toFixed(2));
+    this.ballShadow.setAttribute('opacity', String(Math.max(.12, .45 - h * .05)));
+    if (h < .4) this.markOwner(p); else this.own.setAttribute('opacity', '0');
+  }
+
+  /** Кільце владіння (M52): під гравцем, біля ніг якого м'яч на землі. Нікого поруч — кільця немає. */
+  private markOwner(p: P) {
+    let best = '', bd = 1.9;
+    for (const id in this.t) {
+      if (id === 'ref' || id === 'med' || !this.playing(id)) continue;
+      const d = dist(this.t[id].p, p);
+      if (d < bd) { bd = d; best = id; }
+    }
+    if (!best) { this.own.setAttribute('opacity', '0'); return; }
+    const q = this.t[best].p;
+    this.own.setAttribute('cx', q[0].toFixed(2)); this.own.setAttribute('cy', q[1].toFixed(2));
+    this.own.setAttribute('r', best === 'u10' ? '2.75' : '2.05');
+    this.own.setAttribute('opacity', '.75');
+  }
   private setView(v: View) { this.view = v; this.svg.setAttribute('viewBox', `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${v.h.toFixed(2)}`); }
   pos(id: string): P { return this.t[id]?.p ?? [52.5, 34]; }
 
@@ -294,7 +444,9 @@ export class Director {
     for (const id in o.moves ?? {}) from[id] = this.pos(id);
     const b0 = this.ballP;
     const v0 = this.view;
-    let v1 = o.cam ? this.frame(o.cam, o.w ?? v0.w) : v0;
+    // Камера трохи випереджає напрям гри (M52): дивимось туди, куди летить м'яч, а не туди, де він був.
+    const lead = o.cam && o.ball ? clamp((o.ball[0] - b0[0]) * .22, -5, 5) : 0;
+    let v1 = o.cam ? this.frame([o.cam[0] + lead, o.cam[1]], o.w ?? v0.w) : v0;
     // М'яч не має вилітати з кадру: якщо ціль поза ним — кадр зсувається рівно настільки, щоб ціль була видна.
     if (o.ball) {
       const m = 4, b = o.ball;
@@ -303,14 +455,26 @@ export class Director {
       if (nx !== v1.x || ny !== v1.y) v1 = this.frame([nx + v1.w / 2, ny + v1.h / 2], v1.w);
     }
     const arc = o.arc ?? 0;
-    const mid: P | null = o.ball ? [(b0[0] + o.ball[0]) / 2, (b0[1] + o.ball[1]) / 2 - arc] : null;
+    // Висота польоту: низом — по землі; навіс, переведення, свічка (arc від 3) — угору й униз параболою.
+    const H = arc >= 3 ? Math.min(6, arc * .45) : 0;
+    const mid: P | null = o.ball ? [(b0[0] + o.ball[0]) / 2, (b0[1] + o.ball[1]) / 2 - (H ? H * 2 : arc)] : null;
+    // Розтяг на бігу (M52): фішка, що біжить далі за 2 м, трохи витягується вздовж руху.
+    const runs: Record<string, number> = {};
+    if (!this.reduced) for (const id in from) { const z = o.moves![id], a = from[id]; const d = dist(a, z); if (d > 2) runs[id] = Math.atan2(z[1] - a[1], z[0] - a[0]) * 180 / Math.PI; }
     // Звук удару — разом із передачею: м'яч пішов далі ніж на 4 м (не перекат біля ніг).
     if (o.ball && dist(b0, o.ball) > 4) sfxKick(this.idling ? 0.5 : 0.8);
     if (o.ball && dist(b0, o.ball) > 4) { this.trail.setAttribute('d', `M${b0[0]},${b0[1]} Q${mid![0]},${mid![1]} ${o.ball[0]},${o.ball[1]}`); this.trail.setAttribute('opacity', '.55'); }
     await this.tween(dur, (k) => {
       if (my !== this.run) return;
       for (const id in from) { const a = from[id], z = o.moves![id]; this.put(id, [a[0] + (z[0] - a[0]) * k, a[1] + (z[1] - a[1]) * k]); }
-      if (o.ball && mid) { const q = 1 - k; this.putBall([q * q * b0[0] + 2 * q * k * mid[0] + k * k * o.ball[0], q * q * b0[1] + 2 * q * k * mid[1] + k * k * o.ball[1]]); }
+      for (const id in runs) {
+        const s = Math.sin(Math.PI * k) * .13, a = runs[id];
+        this.t[id].mv.setAttribute('transform', k >= 1 ? '' : `rotate(${a.toFixed(1)}) scale(${(1 + s).toFixed(3)},${(1 - s * .6).toFixed(3)}) rotate(${(-a).toFixed(1)})`);
+      }
+      if (o.ball && mid) {
+        if (H) this.putBall([b0[0] + (o.ball[0] - b0[0]) * k, b0[1] + (o.ball[1] - b0[1]) * k], 4 * H * k * (1 - k));
+        else { const q = 1 - k; this.putBall([q * q * b0[0] + 2 * q * k * mid[0] + k * k * o.ball[0], q * q * b0[1] + 2 * q * k * mid[1] + k * k * o.ball[1]]); }
+      } else if (Object.keys(from).length) this.markOwner(this.ballP);
       if (v1 !== v0) this.setView({ x: v0.x + (v1.x - v0.x) * k, y: v0.y + (v1.y - v0.y) * k, w: v0.w + (v1.w - v0.w) * k, h: v0.h + (v1.h - v0.h) * k });
     });
     setTimeout(() => this.trail.setAttribute('opacity', '0'), 380);
@@ -335,8 +499,12 @@ export class Director {
     sfxGoal(side === 'us', this.top);
     this.flashRect.classList.toggle('them', side === 'them');
     this.nets[side === 'us' ? 'them' : 'us'].classList.add('hit');
+    this.nets[side === 'us' ? 'them' : 'us'].parentElement?.classList.add('shake');
+    if (side === 'us') this.flashes.setAttribute('opacity', '1');
     await this.tween(900, (k) => this.flashRect.setAttribute('opacity', String((1 - k) * .3)));
     this.nets[side === 'us' ? 'them' : 'us'].classList.remove('hit');
+    this.nets[side === 'us' ? 'them' : 'us'].parentElement?.classList.remove('shake');
+    this.flashes.setAttribute('opacity', '0');
   }
   private async barHit(side: 'us' | 'them') { sfxPost(); this.bars[side].classList.add('hit'); await this.sleep(320); this.bars[side].classList.remove('hit'); }
 

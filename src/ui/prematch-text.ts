@@ -48,4 +48,14 @@ export function toneLines(c: MatchConditions): { title: string; note: string } {
 /** День туру: непарні — субота, парні — неділя. Без оператора остачі: тест шукає «%» у текстах. */
 export const matchDay = (round: number) => ((round & 1) === 1 ? t('субота') : t('неділя'));
 /** Вдома грають увечері, на виїзді — пізніше: різниця помітна в рядку матчдея. */
-export const matchTime = (venue: MatchConditions['venue']) => (venue === 'home' ? '18:00' : '20:00');
+export const kickoffHour = (venue: MatchConditions['venue']) => (venue === 'home' ? 18 : 20);
+export const matchTime = (venue: MatchConditions['venue']) => `${kickoffHour(venue)}:00`;
+
+/** Захід сонця в місяці туру, години місцевого часу (середина місяця, наша широта, з літнім часом):
+ *  серпень … травень за `season.ts:MONTHS`, квітень двічі. Стики — травень. */
+const SUNSET = [20.2, 19.2, 18.1, 16.4, 15.9, 17.3, 18.1, 19.6, 19.9, 20.6];
+/** Поле під прожекторами (M52, 19.10): якщо сонце сідає раніше, ніж за годину після свистка з афіші, —
+ *  більша частина матчу йде при штучному світлі. Так поле показує той самий вечір, що надрукований на
+ *  афіші: виїзд о 20:00 — завжди, домашній о 18:00 — з жовтня по березень. */
+export const floodlit = (round: number, venue: MatchConditions['venue']) =>
+  SUNSET[Math.max(0, Math.min(SUNSET.length - 1, round - 1))] < kickoffHour(venue) + 1;

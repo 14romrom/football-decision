@@ -4,6 +4,7 @@ import { AdBreakCard } from './ui/AdBreakCard';
 import { adBreakFor, adPlan, pauseMinute } from './engine/ads';
 import { adReady, prepareInterstitial, showInterstitial } from './ui/ads';
 import { AskSheet } from './ui/AskSheet';
+import { PitchLab } from './ui/PitchLab';
 import { markNotifyAsked, notifyAskDue, requestNotify, requestReview, reviewAvailable, reviewLater, setNotify } from './ui/notify';
 import { reviewDue } from './engine/notify';
 import { adContext, pickAds, playerColumn } from './engine/espm';
@@ -1018,6 +1019,7 @@ function Game() {
   return (
     <>
       <MatchScreen
+        round={season.round + 1}
         state={session.state}
         roster={session.roster}
         shown={shown}
@@ -1140,6 +1142,8 @@ export function App() {
   if (route.startsWith('#/settings')) return <><ScreenWipe on={route} /><Film /><SettingsScreen onBack={() => go('#/')} onWiped={() => go('#/')} /></>;
   if (route.startsWith('#/about')) return <><ScreenWipe on={route} /><Film /><AboutScreen onBack={() => go('#/')} /></>;
   if (route.startsWith('#/stats')) return <><ScreenWipe on={route} /><StatsScreen /></>;
+  // Лабораторія поля (M52) — лише в dev-збірці; у релізі цієї гілки й модуля немає.
+  if (import.meta.env.DEV && route.startsWith('#/pitchlab')) return <PitchLab />;
   // Карточка вне активного матча читает карьеру напрямую из хранилища — она не
   // синхронизирована «вживую» с сессией Game (там своя копия в рефе), но для
   // самостоятельного экрана свежего чтения при заходе достаточно.

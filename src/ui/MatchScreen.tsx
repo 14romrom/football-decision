@@ -9,6 +9,10 @@ import { computeContext } from '../engine/context';
 import { availableOptions, sceneInsights } from '../engine/match';
 import { VOICE_LABEL } from '../engine/voices';
 import { Pitch } from './Pitch';
+import { ADS } from '../content';
+import { periodOfRound } from '../engine/season';
+import { floodlit } from './prematch-text';
+import type { PitchScene } from './pitchDirector';
 import { useEffect } from 'react';
 import { matchAudio } from './sound';
 import { Icon } from './icons';
@@ -58,7 +62,7 @@ function stateMods(episode: Episode, state: MatchState, player: Player, conditio
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, pitchEpisode, sheetMinute, onBench, player, conditions, flagRules, hideDiceZone, finale, sheet, children,
+  state, roster, shown, waiting, onSkip, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, flagRules, hideDiceZone, finale, sheet, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -76,6 +80,8 @@ export function MatchScreen({
   onBench?: boolean;
   player: Player;
   conditions: MatchConditions;
+  /** Тур (як на афіші): місяць вирішує, чи вже темно о часі свистка і чи холодно (M52). */
+  round?: number;
   flagRules: FlagRule[];
   /** На экране броска зона «на кубик» прячется: она про следующее решение. */
   hideDiceZone?: boolean;
@@ -86,6 +92,15 @@ export function MatchScreen({
   children: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
+  // Що навколо поля (M52): тільки те, що вже сказано гравцеві — погода з афіші, час свистка з афіші,
+  // місяць туру. Іній — у холодні місяці й не під дощем: афіша каже «дощ», і поле не має сперечатися.
+  const scene: PitchScene = {
+    weather: conditions.weather,
+    night: round ? floodlit(round, conditions.venue) : conditions.venue !== 'home',
+    cold: !!round && periodOfRound(round) === 'cold' && conditions.weather !== 'rain',
+    league: conditions.league === 'top' ? 'top' : 'second',
+    boards: ADS.flatMap((a) => (a.title ? [a.title] : [])),
+  };
   const VISIBLE = 4;
   const tape = expanded ? shown : shown.slice(-VISIBLE);
   const hidden = shown.length - tape.length;
@@ -120,7 +135,7 @@ export function MatchScreen({
         <div className={`stamina-bar thin ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
       </div>
       {!moment && (
-        <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} roster={roster} top={conditions.league === 'top'}
+        <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} roster={roster} top={conditions.league === 'top'} scene={scene}
           finale={finale} pulse={shown.length ? shown[shown.length - 1] : null}
           // Заміна й червона ставляться кидком сцени — після нього поле вже без Реєса (match.ts: subbed_off / sent_off).
           onBench={onBench || state.flags.includes('subbed_off')} sentOff={state.flags.includes('sent_off')}

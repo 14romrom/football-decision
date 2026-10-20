@@ -8,11 +8,13 @@ import { installBackButton } from './ui/backButton';
 import { CrashGuard } from './ui/CrashGuard';
 import { installNotify } from './ui/notify';
 import { installAds } from './ui/ads';
+import { installAnalytics } from './ui/firebase';
 
 installUiSounds();
 installBackButton();
 installNotify();
 installAds();
+installAnalytics();
 
 // `index.html` приходить із `lang="uk"` — мова базової версії. Без цього рядка англійська збірка
 // лишається «українською» для всього, що читає атрибут: читалка екрана озвучує англійський текст

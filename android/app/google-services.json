@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "464483087068",
+    "project_id": "inside-the-box-f6608",
+    "storage_bucket": "inside-the-box-f6608.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464483087068:android:a5efa3b73fab9e460ffa19",
+        "android_client_info": {
+          "package_name": "ua.footballdecision.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCWUp9tPWJ-FLgwhwJ1jAu1rf23xxyJmk4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

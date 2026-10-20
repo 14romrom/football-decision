@@ -54,6 +54,17 @@ export function ensureAds(): Promise<boolean> {
   return ready;
 }
 
+/** Регіон згоди для аналітики (ui/firebase.ts): UMP без вікна каже, чи діє тут вимога згоди (ЄЕЗ, UK).
+ *  Вікно не показується — його черга перед першою рекламою. Немає мережі чи SDK — `unknown`. */
+export async function consentRegion(): Promise<'eea' | 'other' | 'unknown'> {
+  if (!native()) return 'unknown';
+  try {
+    const info = await AdMob.requestConsentInfo();
+    const st = String(info.privacyOptionsRequirementStatus);
+    return st === 'REQUIRED' ? 'eea' : st === 'NOT_REQUIRED' ? 'other' : 'unknown';
+  } catch { return 'unknown'; }
+}
+
 /** Рядок «Конфіденційність реклами» в налаштуваннях: показувати лише там, де Google цього вимагає (ЄЕЗ, UK). */
 export const privacyOptionsNeeded = () => privacyRequired;
 export async function showPrivacyOptions() {

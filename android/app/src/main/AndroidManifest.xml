@@ -14,7 +14,14 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-8998219288496303~4470175071" />
-
+        <!-- Firebase Analytics (M49): за умовчанням ні рекламного ID, ні сховища аналітики — лише знеособлені
+             сигнали (Consent Mode). Сховище аналітики вмикає src/ui/firebase.ts, коли UMP каже, що згода в
+             цьому регіоні не потрібна (поза ЄЕЗ і UK). Рекламні сигнали Firebase не вмикаються ніде. -->
+        <meta-data android:name="google_analytics_adid_collection_enabled" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_analytics_storage" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_storage" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_user_data" android:value="false" />
+        <meta-data android:name="google_analytics_default_allow_ad_personalization_signals" android:value="false" />
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"

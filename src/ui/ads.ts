@@ -4,6 +4,7 @@ import { AdMob, BannerAdPluginEvents, BannerAdPosition, BannerAdSize, Interstiti
 import { NativePurchases, PURCHASE_TYPE } from '@capgo/native-purchases';
 import { readSettings, writeSettings } from '../telemetry/settings';
 import { AD_UNITS, TEST_IDS } from './adIds';
+import { currentScreen, track } from '../telemetry/analytics';
 
 // Реклама й «Без реклами» на телефоні (M48, макет погоджено 17.10, рішення 18.10 — реклама вже в першій
 // версії). Тут лише «як»: розклад — `engine/ads.ts`, місця показу — App (пауза в матчі, ролик між дошкою
@@ -121,9 +122,11 @@ function grant() {
 /** Купити. `true` — покупка пройшла (або вже була). Скасував — `false`, без повідомлень про помилку. */
 export async function buyNoAds(): Promise<boolean> {
   if (!native()) return false;
+  track('no_ads_tap', { screen: currentScreen() });
   try {
     await NativePurchases.purchaseProduct({ productIdentifier: NO_ADS_ID, productType: PURCHASE_TYPE.INAPP });
     grant();
+    track('no_ads_purchase', { screen: currentScreen() });
     return true;
   } catch {
     return restoreNoAds();

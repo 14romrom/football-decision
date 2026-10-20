@@ -3,6 +3,8 @@
 // <html> (applySettings), чтобы CSS и RollView читали одно и то же место. Здесь же память реплик
 // титула — она тоже общая для всех карьер.
 
+import { track } from './analytics';
+
 export type Settings = {
   /** «барабан» — цифры бегут и замедляются; «одразу» — кубики стоят сразу, паузы драматургии остаются. */
   dice: 'reel' | 'instant';
@@ -68,9 +70,15 @@ export function deviceLang(): Settings['lang'] {
   }
 }
 
+/** Налаштування, які гравець міняє сам (M49): частка вимкненої музики — пряма відповідь, чи тема
+ *  набридає. Службові поля (прохання, покупка) сюди не входять — у них свої події. */
+const TRACKED: (keyof Settings)[] = ['dice', 'haptics', 'sound', 'crowd', 'music', 'reduceMotion', 'textSize', 'hints', 'lang', 'notify'];
+
 export function writeSettings(s: Settings) {
+  const prev = readSettings();
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* приватный режим */ }
   applySettings(s);
+  for (const k of TRACKED) if (prev[k] !== s[k]) track('settings_change', { key: k, value: String(s[k]) });
 }
 
 /** Классы на <html>: `reduce-motion` (CSS дублирует медиазапрос), `text-large` (zoom). */

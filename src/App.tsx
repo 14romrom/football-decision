@@ -76,6 +76,7 @@ import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
 import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent, VoiceKey } from './engine/types';
 import { logDecision } from './telemetry/log';
+import { screen, setUser, track, watchErrors } from './telemetry/analytics';
 import { MatchScreen } from './ui/MatchScreen';
 import { EpisodeCard } from './ui/EpisodeCard';
 import { WhistleCard } from './ui/WhistleCard';
@@ -127,6 +128,12 @@ type Stage =
 /** Етапи, на яких грає тема меню: пролог, глави, лист травня, відпустка, агент, фінал. Решта — тиша
  *  й звуки гри; матч — стадіон. */
 const MUSIC_STAGES = new Set<Stage['k']>(['prologue', 'chapter', 'may', 'vacation', 'agent', 'ending']);
+
+/** Назви екранів для аналітики (M49): усе, що відбувається всередині матчу, — `match`. */
+const SCREEN_OF: Partial<Record<Stage['k'], string>> = {
+  menu: 'prematch', feed: 'match', episode: 'match', roll: 'match', whistle: 'match', entry: 'match', adbreak: 'match',
+  result: 'board', delta: 'card_delta', season: 'espm_table', posts: 'y_feed', week: 'notebook',
+};
 
 /** Розворот глави (M24) показується раз за кар’єру. */
 const seenChapter = (career: Career, id: string): boolean => (career.chaptersSeen ?? []).includes(id);
@@ -195,6 +202,13 @@ function Game() {
   const [stage, setStage] = useState<Stage>({ k: 'menu' });
   // Тема меню лише на моментах історії (ui/sound.ts:musicScene, «Звукова карта кар'єри», 18.10).
   useEffect(() => { musicScene(MUSIC_STAGES.has(stage.k)); }, [stage.k]);
+  // Екран для аналітики (M49): останній перед виходом показує, де втомилися. Матч — один екран:
+  // стрічка, лист, кидок і свисток змінюються десятки разів за матч і лише розмили б воронку.
+  // Меню, що лише перенаправляє в пролог чи незакритий тиждень, екраном не рахується.
+  useEffect(() => {
+    if (stage.k === 'menu' && (prologuePending(careerRef.current) || pendingWeek())) return;
+    screen(stage.k === 'menu' && careerRef.current.ended ? 'epilogue' : SCREEN_OF[stage.k] ?? stage.k);
+  }, [stage.k]);
   // Краї плівки (ui/Film.tsx): на екранах гри; матч малює свої. Дошка, ESPM і стрічка — без рамки, це «чужі» екрани.
   const film = <>
     <ScreenWipe on={stage.k} />
@@ -291,6 +305,14 @@ function Game() {
 
       // Матч записано в кар'єру і сезон — повертатися більше нікуди (M45).
       dropShot('prematch');
+      track('match_end', {
+        season: sn.number, round: sn.round + 1, match_no: after.matchesPlayed,
+        result: summary.scoreUs > summary.scoreThem ? 'w' : summary.scoreUs < summary.scoreThem ? 'l' : 'd',
+        score_us: summary.scoreUs, score_them: summary.scoreThem,
+        goals: summary.stats.goals, assists: summary.stats.assists,
+        coach_rating: summary.coachRating, fan_rating: summary.fanRating,
+        sent_off: session.state.flags.includes('sent_off'), subbed_off: session.state.flags.includes('subbed_off'),
+      });
 
       pendingRef.current = {
         kind: 'result', whistle, summary, xpEarned, leveledFrom: before.level, leveledTo: after.level, before, after,
@@ -391,6 +413,11 @@ function Game() {
     // Хвилина й сюжет — від сиду матчу, тож перезавантаження ставить ту саму паузу. Ролик вантажиться
     // заздалегідь: поки дійде до паузи чи свистка, він уже готовий або вже точно ні.
     const matchNo = consumedCareer.matchesPlayed + 1;
+    track('match_start', {
+      season: seasonRef.current.number, round: seasonRef.current.round + 1, match_no: matchNo,
+      league: conditions.league, venue: conditions.venue, strength: conditions.strength, weather: conditions.weather,
+      from_bench: !!penalty.fromBench, playoff: playoffPending(seasonRef.current),
+    });
     const plan = adPlan(matchNo);
     adBreakRef.current = plan.pause
       ? { minute: pauseMinute(makeRng(seed * 31 + 7)), brk: fillNamesDeep(adBreakFor(AD_BREAKS, matchNo, session.conditions.league ?? 'second', session.conditions.weather), session.roster), done: false }
@@ -571,6 +598,15 @@ function Game() {
       version: __APP_VERSION__,
       insights: sceneInsights(stage.episode, session.state, session.player).map((v) => v.who),
     });
+    // Те саме рішення — в аналітику (M49): розподіл виборів по сценах на живих гравцях, ярус кидка за
+    // формою ризику, чи слухають голос, який «бачив», і скільки секунд думали.
+    track('decision', {
+      scene: stage.episode.id, option: option.id, risk: res.position, tier: res.tier, difficulty: res.difficulty,
+      voice: option.voice?.who, insight: !!option.insight, minute: stage.minute,
+      score_diff: session.state.scoreUs - session.state.scoreThem,
+      sec: Math.round((performance.now() - shownAtRef.current) / 100) / 10,
+      tutorial: !!session.tutorial,
+    });
 
     // Исход применяется сразу: реплика после броска должна знать счёт и минуту
     // уже с учётом этого исхода. В ленту события попадают по кнопке «Далі».
@@ -632,6 +668,7 @@ function Game() {
           const before = careerRef.current;
           const { career: after, loot } = finishPrologue(before, fillNamesDeep(PROLOGUE, ROSTER), picks);
           setCareerBoth(after);
+          track('prologue_done', { picks: picks.map((p) => p.option).join(',') });
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => setStage({ k: 'menu' })}
@@ -647,10 +684,11 @@ function Game() {
         key={kind}
         sheet={fillNamesDeep(NOTIFY.ask[kind], ROSTER)}
         onYes={() => {
+          track('ask_sheet', { kind, answer: 'yes' });
           if (kind === 'notify') { markNotifyAsked(); void requestNotify().then((ok) => { if (!ok) setNotify(false); go(); }); }
           else { void requestReview(); go(); }
         }}
-        onNo={() => { if (kind === 'notify') { markNotifyAsked(); setNotify(false); } else reviewLater(); go(); }}
+        onNo={() => { track('ask_sheet', { kind, answer: 'later' }); if (kind === 'notify') { markNotifyAsked(); setNotify(false); } else reviewLater(); go(); }}
       />
     );
   }
@@ -673,6 +711,7 @@ function Game() {
           const { career: applied, loot } = applyWeek(before, option ? [{ activity: { id: `${spread.id}:${option.id}`, voice: option.voice, title: spread.title, line: '', effect: option.effect } }] : []);
           const after = { ...applied, mayDone: true };
           setCareerBoth(after);
+          track('may_done', { spread: spread.id, option: picks[0]?.option });
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => askOr(careerRef.current.matchesPlayed, { won: false, rating: 0, badMoment: false, may: true }, () => {
@@ -701,6 +740,7 @@ function Game() {
           const before = careerRef.current;
           const { career: after, loot } = finishVacation(before, fillNamesDeep(VACATION, ROSTER), picks, promotion(seasonRef.current), seasonRef.current.number);
           setCareerBoth(after);
+          track('vacation_done', { picks: picks.map((p) => p.option).join(','), witness: after.larsson });
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => { newSeason(); setStage(BALANCE.growth.levels && leveled ? { k: 'levelup', fromLevel: stage.leveledFrom, toLevel: stage.leveledTo } : { k: 'menu' }); }}
@@ -724,6 +764,7 @@ function Game() {
           const before = careerRef.current;
           const { career: after } = finishEnding(before, fillNamesDeep(ENDING.spreads, ROSTER), picks, seasonRef.current.number);
           setCareerBoth(after);
+          track('career_end', { how: 'ending', matches: after.matchesPlayed, picks: picks.map((p) => p.option).join(',') });
           return { loot: [], before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => { location.hash = '#/'; }}
@@ -866,6 +907,7 @@ function Game() {
           }, () => {
             // Ролик після матчу (M48): між дошкою й ESPM — природна точка переходу за правилами AdMob.
             const toSeason = () => setStage({ k: 'season', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo });
+            if (adPlan(stage.after.matchesPlayed).post) track('ad_post_match', { shown: adReady('interstitialAfterMatch') });
             if (adPlan(stage.after.matchesPlayed).post && adReady('interstitialAfterMatch')) void showInterstitial('interstitialAfterMatch').then(toSeason);
             else toSeason();
           });
@@ -891,6 +933,11 @@ function Game() {
         column={(() => { const c = playerColumn(ESPM_COLUMNS.column, arcStage(career), makeRng(season.seed + season.round * 7331 + 5), new Set(recentPosts())); return c ? fillNamesDeep(c, ROSTER) : undefined; })()}
         onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
         onNewSeason={() => {
+          if (over) track('season_end', {
+            season: season.number, position: ourRow(season).position,
+            verdict: (season.number === 1 ? firstSeasonVerdict(season, career.coachTrust) : secondSeasonVerdict(season, career.coachTrust)).kind,
+            goals: season.player.goals, assists: season.player.assists,
+          });
           // Лист травня (M19.2): що сталося після останнього матчу — за зайнятим місцем, до відпустки.
           if (season.number === 1 && over && !careerRef.current.mayDone && maySpread(season)) {
             setStage({ k: 'may', leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo }); return;
@@ -926,6 +973,8 @@ function Game() {
           // Обставини зриву — за кар’єрою до нового сезону (травми цього сезону ще не обнулені).
           const { career: after, loot, text, ended } = resolveAgent(careerRef.current, seasonRef.current, AGENT, choice, stage.mode);
           setCareerBoth(after);
+          track('agent_choice', { mode: stage.mode, choice: String(choice), ended: !!ended });
+          if (ended) track('career_end', { how: 'agent', matches: after.matchesPlayed });
           return { text: fillNames(text, ROSTER), loot, ...(ended ? { ended } : {}) };
         }}
         onNext={() => {
@@ -989,6 +1038,7 @@ function Game() {
           const before = careerRef.current;
           const { career: after, loot } = finishWeek(before, ctx, days, picks, scenes, anchor);
           setCareerBoth(after);
+          track('week_done', { season: sn.number, round: sn.round, picks: picks.length, anchor: anchor?.id, locked: stage.locked });
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}
@@ -1040,7 +1090,7 @@ function Game() {
         {stage.k === 'adbreak' && (
           <AdBreakCard
             brk={stage.brk} minute={stage.minute} withAd={adReady('interstitialPause')}
-            onWait={() => { const lead = stage.lead; void showInterstitial('interstitialPause').then(() => proceed(lead)); }}
+            onWait={() => { const lead = stage.lead; track('ad_pause', { story: stage.brk.id, shown: adReady('interstitialPause') }); void showInterstitial('interstitialPause').then(() => proceed(lead)); }}
           />
         )}
         {stage.k === 'entry' && (
@@ -1105,6 +1155,10 @@ export function App() {
   const afterLaunch = useRef<string | null>(null);
   useEffect(() => {
     applySettings();
+    // Аналітика (M49): розріз для всіх подій — мова, збірка, канал, слот. Приймач (Firebase) підключає
+    // ui/firebase.ts; тут — лише те, що знає гра.
+    watchErrors();
+    setUser({ lang: readSettings().lang, build: __APP_VERSION__, release: __APP_RELEASE__ || 'none', channel: __APP_CHANNEL__, slot: activeSlot() });
     // Без заставки (відкрили не титул) тема вмикається одразу; на матчі її притримає matchAudio.
     if (launched) music(true);
     const onHash = () => { afterLaunch.current = null; setRoute(location.hash); window.scrollTo(0, 0); };
@@ -1116,6 +1170,7 @@ export function App() {
   // ефекти дитини спрацьовують раніше за батьківські, тож тут #/play не чіпаємо.
   useEffect(() => {
     if (route.startsWith('#/play')) return;
+    screen(isTitleRoute(route) ? 'title' : route.replace(/^#\//, '').split(/[/?]/)[0]);
     musicScene(isTitleRoute(route) || /^#\/(slots|settings|about)/.test(route));
   }, [route]);
   const go = (hash: string) => { location.hash = hash; };

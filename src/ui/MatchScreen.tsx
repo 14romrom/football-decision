@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Film } from './Film';
 import type { Episode, FlagRule, MatchState, ModLine, Player, TimelineEvent } from '../engine/types';
 import type { Kit as KitT, Roster } from '../engine/names';
@@ -16,7 +16,7 @@ import type { PitchScene } from './pitchDirector';
 import { useEffect } from 'react';
 import { matchAudio } from './sound';
 import { Icon } from './icons';
-import { plural, t, tf } from '../content/i18n';
+import { t, tf } from '../content/i18n';
 
 // Экран матча по макету А2 (19.09): поле целиком сверху, под ним стрічка подій як діалог —
 // старые строки гаснут и уходят под поле, — сцена (EpisodeCard) или бросок (RollView), внизу
@@ -62,13 +62,17 @@ function stateMods(episode: Episode, state: MatchState, player: Player, conditio
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, seed, flagRules, hideDiceZone, finale, sheet, children,
+  state, roster, shown, waiting, onSkip, onReading, cue, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, seed, flagRules, hideDiceZone, finale, sheet, children,
 }: {
   state: MatchState;
   roster: Roster;
   shown: TimelineEvent[];
   waiting: boolean;
   onSkip: () => void;
+  /** Гравець гортає стрічку вгору — матч чекає (App не подає нових рядків), повернувся вниз — далі. */
+  onReading?: (on: boolean) => void;
+  /** Сцена, що ось-ось відкриється (App, передчуття): поле показує її місце до листа. */
+  cue?: Episode | null;
   /** Текущая сцена — для точки на поле и факторов «на кубик»; null между эпизодами. */
   episode: Episode | null;
   /** Остання сцена — позиція Реєса на полі між листами: розв’язка грає вже після «далі», з місця цієї сцени. */
@@ -93,7 +97,42 @@ export function MatchScreen({
   finale?: { kind: FinaleKind; id: number; action?: ReyesAction } | null;
   children: ReactNode;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  // Стрічка — як чат (плейтест 22.10: «хз як вручну почитати/поскролити лог»): уся історія матчу в ній,
+  // гортається пальцем; поки гравець читає вище останнього рядка, нові не приходять (App, `reading`), а
+  // старі рядки не гаснуть — їх же читають. Кнопки «ще N подій» більше немає: жест, який знає кожен.
+  const [reading, setReading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const atBottom = useRef(true);
+  const read = (on: boolean) => { if (on !== reading) { setReading(on); onReading?.(on); } };
+  // Висота вікна стрічки — до низу екрана, з місцем під «далі ⟶»: так гортається стрічка, а не сторінка.
+  useLayoutEffect(() => {
+    const el = scrollRef.current; if (!el) return;
+    // Під стрічкою — «далі ⟶» і рядок тренера: їхню висоту міряємо, а не вгадуємо, щоб сторінка не гортилась.
+    const fit = () => {
+      const r = el.getBoundingClientRect();
+      const below = document.documentElement.scrollHeight - (r.bottom + window.scrollY);
+      el.style.maxHeight = `${Math.max(130, window.innerHeight - r.top - window.scrollY - below)}px`;
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  });
+  // Новий рядок — стрічка внизу, якщо гравець і так був унизу; читає вище — не смикаємо.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el && atBottom.current) el.scrollTop = el.scrollHeight;
+  }, [shown.length]);
+  const onScroll = () => {
+    const el = scrollRef.current; if (!el) return;
+    atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 12;
+    read(!atBottom.current);
+  };
+  const skip = () => {
+    const el = scrollRef.current;
+    if (el) { atBottom.current = true; el.scrollTop = el.scrollHeight; }
+    read(false);
+    onSkip();
+  };
   // Що навколо поля (M52): тільки те, що вже сказано гравцеві — погода з афіші, час свистка з афіші,
   // місяць туру. Іній — у холодні місяці й не під дощем: афіша каже «дощ», і поле не має сперечатися.
   const scene: PitchScene = {
@@ -103,9 +142,6 @@ export function MatchScreen({
     league: conditions.league === 'top' ? 'top' : 'second',
     boards: ADS.flatMap((a) => (a.title ? [a.title] : [])),
   };
-  const VISIBLE = 4;
-  const tape = expanded ? shown : shown.slice(-VISIBLE);
-  const hidden = shown.length - tape.length;
   const mods = episode ? stateMods(episode, state, player, conditions, flagRules) : [];
   const insights = episode ? sceneInsights(episode, state, player) : [];
   // Сили — полоса по нижней кромке поля (19.09): сжимается влево, цвет по уровню.
@@ -149,27 +185,25 @@ export function MatchScreen({
           finale={finale} pulse={shown.length ? shown[shown.length - 1] : null}
           // Заміна й червона ставляться кидком сцени — після нього поле вже без Реєса (match.ts: subbed_off / sent_off).
           onBench={onBench || state.flags.includes('subbed_off')} sentOff={state.flags.includes('sent_off')}
-          stamina={stamina} momentum={state.momentum} minute={clock} seed={seed} />
+          stamina={stamina} momentum={state.momentum} minute={clock} seed={seed} cue={cue} />
       )}
 
-      {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}`}>
+      {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}${reading ? ' reading' : ''}`}>
         <div className="tape-shade" />
-        {hidden > 0 && !expanded && (
-          <button className="tape-more" onClick={() => setExpanded(true)}>{Icon.list()} {tf('ще {0} {1}', hidden, plural(hidden, t('подія'), t('події'), t('подій')))}</button>
-        )}
-        {expanded && <button className="tape-more" onClick={() => setExpanded(false)}>{t('згорнути')}</button>}
-        {tape.map((e, i) => {
-          const age = tape.length - 1 - i;   // 0 — последняя строка
-          return (
-            <p key={shown.length - tape.length + i} className={`tape-line kind-${e.kind} age-${Math.min(age, 3)}`}>
-              <span className="tape-minute">{e.minute}′</span> — {e.text}
-            </p>
-          );
-        })}
+        <div className="tape-scroll" ref={scrollRef} onScroll={onScroll}>
+          {shown.map((e, i) => {
+            const age = shown.length - 1 - i;   // 0 — последняя строка
+            return (
+              <p key={i} className={`tape-line kind-${e.kind} age-${Math.min(age, 4)}`}>
+                <span className="tape-minute">{e.minute}′</span> — {e.text}
+              </p>
+            );
+          })}
+        </div>
         {state.coachTrust < 30 && (
           <p className="tape-line say say-coach"><b>{t('Тренер')}</b> {t('— дедалі частіше поглядає на брівку: там уже розминаються.')}</p>
         )}
-        {waiting && <button className="skip" onClick={onSkip}>{t('далі ⟶')}</button>}
+        {waiting && <button className="skip" onClick={skip}>{t('далі ⟶')}</button>}
       </div>}
 
       {/* Карточка момента отделена от таймлайна панелью: сцена, варианты и зона «на кубик» — одно целое.

@@ -59,9 +59,11 @@ type Props = {
   minute: number;
   /** Сід матчу для варіацій рухів (M52). */
   seed?: number;
+  /** Сцена, що ось-ось відкриється: камера до її місця, Реєс спалахує (передчуття, 22.10). */
+  cue?: Episode | null;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0 }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
 
@@ -117,6 +119,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pulse?.minute, pulse?.text]);
   useEffect(() => { dir.current?.setMinute(minute); }, [minute]);
+  useEffect(() => { if (cue) void dir.current?.cue(spotOf(cue)); }, [cue?.id]);
 
   return (
     <div className="pitch-cam">

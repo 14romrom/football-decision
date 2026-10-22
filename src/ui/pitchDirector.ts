@@ -1463,6 +1463,22 @@ export class Director {
     void this.idle(my);
   }
 
+  /** Передчуття сцени (22.10): камера повільно наїжджає на місце, де зараз буде сцена, Реєс туди
+   *  підтягується, підписаний і двічі спалахує. Розіграш поточного рядка до кінця не дочікуємося — за
+   *  1,3 с відкриється лист, і важливіше показати, куди дивитись. Гол не перебиваємо (`holds`). */
+  async cue(at: P) {
+    if (this.holds) await this.untilFree();
+    if (this.dead) return;
+    const spot = this.inPlay(at);
+    const my = ++this.run;
+    this.quiet();
+    if (!this.onBench) this.label(['u10']);
+    const glow = this.t.u10.glow, was = glow?.getAttribute('opacity') ?? '0';
+    const pulse = this.raw(1100, (k) => glow?.setAttribute('opacity', String((.25 + .45 * Math.abs(Math.sin(k * Math.PI * 2))).toFixed(2))));
+    await Promise.all([this.step(my, { moves: this.block(spot, this.onBench ? {} : { u10: spot }), ball: [spot[0] + .9, spot[1]], cam: spot, w: 34, dur: 1000 }), pulse]);
+    if (my === this.run) glow?.setAttribute('opacity', was);
+  }
+
   /** Де зараз стоять усі, хто грає, — щоб розвести фішки в кінцевій точці руху. */
   private field(): Record<string, P> {
     const f: Record<string, P> = {};

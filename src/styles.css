@@ -758,6 +758,13 @@ html.reduce-motion .doodle svg { filter: none; }
 
 
 .tape { position: relative; padding: 6px 12px 0; }
+.tape-scroll { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-top: 10px; }
+.tape-scroll::-webkit-scrollbar { display: none; }
+.tape-line.age-4 { color: var(--faint); font-size: 13.5px; }
+/* Гравець гортає історію — рядки не гаснуть: їх читають (плейтест 22.10). */
+.tape.reading .tape-line { color: #c9c4b8; font-size: 14px; }
+.tape.reading .tape-line.age-0 { color: var(--ink); }
+.tape-shade { z-index: 1; }
 .tape-shade { position: absolute; left: 0; right: 0; top: 0; height: 40px; pointer-events: none;
   background: linear-gradient(180deg, var(--bg) 0%, rgba(11,11,13,0.85) 40%, rgba(11,11,13,0) 100%); }
 .tape-line { margin: 0 0 9px; padding-left: 16px; text-indent: -16px; font-size: 14.5px; line-height: 1.5; color: var(--ink); }

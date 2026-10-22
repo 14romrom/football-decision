@@ -236,6 +236,10 @@ function Game() {
   const [queue, setQueue] = useState<TimelineEvent[]>([]);
   /** Стрічка дочитується перед листом: «далі ⟶» лишається на екрані й відкриває лист одразу. */
   const [holding, setHolding] = useState(false);
+  /** Гравець гортає стрічку вгору (MatchScreen) — нові рядки й лист чекають, поки не повернеться вниз. */
+  const [reading, setReading] = useState(false);
+  /** Сцена, що ось-ось відкриється: поле показує її місце (передчуття). */
+  const [cue, setCue] = useState<Episode | null>(null);
   const openNowRef = useRef<(() => void) | null>(null);
 
   const proceed = useCallback((lead: TimelineEvent[] = []) => {
@@ -542,7 +546,7 @@ function Game() {
 
   // Проигрывание ленты: по одному событию, пока очередь не опустеет.
   useEffect(() => {
-    if (stage.k !== 'feed') return;
+    if (stage.k !== 'feed' || reading) return;
     if (queue.length === 0) {
       const p = pendingRef.current;
       if (!p) return;
@@ -554,6 +558,7 @@ function Game() {
       const open = () => {
         openNowRef.current = null;
         setHolding(false);
+        setCue(null);
         pendingRef.current = null;
         if (p.kind === 'episode') {
           shownAtRef.current = performance.now();
@@ -568,9 +573,12 @@ function Game() {
       };
       if (!hold) { open(); return; }
       const h = setTimeout(open, hold);
-      openNowRef.current = () => { clearTimeout(h); open(); };
+      // Передчуття (22.10, принцип «anticipation»): останні ~1,3 с перед листом сцени камера їде туди, де
+      // буде сцена, і Реєс там спалахує — гравець бачить «зараз моє», а не лист, що вискакує сам.
+      const c = p.kind === 'episode' ? setTimeout(() => setCue(p.episode), Math.max(0, hold - 1300)) : undefined;
+      openNowRef.current = () => { clearTimeout(h); clearTimeout(c); open(); };
       setHolding(true);
-      return () => { clearTimeout(h); openNowRef.current = null; setHolding(false); };
+      return () => { clearTimeout(h); clearTimeout(c); openNowRef.current = null; setHolding(false); };
     }
     // Наступний рядок приходить, коли попередній дочитано: час — за попереднім рядком.
     const prev = shownRef.current[shownRef.current.length - 1];
@@ -579,7 +587,7 @@ function Game() {
       setQueue((q) => q.slice(1));
     }, prev ? dwellFor(prev) : 1200);
     return () => clearTimeout(t);
-  }, [stage.k, queue]);
+  }, [stage.k, queue, reading]);
 
   /** «Далі ⟶»: решта рядків — одразу; якщо черга порожня й чекаємо листа — відкрити лист зараз. */
   const skip = useCallback(() => {
@@ -1090,7 +1098,9 @@ function Game() {
         state={session.state}
         roster={session.roster}
         shown={shown}
-        waiting={stage.k === 'feed' && (queue.length > 0 || holding)}
+        waiting={stage.k === 'feed' && (queue.length > 0 || holding || reading)}
+        onReading={setReading}
+        cue={stage.k === 'feed' ? cue : null}
         onSkip={skip}
         episode={stage.k === 'episode' || stage.k === 'roll' ? stage.episode : null}
         pitchEpisode={lastEpisodeRef.current}

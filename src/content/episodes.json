@@ -92,7 +92,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -631,7 +631,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -1909,7 +1909,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -3391,7 +3391,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -5599,7 +5599,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -10052,7 +10052,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -10108,7 +10108,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -10326,7 +10326,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -10753,7 +10753,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -14452,7 +14452,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -16092,7 +16092,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -18998,7 +18998,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -19280,7 +19280,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -20826,7 +20826,7 @@
         "attribute": "strength",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 5,
         "goals": {
           "team": 2,
@@ -24283,7 +24283,7 @@
         "attribute": "positioning",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -24559,7 +24559,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -24791,7 +24791,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -25324,7 +25324,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -25481,7 +25481,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -29121,7 +29121,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -30568,7 +30568,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -30945,7 +30945,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -31127,7 +31127,7 @@
         "attribute": "composure",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -31470,7 +31470,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -31693,7 +31693,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -32124,7 +32124,7 @@
         "attribute": "positioning",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -35997,7 +35997,7 @@
         "attribute": "first_touch",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -36445,7 +36445,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -38525,7 +38525,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 2,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -38955,7 +38955,7 @@
         "attribute": "composure",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": -1,
+        "difficulty": 0,
         "staminaCost": 4,
         "goals": {
           "team": 2,
@@ -40833,7 +40833,7 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 0,
+        "difficulty": 1,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -41707,7 +41707,7 @@
         "attribute": "composure",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": -1,
+        "difficulty": 0,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -42726,7 +42726,7 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": -1,
+        "difficulty": 0,
         "staminaCost": 3,
         "goals": {
           "team": 3,

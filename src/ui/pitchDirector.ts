@@ -140,6 +140,17 @@ export class Director {
   private clock = 0;
   /** Коли востаннє розводили з центру: луна гола в стрічці не повторює розвід, який уже відбувся. */
   private restartedAt = -Infinity;
+  /** Гол грається до кінця (плейтест 22.10: «немає розводу м'яча з центру після гола»): удар, святкування
+   *  й розвід із центру тривають 5–7 с, а наступний рядок стрічки приходить за 1,9 с і обривав їх. Розіграш
+   *  із голом тримає поле (`holds`); новий рядок чекає, і з кількох, що встигли прийти, грається останній. */
+  private holds = 0;
+  private freed: (() => void)[] = [];
+  private waiting = 0;
+  private async holding<T>(f: () => Promise<T>): Promise<T> {
+    this.holds++;
+    try { return await f(); } finally { if (--this.holds === 0) { const w = this.freed; this.freed = []; w.forEach((r) => r()); } }
+  }
+  private untilFree(): Promise<void> { return this.holds ? new Promise((r) => this.freed.push(r)) : Promise.resolve(); }
   /** Хто в поточному розіграші вже має свою роль — без дрейфу (див. step). */
   private pinned = new Set<string>();
   private seed = 0;
@@ -492,7 +503,7 @@ export class Director {
       for (const id in anchor) {
         if (id in moves || this.pinned.has(id) || id === 'ref' || id === 'u1' || id === 't1' || !this.playing(id) || this.t[id]?.body.getAttribute('transform')) continue;
         const p = this.pos(id), a = anchor[id];
-        moves[id] = [clamp(p[0] + (a[0] - p[0]) * .3 + (Math.random() - .5) * 1.8, 1, 104), clamp(p[1] + (a[1] - p[1]) * .3 + (Math.random() - .5) * 1.4, 1, 67)];
+        moves[id] = [clamp(p[0] + (a[0] - p[0]) * .5 + (Math.random() - .5) * 2.6, 1, 104), clamp(p[1] + (a[1] - p[1]) * .5 + (Math.random() - .5) * 2, 1, 67)];
       }
     }
     const from: Record<string, P> = {};
@@ -579,12 +590,17 @@ export class Director {
   /** Блок зсувається за м'ячем: усі польові на `dx` уздовж поля і трохи до флангу гри. */
   private block(z: P, extra: Record<string, P> = {}): Record<string, P> {
     const dx = (z[0] - 52.5) * .45, dy = (z[1] - 34) * .18;
+    // Лінія захисту йде за атакою своєї команди сильніше за решту (плейтест 22.10: «центральні захисники
+    // всю гру стоять у своєму штрафному»): м'яч біля чужих воріт — наші центральні біля центру поля.
+    const backUs = z[0] > 52.5 ? (z[0] - 52.5) * .75 : dx, backThem = z[0] < 52.5 ? (z[0] - 52.5) * .75 : dx;
+    const BACK = new Set(['u2', 'u3', 'u4', 'u5', 't2', 't3', 't4', 't5']);
     const m: Record<string, P> = {};
     for (const id in this.home) {
       if (['ref', 'med', 'sub'].includes(id)) continue;
       if (id === 'u10' && this.onBench) continue;
       const [x, y] = this.home[id];
-      m[id] = id === 'u1' || id === 't1' ? [x, clamp(34 + (z[1] - 34) * .12, 30, 38)] : [clamp(x + dx, 3, 102), clamp(y + dy, 3, 65)];
+      const sx = BACK.has(id) ? (isUs(id) ? backUs : backThem) : dx;
+      m[id] = id === 'u1' || id === 't1' ? [x, clamp(34 + (z[1] - 34) * .12, 30, 38)] : [clamp(x + sx, 3, 102), clamp(y + dy, 3, 65)];
     }
     if (this.onBench && !this.tenMen) m.sub = [clamp(this.home.u10[0] + dx, 3, 102), this.home.u10[1]];
     m.ref = [clamp(z[0] - 6, 6, 99), clamp(z[1] + 9, 5, 63)];
@@ -631,6 +647,12 @@ export class Director {
 
   // ——— розіграш рядка стрічки ————————————————————————————————————————————
   async play(st: Stage, kind?: string) {
+    if (this.holds) { const t = ++this.waiting; await this.untilFree(); if (t !== this.waiting || this.dead) return; }
+    if (kind === 'goalUs' || kind === 'goalThem') return this.holding(() => this.playLine(st, kind));
+    return this.playLine(st, kind);
+  }
+
+  private async playLine(st: Stage, kind?: string) {
     if (st.act === 'kickoff') sfxWhistle('start');
     if (st.act === 'half') sfxWhistle('half');
     // Номер розіграшу цього рядка (playAct бере ++run першою дією). Фон — лише з ним: якщо поле зняли,
@@ -1054,6 +1076,10 @@ export class Director {
    *  (суперник поруч), fail — відібрали / воротар узяв / мимо, lost — втрата й їхня контратака.
    *  Гол, пропущений, фол і червона — з ісходу. Замінює загальну розв'язку `finale`. */
   async action(a: { template: ActionTemplate; result: ActionResult; place: P; target?: P | null; end?: string[]; by?: string; counter?: boolean }) {
+    return a.result === 'goal' || a.result === 'concede' ? this.holding(() => this.actionBody(a)) : this.actionBody(a);
+  }
+
+  private async actionBody(a: { template: ActionTemplate; result: ActionResult; place: P; target?: P | null; end?: string[]; by?: string; counter?: boolean }) {
     const my = ++this.run;
     this.quiet();
     const ok = () => my === this.run;
@@ -1174,8 +1200,18 @@ export class Director {
       }
       await S({ ball: [g[0] + this.fwd(side, 2), hi ? 27 - v() * 4 : 41 + v() * 4], arc: curl, dur: 550, cam, w });
     };
-    /** Удар Реєса (шаблон «удар», голова біля воріт, обведення з голом). */
-    const shoot = (from: P) => strike(from, r, 'us', shotEnd, scoresNow);
+    /** Удар Реєса (шаблон «удар», голова біля воріт, обведення з голом). Із глибини спершу доводить м'яч
+     *  до зони удару (плейтест 22.10: «гол зі своєї половини, хоча текст про момент біля чужих воріт»):
+     *  точка сцени — де почалося, а б'ють у грі з-під штрафного, не з центрального кола. */
+    const shoot = async (from: P) => {
+      let f = from;
+      if (f[0] < 74) {
+        f = [74 + v() * 10, f[1] + (34 - f[1]) * .5];
+        await S({ moves: this.block(f, { [r]: f }), ball: [f[0] + .9, f[1]], cam: f, w: 46, dur: 750 });
+        if (!ok()) return;
+      }
+      await strike(f, r, 'us', shotEnd, scoresNow);
+    };
     /** Передача: ok — прийняв і пішов далі, meh — прийняв під тиском, goal — адресат забиває,
      *  fail/lost — перехоплення на шляху. Якщо текст каже, що адресат бив, — його удар з кінцівкою. */
     const deliver = async (target: P, mate: string, arc = 1, dur = 600) => {
@@ -1466,7 +1502,7 @@ export class Director {
       await this.step(my, { moves: { ...bm, [to]: ball }, ball, cam: ball, w: 52, dur: 1100 + Math.random() * 500 });
       this.idling = false;
       if (my !== this.run) return;
-      await this.sleep(500 + Math.random() * 900);
+      await this.sleep(300 + Math.random() * 600);
     }
   }
 
@@ -1538,6 +1574,10 @@ export class Director {
 
   private async celebrate(my: number, side: 'us' | 'them', scorer = side === 'us' ? 'u9' : 't9') {
     if (my !== this.run || this.dead || !this.t[scorer]) return;
+    await this.holding(() => this.celebration(my, side, scorer));
+  }
+
+  private async celebration(my: number, side: 'us' | 'them', scorer: string) {
     let h = this.clock * 7;
     for (const c of scorer) h += c.charCodeAt(0);
     const kind = this.forceCelebration ?? CELEBRATIONS[h & 3];

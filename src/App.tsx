@@ -1056,7 +1056,7 @@ function Game() {
     minute: stage.k === 'episode' || stage.k === 'roll' || stage.k === 'entry' || stage.k === 'adbreak' ? stage.minute
       : shown.length ? shown[shown.length - 1].minute : session.state.minute,
     scoreUs: session.state.scoreUs, scoreThem: session.state.scoreThem,
-    us: session.roster.us.name.nom, them: session.roster.them.name.nom,
+    us: session.roster.us.name.nom, them: session.roster.them.name.nom, away: session.conditions.venue === 'away',
   });
   /** Підказка-прожектор першого матчу з номером кроку; вимикається в налаштуваннях. */
   const hintFor = (episodeId: string): Hint | undefined => {

@@ -32,7 +32,10 @@ export const spotOf = (episode: Episode | null): P => {
   const own = episode ? placePoint(scenePlace(episode.id)) : null;
   if (own) return own;
   const s = (episode?.family && FAMILY_SPOT[episode.family]) || PHASE_SPOT[episode?.phase ?? 'transition'];
-  return [s[0] * PW, s[1] * PH];
+  // Атакувальна сцена без місця в тексті не стоїть на своїй половині (22.10: `ep_between_lines` — сім'я
+  // «дуель» із точкою 0.34, хоча «між лініями» — це біля чужого штрафного).
+  const x = episode?.phase === 'attack' ? Math.max(s[0], PHASE_SPOT.attack[0]) : s[0];
+  return [x * PW, s[1] * PH];
 };
 
 type Props = {

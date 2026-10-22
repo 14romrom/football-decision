@@ -130,7 +130,9 @@ export function PauseMenu({ go }: Props) {
               <ChapterHead chapter={chapter} before={t('Пауза')} size="sm" />
             </div>
             <p className="pause-where">
-              {live && <b>{tf('{0}′ · {1} {2}:{3} {4}', live.minute, live.us, live.scoreUs, live.scoreThem, live.them)}</b>}
+              {live && <b>{live.away
+                ? tf('{0}′ · {1} {2}:{3} {4}', live.minute, live.them, live.scoreThem, live.scoreUs, live.us)
+                : tf('{0}′ · {1} {2}:{3} {4}', live.minute, live.us, live.scoreUs, live.scoreThem, live.them)}</b>}
               {live && where && <br />}
               {where}
             </p>

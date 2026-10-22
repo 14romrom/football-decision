@@ -130,10 +130,18 @@ export function MatchScreen({
       {/* Смужка рахунку — завжди зверху (17.10): і над листом, і над полем. Кружок біля назви — форма
           клубу, та сама, що на фішках поля. Сили — тонка лінія по нижній кромці; на полі вони ще й кільцем
           навколо фішки Реєса. */}
+      {/* Господарі зліва, як на будь-якому табло (плейтест 22.10: «табло не показує, виїзд чи домашній»):
+          на виїзді «Вальмара» справа, і рахунок теж «їхні : наші». Колір рахунку — як і раніше, за нами. */}
       <div className="score-strip">
-        <span className={`strip-team${roster.us.name.nom.length > 11 ? ' long' : ''}`}><Kit kit={roster.us.kit} />{roster.us.name.nom}</span>
-        <b className={`strip-score ${scoreTone}`}>{scoreUs} : {scoreThem}</b>
-        <span className={`strip-team r${roster.them.name.nom.length > 11 ? ' long' : ''}`}>{roster.them.name.nom}<Kit kit={roster.them.kit} /></span>
+        {(() => {
+          const away = conditions.venue === 'away';
+          const L = away ? roster.them : roster.us, R = away ? roster.us : roster.them;
+          return <>
+            <span className={`strip-team${L.name.nom.length > 11 ? ' long' : ''}`}><Kit kit={L.kit} />{L.name.nom}</span>
+            <b className={`strip-score ${scoreTone}`}>{away ? `${scoreThem} : ${scoreUs}` : `${scoreUs} : ${scoreThem}`}</b>
+            <span className={`strip-team r${R.name.nom.length > 11 ? ' long' : ''}`}>{R.name.nom}<Kit kit={R.kit} /></span>
+          </>;
+        })()}
         <div className={`stamina-bar thin ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
       </div>
       {!moment && (

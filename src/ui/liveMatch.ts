@@ -3,7 +3,7 @@
 // на кожному рендері матчу й скидає на будь-якому іншому екрані; пауза читає, коли відкривається.
 // Це не стан React: перемальовувати тут нічого не треба, лише прочитати в момент відкриття.
 
-export type LiveMatch = { minute: number; scoreUs: number; scoreThem: number; us: string; them: string };
+export type LiveMatch = { minute: number; scoreUs: number; scoreThem: number; us: string; them: string; /** На виїзді господарі — вони, і в шапці паузи вони перші. */ away?: boolean };
 
 let live: LiveMatch | null = null;
 

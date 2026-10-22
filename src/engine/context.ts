@@ -166,6 +166,12 @@ export function computeContext(
     const eased = -Math.min(0, Math.max(c.momentumMin, state.momentum)) + (cond.strength === 'strong' ? -k.strongOpponent : 0);
     if (eased > 0) mods.push({ label: t('вони ведуть — розслабилися'), value: eased, source: 'field', short: t('вони розслабились') });
   }
+  // Тебе пасуть (BALANCE.conditions.markedPer): після твого гола чи асиста — на твоїх ударах і обводці.
+  const contrib = state.stats.goals + state.stats.assists;
+  const marks = option.attribute === 'dribbling' || Object.values(option.outcomes).some((x) => x?.apply?.goal || (k.markedScope === 'involved' && x?.apply?.assist));
+  if (contrib > 0 && k.markedPer && marks) {
+    mods.push({ label: t('тебе пасуть'), value: Math.max(k.markedMax, k.markedPer * contrib), source: 'field', short: t('пасуть') });
+  }
   if (cond.weather === 'rain' && (option.attribute === 'dribbling' || option.attribute === 'passing')) {
     mods.push({ label: t('мокрий газон'), value: k.rainPenalty, source: 'field', short: t('газон') });
   }

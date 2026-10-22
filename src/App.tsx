@@ -146,13 +146,17 @@ type Pending =
 
 /** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
 
-/** Пауза на событие ленты: гол должен успеть прозвучать, проходной момент — нет. */
-function delayFor(e: TimelineEvent): number {
-  // Гол розігрується на полі (17.10): розбіг, удар, сітка, святкування — йому треба більше часу, ніж рядку.
-  if (e.kind === 'goalUs' || e.kind === 'goalThem') return 3000;
-  if (e.kind === 'halftime' || e.kind === 'kickoff') return 1800;
-  if (e.kind === 'episode') return 0;   // исход уже показан на экране броска
-  return 1900;
+/** Скільки рядок стрічки стоїть на екрані, перш ніж прийде наступний (або відкриється лист).
+ *  Від довжини рядка (плейтест 22.10: «хочу почитати лог між подіями, але не встигаю»): було 1,9 с на
+ *  будь-який рядок — це ~34 знаки на секунду при середньому рядку 64 знаки, а гравець ще й дивиться на
+ *  поле. Тепер 0,6 с + 28 знаків на секунду: 40 знаків — 2 с, 64 — 2,9 с, 90 — 3,8 с. Гол — не менше 3 с
+ *  (розіграш на полі), сцена в стрічці — 1,9 с: поле грає дію Реєса. Хто читає швидше — «далі ⟶». */
+function dwellFor(e: TimelineEvent): number {
+  if (e.kind === 'episode') return 1900;
+  const read = Math.round(600 + (e.text?.length ?? 60) * 1000 / 28);
+  if (e.kind === 'goalUs' || e.kind === 'goalThem') return Math.max(3000, Math.min(read, 4200));
+  if (e.kind === 'halftime' || e.kind === 'kickoff') return Math.max(1800, Math.min(read, 4200));
+  return Math.max(1900, Math.min(read, 4200));
 }
 
 function Game() {
@@ -230,6 +234,9 @@ function Game() {
   /** Пауза на рекламу в цьому матчі (M48): хвилина, сюжет і чи вже була. */
   const adBreakRef = useRef<{ minute: number; brk: AdBreak; done: boolean } | null>(null);
   const [queue, setQueue] = useState<TimelineEvent[]>([]);
+  /** Стрічка дочитується перед листом: «далі ⟶» лишається на екрані й відкриває лист одразу. */
+  const [holding, setHolding] = useState(false);
+  const openNowRef = useRef<(() => void) | null>(null);
 
   const proceed = useCallback((lead: TimelineEvent[] = []) => {
     const session = sessionRef.current!;
@@ -539,11 +546,14 @@ function Game() {
     if (queue.length === 0) {
       const p = pendingRef.current;
       if (!p) return;
-      // Останній рядок стрічки має доіграти на полі, перш ніж поле згорнеться в лист (17.10): без паузи
-      // лист відкривався в ту ж мить, і розіграш цього рядка ніхто не бачив.
+      // Останній рядок стрічки має доіграти на полі й бути прочитаним, перш ніж поле згорнеться в лист:
+      // свій повний час, як будь-який рядок (плейтест 22.10: «подія вспливає відразу після крайнього логу»
+      // — раніше тут було не більше 1,6 с). Тап «далі ⟶» відкриває лист одразу.
       const last = shownRef.current[shownRef.current.length - 1];
-      const hold = last && last.kind !== 'episode' ? Math.min(1600, delayFor(last)) : 0;
+      const hold = last && last.kind !== 'episode' ? dwellFor(last) : 0;
       const open = () => {
+        openNowRef.current = null;
+        setHolding(false);
         pendingRef.current = null;
         if (p.kind === 'episode') {
           shownAtRef.current = performance.now();
@@ -558,16 +568,22 @@ function Game() {
       };
       if (!hold) { open(); return; }
       const h = setTimeout(open, hold);
-      return () => clearTimeout(h);
+      openNowRef.current = () => { clearTimeout(h); open(); };
+      setHolding(true);
+      return () => { clearTimeout(h); openNowRef.current = null; setHolding(false); };
     }
+    // Наступний рядок приходить, коли попередній дочитано: час — за попереднім рядком.
+    const prev = shownRef.current[shownRef.current.length - 1];
     const t = setTimeout(() => {
       setShown((s) => [...s, queue[0]]);
       setQueue((q) => q.slice(1));
-    }, delayFor(queue[0]));
+    }, prev ? dwellFor(prev) : 1200);
     return () => clearTimeout(t);
   }, [stage.k, queue]);
 
+  /** «Далі ⟶»: решта рядків — одразу; якщо черга порожня й чекаємо листа — відкрити лист зараз. */
   const skip = useCallback(() => {
+    if (!queue.length && openNowRef.current) { openNowRef.current(); return; }
     setShown((s) => [...s, ...queue]);
     setQueue([]);
   }, [queue]);
@@ -1074,7 +1090,7 @@ function Game() {
         state={session.state}
         roster={session.roster}
         shown={shown}
-        waiting={stage.k === 'feed' && queue.length > 0}
+        waiting={stage.k === 'feed' && (queue.length > 0 || holding)}
         onSkip={skip}
         episode={stage.k === 'episode' || stage.k === 'roll' ? stage.episode : null}
         pitchEpisode={lastEpisodeRef.current}

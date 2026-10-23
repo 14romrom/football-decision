@@ -9,7 +9,7 @@ import { markNotifyAsked, notifyAskDue, requestNotify, requestReview, reviewAvai
 import { reviewDue } from './engine/notify';
 import { adContext, pickAds, playerColumn } from './engine/espm';
 import { fillNamesDeep } from './engine/names';
-import { applyWeek, coachLocksCity, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick, anchorScene } from './engine/week';
+import { applyWeek, dominantCareerVoice, finishWeek, planWeek, seenScenes, weekContext, weekPending, weekVoiceSees, type Activity, type WeekOffer, type WeekPick, anchorScene } from './engine/week';
 import { WeekScreen } from './ui/WeekScreen';
 import { ChapterCard } from './ui/ChapterCard';
 import { PrologueScreen } from './ui/PrologueScreen';
@@ -106,7 +106,7 @@ type Stage =
   | { k: 'delta'; summary: MatchSummary; before: Career; after: Career; leveledFrom: number; leveledTo: number; card: boolean }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
   | { k: 'posts'; posts: Post[]; leveledFrom: number; leveledTo: number }
-  | { k: 'week'; days: WeekOffer[][]; locked: boolean; leveledFrom: number; leveledTo: number }
+  | { k: 'week'; days: WeekOffer[][]; leveledFrom: number; leveledTo: number }
   // Пролог (M12, 20.09): тиждень нуль у зошиті перед першим матчем нової кар’єри.
   | { k: 'prologue' }
   // Відпустка (M15): три розвороти між сезонами — дзвінок, травма перед медоглядом, база.
@@ -504,7 +504,7 @@ function Game() {
     const ctx = weekContext(sn, career, ourRow(sn).position);
     if (!ctx || isSeasonOver(sn) || !weekPending(career, ctx)) return null;
     const days = planWeek(ACTIVITIES, effectivePlayer(PLAYER, career), ctx, career, makeRng(sn.seed + sn.round * 104729 + 7));
-    return { days, ctx, locked: coachLocksCity(ctx) };
+    return { days, ctx };
   }, []);
 
   /** Лист-прохання між екранами (M51): спершу дозвіл (один раз, після першого матчу), потім відгук —
@@ -520,7 +520,7 @@ function Game() {
 
   const afterPosts = useCallback((leveledFrom: number, leveledTo: number) => {
     const w = pendingWeek();
-    if (w) setStage({ k: 'week', days: w.days, locked: w.locked, leveledFrom, leveledTo });
+    if (w) setStage({ k: 'week', days: w.days, leveledFrom, leveledTo });
     else setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' });
   }, [pendingWeek, buildPosts]);
 
@@ -657,7 +657,7 @@ function Game() {
       return;
     }
     const w = pendingWeek();
-    if (w) setStage({ k: 'week', days: w.days, locked: w.locked, leveledFrom: career.level, leveledTo: career.level });
+    if (w) setStage({ k: 'week', days: w.days, leveledFrom: career.level, leveledTo: career.level });
   }, [stage.k, career, pendingWeek, buildPosts]);
 
   if (stage.k === 'menu' && (prologuePending(career) || pendingWeek())) return null;
@@ -1054,7 +1054,6 @@ function Game() {
         scenes={scenes}
         anchor={anchor}
         sees={(who: VoiceKey) => weekVoiceSees(who, player, ctx, careerRef.current)}
-        locked={stage.locked}
         month={sn.round === WINTER_BREAK_AFTER ? t('зимова перерва · січень') : monthOfRound(sn.round + 1)}   // тиждень живе перед наступним туром
         seen={seenNow}
         seed={sn.seed + sn.round}
@@ -1062,7 +1061,7 @@ function Game() {
           const before = careerRef.current;
           const { career: after, loot } = finishWeek(before, ctx, days, picks, scenes, anchor);
           setCareerBoth(after);
-          track('week_done', { season: sn.number, round: sn.round, picks: picks.length, anchor: anchor?.id, locked: stage.locked });
+          track('week_done', { season: sn.number, round: sn.round, picks: picks.length, anchor: anchor?.id });
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}

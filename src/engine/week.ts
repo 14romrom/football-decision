@@ -185,12 +185,10 @@ export function matchesActivity(w: ActivityWhen | undefined, c: WeekContext): bo
   return true;
 }
 
-/** Тренер після розгрому або при низькій довірі закриває місто: лишаються дела Тіла й Бачення
- *  (і Холоднокровності — психолог теж «на базі»). Это не механика, это реплика. */
-export function coachLocksCity(c: WeekContext): boolean {
-  return c.bigLoss || c.coachTrust < LOW_TRUST;
-}
-const BASE_VOICES: VoiceKey[] = ['body', 'vision', 'composure'];
+// «Тренер закриває місто» прибрано (23.10, рішення користувача після замору tools/voice-paths.ts):
+// після розгрому або при низькій довірі в тижні лишалися тільки Тіло, Бачення і Спокій. Шлях Его сам
+// себе відрізав — ризик → провали → довіра падає → справ Его немає (4,6 за сезон проти 18 у Бачення,
+// місто закрите в 4–6 тижнях із 9). Ціна низької довіри живе в матчі (хватка тренера), не в тижні.
 export const VOICE_ORDER: VoiceKey[] = ['body', 'vision', 'instinct', 'composure', 'team', 'ego'];
 
 /** Шесть предложений недели — по одному на голос. Пул фильтруется условиями, once и cooldown,
@@ -201,14 +199,10 @@ export function offerWeek(pool: Activity[], c: WeekContext, career: Career, rng:
   const thisSeason = log.filter((e) => e.season === c.season);
   const lastChosen = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.chosen ?? []).includes(id)).map((e) => e.round));
   const lastOffered = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.offered ?? []).includes(id)).map((e) => e.round));
-  const locked = coachLocksCity(c);
   const offers: Activity[] = [];
   for (const voice of VOICE_ORDER) {
-    const voiceLocked = locked && !BASE_VOICES.includes(voice);
     const fitting = pool.filter((a) => {
       if (a.voice !== voice || !matchesActivity(a.when, c)) return false;
-      // Закрытый город не отменяет разговор с ображеним партнёром: ситуационные дела по флагу остаются.
-      if (voiceLocked && !a.when?.flags?.length) return false;
       if (a.once && thisSeason.some((e) => (e.chosen ?? []).includes(a.id))) return false;
       if (a.cooldown && c.round - lastChosen(a.id) < a.cooldown) return false;
       return true;
@@ -275,10 +269,8 @@ export function offerWeekDays(pool: Activity[], c: WeekContext, career: Career, 
 
   const lastChosen = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.chosen ?? []).includes(id)).map((e) => e.round));
   const lastOffered = (id: string) => Math.max(-Infinity, ...thisSeason.filter((e) => (e.offered ?? []).includes(id)).map((e) => e.round));
-  const locked = coachLocksCity(c);
   const fits = (a: Activity) => {
     if (!matchesActivity(a.when, c)) return false;
-    if (locked && !BASE_VOICES.includes(a.voice) && !a.when?.flags?.length) return false;
     if (a.once && thisSeason.some((e) => (e.chosen ?? []).includes(a.id))) return false;
     if (a.cooldown && c.round - lastChosen(a.id) < a.cooldown) return false;
     return true;
@@ -292,8 +284,8 @@ export function offerWeekDays(pool: Activity[], c: WeekContext, career: Career, 
     const dayVoices = new Set<VoiceKey>();
     // Порядок голосов внутри дня — со сдвигом, чтобы Его не открывал каждый день.
     const order = [...VOICE_ORDER.slice(d), ...VOICE_ORDER.slice(0, d)];
-    // Второй проход без лимита на голос — когда голосов не хватает (тренер закрив місто: три
-    // базовых голоса на три дня), иначе третий день оставался пустым.
+    // Второй проход без лимита на голос — когда голосов не хватает (условия и cooldown выбили
+    // пул), иначе третий день оставался пустым.
     for (const capped of [true, false]) {
       for (const voice of order) {
         if (day.length >= w.perDay) break;

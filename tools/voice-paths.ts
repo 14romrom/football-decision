@@ -9,7 +9,7 @@ import { resolveOption } from '../src/engine/resolve';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, coachGrip, type Career } from '../src/engine/career';
 import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, type OurResult, type Season } from '../src/engine/season';
 import { generateConditions } from '../src/engine/conditions';
-import { planWeek, applyWeek, weekContext, withOutcome, VOICE_ATTRS, coachLocksCity } from '../src/engine/week';
+import { planWeek, applyWeek, weekContext, withOutcome, VOICE_ATTRS } from '../src/engine/week';
 import { makeRng } from '../src/engine/rng';
 import { attrMod } from '../src/engine/attr';
 import type { Attribute, VoiceKey } from '../src/engine/types';
@@ -24,7 +24,7 @@ const MAIN: Record<VoiceKey, Attribute> = {
 const ATTRS = Object.keys(PLAYER.attrs) as Attribute[];
 const GOOD = new Set(['transfer', 'extend']);
 
-type Row = { goals: number; assists: number; matches: number; position: number; verdict: string; mods: Record<Attribute, number>; rolls: number; clean: number; fail: number; cat: number; picked: number; weeks: number; own: number; trains: number; locked: number };
+type Row = { goals: number; assists: number; matches: number; position: number; verdict: string; mods: Record<Attribute, number>; rolls: number; clean: number; fail: number; cat: number; picked: number; weeks: number; own: number; trains: number };
 
 function run(seed: number, path: Path): Row[] {
   let career: Career = defaultCareer();
@@ -32,7 +32,7 @@ function run(seed: number, path: Path): Row[] {
   for (let num = 1; num <= 2; num++) {
     const keys = num === 1 ? OPPONENT_KEYS.second : [...OPPONENT_KEYS.top, ...OPPONENT_KEYS.second.slice(0, 1)];
     let season: Season = createSeason(seed + num, keys, num, []);
-    let rolls = 0, clean = 0, fail = 0, cat = 0, picked = 0, weeks = 0, own = 0, trains = 0, locked = 0;
+    let rolls = 0, clean = 0, fail = 0, cat = 0, picked = 0, weeks = 0, own = 0, trains = 0;
     while (!isSeasonOver(season)) {
       const rng = makeRng(seed * 31 + num * 977 + season.round);
       const fixture = ourFixture(season) ?? undefined;
@@ -80,7 +80,6 @@ function run(seed: number, path: Path): Row[] {
           const days = planWeek(ACTIVITIES, player, ctx, career, wrng);
           const chosen = days.map((d) => (path === 'mixed' ? d[0] : d.find((x) => x.activity.voice === path) ?? d[0])).filter(Boolean);
           weeks++;
-          if (coachLocksCity(ctx)) locked++;
           for (const x of chosen) {
             if (x.activity.voice === path) own++;
             const tr = withOutcome(x.activity, x.outcome).effect.train;
@@ -98,7 +97,7 @@ function run(seed: number, path: Path): Row[] {
       goals: p.goals, assists: p.assists, matches: p.matches, position: ourRow(season).position,
       verdict: seasonVerdict(season, career.coachTrust).kind,
       mods: Object.fromEntries(ATTRS.map((a) => [a, attrMod(grown.attrs[a])])) as Record<Attribute, number>,
-      rolls, clean, fail, cat, picked, weeks, own, trains, locked,
+      rolls, clean, fail, cat, picked, weeks, own, trains,
     });
   }
   return rows;
@@ -110,7 +109,7 @@ const startMods = Object.fromEntries(ATTRS.map((a) => [a, attrMod(PLAYER.attrs[a
 const SHOW: Attribute[] = ['vision', 'passing', 'positioning', 'finishing', 'dribbling', 'pace', 'strength', 'composure'];
 
 console.log(`Шляхи голосів: ${N} кар'єр на шлях. Модифікатори — приріст до старту (${SHOW.map((a) => `${a.slice(0, 4)} ${startMods[a]}`).join(', ')})\n`);
-console.log('шлях       сезон  справ/т свого трен.  замк.  свій%  Г/м   А/м   Г+А/м  місце  добре  чисто  провал  катастр  ' + SHOW.map((a) => a.slice(0, 4).padStart(5)).join(''));
+console.log('шлях       сезон  справ/т свого трен.  свій%  Г/м   А/м   Г+А/м  місце  добре  чисто  провал  катастр  ' + SHOW.map((a) => a.slice(0, 4).padStart(5)).join(''));
 for (const path of PATHS) {
   const s: Row[][] = [[], []];
   for (let i = 0; i < N; i++) { const r = run(9000 + i, path); s[0].push(r[0]); s[1].push(r[1]); }
@@ -121,7 +120,7 @@ for (const path of PATHS) {
     const pct = (x: number) => `${Math.round((100 * x) / rolls)}%`;
     const good = Math.round((100 * rows.filter((r) => GOOD.has(r.verdict)).length) / rows.length);
     console.log(
-      `${(k === 0 ? path : '').padEnd(10)} ${String(k + 1).padEnd(5)} ${f(avg(rows.map((r) => r.weeks)), 0).padStart(6)} ${f(avg(rows.map((r) => r.own)), 1).padStart(6)} ${f(avg(rows.map((r) => r.trains)), 1).padStart(5)} ${f(avg(rows.map((r) => r.locked)), 1).padStart(6)} ${pct(avg(rows.map((r) => r.picked))).padStart(5)} ${f(g, 2).padStart(5)} ${f(a, 2).padStart(5)} ${f(g + a, 2).padStart(6)} ${f(avg(rows.map((r) => r.position))).padStart(6)} ${`${good}%`.padStart(6)} ${pct(avg(rows.map((r) => r.clean))).padStart(6)} ${pct(avg(rows.map((r) => r.fail))).padStart(7)} ${pct(avg(rows.map((r) => r.cat))).padStart(8)}  ` +
+      `${(k === 0 ? path : '').padEnd(10)} ${String(k + 1).padEnd(5)} ${f(avg(rows.map((r) => r.weeks)), 0).padStart(6)} ${f(avg(rows.map((r) => r.own)), 1).padStart(6)} ${f(avg(rows.map((r) => r.trains)), 1).padStart(5)} ${pct(avg(rows.map((r) => r.picked))).padStart(5)} ${f(g, 2).padStart(5)} ${f(a, 2).padStart(5)} ${f(g + a, 2).padStart(6)} ${f(avg(rows.map((r) => r.position))).padStart(6)} ${`${good}%`.padStart(6)} ${pct(avg(rows.map((r) => r.clean))).padStart(6)} ${pct(avg(rows.map((r) => r.fail))).padStart(7)} ${pct(avg(rows.map((r) => r.cat))).padStart(8)}  ` +
       SHOW.map((at) => `+${f(avg(rows.map((r) => r.mods[at])) - startMods[at])}`.padStart(5)).join(''),
     );
   });

@@ -37,8 +37,6 @@ type Props = {
   scenes: WeekScene[];
   /** Голос бачить между матчами — открывает варианты сцены с подсказкой. */
   sees: (who: VoiceKey) => boolean;
-  /** Тренер закрив місто — почему предложений меньше. */
-  locked: boolean;
   /** Сцены, уже виденные в карьере (week.ts:seenScenes) — дословно не повторяем. */
   seen: Set<string>;
   /** Сид для малюнків на полях — тур сезона. */
@@ -63,7 +61,7 @@ type Phase =
 
 const DAY = [t('День 1'), t('День 2'), t('День 3'), t('День 4')];
 
-export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, anchor, onFinish, onNext }: Props) {
+export function WeekScreen({ days, scenes, sees, seen, seed = 0, month, anchor, onFinish, onNext }: Props) {
   const [day, setDay] = useState(0);
   const [phase, setPhase] = useState<Phase>(anchor ? { p: 'anchor', scene: anchor } : { p: 'pick' });
   // Кадр якоря: хук на верхньому рівні, бо `anchorSheet` викликається лише в одній фазі.
@@ -309,9 +307,6 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
           <defs><filter id="pen"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="1.6" /></filter></defs>
         </svg>
         <Doodles seed={seed} />
-        {locked && (
-          <div className="nb-coach"><b>{t('Тренер')}</b>{t('Місто закрите. База, відео, психолог. Місто почекає.')}</div>
-        )}
 
         {days.map((offers, d) => {
           if (phase.p === 'summary' || d < day) return doneDay(d, true);
@@ -333,7 +328,7 @@ export function WeekScreen({ days, scenes, sees, locked, seen, seed = 0, month, 
 
           return (
             <section key={d} className="nb-day">
-              <h3>{DAY[d]}{d === 0 && <small>{locked ? t('місто закрите') : t('одна справа на день')}</small>}</h3>
+              <h3>{DAY[d]}{d === 0 && <small>{t('одна справа на день')}</small>}</h3>
               <div className="nb-notes">
                 {offers.map((o) => note(o, selected === o.activity.id ? 'on' : 'open',
                   () => { setSelected(selected === o.activity.id ? null : o.activity.id); setTrainAttr(null); }))}

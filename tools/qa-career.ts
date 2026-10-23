@@ -10,7 +10,7 @@ import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, FLAVOR, OPPONENTS, PLAYER, roster
 import { generateConditions } from '../src/engine/conditions';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, spendPoint, type Career } from '../src/engine/career';
 import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, seasonVerdict, type Season } from '../src/engine/season';
-import { applyWeek, coachLocksCity, offerWeek, recordWeek, weekContext } from '../src/engine/week';
+import { applyWeek, offerWeek, recordWeek, weekContext } from '../src/engine/week';
 import { dominantVoice } from '../src/engine/voices';
 import type { Attribute } from '../src/engine/types';
 
@@ -23,7 +23,6 @@ function runCareer(seed: number) {
   let season: Season = createSeason(seed, OPPONENT_KEYS.second);
   const strengths = Object.fromEntries(Object.entries(OPPONENTS).map(([k, o]) => [k, o.strength]));
   let insightsSeen = 0; let insightsTaken = 0; let flavorMissing = 0; let rolls = 0;
-  let locked = 0;
   while (!isSeasonOver(season)) {
     const fixture = ourFixture(season)!;
     const rng = makeRng(seed * 31 + season.round);
@@ -73,7 +72,6 @@ function runCareer(seed: number) {
     if (!ctx) { note('нет контекста недели после тура'); break; }
     const wrng = makeRng(seed * 7 + season.round * 104729);
     const offers = offerWeek(ACTIVITIES, ctx, career, wrng);
-    if (coachLocksCity(ctx)) locked += 1;
     if (offers.length === 0) note('пустая неделя');
     if (new Set(offers.map((a) => a.voice)).size !== offers.length) note('два дела одного голоса');
     if (offers.length > 6) note('больше шести дел');
@@ -86,7 +84,7 @@ function runCareer(seed: number) {
     if (new Set(rounds).size !== rounds.length) note('неделя записана дважды');
   }
   const verdict = seasonVerdict(season, career.coachTrust);
-  return { insightsSeen, insightsTaken, flavorMissing, rolls, locked, level: career.level, mods: Object.values(career.attrPoints).reduce((s, v) => s + (v ?? 0), 0), verdict: verdict.kind, points: ourRow(season).points, trust: career.coachTrust };
+  return { insightsSeen, insightsTaken, flavorMissing, rolls, level: career.level, mods: Object.values(career.attrPoints).reduce((s, v) => s + (v ?? 0), 0), verdict: verdict.kind, points: ourRow(season).points, trust: career.coachTrust };
 }
 
 const n = Number(process.argv[2] ?? 200);
@@ -98,7 +96,6 @@ const avg = (f: (r: (typeof runs)[number]) => number) => (runs.reduce((s, r) => 
 console.log(`\nQA: ${n} карьер по 10 матчей, случайные матч и неделя\n`);
 console.log(`вставок показано за сезон: ${avg((r) => r.insightsSeen)}, взято: ${avg((r) => r.insightsTaken)}`);
 console.log(`бросков без реплики: ${avg((r) => r.flavorMissing)} из ${avg((r) => r.rolls)}`);
-console.log(`недель «тренер закрив місто»: ${avg((r) => r.locked)} из 9`);
 console.log(`уровень к концу: ${avg((r) => r.level)}, очков в атрибуты: ${avg((r) => r.mods)}, довіра: ${avg((r) => r.trust)}, очки: ${avg((r) => r.points)}`);
 const verdicts = runs.reduce((m, r) => ({ ...m, [r.verdict]: (m[r.verdict] ?? 0) + 1 }), {} as Record<string, number>);
 console.log('вердикты сезона:', verdicts);

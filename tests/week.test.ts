@@ -10,7 +10,7 @@ import { voiceSees } from '../src/engine/voices';
 import { attrMod } from '../src/engine/attr';
 import { BALANCE } from '../src/engine/balance';
 import {
-  applyWeek, coachLocksCity, matchesActivity, offerWeek, recordWeek, seenScenes, VOICE_ORDER, weekContext, weekPending,
+  applyWeek, matchesActivity, offerWeekDays, offerWeek, recordWeek, seenScenes, VOICE_ORDER, weekContext, weekPending,
   type Activity, type WeekContext,
 } from '../src/engine/week';
 import { ACTIVITIES, EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, OPPONENT_KEYS } from '../src/content';
@@ -53,11 +53,10 @@ describe('контекст и предложения', () => {
     for (const a of offers) expect(matchesActivity(a.when, c), a.id).toBe(true);
   });
 
-  it('после разгрома тренер закрывает город: только Тіло, Бачення, Спокій', () => {
+  it('після розгрому тиждень не звужується: усі шість голосів (місто більше не закривається, 23.10)', () => {
     const c = ctxFor(seasonWith([[0, 4]]));
-    expect(coachLocksCity(c)).toBe(true);
     const offers = offerWeek(ACTIVITIES, c, defaultCareer(), makeRng(1));
-    expect(offers.map((a) => a.voice).sort()).toEqual(['body', 'composure', 'vision']);
+    expect(offers.map((a) => a.voice)).toEqual(VOICE_ORDER);
   });
 
   it('once — раз за сезон, cooldown — не раньше чем через N туров, недавно показанное весит меньше', () => {
@@ -248,13 +247,15 @@ describe('QA 17.09: пробелы, найденные прогоном', () => 
     expect(voiceAudible('team', teamOpt, { ...low, coachTrust: 80, voices: { ...low.voices, muted: { team: 2 } } }, PLAYER)).toBe(false);
   });
 
-  it('закрытый город оставляет ситуационные дела по флагу: поговорити з партнером после разгрома', () => {
+  it('ситуаційна справа за флагом спливає і після розгрому: поговорити з партнером', () => {
     const career: Career = { ...defaultCareer(), carriedFlags: [{ flag: 'partner_annoyed', mark: { minute: 1, episodeId: 'e', optionId: 'o', past: 'x' } }] };
     const c = ctxFor(seasonWith([[0, 4]]), career);
-    expect(coachLocksCity(c)).toBe(true);
-    const offers = offerWeek(ACTIVITIES, c, career, makeRng(1));
-    expect(offers.map((a) => a.id)).toContain('apologize_partner');
-    expect(offers.some((a) => a.voice === 'ego')).toBe(false);
+    // Раніше після розгрому вона була гарантована, бо закрите місто лишало Команді тільки справи за
+    // флагом. Тепер — як у звичайний тиждень: вага 16, але голос Команди приходить не щодня (замір 23.10:
+    // 14 тижнів із 40). Тест тримає, що справа спливає, а не те, що вона гарантована.
+    let hits = 0;
+    for (let seed = 0; seed < 40; seed++) if (offerWeekDays(ACTIVITIES, c, career, makeRng(seed)).flat().some((a) => a.id === 'apologize_partner')) hits++;
+    expect(hits).toBeGreaterThanOrEqual(10);
   });
 
   it('отложенный флаг недели и тот же флаг из матча не дублируются', () => {

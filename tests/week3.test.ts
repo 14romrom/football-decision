@@ -173,10 +173,10 @@ describe('три дні по три справи', () => {
     }
   });
 
-  it('тренер закрив місто: три базових голоси, але всі три дні заповнені', () => {
-    const locked = ctxFor(seasonWith([[0, 4]]));
+  it('після розгрому всі три дні заповнені', () => {
+    const afterBigLoss = ctxFor(seasonWith([[0, 4]]));
     for (let seed = 0; seed < 30; seed++) {
-      const days = offerWeekDays(ACTIVITIES, locked, defaultCareer(), makeRng(seed));
+      const days = offerWeekDays(ACTIVITIES, afterBigLoss, defaultCareer(), makeRng(seed));
       for (const day of days) expect(day.length, `seed ${seed}`).toBe(BALANCE.week.perDay);
     }
   });

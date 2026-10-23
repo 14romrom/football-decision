@@ -652,8 +652,6 @@ button.nb-note:focus-visible { outline: 2px solid var(--pen); outline-offset: 2p
 .spot-ok button { flex: none; font-family: var(--font-caps); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; font-size: 13px; background: #1f2333; color: #f4f1e8; border: 0; padding: 8px 14px; border-radius: 4px; }
 .spot-callout .kw { font-family: var(--font-mono); font-size: 12.5px; padding: 0 4px; background: #e6dfc8; border-radius: 2px; white-space: nowrap; }
 .spot-callout .kw-c { color: #1f6b3c; } .spot-callout .kw-r { color: #8a5a10; } .spot-callout .kw-d { color: #8a2a1c; } .spot-callout .kw-body { color: #a33; }
-.nb-coach { position: relative; z-index: 1; width: 190px; margin: -4px 0 8px auto; padding: 8px 10px; background: #fff; color: #1f2333; font-family: var(--font-hand); font-size: 15px; line-height: 1.2; box-shadow: 2px 3px 8px rgba(0,0,0,.25); transform: rotate(2.5deg); clip-path: polygon(0 4%, 6% 0, 100% 2%, 98% 96%, 50% 100%, 2% 97%); }
-.nb-coach b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--bad); }
 /* Лист здобутків (M12, ui/LootSheet.tsx): речі лягають по одній, назавжди — золотом, бокси картки з ▲. */
 .loot-sheet .scene { padding-bottom: 2px; }
 .loot-count { position: absolute; right: 12px; top: -1px; z-index: 2; font-family: var(--font-mono); font-size: 12px; color: #e8c46a; background: #16161a; border: 1px solid #4a463c; border-top: 0; border-radius: 0 0 3px 3px; padding: 3px 9px; opacity: 0; animation: lootRise .4s ease-out forwards; animation-delay: calc(var(--i) * .4s + .3s); }

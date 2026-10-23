@@ -282,8 +282,12 @@ export function offerWeekDays(pool: Activity[], c: WeekContext, career: Career, 
   for (let d = 0; d < w.days; d++) {
     const day: Activity[] = [];
     const dayVoices = new Set<VoiceKey>();
-    // Порядок голосов внутри дня — со сдвигом, чтобы Его не открывал каждый день.
-    const order = [...VOICE_ORDER.slice(d), ...VOICE_ORDER.slice(0, d)];
+    // Порядок голосов внутри дня — со сдвигом, чтобы Его не открывал каждый день. Сдвиг идёт и от
+    // тура (23.10): с одним только сдвигом по дню три дня по три места каждую неделю давали Бачення,
+    // Інстинкту и Спокою по два дела, а Тілу, Команді и Его — по одному. Тестер это и заметил
+    // («кожен тур гарантовано можна 2 рази тренувати бачення»); теперь за шесть туров поровну.
+    const shift = (d + c.round) % VOICE_ORDER.length;
+    const order = [...VOICE_ORDER.slice(shift), ...VOICE_ORDER.slice(0, shift)];
     // Второй проход без лимита на голос — когда голосов не хватает (условия и cooldown выбили
     // пул), иначе третий день оставался пустым.
     for (const capped of [true, false]) {

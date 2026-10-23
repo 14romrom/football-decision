@@ -24,7 +24,7 @@ const MAIN: Record<VoiceKey, Attribute> = {
 const ATTRS = Object.keys(PLAYER.attrs) as Attribute[];
 const GOOD = new Set(['transfer', 'extend']);
 
-type Row = { goals: number; assists: number; matches: number; position: number; verdict: string; mods: Record<Attribute, number>; rolls: number; clean: number; fail: number; cat: number; picked: number; weeks: number; own: number; trains: number };
+type Row = { goals: number; assists: number; matches: number; position: number; verdict: string; mods: Record<Attribute, number>; rolls: number; clean: number; fail: number; cat: number; picked: number; weeks: number; own: number; trains: number; byForm: [number, number, number] };
 
 function run(seed: number, path: Path): Row[] {
   let career: Career = defaultCareer();
@@ -33,6 +33,7 @@ function run(seed: number, path: Path): Row[] {
     const keys = num === 1 ? OPPONENT_KEYS.second : [...OPPONENT_KEYS.top, ...OPPONENT_KEYS.second.slice(0, 1)];
     let season: Season = createSeason(seed + num, keys, num, []);
     let rolls = 0, clean = 0, fail = 0, cat = 0, picked = 0, weeks = 0, own = 0, trains = 0;
+    const byForm: [number, number, number] = [0, 0, 0];
     while (!isSeasonOver(season)) {
       const rng = makeRng(seed * 31 + num * 977 + season.round);
       const fixture = ourFixture(season) ?? undefined;
@@ -62,7 +63,7 @@ function run(seed: number, path: Path): Row[] {
         const o = pool[rng.int(0, pool.length - 1)];
         const res = resolveOption(session.state, session.player, o, next.episode.phase, rng, session.conditions, session.flagRules);
         rolls++;
-        if (res.tier === 'clean') clean++;
+        if (res.tier === 'clean') { clean++; byForm[res.basePosition === 'controlled' ? 0 : res.basePosition === 'risky' ? 1 : 2]++; }
         if (res.tier === 'fail' || res.tier === 'badFail') fail++;
         if (res.tier === 'badFail') cat++;
         applyChoice(session, next.episode, o, res, rng, FLAVOR);
@@ -97,7 +98,7 @@ function run(seed: number, path: Path): Row[] {
       goals: p.goals, assists: p.assists, matches: p.matches, position: ourRow(season).position,
       verdict: seasonVerdict(season, career.coachTrust).kind,
       mods: Object.fromEntries(ATTRS.map((a) => [a, attrMod(grown.attrs[a])])) as Record<Attribute, number>,
-      rolls, clean, fail, cat, picked, weeks, own, trains,
+      rolls, clean, fail, cat, picked, weeks, own, trains, byForm,
     });
   }
   return rows;
@@ -124,4 +125,16 @@ for (const path of PATHS) {
       SHOW.map((at) => `+${f(avg(rows.map((r) => r.mods[at])) - startMods[at])}`.padStart(5)).join(''),
     );
   });
+}
+
+// Пропозиція Б (23.10): чистий на ризику вчить швидше — «упевнено» 1, «ризиковано» 2, «відчайдушно» 3.
+// Скільки це додало б росту від гри на кожному шляху (множник до нинішнього лічильника чистих).
+console.log('\nчисті за формою (упевнено / ризиковано / відчайдушно) і множник росту від гри за правилом Б:');
+for (const path of PATHS) {
+  const rows: Row[] = [];
+  for (let i = 0; i < N; i++) rows.push(...run(9000 + i, path));
+  const sum = [0, 1, 2].map((k) => rows.reduce((x, r) => x + r.byForm[k], 0));
+  const all = sum[0] + sum[1] + sum[2];
+  const share = sum.map((x) => `${Math.round((100 * x) / all)}%`).join(' / ');
+  console.log(`${path.padEnd(10)} ${share.padEnd(16)} ×${f((sum[0] + 2 * sum[1] + 3 * sum[2]) / all, 2)}`);
 }

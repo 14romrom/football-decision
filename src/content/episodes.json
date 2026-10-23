@@ -92,7 +92,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -100,16 +101,16 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Пас у дотик. {partner} одним рухом укладає м’яч у сітку і біжить до тебе, але трибуни скандують його прізвище.",
-            "recap": "і {partner} забив з твоєї передачі.",
+            "text": "Пас у дотик, точно під удар. {partner} б’є одним рухом — воротар летить і дістає кінчиками пальців. Кутовий, і {partner} показує на тебе: пас був ідеальний.",
+            "recap": "і {partner} змусив воротаря до найкращого сейву матчу.",
             "apply": {
-              "assist": true,
-              "coachTrust": 10,
-              "fanHype": 5,
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 7,
+              "fanHype": 3,
               "addFlags": [
                 "partner_trusts"
-              ],
-              "scorer": "partner"
+              ]
             }
           },
           "cost": {
@@ -136,6 +137,19 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -5
+            }
+          },
+          "crit": {
+            "text": "Пас у дотик. {partner} одним рухом укладає м’яч у сітку і біжить до тебе, але трибуни скандують його прізвище.",
+            "recap": "і {partner} забив з твоєї передачі.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 10,
+              "fanHype": 5,
+              "addFlags": [
+                "partner_trusts"
+              ],
+              "scorer": "partner"
             }
           }
         },
@@ -631,7 +645,8 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -639,16 +654,15 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти віддаєш рівно тієї миті, коли захисник переносить вагу. {striker} виходить сам на сам і не маже.",
-            "recap": "і {striker} вийшов сам на сам і забив.",
+            "text": "Ти віддаєш рівно тієї миті, коли захисник переносить вагу. {striker} виходить сам на сам — і воротар, вискочивши, накриває удар тілом. Пас, який розрізав їхню лінію, лишився без підпису.",
+            "recap": "і вивів {striker.gen} сам на сам — воротар накрив удар.",
             "apply": {
-              "assist": true,
-              "coachTrust": 10,
-              "fanHype": 6,
+              "keyPass": true,
+              "coachTrust": 7,
+              "fanHype": 4,
               "addFlags": [
                 "partner_trusts"
-              ],
-              "scorer": "striker"
+              ]
             }
           },
           "cost": {
@@ -678,12 +692,12 @@
             }
           },
           "crit": {
-            "text": "Пас п’яткою, не дивлячись, — між двома, точно під удар. {striker} б’є в порожні, а потім довго показує на тебе.",
-            "recap": "і віддав пас, який покажуть у всіх оглядах.",
+            "text": "Ти віддаєш рівно тієї миті, коли захисник переносить вагу. {striker} виходить сам на сам і не маже.",
+            "recap": "і {striker} вийшов сам на сам і забив.",
             "apply": {
               "assist": true,
-              "coachTrust": 12,
-              "fanHype": 14,
+              "coachTrust": 10,
+              "fanHype": 6,
               "addFlags": [
                 "partner_trusts"
               ],
@@ -5599,7 +5613,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -5607,16 +5622,15 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти скидаєш головою назад, {striker} б’є в дотик — сітка. Він біжить до {partner.gen}, потім до тебе.",
-            "recap": "і {striker} забив у дотик.",
+            "text": "Ти скидаєш головою назад точно під ногу, {striker} б’є в дотик — і воротар, уже лежачи, відбиває ногою. Півстадіону схопилося за голову. {striker} показує на тебе: скидка була ідеальна.",
+            "recap": "і {striker} змусив воротаря рятувати лежачи.",
             "apply": {
-              "assist": true,
-              "coachTrust": 8,
-              "fanHype": 6,
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 4,
               "addFlags": [
                 "partner_trusts"
-              ],
-              "scorer": "striker"
+              ]
             }
           },
           "cost": {
@@ -5643,6 +5657,19 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -5
+            }
+          },
+          "crit": {
+            "text": "Ти скидаєш головою назад, {striker} б’є в дотик — сітка. Він біжить до {partner.gen}, потім до тебе.",
+            "recap": "і {striker} забив у дотик.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 8,
+              "fanHype": 6,
+              "addFlags": [
+                "partner_trusts"
+              ],
+              "scorer": "striker"
             }
           }
         },
@@ -10108,7 +10135,8 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -10120,13 +10148,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти котиш назад на край штрафного — {dm} б’є з ходу у дальній кут. Найпростіше рішення виявилося найправильнішим.",
-            "recap": "і відкотив назад під гол {dm.gen}.",
+            "text": "Ти котиш назад на край штрафного, точно під хід, — {dm} б’є з ходу, і м’яч зриває верхівку поперечини. Найпростіше рішення майже стало найкращим.",
+            "recap": "і {dm} пробив з ходу в поперечину.",
             "apply": {
-              "assist": true,
-              "coachTrust": 7,
-              "fanHype": 5,
-              "scorer": "dm"
+              "keyPass": true,
+              "coachTrust": 5,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -10152,6 +10179,16 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -4
+            }
+          },
+          "crit": {
+            "text": "Ти котиш назад на край штрафного — {dm} б’є з ходу у дальній кут. Найпростіше рішення виявилося найправильнішим.",
+            "recap": "і відкотив назад під гол {dm.gen}.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 7,
+              "fanHype": 5,
+              "scorer": "dm"
             }
           }
         }
@@ -10326,7 +10363,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -10338,13 +10376,13 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти не мучишся з незручною ногою — просто віддаєш {partner.dat}, який б’є впевнено і точно.",
-            "recap": "і віддав {partner.dat}, оминувши незручну ногу.",
+            "text": "Ти не мучишся з незручною ногою — віддаєш {partner.dat} точно під удар. Він б’є впевнено, і м’яч зустрічає захисник, що ліг на лінії. Кутовий.",
+            "recap": "і {partner} пробив у захисника на лінії.",
             "apply": {
-              "assist": true,
-              "coachTrust": 7,
-              "fanHype": 4,
-              "scorer": "partner"
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 5,
+              "fanHype": 2
             }
           },
           "cost": {
@@ -10370,6 +10408,16 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -4
+            }
+          },
+          "crit": {
+            "text": "Ти не мучишся з незручною ногою — просто віддаєш {partner.dat}, який б’є впевнено і точно.",
+            "recap": "і віддав {partner.dat}, оминувши незручну ногу.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 7,
+              "fanHype": 4,
+              "scorer": "partner"
             }
           }
         }
@@ -14452,7 +14500,8 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -14464,13 +14513,13 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Замість навісу — низом назад. {dm} б’є в дотик з межі штрафного, і м’яч влітає в кут, який ніхто не закривав.",
-            "recap": "і відкотив назад на гол {dm.gen}.",
+            "text": "Замість навісу — низом назад, точно в ногу. {dm} б’є в дотик з межі штрафного, і воротар у кидку переводить м’яч на кутовий. Пас був, удар був; сейв виявився кращим.",
+            "recap": "і {dm} пробив з дотику — воротар перевів на кутовий.",
             "apply": {
-              "assist": true,
-              "scorer": "dm",
-              "fanHype": 12,
-              "coachTrust": 8
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 6,
+              "fanHype": 8
             }
           },
           "cost": {
@@ -14497,6 +14546,16 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -6
+            }
+          },
+          "crit": {
+            "text": "Замість навісу — низом назад. {dm} б’є в дотик з межі штрафного, і м’яч влітає в кут, який ніхто не закривав.",
+            "recap": "і відкотив назад на гол {dm.gen}.",
+            "apply": {
+              "assist": true,
+              "scorer": "dm",
+              "fanHype": 12,
+              "coachTrust": 8
             }
           }
         }
@@ -16092,7 +16151,8 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -16104,13 +16164,13 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти розігруєш коротко, {partner} повертає — і ти вже з кращого кута прострілюєш низом. {striker} замикає.",
-            "recap": "і {striker} замкнув простріл.",
+            "text": "Ти розігруєш коротко, {partner} повертає — і ти з кращого кута прострілюєш низом. {striker} встигає першим і б’є з п’яти метрів, воротар відбиває ногами. Кутовий знову наш.",
+            "recap": "і простріл дав {striker.dat} удар з п’яти метрів.",
             "apply": {
-              "assist": true,
-              "scorer": "striker",
-              "fanHype": 10,
-              "coachTrust": 6
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 4,
+              "fanHype": 7
             }
           },
           "cost": {
@@ -16137,6 +16197,16 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -6
+            }
+          },
+          "crit": {
+            "text": "Ти розігруєш коротко, {partner} повертає — і ти вже з кращого кута прострілюєш низом. {striker} замикає.",
+            "recap": "і {striker} замкнув простріл.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "fanHype": 10,
+              "coachTrust": 6
             }
           }
         }
@@ -19280,7 +19350,8 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -19292,13 +19363,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти приховуєш пас корпусом і котиш назад — {dm} б’є з ходу в дальній кут, не зупиняючи м’яч.",
-            "recap": "і відкотив назад під гол {dm.gen}.",
+            "text": "Ти приховуєш пас корпусом і котиш назад — {dm} б’є з ходу, не зупиняючи м’яч, і воротар відбиває кулаками перед собою. Захисник вибиває з-під ніг того, хто набігав.",
+            "recap": "і {dm} пробив з ходу — воротар відбив кулаками.",
             "apply": {
-              "assist": true,
-              "coachTrust": 8,
-              "fanHype": 6,
-              "scorer": "dm"
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 4
             }
           },
           "cost": {
@@ -19324,6 +19394,16 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -4
+            }
+          },
+          "crit": {
+            "text": "Ти приховуєш пас корпусом і котиш назад — {dm} б’є з ходу в дальній кут, не зупиняючи м’яч.",
+            "recap": "і відкотив назад під гол {dm.gen}.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 8,
+              "fanHype": 6,
+              "scorer": "dm"
             }
           }
         }
@@ -20826,7 +20906,8 @@
         "attribute": "strength",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 5,
         "goals": {
           "team": 2,
@@ -20838,13 +20919,13 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти встоюєш, {them.mid} висне на футболці — і суддя дає перевагу. Ти входиш у штрафний, віддаєш {striker.dat} — гол. Перевага, яку він дав тобі, бо ти не впав.",
-            "recap": "і встояв, отримав перевагу і віддав {striker.dat} на гол.",
+            "text": "Ти встоюєш, {them.mid} висне на футболці — і суддя дає перевагу. Ти входиш у штрафний і віддаєш {striker.dat} на порожній кут, але захисник у підкаті вибиває м’яч з лінії. Перевага була твоя, гол — ні.",
+            "recap": "і встояв, вивів {striker.gen} на удар — захисник вибив з лінії.",
             "apply": {
-              "assist": true,
-              "scorer": "striker",
-              "fanHype": 16,
-              "coachTrust": 8,
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 6,
+              "fanHype": 10,
               "removeFlags": [
                 "ref_sympathetic"
               ]
@@ -20880,6 +20961,19 @@
               "losses": 1,
               "counterAttack": true,
               "coachTrust": -6,
+              "removeFlags": [
+                "ref_sympathetic"
+              ]
+            }
+          },
+          "crit": {
+            "text": "Ти встоюєш, {them.mid} висне на футболці — і суддя дає перевагу. Ти входиш у штрафний, віддаєш {striker.dat} — гол. Перевага, яку він дав тобі, бо ти не впав.",
+            "recap": "і встояв, отримав перевагу і віддав {striker.dat} на гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "fanHype": 16,
+              "coachTrust": 8,
               "removeFlags": [
                 "ref_sympathetic"
               ]
@@ -24559,7 +24653,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -24571,13 +24666,13 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти накочуєш на пів метра, і {partner} б’є низом, під стінкою, яка стрибнула. Гол. Він біжить до трибун, ти стоїш на місці й дивишся, як воротар підіймається з газону.",
-            "recap": "і накотив під удар {partner.dat} — гол.",
+            "text": "Ти накочуєш на пів метра, і {partner} б’є низом під стінкою, яка стрибнула. Воротар встигає впасти — м’яч б’ється в нього й виходить за лицьову. Задумка спрацювала до останнього метра.",
+            "recap": "і накотив під удар {partner.dat} — воротар упав і врятував.",
             "apply": {
-              "assist": true,
-              "scorer": "partner",
-              "coachTrust": 7,
-              "fanHype": 9
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 5,
+              "fanHype": 6
             }
           },
           "cost": {
@@ -24608,6 +24703,16 @@
               "coachTrust": -6,
               "fanHype": -4,
               "composure": -5
+            }
+          },
+          "crit": {
+            "text": "Ти накочуєш на пів метра, і {partner} б’є низом, під стінкою, яка стрибнула. Гол. Він біжить до трибун, ти стоїш на місці й дивишся, як воротар підіймається з газону.",
+            "recap": "і накотив під удар {partner.dat} — гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "partner",
+              "coachTrust": 7,
+              "fanHype": 9
             }
           }
         }
@@ -29121,7 +29226,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -29133,13 +29239,13 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти подаєш на дальню — усі, включно з їхнім воротарем, дивляться на {keeper.gen} на ближній. {cb} замикає головою в порожній кут. Гол. Найстарший спосіб і найстарший гравець.",
-            "recap": "і {cb} забив головою в останню хвилину.",
+            "text": "Ти подаєш на дальню — усі, включно з їхнім воротарем, дивляться на {keeper.gen} на ближній. {cb} б’є головою в порожній кут, і захисник на лінії відбиває м’яч грудьми. Кутовий, і час ще є.",
+            "recap": "і {cb} пробив головою — захисник вибив з лінії.",
             "apply": {
-              "assist": true,
-              "scorer": "cb",
-              "coachTrust": 8,
-              "fanHype": 12
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 6,
+              "fanHype": 8
             }
           },
           "cost": {
@@ -29168,6 +29274,16 @@
               "coachTrust": -5,
               "fanHype": -4,
               "composure": -6
+            }
+          },
+          "crit": {
+            "text": "Ти подаєш на дальню — усі, включно з їхнім воротарем, дивляться на {keeper.gen} на ближній. {cb} замикає головою в порожній кут. Гол. Найстарший спосіб і найстарший гравець.",
+            "recap": "і {cb} забив головою в останню хвилину.",
+            "apply": {
+              "assist": true,
+              "scorer": "cb",
+              "coachTrust": 8,
+              "fanHype": 12
             }
           }
         }
@@ -30568,7 +30684,8 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -30580,13 +30697,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти показуєш удар і пропускаєш м’яч між ніг — {striker} за спиною приймає і б’є з першого дотику. Гол. Двоє захисників кинулися на твій замах, і обидва ще в повітрі.",
-            "recap": "і {striker} забив з-під воротаря.",
+            "text": "Ти показуєш удар і пропускаєш м’яч між ніг — {striker} за спиною приймає і б’є з першого дотику. Поперечина. Двоє захисників кинулися на твій замах, і обидва ще в повітрі, коли м’яч відскакує в поле.",
+            "recap": "і {striker} влучив з першого дотику в поперечину.",
             "apply": {
-              "assist": true,
-              "scorer": "striker",
-              "coachTrust": 8,
-              "fanHype": 8
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 6
             }
           },
           "cost": {
@@ -30616,6 +30732,16 @@
               "coachTrust": -6,
               "fanHype": -4,
               "composure": -5
+            }
+          },
+          "crit": {
+            "text": "Ти показуєш удар і пропускаєш м’яч між ніг — {striker} за спиною приймає і б’є з першого дотику. Гол. Двоє захисників кинулися на твій замах, і обидва ще в повітрі.",
+            "recap": "і {striker} забив з-під воротаря.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
             }
           }
         }
@@ -30945,7 +31071,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -30957,13 +31084,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти приймаєш і скидаєш назад у дотик — {partner} набігає і б’є низом у кут. Гол. Ти спиною до воріт, він обличчям, і разом — гол. {them.cb} тримав тебе весь цей час. Правильно тримав.",
-            "recap": "і скинув зі штрафного {partner.dat} — гол.",
+            "text": "Ти приймаєш і скидаєш назад у дотик — {partner} набігає і б’є низом у кут. Воротар дістає в кидку, і м’яч котиться вздовж лінії повз дальню стійку. Ти спиною до воріт, він обличчям, і разом — майже.",
+            "recap": "і скинув {partner.dat} — воротар дістав у кидку.",
             "apply": {
-              "assist": true,
-              "scorer": "partner",
-              "coachTrust": 8,
-              "fanHype": 8,
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 4,
               "removeFlags": [
                 "partner_annoyed"
               ]
@@ -30996,6 +31122,19 @@
               "coachTrust": -6,
               "fanHype": -4,
               "composure": -5
+            }
+          },
+          "crit": {
+            "text": "Ти приймаєш і скидаєш назад у дотик — {partner} набігає і б’є низом у кут. Гол. Ти спиною до воріт, він обличчям, і разом — гол. {them.cb} тримав тебе весь цей час. Правильно тримав.",
+            "recap": "і скинув зі штрафного {partner.dat} — гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "partner",
+              "coachTrust": 8,
+              "fanHype": 8,
+              "removeFlags": [
+                "partner_annoyed"
+              ]
             }
           }
         }
@@ -31127,7 +31266,8 @@
         "attribute": "composure",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -31139,13 +31279,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти ведеш прямо на нього, не міняючи темпу, — і за мить до стику він робить крок на тебе. Тоді ти віддаєш. {striker} сам, закочує повз воротаря. Гол. Два на одного, зіграні як у підручнику, і підручник написав ти.",
-            "recap": "і розіграв два на одного до гола {striker.gen}.",
+            "text": "Ти ведеш прямо на нього, не міняючи темпу, — і за мить до стику він робить крок на тебе. Тоді ти віддаєш. {striker} сам на сам, і воротар виграє цю дуель ногою. Два на одного ти зіграв як у підручнику; останню сторінку дочитав воротар.",
+            "recap": "і вивів {striker.gen} сам на сам — воротар виграв дуель.",
             "apply": {
-              "assist": true,
-              "scorer": "striker",
-              "coachTrust": 8,
-              "fanHype": 8
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 5
             }
           },
           "cost": {
@@ -31177,6 +31316,16 @@
               "coachTrust": -8,
               "fanHype": -5,
               "composure": -7
+            }
+          },
+          "crit": {
+            "text": "Ти ведеш прямо на нього, не міняючи темпу, — і за мить до стику він робить крок на тебе. Тоді ти віддаєш. {striker} сам, закочує повз воротаря. Гол. Два на одного, зіграні як у підручнику, і підручник написав ти.",
+            "recap": "і розіграв два на одного до гола {striker.gen}.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
             }
           }
         }
@@ -32124,7 +32273,8 @@
         "attribute": "positioning",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -32136,13 +32286,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти скидаєш головою в штрафний — м’яко, за спини тих, хто дивився вгору, — і {striker} приймає обличчям до воріт, розвертатися не треба. Удар низом, гол. Ти торкнувся м’яча головою один раз, і цього вистачило.",
-            "recap": "і скинув головою на {striker.gen} — гол.",
+            "text": "Ти скидаєш головою в штрафний — м’яко, за спини тих, хто дивився вгору, — і {striker} приймає обличчям до воріт. Удар низом — у ближню стійку. Ти торкнувся м’яча головою один раз, і цього вистачило б, якби стійка стояла на пів метра далі.",
+            "recap": "і скинув головою на {striker.gen} — удар у стійку.",
             "apply": {
-              "assist": true,
-              "scorer": "striker",
-              "coachTrust": 8,
-              "fanHype": 8
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 5
             }
           },
           "cost": {
@@ -32172,6 +32321,16 @@
               "coachTrust": -5,
               "fanHype": -3,
               "composure": -5
+            }
+          },
+          "crit": {
+            "text": "Ти скидаєш головою в штрафний — м’яко, за спини тих, хто дивився вгору, — і {striker} приймає обличчям до воріт, розвертатися не треба. Удар низом, гол. Ти торкнувся м’яча головою один раз, і цього вистачило.",
+            "recap": "і скинув головою на {striker.gen} — гол.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 8
             }
           }
         }
@@ -35997,7 +36156,8 @@
         "attribute": "first_touch",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 0,
+        "partnerFinish": true,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -36009,14 +36169,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти показуєш рукою — і він біжить туди, куди ти показав. Пас у дотик, він у штрафному сам. Слова не знадобилися.",
-            "recap": "і домовився з {partner.ins} рукою — і вивів його на удар.",
+            "text": "Ти показуєш рукою — і він біжить туди, куди ти показав. Пас у дотик, він у штрафному сам — і б’є у воротаря, що встиг вийти назустріч. Слова не знадобилися; бракувало одного дотику, і не твого.",
+            "recap": "і рукою вивів {partner.gen} на удар — воротар устиг вийти.",
             "apply": {
-              "coachTrust": 5,
-              "fanHype": 5,
               "keyPass": true,
-              "assist": true,
-              "scorer": "partner"
+              "coachTrust": 4,
+              "fanHype": 3
             }
           },
           "cost": {
@@ -36040,6 +36198,17 @@
             "apply": {
               "counterAttack": true,
               "coachTrust": -3
+            }
+          },
+          "crit": {
+            "text": "Ти показуєш рукою — і він біжить туди, куди ти показав. Пас у дотик, він у штрафному сам. Слова не знадобилися.",
+            "recap": "і домовився з {partner.ins} рукою — і вивів його на удар.",
+            "apply": {
+              "coachTrust": 5,
+              "fanHype": 5,
+              "keyPass": true,
+              "assist": true,
+              "scorer": "partner"
             }
           }
         }
@@ -36445,7 +36614,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 1,
+        "difficulty": 0,
+        "partnerFinish": true,
         "staminaCost": 5,
         "goals": {
           "team": 3,
@@ -36457,13 +36627,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти віддаєш {striker.dat} у дотик, як робиш завжди, — і він забиває, як робить не завжди. Ти не дивишся на трибуну. Він — дивиться на тебе.",
-            "recap": "і віддав як завжди — {striker} забив.",
+            "text": "Ти віддаєш {striker.dat} у дотик, як робиш завжди, — і він б’є, як робить завжди: сильно і у воротаря. Ти не дивишся на трибуну. Він дивиться на тебе: після такого паса соромно не забити.",
+            "recap": "і віддав як завжди — {striker} пробив у воротаря.",
             "apply": {
-              "coachTrust": 5,
-              "fanHype": 4,
-              "assist": true,
-              "scorer": "striker",
+              "keyPass": true,
+              "coachTrust": 4,
+              "fanHype": 2,
               "removeFlags": [
                 "agent_in_stands"
               ]
@@ -36497,6 +36666,19 @@
             "apply": {
               "counterAttack": true,
               "coachTrust": -4,
+              "removeFlags": [
+                "agent_in_stands"
+              ]
+            }
+          },
+          "crit": {
+            "text": "Ти віддаєш {striker.dat} у дотик, як робиш завжди, — і він забиває, як робить не завжди. Ти не дивишся на трибуну. Він — дивиться на тебе.",
+            "recap": "і віддав як завжди — {striker} забив.",
+            "apply": {
+              "coachTrust": 5,
+              "fanHype": 4,
+              "assist": true,
+              "scorer": "striker",
               "removeFlags": [
                 "agent_in_stands"
               ]
@@ -38525,7 +38707,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 2,
+        "difficulty": 1,
+        "partnerFinish": true,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -38537,13 +38720,13 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти відпускаєш у дотик, не розвертаючись: {winger} отримує на швидкості, і фланг перед ним порожній. Простріл із лицьової, {striker} замикає в дотик.",
-            "recap": "і простріл знайшов {striker.gen}.",
+            "text": "Ти відпускаєш у дотик, не розвертаючись: {winger} отримує на швидкості, і фланг перед ним порожній. Простріл із лицьової — {striker} замикає в дотик, але захисник у ковзанні встигає кинути ногу. Кутовий, і {winger} уже біжить його подавати.",
+            "recap": "і {winger} пішов у простріл — захисник у ковзанні зірвав удар.",
             "apply": {
-              "assist": true,
-              "scorer": "striker",
-              "coachTrust": 8,
-              "fanHype": 7,
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 6,
+              "fanHype": 5,
               "addFlags": [
                 "partner_trusts"
               ]
@@ -38576,6 +38759,19 @@
               "coachTrust": -6,
               "fanHype": -3,
               "composure": -3
+            }
+          },
+          "crit": {
+            "text": "Ти відпускаєш у дотик, не розвертаючись: {winger} отримує на швидкості, і фланг перед ним порожній. Простріл із лицьової, {striker} замикає в дотик.",
+            "recap": "і простріл знайшов {striker.gen}.",
+            "apply": {
+              "assist": true,
+              "scorer": "striker",
+              "coachTrust": 8,
+              "fanHype": 7,
+              "addFlags": [
+                "partner_trusts"
+              ]
             }
           }
         }
@@ -40833,7 +41029,8 @@
         "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 1,
+        "difficulty": 0,
+        "partnerFinish": true,
         "staminaCost": 4,
         "goals": {
           "team": 3,
@@ -40845,13 +41042,13 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти скидаєш головою назад, не дивлячись, — туди, де має бути {dm}. Він там. Удар із восьми метрів по м’ячу, що стоїть на місці.",
-            "recap": "і скинув у зону, звільнену власним забігом.",
+            "text": "Ти скидаєш головою назад, не дивлячись, — туди, де має бути {dm}. Він там. Удар із восьми метрів по м’ячу, що стоїть на місці, — і воротар, якого ти виманив на ближню, встигає повернутися. Кутовий.",
+            "recap": "і скинув у зону — воротар повернувся на удар {dm.gen}.",
             "apply": {
-              "assist": true,
-              "coachTrust": 9,
-              "fanHype": 12,
-              "scorer": "dm"
+              "keyPass": true,
+              "corner": true,
+              "coachTrust": 7,
+              "fanHype": 8
             }
           },
           "cost": {
@@ -40877,6 +41074,16 @@
             "apply": {
               "counterAttack": true,
               "coachTrust": -5
+            }
+          },
+          "crit": {
+            "text": "Ти скидаєш головою назад, не дивлячись, — туди, де має бути {dm}. Він там. Удар із восьми метрів по м’ячу, що стоїть на місці.",
+            "recap": "і скинув у зону, звільнену власним забігом.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 9,
+              "fanHype": 12,
+              "scorer": "dm"
             }
           }
         }
@@ -41707,7 +41914,8 @@
         "attribute": "composure",
         "basePosition": "controlled",
         "effect": "great",
-        "difficulty": 0,
+        "difficulty": -1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -41719,13 +41927,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Ти розбігаєшся, замахуєшся і переступаєш через м’яч. Стінка стрибає, воротар присідає — а {dm} б’є низом у те місце, де щойно були ноги.",
-            "recap": "і перестрибнув м’яч — {dm} пробив у стрибнуту стінку.",
+            "text": "Ти розбігаєшся, замахуєшся і переступаєш через м’яч. Стінка стрибає, воротар присідає — а {dm} б’є низом у те місце, де щойно були ноги. Повз стійку на ширину м’яча. Стадіон видихнув так, що чути на лаві.",
+            "recap": "і перестрибнув м’яч — {dm} пробив повз стійку на ширину м’яча.",
             "apply": {
-              "assist": true,
-              "coachTrust": 9,
-              "fanHype": 13,
-              "scorer": "dm"
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 9
             }
           },
           "cost": {
@@ -41752,6 +41959,16 @@
               "losses": 1,
               "coachTrust": -5,
               "fanHype": -4
+            }
+          },
+          "crit": {
+            "text": "Ти розбігаєшся, замахуєшся і переступаєш через м’яч. Стінка стрибає, воротар присідає — а {dm} б’є низом у те місце, де щойно були ноги.",
+            "recap": "і перестрибнув м’яч — {dm} пробив у стрибнуту стінку.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 9,
+              "fanHype": 13,
+              "scorer": "dm"
             }
           }
         }
@@ -42726,7 +42943,8 @@
         "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
-        "difficulty": 0,
+        "difficulty": -1,
+        "partnerFinish": true,
         "staminaCost": 3,
         "goals": {
           "team": 3,
@@ -42738,13 +42956,12 @@
         },
         "outcomes": {
           "clean": {
-            "text": "Відкат під робочу ногу {partner.gen} — він навіть не підлаштовується, б’є як є.",
-            "recap": "і відкотив {partner.dat} під зручну ногу.",
+            "text": "Відкат під робочу ногу {partner.gen} — він навіть не підлаштовується, б’є як є. Воротар ловить намертво і дивиться на тебе: так віддають тільки ті, хто знає, кому віддає.",
+            "recap": "і відкотив {partner.dat} під удар — воротар зловив.",
             "apply": {
-              "assist": true,
-              "coachTrust": 8,
-              "fanHype": 10,
-              "scorer": "partner"
+              "keyPass": true,
+              "coachTrust": 6,
+              "fanHype": 5
             }
           },
           "cost": {
@@ -42769,6 +42986,16 @@
             "apply": {
               "counterAttack": true,
               "coachTrust": -4
+            }
+          },
+          "crit": {
+            "text": "Відкат під робочу ногу {partner.gen} — він навіть не підлаштовується, б’є як є.",
+            "recap": "і відкотив {partner.dat} під зручну ногу.",
+            "apply": {
+              "assist": true,
+              "coachTrust": 8,
+              "fanHype": 10,
+              "scorer": "partner"
             }
           }
         }

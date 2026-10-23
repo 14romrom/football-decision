@@ -10,7 +10,7 @@
 // за два матча, и второй вариант станет мёртвой кнопкой. Аудит 20.09 нашёл 134 таких из 398.
 
 import { EPISODES_RAW, PLAYER } from '../src/content';
-import { CATASTROPHE_BAND, THRESHOLDS, BALANCE, MOMENTUM_BY_BOLDNESS } from '../src/engine/balance';
+import { CATASTROPHE_BAND, THRESHOLDS, BALANCE, MOMENTUM_BY_BOLDNESS, PARTNER_FINISH_RAW } from '../src/engine/balance';
 import { attrMod } from '../src/engine/attr';
 import type { ApplyEffect, Episode, EpisodeOption, Position, Tier } from '../src/engine/types';
 
@@ -32,6 +32,20 @@ export function tierProbs(pos: Position, mod: number, difficulty: number): Recor
     else if (raw + mod <= t.fail + difficulty) r.fail += p;
     else if (raw + mod <= t.cost + difficulty) r.cost += p;
     else r.clean += p;
+  }
+  return r;
+}
+
+/** Доля бросков, в которых показывается `outcomes.crit` (resolve.ts:pickOutcome): две десятки — у
+ *  любого варианта с крит-текстом, гол партнёра на сырых PARTNER_FINISH_RAW+ — у `partnerFinish`, если
+ *  бросок при этом чистый. Без этого аудит видел передачу «під удар» как момент без гола в 100%. */
+export function critProb(pos: Position, mod: number, difficulty: number, partner: boolean): number {
+  const t = THRESHOLDS[pos];
+  let r = 0;
+  for (let raw = 2; raw <= 20; raw++) {
+    if (raw <= CATASTROPHE_BAND[pos]) continue;
+    const clean = raw >= 20 || raw + mod > t.cost + difficulty;
+    if (raw >= 20 || (partner && clean && raw >= PARTNER_FINISH_RAW)) r += P2D10[raw];
   }
   return r;
 }
@@ -85,8 +99,11 @@ const SINGLE_ANSWER_GAP = 1.5;
  *  проигравшим, «пас під удар» на складності ≥ 1, без двойной цены сил).
  *  M43b (03.10): 23% / 24 → 22% / 20 — у 27 смелых вариантов в старых сценах цель чистого исхода стояла
  *  на 19–22 (складність +1..+3 поверх отчаянной формы на слабом атрибуте), то есть была недосягаема, и
- *  за это же брали 8–10 сил против 3–5 у надёжного соседа. */
-export const AUDIT_LIMITS = { dominatedShare: 0.22, singleAnswer: 20 };
+ *  за это же брали 8–10 сил против 3–5 у надёжного соседа.
+ *  23.10: 22% / 20 → 21% / 19 — аудит научился считать крит (две десятки и гол партнёра на 15+,
+ *  balance.ts:PARTNER_FINISH_RAW); у 21 передачи «під удар» снята складність +1 из 1.0.6 — её работу
+ *  теперь делает правило гола партнёра. Доля доминируемых остаётся 0.22: 21% — это округление. */
+export const AUDIT_LIMITS = { dominatedShare: 0.22, singleAnswer: 19 };
 
 const unconditional = (o: EpisodeOption) => !o.requires && !o.insight;
 
@@ -112,8 +129,10 @@ export function scoreOption(ep: Episode, o: EpisodeOption, bonus = 0, chains = t
   const mod = Math.min(12, attrMod(PLAYER.attrs[o.attribute]) + bonus);
   const p = tierProbs(o.basePosition, mod, o.difficulty ?? 0);
   let evTeam = 0, evSelf = 0, pGoal = 0;
-  for (const t of TIERS) {
-    const a = o.outcomes[t].apply;
+  const pc = o.outcomes.crit ? critProb(o.basePosition, mod, o.difficulty ?? 0, !!o.partnerFinish) : 0;
+  for (const t of [...TIERS, 'crit'] as const) {
+    if (t === 'crit' && !pc) continue;
+    const a = o.outcomes[t]!.apply;
     const v = value(a);
     let team = v.team, self = v.self, goal = a?.goal ? 1 : 0;
     if (chains && a?.followUp) {
@@ -122,14 +141,17 @@ export function scoreOption(ep: Episode, o: EpisodeOption, bonus = 0, chains = t
       const e = value(a.followUpElse);
       team += (c.team + e.team) / 2; self += (c.self + e.self) / 2; goal += (c.pGoal + (a.followUpElse?.goal ? 1 : 0)) / 2;
     }
-    evTeam += p[t] * team;
+    // Крит забирає свою долю з чистого: ярус той самий, текст і приз — інші.
+    const w = t === 'crit' ? pc : t === 'clean' ? p.clean - pc : p[t];
+    const clean = t === 'clean' || t === 'crit';
+    evTeam += w * team;
     // Системний кураж за ризик (match.ts:applyChoice) — приз, якого нема в тексті ісходу.
-    evSelf += p[t] * (self + (t === 'clean' ? MOMENTUM_BY_BOLDNESS[o.basePosition] * 0.4 : 0));
+    evSelf += w * (self + (clean ? MOMENTUM_BY_BOLDNESS[o.basePosition] * 0.4 : 0));
     // Трибуни реагують на сміливість до результату (BALANCE.systemic.boldnessHype) — теж системно.
-    evSelf += p[t] * BALANCE.systemic.boldnessHype[o.basePosition] * 0.08;
+    evSelf += w * BALANCE.systemic.boldnessHype[o.basePosition] * 0.08;
     // Спокій: провал не збиває кураж і не тягне «після провалу» в наступний кидок (COMPOSURE_CALM).
-    if (o.attribute === 'composure' && t === 'fail') evSelf += p[t] * 0.4;
-    pGoal += p[t] * goal;
+    if (o.attribute === 'composure' && t === 'fail') evSelf += w * 0.4;
+    pGoal += w * goal;
   }
   return { ep, o, mod, p, evTeam, evSelf, ev: evTeam * 5 + evSelf - o.staminaCost * STAMINA_WEIGHT, pGoal };
 }

@@ -1,7 +1,7 @@
 // Единственный бросок в игре: 2d10 + модификатор атрибута + контекст.
 // Функция чистая — rng приходит аргументом, поэтому её можно прогнать миллион раз.
 
-import { CATASTROPHE_BAND, CATASTROPHE_MASTER, CRIT_SUCCESS, THRESHOLDS, cleanTarget } from './balance';
+import { CATASTROPHE_BAND, CATASTROPHE_MASTER, CRIT_SUCCESS, PARTNER_FINISH_RAW, THRESHOLDS, cleanTarget } from './balance';
 import { computeContext } from './context';
 import type { ApplyEffect, Episode, EpisodeOption, FlagRule, MatchState, Outcome, Player, Position, Resolution, ResultBadge, Tier } from './types';
 import type { Rng } from './rng';
@@ -66,7 +66,11 @@ export function resolveOption(
  *  успехе экран броска показывал обычный «чисто», а в ленту уходил другой, крит-текст —
  *  игрок читал не то, что потом видел в хронологии матча. */
 export function pickOutcome(option: EpisodeOption, res: Resolution): Outcome {
-  return res.critical === 'success' && option.outcomes.crit ? option.outcomes.crit : option.outcomes[res.tier];
+  if (!option.outcomes.crit) return option.outcomes[res.tier];
+  if (res.critical === 'success') return option.outcomes.crit;
+  // Гол партнёра (balance.ts:PARTNER_FINISH_RAW): твой пас чистый, а удар его — на высоких гранях.
+  if (option.partnerFinish && res.tier === 'clean' && res.rawRoll >= PARTNER_FINISH_RAW) return option.outcomes.crit;
+  return option.outcomes[res.tier];
 }
 
 /** Ярлыки, которые видит игрок. Ни одного числа — это условие эксперимента. */

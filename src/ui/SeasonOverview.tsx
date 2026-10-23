@@ -33,7 +33,8 @@ type StoredMoment = NonNullable<NonNullable<OurResult['moments']>['best']> & { e
  *  прибрати з пулу. */
 function momentText(m: StoredMoment): { past: string; recap: string } {
   const opt = m.episodeId ? EPISODES.find((e) => e.id === m.episodeId)?.options.find((o) => o.id === m.optionId) : undefined;
-  const out = opt?.outcomes[m.tier as keyof typeof opt.outcomes];
+  // Крит-исход (две десятки или гол партнёра) лежит под ярусом 'clean' — без флага взяли бы текст без гола.
+  const out = m.crit && opt?.outcomes.crit ? opt.outcomes.crit : opt?.outcomes[m.tier as keyof typeof opt.outcomes];
   return opt && out?.recap ? { past: opt.past, recap: out.recap } : { past: m.past, recap: m.recap };
 }
 

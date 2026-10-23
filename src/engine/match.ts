@@ -1036,6 +1036,7 @@ export function applyChoice(
     past: option.past,
     recap: outcome.recap,
     tier: res.tier,
+    ...(outcome === option.outcomes.crit ? { crit: true } : {}),
     effect: res.effect,
     causedConcede: conceded,
     // Реплика знает семью сцены (пенальті, а не «удар») и, как и эпизоды, говорит именами ростера.
@@ -1082,13 +1083,13 @@ export type MatchSummary = {
   moments?: { best?: Moment; worst?: Moment };
 };
 
-export type Moment = { minute: number; past: string; recap: string; tier: Tier; episodeId: string; optionId: string };
+export type Moment = { minute: number; past: string; recap: string; tier: Tier; episodeId: string; optionId: string; crit?: boolean };
 
 /** Худший — катастрофа, потом решение, после которого пропустили, потом провал; лучший — гол,
  *  ассист, чистый «вирішити», чистый. Если матч ровный, момента может не быть. */
 export function pickMoments(state: MatchState): { best?: Moment; worst?: Moment } {
   const episodes = state.log.filter((e) => e.kind === 'episode' && e.past && e.recap);
-  const toMoment = (e: TimelineEvent): Moment => ({ minute: e.minute, past: e.past!, recap: e.recap!, tier: e.tier ?? 'fail', episodeId: e.episodeId ?? '', optionId: e.optionId ?? '' });
+  const toMoment = (e: TimelineEvent): Moment => ({ minute: e.minute, past: e.past!, recap: e.recap!, tier: e.tier ?? 'fail', episodeId: e.episodeId ?? '', optionId: e.optionId ?? '', ...(e.crit ? { crit: true } : {}) });
   const worstScore = (e: TimelineEvent) => (e.tier === 'badFail' ? 3 : 0) + (e.causedConcede ? 2 : 0) + (e.tier === 'fail' ? 1 : 0);
   const goalMinutes = new Set(state.log.filter((e) => e.kind === 'goalUs').map((e) => e.minute));
   const bestScore = (e: TimelineEvent) => (e.tier !== 'clean' ? 0 : 1 + (goalMinutes.has(e.minute) ? 3 : 0) + (e.effect === 'great' ? 1 : 0));

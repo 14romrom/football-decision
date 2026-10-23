@@ -234,7 +234,7 @@ export type OurResult = {
   /** Лучший/худший момент (match.ts:pickMoments) — для стрічки. */
   moments?: { best?: MomentRef; worst?: MomentRef };
 };
-export type MomentRef = { minute: number; past: string; recap: string; tier: string };
+export type MomentRef = { minute: number; past: string; recap: string; tier: string; crit?: boolean };
 
 /** Закрыть тур: наш результат — настоящий, два чужих матча — по силе клубов.
  *  rng — отдельный, по сиду сезона и туру, чтобы чужие результаты не зависели от того,

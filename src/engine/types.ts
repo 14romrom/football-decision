@@ -42,6 +42,8 @@ export type TimelineEvent = {
   optionId?: string;
   optionLabel?: string;
   tier?: Tier;
+  /** Показан `outcomes.crit` (две десятки или гол партнёра на 15+) — ярус при этом 'clean'. */
+  crit?: boolean;
   effect?: Effect;
   recap?: string;
   past?: string;
@@ -196,6 +198,9 @@ export type EpisodeOption = {
    *  назад під пресингом легко, но опасно; удар с 40 метров трудно, но безопасно. Без поля — 0.
    *  На кнопке — «ціль N», своя у каждого варианта. */
   difficulty?: number;
+  /** Передача, после которой бьёт партнёр (balance.ts:PARTNER_FINISH_RAW): чистый исход — момент
+   *  без гола, гол партнёра — `outcomes.crit` на сырых 15+. Без поля чистый исход решает сам. */
+  partnerFinish?: boolean;
   staminaCost: number;               // 2..12
   goals: { team: 0 | 1 | 2 | 3; personal: 0 | 1 | 2 | 3 };
   /** Кто и что говорит с этого варианта. Слышно, только если голос сильный. */

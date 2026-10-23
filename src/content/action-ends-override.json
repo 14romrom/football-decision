@@ -1,0 +1,12 @@
+{
+  "ep_free_kick_dummy/fake_and_let_dm/crit": "",
+  "ep_free_kick_dummy/fake_and_let_dm/clean": "@dm wide",
+  "ep_cutback_arrival/let_it_run_striker/clean": "@striker bar rebound",
+  "ep_corner_far_cutback/cut_back_to_zone/clean": "@dm parry corner",
+  "ep_hold_up_for_runners/release_wide_early/clean": "@striker block corner",
+  "ep_two_v_one_lead/draw_and_release/clean": "@striker parry",
+  "rx_top_agent_in_stands/play_as_usual/clean": "@striker held",
+  "ep_top_three_tiers_noise/hand_signal/clean": "@partner held",
+  "ep_box_turn_shot/lay_off_to_partner/clean": "@partner tip wide",
+  "rx_ref_favor/stay_up_play/clean": "@striker line corner"
+}

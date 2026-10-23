@@ -24,7 +24,7 @@ const MAIN: Record<VoiceKey, Attribute> = {
 const ATTRS = Object.keys(PLAYER.attrs) as Attribute[];
 const GOOD = new Set(['transfer', 'extend']);
 
-type Row = { goals: number; assists: number; matches: number; position: number; verdict: string; mods: Record<Attribute, number>; rolls: number; clean: number; fail: number; cat: number; picked: number; weeks: number; own: number; trains: number; byForm: [number, number, number] };
+type Row = { goals: number; assists: number; matches: number; position: number; verdict: string; mods: Record<Attribute, number>; rolls: number; clean: number; fail: number; cat: number; picked: number; weeks: number; own: number; trains: number; byForm: [number, number, number]; uses: Record<Attribute, number> };
 
 function run(seed: number, path: Path): Row[] {
   let career: Career = defaultCareer();
@@ -99,6 +99,7 @@ function run(seed: number, path: Path): Row[] {
       verdict: seasonVerdict(season, career.coachTrust).kind,
       mods: Object.fromEntries(ATTRS.map((a) => [a, attrMod(grown.attrs[a])])) as Record<Attribute, number>,
       rolls, clean, fail, cat, picked, weeks, own, trains, byForm,
+      uses: Object.fromEntries(ATTRS.map((a) => [a, career.useCounts?.[a] ?? 0])) as Record<Attribute, number>,
     });
   }
   return rows;
@@ -107,7 +108,7 @@ function run(seed: number, path: Path): Row[] {
 const avg = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
 const f = (n: number, d = 1) => n.toFixed(d);
 const startMods = Object.fromEntries(ATTRS.map((a) => [a, attrMod(PLAYER.attrs[a])])) as Record<Attribute, number>;
-const SHOW: Attribute[] = ['vision', 'passing', 'positioning', 'finishing', 'dribbling', 'pace', 'strength', 'composure'];
+const SHOW: Attribute[] = ['vision', 'passing', 'positioning', 'finishing', 'dribbling', 'first_touch', 'pace', 'strength', 'stamina', 'composure'];
 
 console.log(`Шляхи голосів: ${N} кар'єр на шлях. Модифікатори — приріст до старту (${SHOW.map((a) => `${a.slice(0, 4)} ${startMods[a]}`).join(', ')})\n`);
 console.log('шлях       сезон  справ/т свого трен.  свій%  Г/м   А/м   Г+А/м  місце  добре  чисто  провал  катастр  ' + SHOW.map((a) => a.slice(0, 4).padStart(5)).join(''));
@@ -137,4 +138,13 @@ for (const path of PATHS) {
   const all = sum[0] + sum[1] + sum[2];
   const share = sum.map((x) => `${Math.round((100 * x) / all)}%`).join(' / ');
   console.log(`${path.padEnd(10)} ${share.padEnd(16)} ×${f((sum[0] + 2 * sum[1] + 3 * sum[2]) / all, 2)}`);
+}
+
+// Чисті за кар'єру на атрибутах (career.useCounts, наростаючим підсумком) — звідки береться ріст від гри.
+console.log("\nчистих за кар'єру (useCounts) на кінець другого сезону:");
+console.log('шлях       ' + SHOW.map((a) => a.slice(0, 4).padStart(6)).join(''));
+for (const path of PATHS) {
+  const rows: Row[] = [];
+  for (let i = 0; i < N; i++) rows.push(run(9000 + i, path)[1]);
+  console.log(`${path.padEnd(10)} ` + SHOW.map((a) => f(avg(rows.map((r) => r.uses[a])), 0).padStart(6)).join(''));
 }

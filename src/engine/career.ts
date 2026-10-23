@@ -421,7 +421,7 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
 /** Обновление карьеры по итогам матча: опыт, уровень (без авто-траты очка — это отдельный
  *  экран выбора), доверие тренера, счётчик жёлтых/травм, профиль голосов. */
 /** Очки, які вже видані за використання атрибута: ціла частина від лічильника чистих. */
-const usePoints = (n: number) => Math.floor(n / BALANCE.growth.useToPoint);
+const usePoints = (n: number, attr: Attribute) => Math.floor(n / (BALANCE.growth.useToPointBy[attr] ?? BALANCE.growth.useToPoint));
 
 /** Ріст від матчу (M18.4): чисті ісходи цього матчу додаються до лічильників кар’єри, і кожен перехід
  *  через поріг дає +1 очко назавжди. Повертає нові лічильники, очки і те, що саме виросло (для дошки). */
@@ -435,7 +435,7 @@ export function growthFromMatch(career: Career, state: MatchState): {
     const was = useCounts[a] ?? 0;
     const now = was + n;
     useCounts[a] = now;
-    const gained = usePoints(now) - usePoints(was);
+    const gained = usePoints(now, a) - usePoints(was, a);
     if (gained > 0) {
       attrPoints[a] = (attrPoints[a] ?? 0) + gained;
       grew.push({ attr: a, total: now });

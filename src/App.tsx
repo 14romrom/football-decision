@@ -76,7 +76,7 @@ import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
 import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent, VoiceKey } from './engine/types';
 import { logDecision } from './telemetry/log';
-import { screen, setUser, track, watchErrors } from './telemetry/analytics';
+import { hashText, screen, setUser, track, watchErrors } from './telemetry/analytics';
 import { MatchScreen } from './ui/MatchScreen';
 import { EpisodeCard } from './ui/EpisodeCard';
 import { WhistleCard } from './ui/WhistleCard';
@@ -1040,7 +1040,10 @@ function Game() {
       <PostsScreen
         posts={stage.posts}
         self={{ name: ROSTER.us.players.self.nom, handle: '@reyes10' }}
-        onReply={(_post, option) => {
+        onReply={(post, option) => {
+          // Відповідь у стрічці (M49, 23.10): чи відповідають узагалі й що саме — 27 с на екрані «Y» можуть бути
+          // й читанням. Текст не збираємо: id варіанта, а без нього — хеш.
+          track('y_reply', { account: post.account.handle, option: option.id ?? hashText(option.text) });
           // Ответ в стрічці — последствия как у дела недели: через applyWeek, чтобы бирки,
           // флаги и старт следующего матча считались в одном месте. Неделя потом дольёт своё.
           const activity: Activity = { id: 'reply', voice: 'ego', title: t('Відповідь у стрічці'), line: option.text, effect: option.effect };

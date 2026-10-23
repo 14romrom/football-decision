@@ -71,6 +71,8 @@ type Props = {
 export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue, instruction = 'free', lead = 0, onPlayed }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
+  /** Розв'язка сцени на полі — стрічка чекає на неї так само, як на постановку рядка (onPlayed). */
+  const resolved = useRef<Promise<void> | null>(null);
 
   // Поле збирається один раз на монтування: форми, розстановка суперника, підписи.
   useEffect(() => {
@@ -98,10 +100,10 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     // наступного кидка, тож без цієї позначки кожен лист повторював останній гол, навіть із минулого матчу.
     const fresh = !!finale && !PLAYED.has(finale);
     if (finale) PLAYED.add(finale);
-    if (fresh && finale?.action) void d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target), end: finale.action.end, by: finale.action.by, counter: finale.action.counter, freeKick: episode?.family === 'free_kick',
+    if (fresh && finale?.action) resolved.current = d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target), end: finale.action.end, by: finale.action.by, counter: finale.action.counter, freeKick: episode?.family === 'free_kick',
       corner: episode?.family === 'corner_attack' && episode.id !== 'ep_long_throw_box' ? 'us' : episode?.family === 'corner_defense' ? 'them' : undefined,
       penalty: !!episode?.id.startsWith('fin_penalty') });
-    else if (fresh && finale) void d.finale(finale.kind, spotOf(episode));
+    else if (fresh && finale) resolved.current = d.finale(finale.kind, spotOf(episode));
     else if (episode) void d.toSpot(spotOf(episode));
     // Поле, зняте одразу (подвійний монтаж StrictMode у dev), розв'язку не бачило — позначку знімаємо.
     const born = performance.now();
@@ -119,7 +121,10 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     const d = dir.current;
     if (!pulse) return;
     const done = () => onPlayed?.(pulse);
-    if (!d || pulse.kind === 'episode') { done(); return; }
+    if (!d) { done(); return; }
+    // Рядок сцени — це її розв'язка, вона вже грає. Позначку «перший рядок — старий» знімаємо: інакше
+    // наступний рядок стрічки після кожної сцени вважався «уже баченим» і на полі не грався (знайдено 23.10).
+    if (pulse.kind === 'episode') { first.current = false; void (resolved.current ?? Promise.resolve()).then(done); return; }
     // На монтуванні після листа останній показаний рядок — старий: його вже бачили.
     if (first.current) { first.current = false; if (finale || episode) { done(); return; } }
     // Хвилина рядка — до розіграшу: від неї варіація постановки (M52), а ефект хвилини нижче спрацює пізніше.

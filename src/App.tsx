@@ -601,7 +601,8 @@ function Game() {
     const t = setTimeout(() => {
       if (!prev || playedRef.current === prev) { advance(); return; }
       waitPlayRef.current = advance;
-      cap = setTimeout(advance, prev.kind === 'goalUs' || prev.kind === 'goalThem' ? PLAY_WAIT_GOAL : PLAY_WAIT_MAX);
+      // Розв'язка сцени може містити гол — та сама стеля, що в гола.
+      cap = setTimeout(advance, prev.kind === 'goalUs' || prev.kind === 'goalThem' || prev.kind === 'episode' ? PLAY_WAIT_GOAL : PLAY_WAIT_MAX);
     }, prev ? dwellFor(prev) : 1200);
     return () => { clearTimeout(t); clearTimeout(cap); waitPlayRef.current = null; };
   }, [stage.k, queue, reading]);

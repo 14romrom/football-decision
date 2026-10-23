@@ -9,7 +9,10 @@ import endsJson from '../content/action-ends.json';
 import type { Episode, EpisodeOption, Resolution, TimelineEvent } from './types';
 import { pickOutcome } from './resolve';
 
-export const ACTION_TEMPLATES = ['pass', 'switch', 'through', 'back', 'cross', 'dribble', 'shot', 'header', 'tackle', 'shield', 'run', 'foul', 'hold', 'talk'] as const;
+/** 23.10: «hold» був звалищем (94 варіанти з 604): позиційне, психологічне, навіть передачі. Тепер окремо:
+ *  line — лінія оборони крокує разом (офсайдна пастка), mark — опіка, cover — закрити кут чи шлях,
+ *  wait — чекати на підбір, calm — пауза: зберегти м'яч, не реагувати, збити темп. */
+export const ACTION_TEMPLATES = ['pass', 'switch', 'through', 'back', 'cross', 'dribble', 'shot', 'header', 'tackle', 'shield', 'run', 'foul', 'hold', 'talk', 'line', 'mark', 'cover', 'wait', 'calm'] as const;
 export type ActionTemplate = typeof ACTION_TEMPLATES[number];
 export type ActionResult = 'goal' | 'concede' | 'red' | 'foul' | 'ok' | 'meh' | 'fail' | 'lost';
 /** Події кінцівки, які називає текст ісходу (M52, tools/action-ends.ts), у порядку тексту.
@@ -17,7 +20,10 @@ export type ActionResult = 'goal' | 'concede' | 'red' | 'foul' | 'ok' | 'meh' | 
  *  held — воротар забрав, parry — відбив перед собою, block — захисник чи стінка, line — винесли з лінії.
  *  Далі: rebound — добивання (гол — того, хто в `by`), corner, out, offside, pen — пенальті, fk — фол на
  *  Реєсі, cut — перехоплення, down — Реєс на газоні. */
-export const ACTION_BEATS = ['whiff', 'bar', 'post', 'over', 'wide', 'tip', 'held', 'parry', 'block', 'line', 'rebound', 'corner', 'out', 'offside', 'pen', 'fk', 'cut', 'down'] as const;
+/** 23.10: + card/cardme (картка їм / тобі; red — червона), ref (суддя показує, махає, розводить), cross (подача
+ *  чи простріл, не Реєса), aerial (боротьба вгорі), shout (крик, жест), run (ривок), beat (обвели). */
+export const ACTION_BEATS = ['whiff', 'bar', 'post', 'over', 'wide', 'tip', 'held', 'parry', 'block', 'line', 'rebound', 'corner', 'out', 'offside', 'pen', 'fk', 'cut', 'down',
+  'card', 'cardme', 'red', 'ref', 'cross', 'aerial', 'shout', 'run', 'beat'] as const;
 export type ActionBeat = typeof ACTION_BEATS[number];
 /** `target` — куди м'яч, якщо назва варіанта це каже («на дугу», «на дальню»); зона стрічки або nearPost/farPost.
  *  `end` — події кінцівки з тексту ісходу; `by` — хто забиває, якщо гол не Реєса (ключ ростера з `apply.scorer`);

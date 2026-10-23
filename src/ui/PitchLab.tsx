@@ -17,13 +17,13 @@ const STAGES = [
   'shot theirBox:C us.striker saved', 'shot theirBox:L self post', 'shot their:C self over', 'cross their:L us.winger>us.striker',
   'long own:C', 'dribble mid:C self', 'foul mid:C them.mid>self', 'corner theirBox:L', 'build mid:C', 'switch their:R',
 ];
-const TEMPLATES: ActionTemplate[] = ['shot', 'pass', 'cross', 'through', 'switch', 'dribble', 'tackle', 'header', 'run', 'shield', 'hold'];
+const TEMPLATES: ActionTemplate[] = ['shot', 'pass', 'cross', 'through', 'switch', 'dribble', 'tackle', 'header', 'run', 'shield', 'hold', 'line', 'mark', 'cover', 'wait', 'calm'];
 const CELEBRATIONS: Celebration[] = ['jump', 'knees', 'flag', 'plane'];
 const RESULTS: ActionResult[] = ['goal', 'ok', 'meh', 'fail', 'lost', 'foul', 'red', 'concede'];
 
 /** Зіграти ісход сцени за ключем «епізод/варіант/ярус» так, як його зіграє матч (App → reyesAction).
  *  `plain` — без подій кінцівки з тексту: так поле грало до M52, для записів «було / стало». */
-function playOutcome(d: Director | undefined, key: string, plain = false) {
+function playOutcome(d: Director | undefined, key: string, plain = false): Promise<void> | false {
   const [eid, oid, tier] = key.split('/');
   const e = EPISODES.find((x) => x.id === eid); const o = e?.options.find((x) => x.id === oid);
   if (!d || !e || !o) return false;
@@ -32,8 +32,9 @@ function playOutcome(d: Director | undefined, key: string, plain = false) {
   const ap = oc.apply ?? {};
   const events = [...(ap.goal || ap.teamGoal || ap.assist ? [{ kind: 'goalUs' }] : []), ...(ap.concede ? [{ kind: 'goalThem' }] : [])] as TimelineEvent[];
   const act = reyesAction(e, o, res, events);
-  void d.action({ template: act.template, result: act.result, place: placePoint(act.place) ?? spotOf(e), target: placePoint(act.target), end: plain ? [] : act.end, by: act.by, counter: act.counter });
-  return true;
+  // Ті самі прапорці стандартів, що в Pitch.tsx: стінка, кутовий, пенальті з позначки.
+  return d.action({ template: act.template, result: act.result, place: placePoint(act.place) ?? spotOf(e), target: placePoint(act.target), end: plain ? [] : act.end, by: act.by, counter: act.counter,
+    freeKick: e.family === 'free_kick', corner: e.family === 'corner_attack' && e.id !== 'ep_long_throw_box' ? 'us' : e.family === 'corner_defense' ? 'them' : undefined, penalty: e.id.startsWith('fin_penalty') });
 }
 
 export function PitchLab() {
@@ -45,7 +46,8 @@ export function PitchLab() {
   const [tpl, setTpl] = useState<ActionTemplate>('shot');
   const roster = rosterFor('sandorea');
   const d = () => (window as unknown as { __pitch?: Director }).__pitch;
-  (window as unknown as { __outcome?: (k: string, plain?: boolean) => boolean }).__outcome = (k, plain) => playOutcome(d(), k, plain);
+  (window as unknown as { __outcome?: (k: string, plain?: boolean) => boolean }).__outcome = (k, plain) => playOutcome(d(), k, plain) !== false;
+  (window as unknown as { __outcomeRun?: (k: string) => Promise<void> | false }).__outcomeRun = (k) => playOutcome(d(), k);
   const rebuild = (f: () => void) => { f(); setKey((k) => k + 1); };
   return (
     <div className="pitchlab">

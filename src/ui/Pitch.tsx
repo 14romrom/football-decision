@@ -61,9 +61,12 @@ type Props = {
   seed?: number;
   /** Сцена, що ось-ось відкриється: камера до її місця, Реєс спалахує (передчуття, 22.10). */
   cue?: Episode | null;
+  /** Установка тренера й рахунок за показаною стрічкою (+ — ведемо): форма команди на полі (23.10). */
+  instruction?: 'hold' | 'press' | 'free' | 'none';
+  lead?: number;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue, instruction = 'free', lead = 0 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
 
@@ -82,6 +85,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     });
     d.setBench(onBench, sentOff);
     d.setMinute(minute);
+    d.setPlay({ instruction, lead, strength });
     dir.current = d;
     // Лише в dev-збірці: щоб прогнати кожну постановку стрічки руками, не чекаючи її в матчі.
     if (import.meta.env.DEV) (window as unknown as { __pitch?: Director }).__pitch = d;
@@ -92,7 +96,9 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     // наступного кидка, тож без цієї позначки кожен лист повторював останній гол, навіть із минулого матчу.
     const fresh = !!finale && !PLAYED.has(finale);
     if (finale) PLAYED.add(finale);
-    if (fresh && finale?.action) void d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target), end: finale.action.end, by: finale.action.by, counter: finale.action.counter });
+    if (fresh && finale?.action) void d.action({ template: finale.action.template, result: finale.action.result, place: placePoint(finale.action.place) ?? spotOf(episode), target: placePoint(finale.action.target), end: finale.action.end, by: finale.action.by, counter: finale.action.counter, freeKick: episode?.family === 'free_kick',
+      corner: episode?.family === 'corner_attack' && episode.id !== 'ep_long_throw_box' ? 'us' : episode?.family === 'corner_defense' ? 'them' : undefined,
+      penalty: !!episode?.id.startsWith('fin_penalty') });
     else if (fresh && finale) void d.finale(finale.kind, spotOf(episode));
     else if (episode) void d.toSpot(spotOf(episode));
     // Поле, зняте одразу (подвійний монтаж StrictMode у dev), розв'язку не бачило — позначку знімаємо.
@@ -119,6 +125,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pulse?.minute, pulse?.text]);
   useEffect(() => { dir.current?.setMinute(minute); }, [minute]);
+  useEffect(() => { dir.current?.setPlay({ instruction, lead }); }, [instruction, lead]);
   useEffect(() => { if (cue) void dir.current?.cue(spotOf(cue)); }, [cue?.id]);
 
   return (

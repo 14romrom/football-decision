@@ -151,6 +151,15 @@ type Pending =
  *  будь-який рядок — це ~34 знаки на секунду при середньому рядку 64 знаки, а гравець ще й дивиться на
  *  поле. Тепер 0,6 с + 28 знаків на секунду: 40 знаків — 2 с, 64 — 2,9 с, 90 — 3,8 с. Гол — не менше 3 с
  *  (розіграш на полі), сцена в стрічці — 1,9 с: поле грає дію Реєса. Хто читає швидше — «далі ⟶». */
+/** Скільки стрічка чекає на поле понад час читання (23.10). Наступний рядок приходить, коли рядок
+ *  дочитано **і** поле доіграло його постановку: інакше новий рядок обривав розіграш на півдорозі, і
+ *  хореографію доводилось підганяти під найкоротший рядок (правило «≤ 1,9 с»). Час читання рахується
+ *  з показаного тексту, тож мова з довшими словами отримує більше часу сама. Стеля — щоб зависле чи
+ *  дуже довге поле не тримало матч. Гол — виняток: свято й розвод з центру тривають 7–8 с, і стрічка
+ *  чекає на них, а не біжить під чужі рядки, поки поле ще святкує. */
+const PLAY_WAIT_MAX = 2500;
+const PLAY_WAIT_GOAL = 6000;
+
 function dwellFor(e: TimelineEvent): number {
   if (e.kind === 'episode') return 1900;
   const read = Math.round(600 + (e.text?.length ?? 60) * 1000 / 28);
@@ -580,14 +589,30 @@ function Game() {
       setHolding(true);
       return () => { clearTimeout(h); clearTimeout(c); openNowRef.current = null; setHolding(false); };
     }
-    // Наступний рядок приходить, коли попередній дочитано: час — за попереднім рядком.
+    // Наступний рядок приходить, коли попередній дочитано й поле його доіграло (PLAY_WAIT_MAX).
     const prev = shownRef.current[shownRef.current.length - 1];
-    const t = setTimeout(() => {
+    let cap: ReturnType<typeof setTimeout> | undefined;
+    const advance = () => {
+      waitPlayRef.current = null;
+      clearTimeout(cap);
       setShown((s) => [...s, queue[0]]);
       setQueue((q) => q.slice(1));
+    };
+    const t = setTimeout(() => {
+      if (!prev || playedRef.current === prev) { advance(); return; }
+      waitPlayRef.current = advance;
+      cap = setTimeout(advance, prev.kind === 'goalUs' || prev.kind === 'goalThem' ? PLAY_WAIT_GOAL : PLAY_WAIT_MAX);
     }, prev ? dwellFor(prev) : 1200);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t); clearTimeout(cap); waitPlayRef.current = null; };
   }, [stage.k, queue, reading]);
+
+  /** Поле доіграло постановку рядка: якщо стрічка вже дочитала його й чекає — далі. */
+  const playedRef = useRef<TimelineEvent | null>(null);
+  const waitPlayRef = useRef<(() => void) | null>(null);
+  const onPlayed = useCallback((e: TimelineEvent) => {
+    playedRef.current = e;
+    if (shownRef.current[shownRef.current.length - 1] === e) waitPlayRef.current?.();
+  }, []);
 
   /** «Далі ⟶»: решта рядків — одразу; якщо черга порожня й чекаємо листа — відкрити лист зараз. */
   const skip = useCallback(() => {
@@ -1099,6 +1124,7 @@ function Game() {
         shown={shown}
         waiting={stage.k === 'feed' && (queue.length > 0 || holding || reading)}
         onReading={setReading}
+        onPlayed={onPlayed}
         cue={stage.k === 'feed' ? cue : null}
         onSkip={skip}
         episode={stage.k === 'episode' || stage.k === 'roll' ? stage.episode : null}

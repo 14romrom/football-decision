@@ -64,9 +64,11 @@ type Props = {
   /** Установка тренера й рахунок за показаною стрічкою (+ — ведемо): форма команди на полі (23.10). */
   instruction?: 'hold' | 'press' | 'free' | 'none';
   lead?: number;
+  /** Постановку рядка доіграно (або її немає) — стрічка чекає на це, щоб наступний рядок не обривав поле. */
+  onPlayed?: (e: TimelineEvent) => void;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue, instruction = 'free', lead = 0 }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue, instruction = 'free', lead = 0, onPlayed }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
 
@@ -115,13 +117,16 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
   const first = useRef(true);
   useEffect(() => {
     const d = dir.current;
-    if (!d || !pulse || pulse.kind === 'episode') return;
+    if (!pulse) return;
+    const done = () => onPlayed?.(pulse);
+    if (!d || pulse.kind === 'episode') { done(); return; }
     // На монтуванні після листа останній показаний рядок — старий: його вже бачили.
-    if (first.current) { first.current = false; if (finale || episode) return; }
+    if (first.current) { first.current = false; if (finale || episode) { done(); return; } }
     // Хвилина рядка — до розіграшу: від неї варіація постановки (M52), а ефект хвилини нижче спрацює пізніше.
     if (pulse.minute !== undefined) d.setMinute(pulse.minute);
-    if (pulse.stage) void d.play(pulse.stage, pulse.kind);
-    else if (pulse.kind === 'goalUs' || pulse.kind === 'goalThem') void d.play({ act: 'echo', tags: [] }, pulse.kind);
+    if (pulse.stage) void d.play(pulse.stage, pulse.kind).then(done);
+    else if (pulse.kind === 'goalUs' || pulse.kind === 'goalThem') void d.play({ act: 'echo', tags: [] }, pulse.kind).then(done);
+    else done();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pulse?.minute, pulse?.text]);
   useEffect(() => { dir.current?.setMinute(minute); }, [minute]);

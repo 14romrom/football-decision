@@ -1648,12 +1648,16 @@ export class Director {
     const fade = (from: number, to: number, ms: number) => this.raw(ms, (k) => { this.svg.style.opacity = (from + (to - from) * k).toFixed(3); });
     await fade(1, 0, 90);
     if (my !== this.run || this.dead) { this.svg.style.opacity = '1'; return; }
-    for (const id in all) if (id === 'ref' || this.playing(id)) this.put(id, all[id]);
+    // Після склейки фішки стоять на 60% шляху, решту доходять рухом: постановка з одного такту (суперечка,
+    // зупинка, «тримає біля прапорця») не зникає в затемненні. М'яч — одразу на місці, без передачі.
+    for (const id in all) if (id === 'ref' || this.playing(id)) { const p = this.pos(id), q = all[id]; this.put(id, [p[0] + (q[0] - p[0]) * .6, p[1] + (q[1] - p[1]) * .6]); }
     this.putBall(at);
     this.trail.setAttribute('opacity', '0');
     this.setView(this.frame(o.cam ?? at, o.w ?? this.view.w));
     await fade(0, 1, 110);
     this.svg.style.opacity = '';
+    if (my !== this.run || this.dead) return;
+    await this.step(my, { moves: all, cam: o.cam, w: o.w, dur: Math.max(350, (o.dur ?? 600) * .7) });
   }
 
   /** Свідки промаху: ті, хто чекав у штрафному, хапаються за голову; м'яч за лицьовою — воротар

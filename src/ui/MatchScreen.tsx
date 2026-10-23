@@ -62,7 +62,7 @@ function stateMods(episode: Episode, state: MatchState, player: Player, conditio
 }
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, onReading, cue, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, seed, flagRules, hideDiceZone, finale, sheet, children,
+  state, roster, shown, waiting, onSkip, onReading, onPlayed, cue, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, seed, flagRules, hideDiceZone, finale, sheet, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -71,6 +71,8 @@ export function MatchScreen({
   onSkip: () => void;
   /** Гравець гортає стрічку вгору — матч чекає (App не подає нових рядків), повернувся вниз — далі. */
   onReading?: (on: boolean) => void;
+  /** Поле доіграло постановку рядка — стрічка може йти далі (App чекає на це, див. PLAY_WAIT_MAX). */
+  onPlayed?: (e: TimelineEvent) => void;
   /** Сцена, що ось-ось відкриється (App, передчуття): поле показує її місце до листа. */
   cue?: Episode | null;
   /** Текущая сцена — для точки на поле и факторов «на кубик»; null между эпизодами. */
@@ -186,7 +188,7 @@ export function MatchScreen({
           // Заміна й червона ставляться кидком сцени — після нього поле вже без Реєса (match.ts: subbed_off / sent_off).
           onBench={onBench || state.flags.includes('subbed_off')} sentOff={state.flags.includes('sent_off')}
           stamina={stamina} momentum={state.momentum} minute={clock} seed={seed} cue={cue}
-          instruction={conditions.instruction} lead={scoreUs - scoreThem} />
+          instruction={conditions.instruction} lead={scoreUs - scoreThem} onPlayed={onPlayed} />
       )}
 
       {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}${reading ? ' reading' : ''}`}>

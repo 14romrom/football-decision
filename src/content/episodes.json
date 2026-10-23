@@ -89,7 +89,7 @@
         "id": "pass_moraes",
         "label": "Віддати {partner.dat}",
         "past": "віддав {partner.dat}",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
         "difficulty": 1,
@@ -1068,7 +1068,7 @@
           }
         },
         "voice": {
-          "who": "vision",
+          "who": "team",
           "line": "{cb} виграє верх у будь-кого з них."
         }
       },
@@ -2365,7 +2365,7 @@
           }
         },
         "voice": {
-          "who": "vision",
+          "who": "team",
           "line": "Ближня. {cb} завжди йде на ближню."
         }
       },
@@ -2712,7 +2712,7 @@
           }
         },
         "voice": {
-          "who": "vision",
+          "who": "team",
           "line": "{partner} на позначці. Він без опіки."
         }
       },
@@ -7402,7 +7402,7 @@
         "id": "give_it_back",
         "label": "Повернути йому — хай б’є сам",
         "past": "повернув борг партнеру тим самим пасом",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 1,
@@ -8156,7 +8156,7 @@
         "id": "one_touch_release",
         "label": "Віддати в одне торкання",
         "past": "віддав у одне торкання між лініями",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": -1,
@@ -10132,7 +10132,7 @@
         "id": "cut_back_instead",
         "label": "Відкотити назад під удар здалеку",
         "past": "відкотив назад під удар здалеку з гострого кута",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 1,
@@ -10798,7 +10798,7 @@
         "id": "square_the_rebound",
         "label": "Не бити самому — відкотити партнеру з кращим кутом",
         "past": "відкотив відскок партнеру з кращим кутом",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 2,
@@ -10852,7 +10852,7 @@
         "id": "let_partner_finish",
         "label": "Підкотити {partner.dat} під удар, а не бити самому",
         "past": "розчистив м’яч для {partner.gen} замість удару самому",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "risky",
         "effect": "great",
         "difficulty": -1,
@@ -13219,7 +13219,7 @@
         "id": "low_through",
         "label": "Низом вразріз",
         "past": "віддав низом вразріз",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
@@ -14880,7 +14880,7 @@
         "id": "fake_and_pass",
         "label": "Замах — і пас {partner.dat} у вільну зону",
         "past": "замахом звільнив зону і віддав {partner.dat}",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": -1,
@@ -15987,7 +15987,7 @@
           "personal": 1
         },
         "voice": {
-          "who": "vision",
+          "who": "team",
           "line": "Ближня. Він стартує раніше за захисника."
         },
         "outcomes": {
@@ -16148,7 +16148,7 @@
         "id": "short_corner",
         "label": "Коротко на {partner.gen} — і простріл",
         "past": "розіграв кутовий коротко під простріл",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 1,
@@ -16215,7 +16215,7 @@
         "id": "pull_back_to_dm",
         "label": "Викотити назад під удар {dm.dat}",
         "past": "викотив кутовий назад під удар {dm.dat}",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "risky",
         "effect": "great",
         "difficulty": -2,
@@ -18185,7 +18185,7 @@
         "id": "pass_early",
         "label": "Не йти на нього — віддати раніше",
         "past": "не дав захиснику стику і віддав раніше",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": -2,
@@ -19065,7 +19065,7 @@
         "id": "square_striker",
         "label": "Відкотити {striker.dat} — він за спиною воротаря",
         "past": "відкотив {striker.dat} за спину воротарю",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
         "difficulty": 2,
@@ -19347,7 +19347,7 @@
         "id": "lay_back",
         "label": "Віддати назад на дугу, під удар",
         "past": "віддав назад на дугу під удар",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
         "difficulty": 1,
@@ -23991,7 +23991,7 @@
         "id": "drive_low_cross",
         "label": "Прострілити низом уздовж воріт",
         "past": "прострілював низом після короткого кутового",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
@@ -24893,7 +24893,7 @@
         "id": "square_to_striker_empty",
         "label": "Відкотити {striker.dat} на порожні",
         "past": "відкочував {striker.dat} на порожні ворота",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
         "difficulty": 2,
@@ -25092,7 +25092,7 @@
           "personal": 1
         },
         "voice": {
-          "who": "vision",
+          "who": "team",
           "line": "{partner} на дальній сам. Над усіма — і він замкне."
         },
         "outcomes": {
@@ -25426,7 +25426,7 @@
         "id": "square_to_partner_rebound",
         "label": "Відкотити {partner.dat} під удар",
         "past": "відкочував добивання {partner.dat}",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
         "difficulty": 2,
@@ -26636,7 +26636,7 @@
         "id": "return_low",
         "label": "Повернути низом у штрафний",
         "past": "повертав підбір низом у штрафний",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
@@ -26704,7 +26704,7 @@
           "personal": 0
         },
         "voice": {
-          "who": "team",
+          "who": "vision",
           "line": "{winger} на дальньому сам. Усі дивляться в штрафний — переведи туди, куди ніхто не дивиться."
         },
         "outcomes": {
@@ -27366,7 +27366,7 @@
           "personal": 1
         },
         "voice": {
-          "who": "vision",
+          "who": "team",
           "line": "Скинь — і біжи за спину {them.cb.dat}. {dm} кине туди, куди ти побіг."
         },
         "outcomes": {
@@ -27429,7 +27429,7 @@
           "personal": 0
         },
         "voice": {
-          "who": "team",
+          "who": "vision",
           "line": "Вони стиснулися на тебе. Отже, на дальньому краю {winger} сам."
         },
         "outcomes": {
@@ -28048,7 +28048,7 @@
         "id": "pass_through_line",
         "label": "Пас крізь лінію на {dm.gen}",
         "past": "віддавав крізь першу лінію на {dm.gen}",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": 0,
@@ -30681,7 +30681,7 @@
         "id": "let_it_run_striker",
         "label": "Пропустити на {striker.gen} за спиною",
         "past": "пропускав відкат на {striker.gen}",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
         "difficulty": 1,
@@ -31839,7 +31839,7 @@
         "id": "return_to_striker",
         "label": "Повернути {striker.dat} — він уже розвернувся",
         "past": "повертав {striker.dat} після його пропуску",
-        "attribute": "vision",
+        "attribute": "passing",
         "basePosition": "controlled",
         "effect": "great",
         "difficulty": 2,
@@ -32068,7 +32068,7 @@
           "personal": 0
         },
         "voice": {
-          "who": "team",
+          "who": "vision",
           "line": "Обидва ряди дивляться на твою ногу. {rb} біжить повз по бровці — і ніхто на нього не дивиться."
         },
         "outcomes": {
@@ -33999,7 +33999,7 @@
         "id": "pass_striker_behind",
         "label": "Віддати {striker.dat} за спину воротаря",
         "past": "віддав за спину воротареві-ліберо",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
@@ -39239,7 +39239,7 @@
         "id": "whip_it_first_time",
         "label": "Подати в дотик, поки вони спиною",
         "past": "подавав у дотик, поки вони відходили",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "risky",
         "effect": "standard",
         "difficulty": 1,
@@ -39892,7 +39892,7 @@
         "id": "thread_first_time",
         "label": "У дотик, поки коридор є",
         "past": "віддав розрізну в дотик",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
@@ -40129,7 +40129,7 @@
         "id": "disguised_through",
         "label": "Віддати в центр, дивлячись на фланг",
         "past": "віддав у центр, дивлячись на фланг",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "risky",
         "effect": "great",
         "difficulty": 1,
@@ -42035,7 +42035,7 @@
         "id": "roll_it_sideways",
         "label": "Відкотити вбік під удар із ходу",
         "past": "відкотив штрафний убік під удар",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "controlled",
         "effect": "standard",
         "difficulty": -1,
@@ -42100,7 +42100,7 @@
         "id": "curl_away",
         "label": "Крутити від воріт — під забігання",
         "past": "закрутив штрафний від воріт",
-        "attribute": "passing",
+        "attribute": "vision",
         "basePosition": "controlled",
         "effect": "great",
         "difficulty": 0,

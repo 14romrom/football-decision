@@ -157,6 +157,8 @@ function Game() {
   const sessionRef = useRef<MatchSession | null>(null);
   const rngRef = useRef<Rng | null>(null);
   const pendingRef = useRef<Pending | null>(null);
+  /** У цій стрічці вже була відповідь із тренуванням (`ActivityEffect.practice`) — друга в очко не йде. */
+  const practiceUsedRef = useRef(false);
   const shownAtRef = useRef(0);
   // career — состояние для UI (уровень/опыт на экранах) и ref для чтения из колбэков
   // без устаревших замыканий, тот же приём, что и sessionRef/rngRef.
@@ -518,6 +520,7 @@ function Game() {
     const sn = seasonRef.current;
     if (isSeasonOver(sn)) { afterPosts(leveledFrom, leveledTo); return; }
     // Частка «нашого» в стрічці росте туром кар'єри, не сезоном (posts.ts:POST_QUOTA_BY_CAREER_ROUND).
+    practiceUsedRef.current = false;
     setStage({ k: 'posts', posts: buildPosts(postQuota(sn.number, sn.round), 3), leveledFrom, leveledTo });
   }, [afterPosts, buildPosts]);
 
@@ -1026,7 +1029,12 @@ function Game() {
           track('y_reply', { account: post.account.handle, option: option.id ?? `#${post.replyOptions?.indexOf(option) ?? -1}` });
           // Ответ в стрічці — последствия как у дела недели: через applyWeek, чтобы бирки,
           // флаги и старт следующего матча считались в одном месте. Неделя потом дольёт своё.
-          const activity: Activity = { id: 'reply', voice: 'ego', title: t('Відповідь у стрічці'), line: option.text, effect: option.effect };
+          // Тренування зі стрічки — не більше однієї за стрічку (`ActivityEffect.practice`): друга відповідь
+          // діє як звичайно, але в очко не рахується, інакше «Y» стала б фермою.
+          const { practice, ...rest } = option.effect;
+          const effect: typeof option.effect = practice && !practiceUsedRef.current ? option.effect : rest;
+          if (effect.practice) practiceUsedRef.current = true;
+          const activity: Activity = { id: 'reply', voice: 'ego', title: t('Відповідь у стрічці'), line: option.text, effect };
           const { career: after, tags } = applyWeek(careerRef.current, [{ activity }]);
           // Місто пам'ятає тільки названі відповіді (`ReplyOption.id`) — і тільки щоб потім
           // пролунати в стрічці (`PostWhen.said`). Ні в голоси, ні в баланс це не йде.

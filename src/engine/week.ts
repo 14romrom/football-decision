@@ -67,6 +67,11 @@ export type ActivityEffect = {
   /** Тренировка атрибута: +1 к счётчику, BALANCE.week.trainToPoint = +1 очко навсегда.
    *  'choice' — игрок выбирает атрибут голоса на экране. */
   train?: Attribute | 'choice';
+  /** Крихта тренування зі стрічки «Y» (24.10): той самий шлях до очка, що й `train`, але повільніший —
+   *  `BALANCE.week.practiceToPoint` відповідей замість `trainToPoint` справ. Лише атрибути, які відстають
+   *  у змішаній грі (`tools/voice-paths.ts`): спокій, витривалість, корпус — тест; Бачення не підтягуємо
+   *  (рішення користувача: його аномалію довго прибирали). Не більше однієї за стрічку — App. */
+  practice?: Attribute;
   /** Флаги в следующий матч (after 0) или через N туров; past — для {trigger.past}. */
   flags?: { flag: string; after?: number; past: string }[];
   removeFlags?: string[];
@@ -360,7 +365,7 @@ const START_VOICE: Record<string, VoiceKey | undefined> = { stamina: 'body', com
 /** Применить выбранные дела к карьере. Доверие и тренировки — сразу и навсегда, остальное —
  *  в nextMatch на один матч. Возвращает бирки для экрана: что изменилось, словами. */
 export function applyWeek(career: Career, choices: WeekChoice[]): { career: Career; tags: string[]; loot: LootItem[] } {
-  const next: Career = { ...career, training: { ...(career.training ?? {}) }, attrPoints: { ...career.attrPoints } };
+  const next: Career = { ...career, training: { ...(career.training ?? {}) }, practice: { ...(career.practice ?? {}) }, attrPoints: { ...career.attrPoints } };
   // Начинаем с того, что уже приготовлено к матчу (ответ в стрічці идёт раньше тижня, 19.09):
   // иначе неделя затирала бы его последствия. consumeStartPenalty очищает всё разом.
   const prev = career.nextMatch;
@@ -413,6 +418,18 @@ export function applyWeek(career: Career, choices: WeekChoice[]): { career: Care
       } else {
         next.training![attr] = n;
         tags.push({ text: tf('{0}: {1} з {2}', ATTRIBUTE_LABEL[attr], n, BALANCE.week.trainToPoint), kind: 'train', attr, where: t('тренування'), progress: [n, BALANCE.week.trainToPoint] });
+      }
+    }
+    if (e.practice) {
+      const a = e.practice, need = BALANCE.week.practiceToPoint;
+      const n = (next.practice![a] ?? 0) + 1;
+      if (n >= need) {
+        next.practice![a] = 0;
+        next.attrPoints[a] = (next.attrPoints[a] ?? 0) + 1;
+        tags.push({ text: tf('{0} +1 назавжди', ATTRIBUTE_LABEL[a]), kind: 'perm', attr: a, dir: 'up', where: t('назавжди · у картку') });
+      } else {
+        next.practice![a] = n;
+        tags.push({ text: tf('{0}: {1} з {2}', ATTRIBUTE_LABEL[a], n, need), kind: 'train', attr: a, where: t('стрічка'), progress: [n, need] });
       }
     }
     if (e.removeFlags?.length) flags = flags.filter((f) => !e.removeFlags!.includes(f.flag));

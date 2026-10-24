@@ -75,6 +75,8 @@ export type Career = {
   partnerBond?: number;
   /** Прогресс тренировок по атрибутам: BALANCE.week.trainToPoint тренировок = +1 очко навсегда. */
   training?: Partial<Record<Attribute, number>>;
+  /** Те саме для відповідей у стрічці «Y» (`ActivityEffect.practice`): BALANCE.week.practiceToPoint = +1 очко. */
+  practice?: Partial<Record<Attribute, number>>;
   /** Ріст від матчу (M18.4): скільки чистих ісходів зроблено кожним атрибутом за кар’єру.
    *  Кожні BALANCE.growth.useToPoint дають +1 очко назавжди — лічильник не обнуляється,
    *  щоб «ще два до пункту» можна було показати на картці. */

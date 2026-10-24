@@ -69,7 +69,8 @@ function Acts({ p }: { p: Post }) {
 
 export function PostsScreen({ posts, self, onReply, onNext }: Props) {
   useBanner('bannerY');   // банер Google внизу, поки відкрита стрічка (M48)
-  const [replied, setReplied] = useState<{ index: number; option: ReplyOption; tags: string[] } | null>(null);
+  // Відповідей за стрічку може бути кілька (REPLY_MAX): кожна — під своїм постом.
+  const [replied, setReplied] = useState<Record<number, { option: ReplyOption; tags: string[] }>>({});
   const [draft, setDraft] = useState<{ index: number; option: ReplyOption } | null>(null);
 
   return (
@@ -80,8 +81,9 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
 
         {posts.map((p, i) => {
           const when = p.kind === 'live' && p.liveMinute !== undefined ? undefined : agoLabel(p.hoursAgo);
-          const open = p.replyOptions && !replied;
-          const done = replied && replied.index === i && replied.option.text;
+          const mine = replied[i];
+          const open = p.replyOptions && !mine;
+          const done = mine && mine.option.text ? mine : null;
           const threaded = !!p.reply || open || done;
           return (
             <article key={i} className={`x-tw x-${p.account.kind} x-kind-${p.kind} ${threaded ? 'x-thread' : ''}`}>
@@ -124,10 +126,10 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
                       {p.replyOptions!.map((o, k) => (
                         <button key={k} type="button" className={draft?.index === i && draft.option === o ? 'on' : ''} onClick={() => setDraft({ index: i, option: o })}>{o.text}</button>
                       ))}
-                      <button type="button" className="skip" onClick={() => setReplied({ index: i, option: { text: '', reaction: '', effect: { note: '' } }, tags: [] })}>{t('Не відповідати')}</button>
+                      <button type="button" className="skip" onClick={() => setReplied((r) => ({ ...r, [i]: { option: { text: '', reaction: '', effect: { note: '' } }, tags: [] } }))}>{t('Не відповідати')}</button>
                     </div>
                     <button type="button" className="x-post-btn" disabled={!(draft && draft.index === i)}
-                      onClick={() => { if (draft && draft.index === i) setReplied({ index: i, option: draft.option, tags: onReply(p, draft.option) }); }}>{t('Опублікувати')}</button>
+                      onClick={() => { if (draft && draft.index === i) { const tags = onReply(p, draft.option); setReplied((r) => ({ ...r, [i]: { option: draft.option, tags } })); } }}>{t('Опублікувати')}</button>
                   </div>
                 </>
               )}
@@ -137,15 +139,15 @@ export function PostsScreen({ posts, self, onReply, onNext }: Props) {
                   <Avatar self />
                   <div className="x-body x-sub">
                     <Name self={self} when={t('щойно')} />
-                    <p className="x-tx">{replied.option.text}</p>
+                    <p className="x-tx">{done.option.text}</p>
                   </div>
                   <Avatar account={p.account} />
                   <div className="x-body x-sub">
                     <Name account={p.account} when={t('щойно')} />
-                    <p className="x-tx">{replied.option.reaction}</p>
-                    {replied.tags.length > 0 && (
+                    <p className="x-tx">{done.option.reaction}</p>
+                    {done.tags.length > 0 && (
                       <ul className="tags">
-                        {replied.tags.map((t) => <li key={t} className="badge badge-neutral">{t}</li>)}
+                        {done.tags.map((t) => <li key={t} className="badge badge-neutral">{t}</li>)}
                       </ul>
                     )}
                   </div>

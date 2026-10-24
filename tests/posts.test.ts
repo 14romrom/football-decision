@@ -6,7 +6,7 @@ import { makeRng } from '../src/engine/rng';
 import { createSeason, ourFixture, recordRound, US } from '../src/engine/season';
 import { defaultCareer } from '../src/engine/career';
 import { fillNames, opponentTraits } from '../src/engine/names';
-import { buildFeed, buildPostContext, LOCAL_GROUPS, localShare, matchesPost, minuteOrdinal, POST_QUOTA, postQuota, POSTS, type PostContext, type PostGroup } from '../src/engine/posts';
+import { buildFeed, buildPostContext, LOCAL_GROUPS, localShare, matchesPost, minuteOrdinal, POST_QUOTA, postQuota, POSTS, REPLY_MAX, type PostContext, type PostGroup } from '../src/engine/posts';
 import { OPPONENTS, rosterFor, OPPONENT_KEYS } from '../src/content';
 
 const keys = OPPONENT_KEYS.second;
@@ -34,6 +34,13 @@ describe('стрічка: контент', () => {
     for (const r of POSTS.posts) {
       expect(POSTS.accounts[r.account], r.account).toBeDefined();
       if (r.reply) expect(POSTS.accounts[r.reply.account], r.reply.account).toBeDefined();
+      // Відповідь під конкретним постом (24.10): рівно по одній на варіант, і не разом зі спільним пулом.
+      if (r.replies) {
+        expect(r.replies, r.lines[0]).toHaveLength(r.lines.length);
+        expect(r.reply, r.lines[0]).toBeUndefined();
+        for (const x of r.replies) if (x) expect(POSTS.accounts[x.account], x.account).toBeDefined();
+      }
+      for (const o of r.replyOptions ?? []) for (const i of o.line ?? []) expect(r.lines[i], `${o.text}: line ${i}`).toBeDefined();
       expect(GROUPS, r.group).toContain(r.group);
     }
     for (const g of GROUPS) expect(POSTS.posts.some((r) => r.group === g && !r.when), g).toBe(true);
@@ -56,7 +63,7 @@ describe('стрічка: контент', () => {
 
   it('плейсхолдеры разрешаются любым ростером; реальных людей по имени нет', () => {
     const texts = POSTS.posts.flatMap((r) => [
-      ...r.lines, ...(r.reply?.lines ?? []), ...(r.poll ?? []),
+      ...r.lines, ...(r.reply?.lines ?? []), ...(r.replies ?? []).flatMap((x) => (x ? [x.text] : [])), ...(r.poll ?? []),
       ...(r.replyOptions ?? []).flatMap((o) => [o.text, o.reaction]),
     ]);
     for (const key of keys) {
@@ -128,11 +135,11 @@ describe('стрічка: контент', () => {
     expect(postQuota(3, 5)).toEqual(postQuota(2, 10));
   });
 
-  it('форма: опрос в сумме 100, видалений твіт цитируется в ответе, лайв — с минутой и внизу, ответить можно на один пост', () => {
+  it('форма: опрос в сумме 100, видалений твіт цитируется в ответе, лайв — с минутой и внизу, ответить можно на REPLY_MAX постів', () => {
     let sawPoll = false, sawDeleted = false, sawLive = false;
     for (let i = 0; i < 60; i++) {
       const feed = buildFeed(ctx({ result: 'loss', scoreUs: 0, scoreThem: 1, lastWeek: ['insta_date'], coachTrust: 30 }), makeRng(700 + i));
-      expect(feed.filter((p) => p.replyOptions).length).toBeLessThanOrEqual(1);
+      expect(feed.filter((p) => p.replyOptions).length).toBeLessThanOrEqual(REPLY_MAX);
       for (const p of feed) {
         if (p.kind === 'poll') { sawPoll = true; expect(p.poll!.reduce((a, o) => a + o.pct, 0)).toBe(100); }
         if (p.kind === 'deleted') { sawDeleted = true; expect(p.text).toBe('Цей твіт видалено'); expect(p.reply!.text).not.toContain('{quote}'); expect(p.reply!.text.length).toBeGreaterThan(20); }
@@ -146,6 +153,13 @@ describe('стрічка: контент', () => {
     for (const r of POSTS.posts) for (const o of r.replyOptions ?? []) {
       expect(o.reaction.length).toBeGreaterThan(0);
       expect(o.effect.note.length).toBeGreaterThan(0);
+      // Тренування зі стрічки — лише ті атрибути, що відстають у змішаній грі (рішення користувача 24.10:
+      // Спокій і Тіло, Бачення не підтягувати), і тільки з голосом, якому атрибут належить на картці.
+      if (o.effect.practice) {
+        expect(['composure', 'stamina', 'strength'], o.text).toContain(o.effect.practice);
+        expect(o.effect.louder ?? [], o.text).toContain(o.effect.practice === 'composure' ? 'composure' : 'body');
+        expect(o.effect.train, o.text).toBeUndefined();
+      }
     }
   });
 
@@ -197,6 +211,21 @@ describe('стрічка: ответ игрока', () => {
     expect(c2.nextMatch?.start?.fanHype).toBe(5);
     expect(c2.nextMatch?.start?.stamina).toBe(-8);
     expect(c2.nextMatch?.notes).toEqual(['відповів', 'зал']);
+  });
+  it('тренування зі стрічки повільніше за справу тижня: practiceToPoint відповідей = +1 очко', async () => {
+    const { applyWeek } = await import('../src/engine/week');
+    const { BALANCE } = await import('../src/engine/balance');
+    const calm = { id: 'reply', voice: 'ego' as const, title: 'Відповідь', line: '', effect: { practice: 'composure' as const, note: 'спокійно' } };
+    expect(BALANCE.week.practiceToPoint).toBeGreaterThan(BALANCE.week.trainToPoint);
+    let c = defaultCareer();
+    for (let i = 1; i < BALANCE.week.practiceToPoint; i++) {
+      c = applyWeek(c, [{ activity: calm }]).career;
+      expect(c.practice?.composure).toBe(i);
+      expect(c.attrPoints.composure ?? 0).toBe(0);
+    }
+    c = applyWeek(c, [{ activity: calm }]).career;
+    expect(c.attrPoints.composure).toBe(1);
+    expect(c.practice?.composure).toBe(0);
   });
 });
 

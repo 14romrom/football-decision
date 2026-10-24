@@ -71,20 +71,31 @@ export type ReplyOption = {
   /** Только у тех ответов, которые город потом вспомнит: пара `<id правила>:<id варианта>`
    *  уходит в `career.replyLog`, и её читает `PostWhen.said`. Без `id` ответ живёт один вечер. */
   id?: string;
+  /** Тільки під цими варіантами поста (індекси в `lines`): відповідь, яка має сенс лише на один
+   *  із них («дайте йому слухавку» — коли син хоче поговорити, а не коли питає, чому програли). */
+  line?: number[];
 };
+
+/** Відповідь під конкретним варіантом поста — свій аккаунт і свій текст. */
+export type PostReplyLine = { account: string; text: string };
 
 export type PostRule = {
   group: PostGroup; account: string; when?: PostWhen; lines: string[];
   /** Имя правила — нужно только тем постам, чей ответ город запомнит (`replyOptions[].id`). */
   id?: string;
-  /** Ответ под постом — от другого аккаунта, одна из строк. */
+  /** Ответ под постом — от другого аккаунта, одна из строк. Тільки там, де будь-яка з них пасує до
+   *  будь-якого варіанта поста; інакше — `replies`. */
   reply?: { account: string; lines: string[] };
+  /** Відповідь до кожного варіанта поста, паралельно `lines` (24.10): спільний пул відповідей
+   *  обирався незалежно від поста, і під «Астон Віллою» фанат писав про Лондон. `null` — під цим
+   *  варіантом ніхто не відповідає: краще тиша, ніж відповідь не про те. */
+  replies?: (PostReplyLine | null)[];
   kind?: PostKind;
   /** Варианты опроса (kind: poll). */
   poll?: string[];
   /** Минута матча для лайв-твита (kind: live): [от, до]. */
   live?: [number, number];
-  /** Пост, на который игрок может ответить. В одной стрічці — не больше одного такого. */
+  /** Пост, на который игрок может ответить. В одной стрічці — не больше `REPLY_MAX` таких. */
   replyOptions?: ReplyOption[];
 };
 
@@ -254,7 +265,24 @@ function pollResults(options: string[], rng: Rng): { text: string; pct: number }
  *  со второго сезона привязанность есть, и «наша ліга» занимает половину. */
 export const POST_QUOTA: Record<PostGroup, number> = { self: 3, league: 2, world: 3, cross: 1, meta: 1 };
 /** С какой вероятностью в стрічку подмешивается пост, на который можно ответить (если есть подходящий). */
-export const REPLY_CHANCE = 0.5;
+export const REPLY_CHANCE = 1;
+/** Скільки постів за стрічку можна відповісти (24.10, було 1): одна відповідь на тур — це ще не розмова. */
+export const REPLY_MAX = 2;
+
+/** Відповідь під постом для обраного варіанта: своя (`replies`) або зі спільного пулу (`reply`). */
+function replyFor(rule: PostRule, index: number, rng: Rng, accounts: PostsContent['accounts'], fill: (t: string) => string, quote: string): Post['reply'] {
+  if (rule.replies) {
+    const r = rule.replies[index];
+    return r ? { account: accounts[r.account], text: fill(r.text).replace('{quote}', quote) } : undefined;
+  }
+  return rule.reply ? { account: accounts[rule.reply.account], text: fill(rng.pick(rule.reply.lines)).replace('{quote}', quote) } : undefined;
+}
+
+/** Варіанти відповіді Реєса під обраним варіантом поста. */
+function optionsFor(rule: PostRule, index: number, fill: (t: string) => string): ReplyOption[] | undefined {
+  const opts = rule.replyOptions?.filter((o) => !o.line || o.line.includes(index));
+  return opts?.length ? opts.map((o) => ({ ...o, text: fill(o.text), reaction: fill(o.reaction) })) : undefined;
+}
 
 /** «Наш» мир — про Реєса, нашу лігу и наш город; «общее» — великий футбол и мета.
  *  Тот же раздел, что в `tests/posts.test.ts`: `cross` — это большой мир, который заметил нашу
@@ -306,11 +334,11 @@ export function buildFeed(
 ): Post[] {
   const out: Post[] = [];
   for (const group of Object.keys(quota) as PostGroup[]) {
-    const pool: { text: string; weight: number; rule: PostRule }[] = [];
+    const pool: { text: string; weight: number; rule: PostRule; index: number }[] = [];
     for (const rule of content.posts) {
       if (rule.group !== group || !matchesPost(rule.when, ctx)) continue;
       const weight = 3 ** Object.keys(rule.when ?? {}).length;
-      for (const text of rule.lines) pool.push({ text, weight, rule });
+      rule.lines.forEach((text, index) => pool.push({ text, weight, rule, index }));
     }
     const taken = new Set<string>();
     for (let i = 0; i < (quota[group] ?? 0); i++) {
@@ -326,15 +354,13 @@ export function buildFeed(
       const baseText = isBaseText(pick.text);
       pick.text = withMoment(pick.text);
       // Удалённый твит: на экране «Цей твіт видалено», а оригинал живёт в ответе-скрине.
-      const replyText = pick.rule.reply ? withMoment(rng.pick(pick.rule.reply.lines)).replace('{quote}', pick.text) : undefined;
-      const reply = pick.rule.reply && replyText !== undefined
-        ? { account: content.accounts[pick.rule.reply.account], text: replyText }
-        : undefined;
+      const reply = replyFor(pick.rule, pick.index, rng, content.accounts, withMoment, pick.text);
+      const options = optionsFor(pick.rule, pick.index, withMoment);
       out.push({
         account, text: kind === 'deleted' ? t('Цей твіт видалено') : pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0, kind, baseText,
         ...(kind === 'poll' && pick.rule.poll ? { poll: pollResults(pick.rule.poll, rng) } : {}),
         ...(kind === 'live' && pick.rule.live ? { liveMinute: rng.int(pick.rule.live[0], pick.rule.live[1]) } : {}),
-        ...(pick.rule.replyOptions ? { replyOptions: pick.rule.replyOptions.map((o) => ({ ...o, text: withMoment(o.text), reaction: withMoment(o.reaction) })) } : {}),
+        ...(options ? { replyOptions: options } : {}),
       });
     }
   }
@@ -350,27 +376,29 @@ export function buildFeed(
       const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
       seen.add(text);
       const fill = (t: string) => fillMoment(t, rule, ctx);
-      const reply = rule.reply ? { account: content.accounts[rule.reply.account], text: fill(rng.pick(rule.reply.lines)) } : undefined;
+      const index = rule.lines.indexOf(text);
+      const reply = replyFor(rule, index, rng, content.accounts, fill, fill(text));
+      const options = optionsFor(rule, index, fill);
       out[slot] = {
         ...out[slot], account: content.accounts[rule.account], text: fill(text), reply, kind: rule.kind ?? 'post', baseText: isBaseText(text),
         ...(rule.kind === 'poll' && rule.poll ? { poll: pollResults(rule.poll.map(fill), rng) } : {}),
         ...(rule.kind === 'live' && rule.live ? { liveMinute: ctx.moments[which]!.minute } : {}),
-        ...(rule.replyOptions ? { replyOptions: rule.replyOptions.map((o) => ({ ...o, text: fill(o.text), reaction: fill(o.reaction) })) } : {}),
+        ...(options ? { replyOptions: options } : {}),
       };
     }
   }
 
-  // Ответить можно на один пост за стрічку: первый по ленте, остальные — просто читаются.
-  let replyable = false;
+  // Ответить можно на REPLY_MAX постов за стрічку: первые по ленте, остальные — просто читаются.
+  let replyable = 0;
   for (const p of out) {
     if (!p.replyOptions) continue;
-    if (replyable) delete p.replyOptions;
-    replyable = true;
+    if (replyable >= REPLY_MAX) delete p.replyOptions;
+    else replyable++;
   }
   // Пост с ответом сам по себе выпадает редко (квота self — 2–3 из большого пула), а решение в
   // стрічці — фишка: если он есть в пуле, с вероятностью REPLY_CHANCE подменяем им один пост
   // своей группы. Не всегда — иначе каждая стрічка превращается в допрос.
-  if (!replyable && rng.next() < REPLY_CHANCE) {
+  if (replyable === 0 && rng.next() < REPLY_CHANCE) {
     const candidates = content.posts.filter((r) => r.replyOptions && matchesPost(r.when, ctx) && r.lines.some((t) => !seen.has(t)));
     const rule = candidates.length ? rng.pick(candidates) : null;
     const slot = rule ? out.findIndex((p) => p.group === rule.group && !p.poll && p.kind === 'post') : -1;
@@ -380,7 +408,7 @@ export function buildFeed(
       const fill = (t: string) => fillMoment(t, rule, ctx);
       out[slot] = {
         ...out[slot], account: content.accounts[rule.account], text: fill(text), reply: undefined, kind: 'post', baseText: isBaseText(text),
-        replyOptions: rule.replyOptions!.map((o) => ({ ...o, text: fill(o.text), reaction: fill(o.reaction) })),
+        replyOptions: optionsFor(rule, rule.lines.indexOf(text), fill),
       };
     }
   }

@@ -77,6 +77,8 @@ export type Career = {
   training?: Partial<Record<Attribute, number>>;
   /** Те саме для відповідей у стрічці «Y» (`ActivityEffect.practice`): BALANCE.week.practiceToPoint = +1 очко. */
   practice?: Partial<Record<Attribute, number>>;
+  /** Голи + асисти двох останніх матчів — репутація для «тебе пасуть» з першої хвилини (BALANCE.conditions.markedCarryFrom). */
+  recentContrib?: number[];
   /** Кому Реєс поставив лайк у минулій стрічці (хендли): наступна стрічка відгукнеться (`PostWhen.liked`). */
   lastLiked?: string[];
   /** Ріст від матчу (M18.4): скільки чистих ісходів зроблено кожним атрибутом за кар’єру.
@@ -353,7 +355,8 @@ export function coachGrip(coachTrust: number): { hold: boolean; noSetPieces: boo
 }
 
 /** Що переноситься в матч із минулого — для програмки (прес-служба скаже це своїми словами, без «тренер не забув»). */
-export type CarryFacts = { sentOff: boolean; yellows: boolean; injured: boolean; /** Літо без передсезонки (M15): маркер out_of_form на цей матч. */ outOfForm?: boolean };
+export type CarryFacts = { sentOff: boolean; yellows: boolean; injured: boolean; /** Літо без передсезонки (M15): маркер out_of_form на цей матч. */ outOfForm?: boolean;
+  /** Їхній тренер бачив минулі голи: опіка з першої хвилини. */ marked?: boolean };
 
 export type StartPenalty = {
   /** Факти для програмки (programme.ts:carryLine); note нижче — службовий рядок, на екран не йде (21.09). */
@@ -369,6 +372,8 @@ export type StartPenalty = {
   startDelta?: NextMatchPrep['start'];
   voiceStreak?: NextMatchPrep['voiceStreak'];
   voiceMute?: NextMatchPrep['voiceMute'];
+  /** Репутація: 1 — суперник опікає з першої хвилини (state.markedRep). */
+  markedRep?: number;
 };
 
 /** Штрафы старта следующего матча от травмы/картки прошлого — и одновременно их
@@ -411,13 +416,15 @@ export function consumeStartPenalty(career: Career): { career: Career; penalty: 
   next.benched = false;
   if (prep?.notes?.length) note = [note, ...prep.notes].filter(Boolean).join(' ');
   next.nextMatch = undefined;
+  const markedRep = (career.recentContrib ?? []).reduce((a, b) => a + b, 0) >= BALANCE.conditions.markedCarryFrom ? 1 : 0;
   return {
     career: next,
     penalty: {
-      facts: { sentOff: career.pendingSentOff, yellows: !career.pendingSentOff && career.careerYellows >= 3, injured: staminaPenalty > 0, outOfForm: flags.some((f) => f.flag === 'out_of_form') },
+      facts: { sentOff: career.pendingSentOff, yellows: !career.pendingSentOff && career.careerYellows >= 3, injured: staminaPenalty > 0, outOfForm: flags.some((f) => f.flag === 'out_of_form'), marked: markedRep > 0 },
       staminaPenalty, coachTrustPenalty, note, flags: [...flags, ...peopleFlags(career), ...tiboFlags(career), ...prologueFlags(career), ...agentFlags(career)], fromBench: !!career.benched,
       arc: arcStage(career),
       attrBonus: prep?.attrBonus, startDelta: prep?.start, voiceStreak: prep?.voiceStreak, voiceMute: prep?.voiceMute,
+      markedRep,
     },
   };
 }
@@ -470,6 +477,7 @@ export function applyMatchToCareer(
     benched: benchAfterMatch(),
     partnerBond: (career.partnerBond ?? 0) + (state.people?.partner ?? 0),
     matchesPlayed: career.matchesPlayed + 1,
+    recentContrib: [...(career.recentContrib ?? []), (state.stats?.goals ?? 0) + (state.stats?.assists ?? 0)].slice(-2),
     agentEcho: undefined,
     voiceCounts: { ...career.voiceCounts },
   };

@@ -31,7 +31,7 @@ export type ProgrammeInput = {
   agentEcho?: 'leave' | 'stay' | 'wait';
   /** Перенесене з минулого туру (career.ts:CarryFacts): вилучення, картки, травма — фразою прес-служби. Службова
    *  сводка в підвалі програмки прибрана (21.09, пользователь: недоречно для формату, ніхто не читає). */
-  carry?: { sentOff: boolean; yellows: boolean; injured: boolean; outOfForm?: boolean };
+  carry?: { sentOff: boolean; yellows: boolean; injured: boolean; outOfForm?: boolean; marked?: boolean };
 };
 
 const ORD = ['', t('перший'), t('другий'), t('третій'), t('четвертий'), t('п’ятий'), t('шостий'), t('сьомий'), t('восьмий'), t('дев’ятий'), t('десятий')];
@@ -79,7 +79,9 @@ function arcLine(i: ProgrammeInput): string {
 function carryLine(i: ProgrammeInput): string {
   const c = i.carry;
   if (!c) return '';
-  const bits = [c.sentOff ? t('Після вилучення в минулому турі') : c.yellows ? t('Три жовті за сезон — під наглядом') : '', c.injured ? t('грає після травми') : c.outOfForm ? t('літо минуло без передсезонки — форма не та') : ''].filter(Boolean);
+  const bits = [c.sentOff ? t('Після вилучення в минулому турі') : c.yellows ? t('Три жовті за сезон — під наглядом') : '', c.injured ? t('грає після травми') : c.outOfForm ? t('літо минуло без передсезонки — форма не та') : '',
+    // Репутація (24.10): гравець має знати, звідки «тебе пасуть» уже на першому кидку.
+    c.marked ? t('їхній тренер бачив минулі голи — опіка з першої хвилини') : ''].filter(Boolean);
   if (bits.length === 0) return '';
   const line = bits.join(', ');
   return line.charAt(0).toUpperCase() + line.slice(1) + '.';

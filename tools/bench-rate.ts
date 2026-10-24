@@ -38,7 +38,7 @@ for (let s = 0; s < N; s++) {
     const player = effectivePlayer(PLAYER, career, penalty.attrBonus);
     const session = createMatch(`b-${seed}-${season.round}`, seed + season.round, player, rng, EPISODES_RAW, ROSTER, conditions, [], FLAG_RULES, {
       coachTrust: career.coachTrust, fanHype: career.fanHype, fromBench: benched,
-      staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, flags: penalty.flags,
+      staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, markedRep: penalty.markedRep, flags: penalty.flags,
       arc: penalty.arc,
     });
     for (;;) {

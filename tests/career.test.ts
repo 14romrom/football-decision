@@ -167,3 +167,14 @@ describe('career: профиль голосов копится за карьер
     expect(career.matchesPlayed).toBe(2);
   });
 });
+
+describe('«тебе пасуть» з пам’яттю', () => {
+  it('3+ голів і асистів за два останні матчі — опіка з першої хвилини наступного матчу', async () => {
+    const { defaultCareer, consumeStartPenalty } = await import('../src/engine/career');
+    const base = defaultCareer();
+    expect(consumeStartPenalty({ ...base, recentContrib: [1, 1] }).penalty.markedRep).toBe(0);
+    const hot = consumeStartPenalty({ ...base, recentContrib: [2, BALANCE.conditions.markedCarryFrom - 2] }).penalty;
+    expect(hot.markedRep).toBe(1);
+    expect(hot.facts.marked).toBe(true);
+  });
+});

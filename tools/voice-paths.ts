@@ -49,7 +49,7 @@ function run(seed: number, path: Path): Row[] {
       const player = effectivePlayer(PLAYER, career, penalty.attrBonus);
       const session = createMatch(`v-${seed}-${num}-${season.round}`, seed, player, rng, EPISODES_RAW, ROSTER, conditions, [], FLAG_RULES, {
         coachTrust: career.coachTrust, fanHype: career.fanHype, fromBench: penalty.fromBench,
-        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty,
+        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, markedRep: penalty.markedRep,
         flags: penalty.flags, arc: penalty.arc,
       });
       for (;;) {

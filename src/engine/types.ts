@@ -130,6 +130,8 @@ export type MatchState = {
   composureNow: number;   // 0..100, плавает по ходу матча
   /** Стан арки на матч (M13, з Carryover) — для when.arcMin/arcMax у репліках, сетапах і стрічці. */
   arc?: number;
+  /** «Тебе пасуть» з минулих матчів (Carryover.markedRep): суперник приставляє людину з першої хвилини. */
+  markedRep?: number;
   coachTrust: number;     // 0..100, реакция тренера
   fanHype: number;        // 0..100, реакция трибун
   momentum: number;       // -3..+3, инерция последних эпизодов

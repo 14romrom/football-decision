@@ -7,11 +7,12 @@
 //   random — випадковий доступний варіант;
 //   safe   — завжди «упевнено», якщо є.
 //   npx tsx tools/smart-bot.ts 40
+//   npx tsx tools/smart-bot.ts 40 --set fillerGoalUs=0.015   — варіант BALANCE.match
 import { EPISODES_RAW, FLAG_RULES, OPPONENTS, PLAYER, ROSTER, FLAVOR, ACTIVITIES, OPPONENT_KEYS } from '../src/content';
 import { applyChoice, availableOptions, createMatch, finishMatch, nextEpisode, optionCost, type MatchSession } from '../src/engine/match';
 import { resolveOption, tierFor, catastropheBand } from '../src/engine/resolve';
 import { computeContext } from '../src/engine/context';
-import { PARTNER_FINISH_RAW } from '../src/engine/balance';
+import { BALANCE, PARTNER_FINISH_RAW } from '../src/engine/balance';
 import { applyMatchToCareer, consumeStartPenalty, defaultCareer, effectivePlayer, coachGrip, type Career } from '../src/engine/career';
 import { createSeason, isSeasonOver, ourFixture, ourRow, recordRound, type OurResult, type Season } from '../src/engine/season';
 import { generateConditions } from '../src/engine/conditions';
@@ -21,6 +22,14 @@ import { value, STAMINA_WEIGHT } from './audit-options';
 import type { Episode, EpisodeOption, Tier } from '../src/engine/types';
 
 const N = Number(process.argv[2] ?? 40);
+// Варіант балансу без правки коду: --set ключ=значення для BALANCE.match (замір пропозицій до того, як їх приймуть).
+process.argv.forEach((a, i) => {
+  if (a !== '--set') return;
+  const [k, v] = process.argv[i + 1].split('=');
+  if (!(k in BALANCE.match)) throw new Error(`BALANCE.match.${k} не існує`);
+  (BALANCE.match as unknown as Record<string, number>)[k] = Number(v);
+  console.log(`варіант: BALANCE.match.${k} = ${v}`);
+});
 type Policy = 'smart' | 'random' | 'safe';
 const POLICIES: Policy[] = ['smart', 'random', 'safe'];
 
@@ -47,9 +56,9 @@ function pick(policy: Policy, s: MatchSession, ep: Episode, opts: EpisodeOption[
   return opts[Math.floor(r() * opts.length)];
 }
 
-type Seg = { m: number; w: number; d: number; l: number; rolls: number; clean: number; bad: number; goals: number; assists: number; coach: number; fans: number; risky: number };
+type Seg = { m: number; w: number; d: number; l: number; rolls: number; clean: number; bad: number; goals: number; assists: number; coach: number; fans: number; risky: number; us: number; them: number };
 const SEGS = ['1–5', '6–10', '11–15', '16–20'];
-const empty = (): Seg => ({ m: 0, w: 0, d: 0, l: 0, rolls: 0, clean: 0, bad: 0, goals: 0, assists: 0, coach: 0, fans: 0, risky: 0 });
+const empty = (): Seg => ({ m: 0, w: 0, d: 0, l: 0, rolls: 0, clean: 0, bad: 0, goals: 0, assists: 0, coach: 0, fans: 0, risky: 0, us: 0, them: 0 });
 
 function run(seed: number, policy: Policy, segs: Seg[]) {
   let career: Career = defaultCareer();
@@ -72,7 +81,7 @@ function run(seed: number, policy: Policy, segs: Seg[]) {
       const player = effectivePlayer(PLAYER, career, penalty.attrBonus);
       const session = createMatch(`s-${seed}-${num}-${season.round}`, seed, player, rng, EPISODES_RAW, ROSTER, conditions, [], FLAG_RULES, {
         coachTrust: career.coachTrust, fanHype: career.fanHype, fromBench: penalty.fromBench,
-        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty,
+        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, markedRep: penalty.markedRep,
         flags: penalty.flags, arc: penalty.arc,
       });
       const seg = segs[Math.min(3, Math.floor(matchNo / 5))];
@@ -94,6 +103,7 @@ function run(seed: number, policy: Policy, segs: Seg[]) {
       seg.m++;
       if (summary.scoreUs > summary.scoreThem) seg.w++; else if (summary.scoreUs < summary.scoreThem) seg.l++; else seg.d++;
       seg.goals += summary.stats.goals; seg.assists += summary.stats.assists;
+      seg.us += summary.scoreUs; seg.them += summary.scoreThem;
       seg.coach += summary.coachRating; seg.fans += summary.fanRating;
       matchNo++;
       career = applyMatchToCareer(career, session.state, summary, false, conditions.opponentKey);
@@ -114,12 +124,12 @@ function run(seed: number, policy: Policy, segs: Seg[]) {
 const pct = (a: number, b: number) => (b ? `${Math.round((100 * a) / b)}%` : '—').padStart(5);
 const f = (a: number, b: number, d = 2) => (b ? (a / b).toFixed(d) : '—').padStart(5);
 console.log(`Умний бот: ${N} кар'єр на політику, два сезони (другий — вища ліга), ріст і тиждень як у voice-paths.\n`);
-console.log('політика  матчі   перемог нічиїх поразок  чисто  катастр ризик  голи/м асист/м  тренер трибуни');
+console.log('політика  матчі   перемог нічиїх поразок  чисто  катастр ризик  голи/м асист/м  тренер трибуни  рахунок   без Реєса');
 for (const policy of POLICIES) {
   const segs = SEGS.map(empty);
   for (let i = 0; i < N; i++) run(9100 + i, policy, segs);
   segs.forEach((s, k) => console.log(
-    `${(k === 0 ? policy : '').padEnd(9)} ${SEGS[k].padEnd(6)} ${pct(s.w, s.m)}  ${pct(s.d, s.m)}  ${pct(s.l, s.m)}  ${pct(s.clean, s.rolls)}  ${pct(s.bad, s.rolls)}  ${pct(s.risky, s.rolls)}  ${f(s.goals, s.m)}  ${f(s.assists, s.m)}   ${f(s.coach, s.m, 1)}  ${f(s.fans, s.m, 1)}`,
+    `${(k === 0 ? policy : '').padEnd(9)} ${SEGS[k].padEnd(6)} ${pct(s.w, s.m)}  ${pct(s.d, s.m)}  ${pct(s.l, s.m)}  ${pct(s.clean, s.rolls)}  ${pct(s.bad, s.rolls)}  ${pct(s.risky, s.rolls)}  ${f(s.goals, s.m)}  ${f(s.assists, s.m)}   ${f(s.coach, s.m, 1)}  ${f(s.fans, s.m, 1)}  ${f(s.us, s.m, 1)}:${f(s.them, s.m, 1).trim()}  ${f(s.us - s.goals - s.assists, s.m)}`,
   ));
 }
 console.log('\nЖиві гравці (GA4, 23–24.10, версія 1.0.5, 14 матчів у середньому на 13-му матчі кар\'єри):');

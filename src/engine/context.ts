@@ -167,7 +167,9 @@ export function computeContext(
     if (eased > 0) mods.push({ label: t('вони ведуть — розслабилися'), value: eased, source: 'field', short: t('вони розслабились') });
   }
   // Тебе пасуть (BALANCE.conditions.markedPer): після твого гола чи асиста — на твоїх ударах і обводці.
-  const contrib = state.stats.goals + state.stats.assists;
+  // Репутація (24.10): після 3+ голів і асистів за два минулі матчі їхній тренер готується — опіка з першої
+  // хвилини, наче одна результативна дія вже є (state.markedRep). Стеля та сама: markedMax.
+  const contrib = state.stats.goals + state.stats.assists + (state.markedRep ?? 0);
   const marks = option.attribute === 'dribbling' || Object.values(option.outcomes).some((x) => x?.apply?.goal || (k.markedScope === 'involved' && x?.apply?.assist));
   if (contrib > 0 && k.markedPer && marks) {
     mods.push({ label: t('тебе пасуть'), value: Math.max(k.markedMax, k.markedPer * contrib), source: 'field', short: t('пасуть') });

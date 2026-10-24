@@ -373,7 +373,7 @@ function Game() {
       episodeMemory(BALANCE.match.memory.horizon), FLAG_RULES,
       {
         coachTrust: consumedCareer.coachTrust, fanHype: consumedCareer.fanHype, fromBench: penalty.fromBench,
-        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty,
+        staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, markedRep: penalty.markedRep,
         // «Зустрічалися торік» (M14): флаг матчу для сетапів і реплік, коли суперник був у минулому сезоні.
         flags: [
           ...penalty.flags,

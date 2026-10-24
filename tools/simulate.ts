@@ -264,7 +264,7 @@ export function runCareer(seed: number, policy: WeekPolicy, matchPolicy: PolicyN
     if (penalty.fromBench) benchedMatches += 1;
     const player = effectivePlayer(PLAYER, career, penalty.attrBonus);
     const session = createMatch(`career-${seed}-${season.round}`, seed, player, rng, EPISODES_RAW, rosterFor(conditions.opponentKey, rng), conditions, [], FLAG_RULES,
-      { coachTrust: career.coachTrust, fanHype: career.fanHype, fromBench: penalty.fromBench, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty,
+      { coachTrust: career.coachTrust, fanHype: career.fanHype, fromBench: penalty.fromBench, staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, markedRep: penalty.markedRep,
         // Мандраж перших турів (M18.3) — як у грі: поки в сезоні немає результативної дії.
         flags: [...penalty.flags, ...((top ? season.round === 0 : season.round < 2) && season.player.goals + season.player.assists === 0
           ? [{ flag: 'nerves', mark: { minute: 0, episodeId: 'season', optionId: 'nerves', past: 'виходив із мандражем' } }] : [])],

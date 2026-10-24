@@ -71,7 +71,7 @@ function playMatch(career: Career, season: Season, c: AutoContent, rng: Rng, see
     rng, c.episodes, c.rosterFor(conditions.opponentKey, rng), conditions, [], c.flagRules,
     {
       coachTrust: consumed.coachTrust, fanHype: consumed.fanHype, fromBench: penalty.fromBench,
-      staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty,
+      staminaPenalty: penalty.staminaPenalty, coachTrustPenalty: penalty.coachTrustPenalty, markedRep: penalty.markedRep,
       flags: penalty.flags, startDelta: penalty.startDelta, voiceStreak: penalty.voiceStreak,
       voiceMute: penalty.voiceMute, injuriesSeason: consumed.injuriesSeason, arc: arcStage(consumed),
       seenEpisodes: seen,

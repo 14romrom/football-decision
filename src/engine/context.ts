@@ -143,7 +143,9 @@ export function computeContext(
   if (cond.venue === 'home' && signatureAttrs(player).includes(option.attribute)) {
     mods.push({ label: t('рідні трибуни чекають саме цього'), value: k.homeSignatureBonus, source: 'field', short: t('свої') });
   }
-  if (cond.venue === 'away' && state.minute >= k.awayLateMinute) {
+  if (cond.venue === 'away' && cond.league === 'top') {
+    mods.push({ label: t('виїзд у вищій лізі'), value: k.awayTop, source: 'field', short: t('виїзд') });
+  } else if (cond.venue === 'away' && state.minute >= k.awayLateMinute) {
     mods.push({ label: t('чужий стадіон, кінцівка'), value: k.awayLateNerves, source: 'field', short: t('виїзд') });
   }
   // Ліга і сила суперника не складаються (те саме правило, що для рис суперника): іде одна, найсильніша.

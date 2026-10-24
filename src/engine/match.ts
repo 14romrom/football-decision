@@ -475,8 +475,7 @@ function rollFillerGoal(session: MatchSession, rng: Rng): 'us' | 'them' | null {
   const weakEdge = s === 'weak' && !relaxed ? edge : 0;
   const strongEdge = s === 'strong' && !theyRelaxed ? edge : 0;
   const pUs = clamp(m.fillerGoalUs + mom * m.fillerGoalMomentum + weakEdge + (short ? m.shorthandedUs : 0), 0.01, 0.2);
-  const top = session.conditions.league === 'top' ? m.topLeagueFillerThem : 0;
-  const pThem = clamp(m.fillerGoalThem + top - mom * m.fillerGoalMomentum + strongEdge - weakEdge + (short ? m.shorthandedThem : 0), 0.01, 0.2);
+  const pThem = clamp(m.fillerGoalThem - mom * m.fillerGoalMomentum + strongEdge - weakEdge + (short ? m.shorthandedThem : 0), 0.01, 0.2);
   const r = rng.next();
   if (r < pUs) return 'us';
   if (r < pUs + pThem) return 'them';

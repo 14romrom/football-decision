@@ -14,7 +14,7 @@ import type { Rng } from './rng';
 import { peopleFlags, type Career, arcStage, metLastYear, nightKnowledge } from './career';
 import type { Season } from './season';
 import { standings, US, type MomentRef } from './season';
-import type { VoiceKey } from './types';
+import type { Attribute, VoiceKey } from './types';
 import type { ActivityEffect } from './week';
 
 export type PostGroup = 'self' | 'league' | 'world' | 'cross' | 'meta';
@@ -99,7 +99,10 @@ export type PostRule = {
   replyOptions?: ReplyOption[];
 };
 
-export type PostsContent = { accounts: Record<string, PostAccount>; posts: PostRule[] };
+/** Чернетка свого поста Реєса: голос, результат матчу, текст і дві відповіді під ним. */
+export type OwnDraft = { voice: VoiceKey; result: 'win' | 'draw' | 'loss'; text: string; replies: PostReplyLine[] };
+
+export type PostsContent = { accounts: Record<string, PostAccount>; posts: PostRule[]; own?: OwnDraft[] };
 export const POSTS = postsJson as PostsContent;
 
 /** Что стрічка знает о моменте: последний тур, таблица, следующий соперник, карьера. */
@@ -268,6 +271,36 @@ export const POST_QUOTA: Record<PostGroup, number> = { self: 3, league: 2, world
 export const REPLY_CHANCE = 1;
 /** Скільки постів за стрічку можна відповісти (24.10, було 1): одна відповідь на тур — це ще не розмова. */
 export const REPLY_MAX = 2;
+
+/** Свій пост Реєса (24.10): угорі стрічки після 3-го, 6-го і 9-го зіграного туру сезону — шість разів за
+ *  кар'єру. Частіше — це ~90 чернеток тексту (рішення користувача: втричі рідше, ніж щотуру). */
+export const OWN_POST_AFTER = [3, 6, 9];
+export const ownPostDue = (played: number): boolean => OWN_POST_AFTER.includes(played);
+
+/** Атрибути голосу, як на картці (`ui/voices-text.ts:VOICES`, тест тримає збіг), — без Бачення:
+ *  його не підтягуємо, аномалію Бачення довго прибирали (рішення користувача 24.10). */
+export const OWN_VOICE_ATTRS: Record<Exclude<VoiceKey, 'vision'>, Attribute[]> = {
+  ego: ['finishing'], team: ['passing'], instinct: ['dribbling', 'first_touch'],
+  body: ['pace', 'stamina', 'strength'], composure: ['composure'],
+};
+
+/** Три чернетки — голоси, яких гравець у цій кар'єрі слухав найменше (`career.voiceCounts`): свій пост
+ *  вирівнює перекос, а не підсилює його (рішення користувача 24.10). Рівні — у випадковому порядку,
+ *  і в такому ж порядку на екрані: найменш слуханий не повинен стояти першим щоразу. */
+export function ownDrafts(result: OwnDraft['result'], counts: Partial<Record<VoiceKey, number>>, rng: Rng, content: PostsContent = POSTS): OwnDraft[] {
+  const voices = (Object.keys(OWN_VOICE_ATTRS) as VoiceKey[])
+    .map((v) => ({ v, n: counts[v] ?? 0, r: rng.next() }))
+    .sort((a, b) => a.n - b.n || a.r - b.r)
+    .slice(0, 3)
+    .sort((a, b) => a.r - b.r);
+  return voices.map(({ v }) => (content.own ?? []).find((d) => d.voice === v && d.result === result)).filter((d): d is OwnDraft => !!d);
+}
+
+/** Куди йде крок тренування з поста: найслабший атрибут голосу в цього гравця. */
+export function weakestOf(voice: VoiceKey, attrs: Record<Attribute, number>): Attribute | undefined {
+  const list = OWN_VOICE_ATTRS[voice as Exclude<VoiceKey, 'vision'>];
+  return list ? [...list].sort((a, b) => attrs[a] - attrs[b])[0] : undefined;
+}
 
 /** Відповідь під постом для обраного варіанта: своя (`replies`) або зі спільного пулу (`reply`). */
 function replyFor(rule: PostRule, index: number, rng: Rng, accounts: PostsContent['accounts'], fill: (t: string) => string, quote: string): Post['reply'] {

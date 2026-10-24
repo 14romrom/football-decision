@@ -28,8 +28,8 @@ const NERVES_ROUNDS = 2;
 import { fillMarket } from './engine/market';
 import { type MatchConditions, generateConditions, toneFromHistory } from './engine/conditions';
 import { readHistory, allEpisodes, episodeMemory, recentFeed, recentFlavor, recentPosts, allSetups, recordPosts, recordResult } from './telemetry/history';
-import { buildFeed, buildPostContext, postQuota, type Post, type PostGroup } from './engine/posts';
-import { PostsScreen } from './ui/PostsScreen';
+import { buildFeed, buildPostContext, ownDrafts, ownPostDue, postQuota, POSTS, weakestOf, type Post, type PostGroup } from './engine/posts';
+import { PostsScreen, type OwnView } from './ui/PostsScreen';
 import { fillNames, opponentTraits } from './engine/names';
 import { BALANCE } from './engine/balance';
 import { PrematchScreen } from './ui/PrematchScreen';
@@ -73,7 +73,7 @@ import {
   createSeason, firstSeasonVerdict, secondSeasonVerdict, isSeasonOver, monthOfRound, nextSeasonFrom, periodOfRound, ourFixture, ourRow, playoffPending, promotion, recordPlayoff, recordRound, seasonVerdict, SEASON_ROUNDS, US, WINTER_BREAK_AFTER, withPlayoff, type Season,
 } from './engine/season';
 import { SeasonScreen } from './ui/SeasonScreen';
-import { dominantVoice } from './engine/voices';
+import { dominantVoice, VOICE_LABEL } from './engine/voices';
 import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent, VoiceKey } from './engine/types';
 import { logDecision } from './telemetry/log';
 import { screen, setUser, track, watchErrors } from './telemetry/analytics';
@@ -106,7 +106,7 @@ type Stage =
   | { k: 'result'; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
   | { k: 'delta'; summary: MatchSummary; before: Career; after: Career; leveledFrom: number; leveledTo: number; card: boolean }
   | { k: 'season'; leveledFrom: number; leveledTo: number }
-  | { k: 'posts'; posts: Post[]; leveledFrom: number; leveledTo: number }
+  | { k: 'posts'; posts: Post[]; own?: OwnView[]; leveledFrom: number; leveledTo: number }
   | { k: 'week'; days: WeekOffer[][]; leveledFrom: number; leveledTo: number }
   // Пролог (M12, 20.09): тиждень нуль у зошиті перед першим матчем нової кар’єри.
   | { k: 'prologue' }
@@ -521,7 +521,16 @@ function Game() {
     if (isSeasonOver(sn)) { afterPosts(leveledFrom, leveledTo); return; }
     // Частка «нашого» в стрічці росте туром кар'єри, не сезоном (posts.ts:POST_QUOTA_BY_CAREER_ROUND).
     practiceUsedRef.current = false;
-    setStage({ k: 'posts', posts: buildPosts(postQuota(sn.number, sn.round), 3), leveledFrom, leveledTo });
+    // Свій пост Реєса — раз на три матчі (posts.ts:ownPostDue): чернетки голосами, яких він слухав найменше.
+    const result = ownPostDue(ourRow(sn).played) ? buildPostContext(sn, careerRef.current, null)?.result : undefined;
+    const acc = (key: string) => ({ ...POSTS.accounts[key], name: fillNames(POSTS.accounts[key].name, ROSTER) });
+    const own: OwnView[] | undefined = result
+      ? ownDrafts(result, careerRef.current.voiceCounts, makeRng(sn.seed + sn.round * 4243 + 11)).map((d) => ({
+          voice: d.voice, text: fillNames(d.text, ROSTER),
+          replies: d.replies.map((r) => ({ account: acc(r.account), text: fillNames(r.text, ROSTER) })),
+        }))
+      : undefined;
+    setStage({ k: 'posts', posts: buildPosts(postQuota(sn.number, sn.round), 3), own, leveledFrom, leveledTo });
   }, [afterPosts, buildPosts]);
 
   const confirmLevelUp = useCallback((attr: Attribute) => {
@@ -1021,6 +1030,19 @@ function Game() {
     return (
       <PostsScreen
         posts={stage.posts}
+        own={stage.own}
+        onOwnPost={(i) => {
+          // Свій пост: голос гучніший на матч і крок тренування в найслабший атрибут цього голосу в гравця
+          // (вирівнює перекос). Окремо від ліміту відповідей: це одне рішення на три матчі.
+          const d = stage.own![i];
+          const practice = weakestOf(d.voice, effectivePlayer(PLAYER, careerRef.current).attrs);
+          track('y_own_post', { voice: d.voice });
+          const activity: Activity = { id: 'own_post', voice: d.voice, title: t('Свій пост у стрічці'), line: d.text,
+            effect: { louder: [d.voice], ...(practice ? { practice } : {}), note: tf('Свій пост у стрічці — {0}.', VOICE_LABEL[d.voice]) } };
+          const { career: after, tags } = applyWeek(careerRef.current, [{ activity }]);
+          setCareerBoth(after);
+          return tags;
+        }}
         self={{ name: ROSTER.us.players.self.nom, handle: '@reyes10' }}
         onReply={(post, option) => {
           // Відповідь у стрічці (M49, 23.10): чи відповідають узагалі й що саме — 27 с на екрані «Y» можуть бути

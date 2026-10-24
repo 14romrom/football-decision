@@ -736,6 +736,11 @@ html.reduce-motion .doodle svg { filter: none; }
 .x-opts button { font: inherit; font-family: var(--font-app); font-size: 14px; text-align: left; color: var(--x-ink); background: none; border: 1px solid #536471; border-radius: 18px; padding: 8px 14px; min-height: 40px; }
 .x-opts button.on { border-color: var(--x-blue); background: rgba(29,155,240,.12); }
 .x-opts button.skip { border-color: transparent; color: var(--x-gray); padding-left: 0; }
+/* Свій пост (24.10): над чернеткою — голос, яким вона написана, у його кольорі, як стікери в зошиті. */
+.x-own { border-bottom: 1px solid var(--x-line); }
+.x-opts button .yv { display: block; font-family: var(--font-caps); font-weight: 500; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 2px; }
+.yv.voice-ego { color: var(--v-ego); } .yv.voice-team { color: var(--v-team); } .yv.voice-instinct { color: var(--v-instinct); }
+.yv.voice-body { color: var(--v-body); } .yv.voice-composure { color: var(--v-composure); }
 .x-post-btn { display: block; margin: 8px 0 0 auto; background: var(--x-blue); color: #fff; border: 0; border-radius: 18px; padding: 6px 16px; font-family: var(--font-app); font-weight: 700; font-size: 14px; }
 .x-post-btn:disabled { opacity: .5; cursor: default; }
 .x-body .tags { margin-top: 6px; }

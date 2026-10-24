@@ -6,7 +6,7 @@ import { makeRng } from '../src/engine/rng';
 import { createSeason, ourFixture, recordRound, US } from '../src/engine/season';
 import { defaultCareer } from '../src/engine/career';
 import { fillNames, opponentTraits } from '../src/engine/names';
-import { buildFeed, buildPostContext, LOCAL_GROUPS, localShare, matchesPost, minuteOrdinal, POST_QUOTA, postQuota, POSTS, REPLY_MAX, type PostContext, type PostGroup } from '../src/engine/posts';
+import { buildFeed, buildPostContext, LOCAL_GROUPS, localShare, matchesPost, minuteOrdinal, OWN_VOICE_ATTRS, ownDrafts, ownPostDue, POST_QUOTA, postQuota, POSTS, REPLY_MAX, weakestOf, type PostContext, type PostGroup } from '../src/engine/posts';
 import { OPPONENTS, rosterFor, OPPONENT_KEYS } from '../src/content';
 
 const keys = OPPONENT_KEYS.second;
@@ -65,7 +65,7 @@ describe('стрічка: контент', () => {
     const texts = POSTS.posts.flatMap((r) => [
       ...r.lines, ...(r.reply?.lines ?? []), ...(r.replies ?? []).flatMap((x) => (x ? [x.text] : [])), ...(r.poll ?? []),
       ...(r.replyOptions ?? []).flatMap((o) => [o.text, o.reaction]),
-    ]);
+       ]).concat((POSTS.own ?? []).flatMap((d) => [d.text, ...d.replies.map((r) => r.text)]));
     for (const key of keys) {
       const roster = rosterFor(key, makeRng(2));
       for (const t of texts) expect(fillNames(t, roster, EXTRA), t).not.toMatch(/\{[a-z]/);
@@ -245,5 +245,42 @@ describe('стрічка: контекст из сезона', () => {
     expect(c.nextFlags.length).toBeGreaterThan(0);
     expect(c.round).toBe(1);
     expect(buildPostContext(createSeason(22, keys), defaultCareer(), null)).toBeNull();
+  });
+});
+
+describe('стрічка: свій пост Реєса', () => {
+  const VOICES5 = ['ego', 'team', 'instinct', 'body', 'composure'] as const;
+
+  it('чернетка на кожен голос і результат, без Бачення, по дві відповіді від наявних аккаунтів', () => {
+    const own = POSTS.own ?? [];
+    for (const v of VOICES5) for (const res of ['win', 'draw', 'loss'] as const) {
+      expect(own.filter((d) => d.voice === v && d.result === res), `${v}/${res}`).toHaveLength(1);
+    }
+    expect(own.some((d) => d.voice === 'vision')).toBe(false);
+    for (const d of own) {
+      expect(d.replies, d.text).toHaveLength(2);
+      for (const r of d.replies) expect(POSTS.accounts[r.account], r.account).toBeDefined();
+    }
+  });
+
+  it('атрибути голосу — як на картці гравця, без Бачення', async () => {
+    const { VOICES } = await import('../src/ui/voices-text');
+    for (const v of VOICES) {
+      if (v.who === 'vision') expect(v.who in OWN_VOICE_ATTRS).toBe(false);
+      else expect(OWN_VOICE_ATTRS[v.who as keyof typeof OWN_VOICE_ATTRS], v.who).toEqual(v.attrs);
+    }
+  });
+
+  it('раз на три матчі; три найменш слухані голоси; крок тренування — у найслабший атрибут голосу', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter(ownPostDue)).toEqual([3, 6, 9]);
+    const counts = { ego: 30, team: 2, instinct: 25, body: 1, composure: 3, vision: 0 };
+    for (let s = 0; s < 20; s++) {
+      const drafts = ownDrafts('win', counts, makeRng(s));
+      expect(drafts.map((d) => d.voice).sort()).toEqual(['body', 'composure', 'team']);
+    }
+    const attrs = { vision: 40, positioning: 40, passing: 80, finishing: 70, dribbling: 75, first_touch: 60, pace: 70, stamina: 55, strength: 65, composure: 50 };
+    expect(weakestOf('body', attrs)).toBe('stamina');
+    expect(weakestOf('instinct', attrs)).toBe('first_touch');
+    expect(weakestOf('vision', attrs)).toBeUndefined();
   });
 });

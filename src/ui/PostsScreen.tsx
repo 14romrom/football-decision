@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useBanner } from './ads';
 import { agoLabel, countLabel, type Post, type PostAccount, type ReplyOption } from '../engine/posts';
 import { t, tf } from '../content/i18n';
+import { VOICE_LABEL } from '../engine/voices';
+import type { VoiceKey } from '../engine/types';
 
 // Стрічка між матчами — пародія на твіттер, тепер і за формою (19.09, макет «Стрічка як застосунок»,
 // решение пользователя): застосунок «Y» (то, что пришло после X — оммаж в один символ, как ESPM), без
@@ -16,6 +18,9 @@ type Props = {
   self: { name: string; handle: string };
   /** Применить выбранный ответ; возвращает бирки последствий. */
   onReply: (post: Post, option: ReplyOption) => string[];
+  /** Свій пост Реєса (раз на три матчі): три чернетки голосами; публікація повертає бирки, як відповідь. */
+  own?: OwnView[];
+  onOwnPost?: (index: number) => string[];
   onNext: () => void;
 };
 
@@ -67,17 +72,65 @@ function Acts({ p }: { p: Post }) {
   );
 }
 
-export function PostsScreen({ posts, self, onReply, onNext }: Props) {
+/** Чернетка, як її показує екран: імена вже підставлені, аккаунти відповідей — повні. */
+export type OwnView = { voice: VoiceKey; text: string; replies: { account: PostAccount; text: string }[] };
+
+export function PostsScreen({ posts, self, onReply, own, onOwnPost, onNext }: Props) {
   useBanner('bannerY');   // банер Google внизу, поки відкрита стрічка (M48)
   // Відповідей за стрічку може бути кілька (REPLY_MAX): кожна — під своїм постом.
   const [replied, setReplied] = useState<Record<number, { option: ReplyOption; tags: string[] }>>({});
   const [draft, setDraft] = useState<{ index: number; option: ReplyOption } | null>(null);
+  // Свій пост: обрана чернетка й опублікована (index −1 — «Не писати»).
+  const [ownPick, setOwnPick] = useState<number | null>(null);
+  const [ownDone, setOwnDone] = useState<{ index: number; tags: string[] } | null>(null);
+  const ownPost = ownDone && ownDone.index >= 0 ? own![ownDone.index] : null;
 
   return (
     <div className="result posts">
       <div className="x-app">
         <div className="x-top"><Avatar self /><span className="x-logo" aria-label="Y">Y</span><span className="x-gear" aria-hidden="true" /></div>
         <div className="x-tabs"><span className="on">{t('Для тебе')}</span><span>{t('Підписки')}</span></div>
+
+        {/* Свій пост — угорі стрічки, як «Що відбувається?» у X; та сама форма, що й відповідь під постом. */}
+        {own && own.length > 0 && !ownDone && (
+          <article className="x-tw x-own">
+            <Avatar self />
+            <div className="x-body x-compose">
+              <div className="x-ph">{ownPick !== null ? own[ownPick].text : t('Що після матчу?')}</div>
+              <div className="x-opts">
+                {own.map((d, k) => (
+                  <button key={k} type="button" className={ownPick === k ? 'on' : ''} onClick={() => setOwnPick(k)}>
+                    <span className={`yv voice-${d.voice}`}>{VOICE_LABEL[d.voice]}</span>{d.text}
+                  </button>
+                ))}
+                <button type="button" className="skip" onClick={() => setOwnDone({ index: -1, tags: [] })}>{t('Не писати')}</button>
+              </div>
+              <button type="button" className="x-post-btn" disabled={ownPick === null}
+                onClick={() => { if (ownPick !== null) setOwnDone({ index: ownPick, tags: onOwnPost?.(ownPick) ?? [] }); }}>{t('Опублікувати')}</button>
+            </div>
+          </article>
+        )}
+        {ownPost && (
+          <article className="x-tw x-own x-thread">
+            <Avatar self />
+            <div className="x-body">
+              <Name self={self} when={t('щойно')} />
+              <p className="x-tx">{ownPost.text}</p>
+              {ownDone!.tags.length > 0 && (
+                <ul className="tags">{ownDone!.tags.map((x) => <li key={x} className="badge badge-neutral">{x}</li>)}</ul>
+              )}
+            </div>
+            {ownPost.replies.map((r, k) => (
+              <Fragment key={k}>
+                <Avatar account={r.account} />
+                <div className="x-body x-sub">
+                  <Name account={r.account} when={t('щойно')} />
+                  <p className="x-tx">{r.text}</p>
+                </div>
+              </Fragment>
+            ))}
+          </article>
+        )}
 
         {posts.map((p, i) => {
           const when = p.kind === 'live' && p.liveMinute !== undefined ? undefined : agoLabel(p.hoursAgo);

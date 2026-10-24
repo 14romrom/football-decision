@@ -259,6 +259,21 @@ describe('стрічка: лайки й партнери в гілках', () =>
     }
   });
 
+  it('публічна справа тижня гарантовано дає відгук у стрічці; посилання на справи живі', async () => {
+    const { ACTIVITIES } = await import('../src/content');
+    const outs = new Map(ACTIVITIES.map((a) => [a.id, new Set((a.outcomes ?? []).map((o) => o.id))]));
+    for (const r of POSTS.posts) for (const ref of r.when?.week ?? []) {
+      const [id, out] = ref.split(':');
+      expect(outs.has(id), ref).toBe(true);
+      if (out) expect(outs.get(id)!.has(out), ref).toBe(true);
+    }
+    const lines = new Set(POSTS.posts.filter((r) => r.when?.week?.includes('futsal')).flatMap((r) => r.lines));
+    for (let i = 0; i < 20; i++) {
+      const feed = buildFeed(ctx({ round: 6, lastWeek: ['futsal', 'futsal:futsal'] }), makeRng(1200 + i));
+      expect(feed.some((p) => lines.has(p.text)), `сід ${1200 + i}`).toBe(true);
+    }
+  });
+
   it('у гілку вступають лише партнери по клубу', () => {
     for (const r of POSTS.posts) for (const o of r.replyOptions ?? []) {
       if (!o.chime) continue;

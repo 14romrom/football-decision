@@ -415,6 +415,7 @@ export function buildFeed(
   // (поражение — о худшем, победа — о лучшем, иначе как выпадет). Подменяет пост своей группы.
   const wanted: ('best' | 'worst')[] = ctx.result === 'loss' ? ['worst', 'best'] : ctx.result === 'win' ? ['best', 'worst'] : rng.next() < 0.5 ? ['worst', 'best'] : ['best', 'worst'];
   const which = wanted.find((k) => ctx.moments[k]);
+  let momentSlot = -1;
   if (which && !out.some((p) => p.text.includes(String(ctx.moments[which]!.minute)) && p.text.includes(ctx.moments[which]!.past))) {
     const rules = content.posts.filter((r) => r.when?.moment === which && matchesPost(r.when, ctx) && r.lines.some((t) => !seen.has(t)));
     const rule = rules.length ? rng.pick(rules) : null;
@@ -423,6 +424,7 @@ export function buildFeed(
       const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
       seen.add(text);
       const fill = (t: string) => fillMoment(t, rule, ctx);
+      momentSlot = slot;
       const index = rule.lines.indexOf(text);
       const reply = replyFor(rule, index, rng, content.accounts, fill, fill(text));
       const options = optionsFor(rule, index, fill, content.accounts);
@@ -451,6 +453,30 @@ export function buildFeed(
     }
   }
 
+  // Справа тижня, яку бачило місто, не минає мовчки (24.10): якщо є правило-відгук на минулий тиждень
+  // (`when.week`), один пост про це гарантований. Раніше він змагався в пулі з вагою 3 і часто програвав.
+  // Слоти моменту матчу й відгуку на лайк не займає.
+  const weekLines = new Set(content.posts.filter((r) => r.when?.week).flatMap((r) => r.lines));
+  let weekSlot = -1;
+  if (!out.some((p) => weekLines.has(p.text))) {
+    const weekRules = content.posts.filter((r) => r.when?.week && matchesPost(r.when, ctx) && r.lines.some((t) => !seen.has(t)));
+    const rule = weekRules.length ? rng.pick(weekRules) : null;
+    const slot = rule ? out.findIndex((p, i) => i !== echoSlot && i !== momentSlot && p.group === rule.group && p.kind === 'post' && !p.replyOptions) : -1;
+    if (rule && slot >= 0) {
+      weekSlot = slot;
+      const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
+      seen.add(text);
+      const fill = (t: string) => fillMoment(t, rule, ctx);
+      const index = rule.lines.indexOf(text);
+      const options = optionsFor(rule, index, fill, content.accounts);
+      out[slot] = {
+        ...out[slot], account: content.accounts[rule.account], text: fill(text), kind: rule.kind ?? 'post', baseText: isBaseText(text),
+        reply: replyFor(rule, index, rng, content.accounts, fill, fill(text)),
+        ...(options ? { replyOptions: options } : {}),
+      };
+    }
+  }
+
   // Ответить можно на REPLY_MAX постов за стрічку: первые по ленте, остальные — просто читаются.
   let replyable = 0;
   for (const p of out) {
@@ -465,7 +491,7 @@ export function buildFeed(
     const candidates = content.posts.filter((r) => r.replyOptions && matchesPost(r.when, ctx) && r.lines.some((t) => !seen.has(t)));
     const rule = candidates.length ? rng.pick(candidates) : null;
     // Відгук на лайк не підміняємо: це відповідь гравцеві, а пост із відповіддю знайде інше місце.
-    const slot = rule ? out.findIndex((p, i) => i !== echoSlot && p.group === rule.group && !p.poll && p.kind === 'post') : -1;
+    const slot = rule ? out.findIndex((p, i) => i !== echoSlot && i !== weekSlot && p.group === rule.group && !p.poll && p.kind === 'post') : -1;
     if (rule && slot >= 0) {
       const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
       seen.add(text);

@@ -4287,6 +4287,258 @@
       "lines": [
         "Дякуємо за ❤️, {self}. Ваша знижка на «Лід» — 0%. Це теж знижка."
       ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "when": {
+        "week": [
+          "futsal"
+        ]
+      },
+      "lines": [
+        "бачив {self.gen} на футзалі в спорткомплексі. грав з друзями як у дев’ятому класі. ми з хлопцями дивились через сітку"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "tato",
+      "when": {
+        "week": [
+          "academy_kids"
+        ]
+      },
+      "lines": [
+        "син був на тренуванні з {self.ins}. каже обіграв його двічі. {self} каже шо піддався. син не вірить"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "xg",
+      "when": {
+        "week": [
+          "freestyle_stories:stories"
+        ]
+      },
+      "lines": [
+        "фрістайл {self.gen} у сторіз: один трюк. за джерелами — двадцять дублів. ефективність 5%"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "when": {
+        "week": [
+          "freestyle_stories:fail_video"
+        ]
+      },
+      "lines": [
+        "відео де {self} падає з фрістайлом вже в усіх чатах сектору. ми зберегли. ми любимо"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "when": {
+        "week": [
+          "street_cage"
+        ]
+      },
+      "lines": [
+        "у нашій коробці у дворі грав {self}. пропустив — став на ворота. правило є правило"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "tato",
+      "when": {
+        "week": [
+          "winter_frozen_pitch"
+        ]
+      },
+      "lines": [
+        "діти з району грали на льоду з {self.ins}. син тепер каже «той, що з десяткою» з повагою"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "kasyr",
+      "when": {
+        "week": [
+          "bike_buy:buy"
+        ]
+      },
+      "lines": [
+        "{self} приїхав по квиток для мами на велосипеді з оголошення. дзвоник працює. гальма — питання"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "self_fan_page",
+      "when": {
+        "week": [
+          "standup_show:recognized"
+        ]
+      },
+      "lines": [
+        "{self} на стендапі в третьому ряду. комік його впізнав і пів години жартував про суботу. зал був за {self.gen}"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "when": {
+        "week": [
+          "team_dinner"
+        ]
+      },
+      "lines": [
+        "команда вечеряла в тому місці на розі. {keeper} платив за всіх. ми бачили бо стояли під вікном"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "tato",
+      "when": {
+        "week": [
+          "cb_wedding"
+        ]
+      },
+      "lines": [
+        "був на весіллі {cb.gen}. {self} танцював. краще ніж грає. не ображайся"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "tato",
+      "when": {
+        "week": [
+          "academy_lecture"
+        ]
+      },
+      "lines": [
+        "у сина в академії виступав {self}. сорок хвилин. син запам’ятав одне: «не бійся помилитись». і шнурки"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "sportpravda",
+      "when": {
+        "week": [
+          "hometown_paper:school_photo"
+        ]
+      },
+      "lines": [
+        "Газета рідного міста {self.gen} вийшла зі шкільним фото на першій шпальті. Наклад розійшовся: мама купила три."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "kasyr",
+      "when": {
+        "week": [
+          "neighbour_help"
+        ]
+      },
+      "lines": [
+        "сусідка розповідала всій черзі як {self} переносив їй шафу. черга слухала довше ніж матч"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "sportpravda",
+      "when": {
+        "week": [
+          "decline_interview"
+        ]
+      },
+      "lines": [
+        "{self} відмовився від інтерв’ю. Редакція визнала це найкращою відповіддю тижня."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "coachun",
+      "when": {
+        "week": [
+          "press_conf_proper:proper"
+        ]
+      },
+      "lines": [
+        "Прес-конференція {self.gen}: «ми команда» — чотири рази. Тренер слухав і, здається, кивнув."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "tato",
+      "when": {
+        "week": [
+          "animal_shelter:posted"
+        ]
+      },
+      "lines": [
+        "син побачив {self.gen} у притулку на фото. тепер хоче собаку і бути десяткою. в такому порядку"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "self_fan_page",
+      "when": {
+        "week": [
+          "hometown_trip:recognized"
+        ]
+      },
+      "lines": [
+        "{self} у рідному місті грав у дворі на ворота з двох рюкзаків. відео є. рюкзаки виграли"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "bettor",
+      "when": {
+        "week": [
+          "no_betting_ad:refuse"
+        ]
+      },
+      "lines": [
+        "{self} відмовився рекламувати ставки. Моя прохідність через це впала. Нижче вже нікуди, але впала."
+      ]
+    },
+    {
+      "group": "self",
+      "account": "xg",
+      "when": {
+        "week": [
+          "half_marathon"
+        ]
+      },
+      "lines": [
+        "{self} пробіг напівмарафон. 21 км. за матч на полі — 11. математика на боці напівмарафону"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "ultra87",
+      "when": {
+        "week": [
+          "crossbar_challenge"
+        ]
+      },
+      "lines": [
+        "челендж у поперечину: {self} влучив. знімав {keeper}. у кадрі в основному його палець"
+      ]
+    },
+    {
+      "group": "self",
+      "account": "footyhub",
+      "when": {
+        "week": [
+          "watch_opponent:recognized"
+        ]
+      },
+      "lines": [
+        "{self} помічений на трибуні суперника в кепці. Кепка не допомогла: впізнали за три хвилини."
+      ]
     }
   ],
   "own": [

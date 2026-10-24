@@ -580,6 +580,9 @@ export class Director {
 
   private quiet() {
     this.pinned.clear();
+    // Удар від воріт належить лише фону одразу за промахом: новий рядок чи сцена, що перебили фон, його скасовують
+    // (інакше воротар через три рядки ставив м'яч на удар від воріт посеред чужої атаки).
+    this.goalKick = null;
     for (const id in this.t) { this.t[id].body.removeAttribute('transform'); if (this.t[id].label && id !== 'u10') this.t[id].label!.setAttribute('opacity', '0'); }
     for (const e of [this.pointer, this.shout, this.benchMarks, this.flag, this.card]) e.setAttribute('opacity', '0');
     this.t.med?.g.setAttribute('opacity', '0');
@@ -706,7 +709,13 @@ export class Director {
     this.cutNext = st.act !== 'half';
     // Другий тайм розводять вони (перший — ми, рядок `kickoff`): перший рядок після перерви починається з центру.
     if (st.act === 'half') this.secondHalf = true;
-    else if (this.secondHalf) { this.secondHalf = false; await this.centre(my, 'them', 700); if (my !== this.run) return; }
+    else if (this.secondHalf) {
+      this.secondHalf = false;
+      await this.centre(my, 'them', 700);
+      if (my !== this.run) return;
+      // Розвод сам переніс м'яч у центр першим тактом; склейка лишається за рядком, що йде далі.
+      this.cutNext = true;
+    }
     // Варіації рядка стрічки (M52, пункт 3): та сама постановка на іншій хвилині — в іншому місці зони,
     // в іншому темпі й з іншим кутом удару. Зона лишається тією, що в рядку: зсув — у її межах.
     const v = this.rng(`feed/${st.act}/${st.who ?? ''}/${st.vs ?? ''}/${st.x ?? ''}${st.y ?? ''}/${st.tags.join(',')}`);
@@ -1145,8 +1154,10 @@ export class Director {
     const crowd: P = spot[0] > 52.5 ? [PW - 7, 34 + jit(5)] : [7, 34 + jit(5)];
     await S({ moves: this.block(spot, { [r]: spot, [near]: foeAt }), ball: defending ? [foeAt[0] - .9, foeAt[1]] : a.template === 'wait' ? crowd : [spot[0] + .9, spot[1]], cam: spot, w: 44, dur: 450 });
     if (!ok()) return;
-    // Сцена штрафного: їхня стінка й воротар на лінії до того, як Реєс подасть чи вдарить.
-    if (a.freeKick && !defending) { await this.wall(my, [spot[0] + .9, spot[1]], 'us'); if (!ok()) return; }
+    // Сцена штрафного: їхня стінка й воротар на лінії до того, як Реєс подасть чи вдарить. Штрафний у своїй
+    // половині — б'ють вони, і стінку ставимо ми, з Реєсом у ній; м'яч — на 9,5 м перед ним.
+    if (a.freeKick && spot[0] < 52.5) { await this.wall(my, [clamp(spot[0] + 9.5, 3, 102), spot[1]], 'them'); if (!ok()) return; }
+    else if (a.freeKick && !defending) { await this.wall(my, [spot[0] + .9, spot[1]], 'us'); if (!ok()) return; }
     if (a.corner) { await S({ moves: this.cornerShape(a.corner, spot[1] < 34, [r]).m, dur: 700 }); if (!ok()) return; }
     if (a.penalty) { await S({ moves: { ...this.penaltyShape('us', r), [r]: [spot[0] - 1.6, 34] }, dur: 750 }); if (!ok()) return; }
     // Навіс чи боротьба вгорі, які текст називає ДО удару («подача на дальню, {cb} виграє верх — {striker} б'є
@@ -1499,7 +1510,8 @@ export class Director {
     await this.after(my, beats.filter((b) => b !== 'pen' && !lead.includes(b)), { shooterSide: whoTok === '@them' ? 'them' : 'us', rebounder: a.by ? this.id(a.by, this.ballP) : undefined, scores: R === 'goal' || R === 'concede', shown });
     if (!ok()) return;
     // Ісход сильніший за шаблон: червона чи фол — свисток і картка; пропущений — м'яч у наші ворота.
-    if ((R === 'red' || R === 'foul') && a.template !== 'foul') { sfxWhistle('short'); this.showRef(); this.lie(near); this.showCard(this.pos(near), R === 'red'); }
+    // Картку, названу текстом, уже показала кінцівка (card/cardme) — друга поверх неї читалася як друга картка.
+    if ((R === 'red' || R === 'foul') && a.template !== 'foul' && !beats.includes('card') && !beats.includes('cardme')) { sfxWhistle('short'); this.showRef(); this.lie(near); this.showCard(this.pos(near), R === 'red'); }
     if (R === 'concede' && !(whoTok === '@them' && shotEnd)) {
       const scorer = this.nearest('them', this.ballP, 1)[0] ?? near;
       await S({ moves: { [scorer]: [this.ballP[0] - 6, this.ballP[1] + (34 - this.ballP[1]) * .4] }, ball: [-.6, 34], cam: [16, 34], w: 50, dur: 800 });
@@ -1681,6 +1693,9 @@ export class Director {
 
   /** Що поле знає про матч: установка тренера, рахунок для нашої команди, сила суперника. */
   setPlay(c: Partial<PlayContext>) { this.mctx = { ...this.mctx, ...c }; }
+  /** Поле змонтовано після рядка перерви (лист реклами, вихід): постановку перерви воно не бачило, тож
+   *  розвод другого тайму треба пам'ятати ззовні — інакше перший рядок після перерви йшов без центру. */
+  afterBreak() { this.secondHalf = true; }
 
   /** Форма команди за станом матчу: ті самі дані, що в рушії, — «автобус» видно на полі, а не лише
    *  в рядку програмки. Відіграємося в кінцівці — усі вгору; ведемо — блок стискається й сідає. */
@@ -1700,11 +1715,13 @@ export class Director {
     return { dx, wide };
   }
 
-  /** Чий м'яч: сторона найближчого до нього польового. */
+  /** Чий м'яч: сторона найближчого до нього польового — або воротаря, коли м'яч у нього (до 3 м): після удару
+   *  від воріт найближчим польовим бував чужий нападник, і фон віддавав м'яч супернику з рук нашого воротаря. */
   private ownerOf(at: P): 'us' | 'them' {
     let best: 'us' | 'them' = 'us', d = Infinity;
     for (const id in this.t) {
-      if (['u1', 't1', 'ref', 'med'].includes(id) || !this.playing(id)) continue;
+      if (['ref', 'med'].includes(id) || !this.playing(id)) continue;
+      if ((id === 'u1' || id === 't1') && dist(this.pos(id), at) > 3) continue;
       const dd = dist(this.pos(id), at); if (dd < d) { d = dd; best = this.sideOf(id); }
     }
     return best;

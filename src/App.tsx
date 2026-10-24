@@ -76,7 +76,8 @@ import { SeasonScreen } from './ui/SeasonScreen';
 import { dominantVoice } from './engine/voices';
 import type { Attribute, Episode, EpisodeOption, Resolution, TimelineEvent, VoiceKey } from './engine/types';
 import { logDecision } from './telemetry/log';
-import { hashText, screen, setUser, track, watchErrors } from './telemetry/analytics';
+import { screen, setUser, track, watchErrors } from './telemetry/analytics';
+import { dwellFor, playWaitFor } from './ui/feedTiming';
 import { MatchScreen } from './ui/MatchScreen';
 import { EpisodeCard } from './ui/EpisodeCard';
 import { WhistleCard } from './ui/WhistleCard';
@@ -145,28 +146,6 @@ type Pending =
   | { kind: 'result'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career };
 
 /** Подпись на кнопке «Далі», когда цепочка сработала: куда ведёт сцена. */
-
-/** Скільки рядок стрічки стоїть на екрані, перш ніж прийде наступний (або відкриється лист).
- *  Від довжини рядка (плейтест 22.10: «хочу почитати лог між подіями, але не встигаю»): було 1,9 с на
- *  будь-який рядок — це ~34 знаки на секунду при середньому рядку 64 знаки, а гравець ще й дивиться на
- *  поле. Тепер 0,6 с + 28 знаків на секунду: 40 знаків — 2 с, 64 — 2,9 с, 90 — 3,8 с. Гол — не менше 3 с
- *  (розіграш на полі), сцена в стрічці — 1,9 с: поле грає дію Реєса. Хто читає швидше — «далі ⟶». */
-/** Скільки стрічка чекає на поле понад час читання (23.10). Наступний рядок приходить, коли рядок
- *  дочитано **і** поле доіграло його постановку: інакше новий рядок обривав розіграш на півдорозі, і
- *  хореографію доводилось підганяти під найкоротший рядок (правило «≤ 1,9 с»). Час читання рахується
- *  з показаного тексту, тож мова з довшими словами отримує більше часу сама. Стеля — щоб зависле чи
- *  дуже довге поле не тримало матч. Гол — виняток: свято й розвод з центру тривають 7–8 с, і стрічка
- *  чекає на них, а не біжить під чужі рядки, поки поле ще святкує. */
-const PLAY_WAIT_MAX = 2500;
-const PLAY_WAIT_GOAL = 6000;
-
-function dwellFor(e: TimelineEvent): number {
-  if (e.kind === 'episode') return 1900;
-  const read = Math.round(600 + (e.text?.length ?? 60) * 1000 / 28);
-  if (e.kind === 'goalUs' || e.kind === 'goalThem') return Math.max(3000, Math.min(read, 4200));
-  if (e.kind === 'halftime' || e.kind === 'kickoff') return Math.max(1800, Math.min(read, 4200));
-  return Math.max(1900, Math.min(read, 4200));
-}
 
 function Game() {
   // Матч не переживає монтування (M45): сесія живе в рефах, і перезавантаження сторінки чи вихід на
@@ -602,7 +581,7 @@ function Game() {
       if (!prev || playedRef.current === prev) { advance(); return; }
       waitPlayRef.current = advance;
       // Розв'язка сцени може містити гол — та сама стеля, що в гола.
-      cap = setTimeout(advance, prev.kind === 'goalUs' || prev.kind === 'goalThem' || prev.kind === 'episode' ? PLAY_WAIT_GOAL : PLAY_WAIT_MAX);
+      cap = setTimeout(advance, playWaitFor(prev.kind));
     }, prev ? dwellFor(prev) : 1200);
     return () => { clearTimeout(t); clearTimeout(cap); waitPlayRef.current = null; };
   }, [stage.k, queue, reading]);
@@ -1042,8 +1021,9 @@ function Game() {
         self={{ name: ROSTER.us.players.self.nom, handle: '@reyes10' }}
         onReply={(post, option) => {
           // Відповідь у стрічці (M49, 23.10): чи відповідають узагалі й що саме — 27 с на екрані «Y» можуть бути
-          // й читанням. Текст не збираємо: id варіанта, а без нього — хеш.
-          track('y_reply', { account: post.account.handle, option: option.id ?? hashText(option.text) });
+          // й читанням. Текст не збираємо: id варіанта, а без нього — номер у пості. Не хеш тексту: текст показаний
+          // мовою гравця, і один варіант давав би в GA4 два значення.
+          track('y_reply', { account: post.account.handle, option: option.id ?? `#${post.replyOptions?.indexOf(option) ?? -1}` });
           // Ответ в стрічці — последствия как у дела недели: через applyWeek, чтобы бирки,
           // флаги и старт следующего матча считались в одном месте. Неделя потом дольёт своё.
           const activity: Activity = { id: 'reply', voice: 'ego', title: t('Відповідь у стрічці'), line: option.text, effect: option.effect };

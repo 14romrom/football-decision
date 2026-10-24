@@ -64,11 +64,13 @@ type Props = {
   /** Установка тренера й рахунок за показаною стрічкою (+ — ведемо): форма команди на полі (23.10). */
   instruction?: 'hold' | 'press' | 'free' | 'none';
   lead?: number;
+  /** Останній показаний рядок — перерва: перший рядок другого тайму почнеться з розводу. */
+  afterBreak?: boolean;
   /** Постановку рядка доіграно (або її немає) — стрічка чекає на це, щоб наступний рядок не обривав поле. */
   onPlayed?: (e: TimelineEvent) => void;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue, instruction = 'free', lead = 0, onPlayed }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue, instruction = 'free', lead = 0, afterBreak = false, onPlayed }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
   /** Розв'язка сцени на полі — стрічка чекає на неї так само, як на постановку рядка (onPlayed). */
@@ -90,6 +92,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     d.setBench(onBench, sentOff);
     d.setMinute(minute);
     d.setPlay({ instruction, lead, strength });
+    if (afterBreak) d.afterBreak();
     dir.current = d;
     // Лише в dev-збірці: щоб прогнати кожну постановку стрічки руками, не чекаючи її в матчі.
     if (import.meta.env.DEV) (window as unknown as { __pitch?: Director }).__pitch = d;

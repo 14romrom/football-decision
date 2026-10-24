@@ -7,6 +7,7 @@
 //   npx tsx tools/anim-coverage.ts            — частка покритих і що найчастіше не показано
 //   npx tsx tools/anim-coverage.ts --list card — ісходи, де не показано цю подію
 import { readFileSync } from 'node:fs';
+import { maskNoCard } from './card-words';
 
 type Outcome = { text: string; apply?: { goal?: boolean; assist?: boolean; teamGoal?: boolean; concede?: boolean; corner?: boolean; foul?: boolean; addFlags?: string[] } };
 type Ep = { id: string; options: { id: string; label: string; outcomes: Record<string, Outcome> }[] };
@@ -45,7 +46,8 @@ for (const e of EPISODES) for (const o of e.options) {
     const beats = (ENDS[`${e.id}/${o.id}/${tier}`] ?? '').split(' ').filter(Boolean);
     let ok = true;
     for (const ev of EVENTS) {
-      if (!ev.text.test(s)) continue;
+      // Картка, якої в ісході немає («жовтої нема», «з жовтою»), — не подія; та сама маска, що в action-ends.
+      if (!ev.text.test(ev.id === 'card' ? maskNoCard(s) : s)) continue;
       seen[ev.id] = (seen[ev.id] ?? 0) + 1;
       if (!ev.shown(t, beats, oc)) { ok = false; missed[ev.id] = (missed[ev.id] ?? 0) + 1; if (listWant === ev.id) rows.push(`${t.padEnd(8)} ${(beats.join(' ') || '—').padEnd(16)} ${e.id}/${o.id}/${tier}\n    ${oc.text.slice(0, 180)}`); }
     }

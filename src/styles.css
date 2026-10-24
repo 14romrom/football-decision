@@ -723,6 +723,10 @@ html.reduce-motion .doodle svg { filter: none; }
 .x-acts span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .x-acts svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .x-acts .liked { color: #f91880; } .x-acts .liked svg { fill: currentColor; }
+/* Серце — кнопка (24.10): виглядає як решта дій, ціль для пальця — на всю висоту рядка. */
+.x-acts .x-like { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font: inherit; color: inherit; background: none; border: 0; border-radius: 4px; padding: 6px 4px; margin: -6px -4px; min-height: 32px; cursor: pointer; }
+.x-acts .x-like.liked { color: #f91880; }
+.x-acts .x-like:focus-visible { outline: 2px solid var(--x-blue); outline-offset: 2px; }
 .x-poll { display: grid; gap: 6px; margin: 4px 0 8px; }
 .x-poll div { position: relative; height: 32px; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 14px; }
 .x-poll div::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); background: #3d4a57; border-radius: 6px; }

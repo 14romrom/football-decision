@@ -57,6 +57,9 @@ export type PostWhen = {
    *  рішення користувача 04.10 — відповідям у стрічці великої ваги не давати, лише подекуди підсвітити,
    *  щоб світ здавався живим. Тому в такого поста наслідків або немає, або вони дрібні. */
   said?: string[];
+  /** Автор поста отримав лайк від Реєса в минулій стрічці (24.10): правило — відгук на лайк. Звичайним
+   *  пулом не обирається, лише окремою гілкою в `buildFeed`, яка знає, чий це пост. */
+  liked?: boolean;
 };
 
 /** Вид поста (19.09, «форма»): poll — опрос с абсурдными вариантами, проценты раздаёт rng;
@@ -68,6 +71,10 @@ export type PostKind = 'post' | 'poll' | 'deleted' | 'promo' | 'live';
  *  недели (ActivityEffect: трибуны, тренер, кураж, флаг на матч) и реакция автора поста. */
 export type ReplyOption = {
   text: string; reaction: string; effect: ActivityEffect;
+  /** Партнер по команді вступає в гілку після реакції автора (24.10): Тібо, Мораес. */
+  chime?: PostReplyLine;
+  /** Аккаунт `chime` — підставляє `buildFeed`, у контенті не пишеться. */
+  chimeAccount?: PostAccount;
   /** Только у тех ответов, которые город потом вспомнит: пара `<id правила>:<id варианта>`
    *  уходит в `career.replyLog`, и её читает `PostWhen.said`. Без `id` ответ живёт один вечер. */
   id?: string;
@@ -120,6 +127,8 @@ export type PostContext = {
   lastWeek: string[];
   /** Что Реєс уже отвечал в стрічці за карьеру (career.replyLog) — для отлуння, см. `PostWhen.said`. */
   said: string[];
+  /** Хендли аккаунтів, яким Реєс поставив лайк у минулій стрічці (`career.lastLiked`). */
+  liked?: string[];
   /** Лучший и худший момент последнего матча (season.rounds[].moments). */
   moments: { best?: MomentRef; worst?: MomentRef };
   arc: number;
@@ -172,6 +181,7 @@ export function buildPostContext(
     // живе один вечір. Віку в умови не додаємо: пости не повторюються, тож відлуння спрацює
     // один раз у найближчій стрічці, де все інше в правилі теж зійшлося.
     said: (career.replyLog ?? []).map((r) => r.said),
+    liked: career.lastLiked ?? [],
     arc: arcStage(career),
     moments: last.moments ?? {},
   };
@@ -179,6 +189,7 @@ export function buildPostContext(
 
 export function matchesPost(w: PostWhen | undefined, c: PostContext): boolean {
   if (!w) return true;
+  if (w.liked) return false;   // відгук на лайк — лише своєю гілкою в buildFeed
   if (w.result && w.result !== c.result) return false;
   if (w.bigLoss !== undefined && w.bigLoss !== c.scoreThem - c.scoreUs >= 3) return false;
   if (w.bigWin !== undefined && w.bigWin !== c.scoreUs - c.scoreThem >= 3) return false;
@@ -312,9 +323,12 @@ function replyFor(rule: PostRule, index: number, rng: Rng, accounts: PostsConten
 }
 
 /** Варіанти відповіді Реєса під обраним варіантом поста. */
-function optionsFor(rule: PostRule, index: number, fill: (t: string) => string): ReplyOption[] | undefined {
+function optionsFor(rule: PostRule, index: number, fill: (t: string) => string, accounts: PostsContent['accounts']): ReplyOption[] | undefined {
   const opts = rule.replyOptions?.filter((o) => !o.line || o.line.includes(index));
-  return opts?.length ? opts.map((o) => ({ ...o, text: fill(o.text), reaction: fill(o.reaction) })) : undefined;
+  return opts?.length ? opts.map((o) => ({
+    ...o, text: fill(o.text), reaction: fill(o.reaction),
+    ...(o.chime ? { chime: { ...o.chime, text: fill(o.chime.text) }, chimeAccount: accounts[o.chime.account] } : {}),
+  })) : undefined;
 }
 
 /** «Наш» мир — про Реєса, нашу лігу и наш город; «общее» — великий футбол и мета.
@@ -388,7 +402,7 @@ export function buildFeed(
       pick.text = withMoment(pick.text);
       // Удалённый твит: на экране «Цей твіт видалено», а оригинал живёт в ответе-скрине.
       const reply = replyFor(pick.rule, pick.index, rng, content.accounts, withMoment, pick.text);
-      const options = optionsFor(pick.rule, pick.index, withMoment);
+      const options = optionsFor(pick.rule, pick.index, withMoment, content.accounts);
       out.push({
         account, text: kind === 'deleted' ? t('Цей твіт видалено') : pick.text, group, reply, hoursAgo: 0, likes: 0, reposts: 0, kind, baseText,
         ...(kind === 'poll' && pick.rule.poll ? { poll: pollResults(pick.rule.poll, rng) } : {}),
@@ -411,13 +425,29 @@ export function buildFeed(
       const fill = (t: string) => fillMoment(t, rule, ctx);
       const index = rule.lines.indexOf(text);
       const reply = replyFor(rule, index, rng, content.accounts, fill, fill(text));
-      const options = optionsFor(rule, index, fill);
+      const options = optionsFor(rule, index, fill, content.accounts);
       out[slot] = {
         ...out[slot], account: content.accounts[rule.account], text: fill(text), reply, kind: rule.kind ?? 'post', baseText: isBaseText(text),
         ...(rule.kind === 'poll' && rule.poll ? { poll: pollResults(rule.poll.map(fill), rng) } : {}),
         ...(rule.kind === 'live' && rule.live ? { liveMinute: ctx.moments[which]!.minute } : {}),
         ...(options ? { replyOptions: options } : {}),
       };
+    }
+  }
+
+  // Лайк Реєса не лишається непоміченим (24.10): автор, якого він лайкнув у минулій стрічці, відгукується —
+  // одним постом замість поста своєї групи. Без гарантії відгук із вагою 3 програвав би правилам із кількома ключами.
+  const likedRules = content.posts.filter((r) => r.when?.liked && (ctx.liked ?? []).includes(content.accounts[r.account]?.handle)
+    && matchesPost({ ...r.when, liked: undefined }, ctx) && r.lines.some((t) => !seen.has(t)));
+  let echoSlot = -1;
+  if (likedRules.length) {
+    const rule = rng.pick(likedRules);
+    const slot = out.findIndex((p) => p.group === rule.group && p.kind === 'post' && !p.replyOptions);
+    if (slot >= 0) {
+      echoSlot = slot;
+      const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
+      seen.add(text);
+      out[slot] = { ...out[slot], account: content.accounts[rule.account], text: fillMoment(text, rule, ctx), reply: undefined, kind: 'post', baseText: isBaseText(text) };
     }
   }
 
@@ -434,14 +464,15 @@ export function buildFeed(
   if (replyable === 0 && rng.next() < REPLY_CHANCE) {
     const candidates = content.posts.filter((r) => r.replyOptions && matchesPost(r.when, ctx) && r.lines.some((t) => !seen.has(t)));
     const rule = candidates.length ? rng.pick(candidates) : null;
-    const slot = rule ? out.findIndex((p) => p.group === rule.group && !p.poll && p.kind === 'post') : -1;
+    // Відгук на лайк не підміняємо: це відповідь гравцеві, а пост із відповіддю знайде інше місце.
+    const slot = rule ? out.findIndex((p, i) => i !== echoSlot && p.group === rule.group && !p.poll && p.kind === 'post') : -1;
     if (rule && slot >= 0) {
       const text = rng.pick(rule.lines.filter((t) => !seen.has(t)));
       seen.add(text);
       const fill = (t: string) => fillMoment(t, rule, ctx);
       out[slot] = {
         ...out[slot], account: content.accounts[rule.account], text: fill(text), reply: undefined, kind: 'post', baseText: isBaseText(text),
-        replyOptions: optionsFor(rule, rule.lines.indexOf(text), fill),
+        replyOptions: optionsFor(rule, rule.lines.indexOf(text), fill, content.accounts),
       };
     }
   }

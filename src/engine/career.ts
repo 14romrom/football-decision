@@ -77,6 +77,8 @@ export type Career = {
   training?: Partial<Record<Attribute, number>>;
   /** Те саме для відповідей у стрічці «Y» (`ActivityEffect.practice`): BALANCE.week.practiceToPoint = +1 очко. */
   practice?: Partial<Record<Attribute, number>>;
+  /** Кому Реєс поставив лайк у минулій стрічці (хендли): наступна стрічка відгукнеться (`PostWhen.liked`). */
+  lastLiked?: string[];
   /** Ріст від матчу (M18.4): скільки чистих ісходів зроблено кожним атрибутом за кар’єру.
    *  Кожні BALANCE.growth.useToPoint дають +1 очко назавжди — лічильник не обнуляється,
    *  щоб «ще два до пункту» можна було показати на картці. */

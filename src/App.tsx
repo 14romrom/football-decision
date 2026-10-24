@@ -159,6 +159,8 @@ function Game() {
   const pendingRef = useRef<Pending | null>(null);
   /** У цій стрічці вже була відповідь із тренуванням (`ActivityEffect.practice`) — друга в очко не йде. */
   const practiceUsedRef = useRef(false);
+  /** Кому в цій стрічці поставлено лайк (хендли) — пишеться в кар'єру, коли стрічку закривають. */
+  const likedRef = useRef<Set<string>>(new Set());
   const shownAtRef = useRef(0);
   // career — состояние для UI (уровень/опыт на экранах) и ref для чтения из колбэков
   // без устаревших замыканий, тот же приём, что и sessionRef/rngRef.
@@ -481,7 +483,10 @@ function Game() {
         // Варіанти опитування й відповіді гравця теж текст поста: без цього на екрані лишалися
         // «{sub} в основу» і «{self}» (17.10, знайдено в трейлері; 6 опитувань і 3 відповіді).
         ...(p.poll ? { poll: p.poll.map((o) => ({ ...o, text: f(o.text) })) } : {}),
-        ...(p.replyOptions ? { replyOptions: p.replyOptions.map((o) => ({ ...o, text: f(o.text), reaction: f(o.reaction) })) } : {}),
+        ...(p.replyOptions ? { replyOptions: p.replyOptions.map((o) => ({
+          ...o, text: f(o.text), reaction: f(o.reaction),
+          ...(o.chime && o.chimeAccount ? { chime: { ...o.chime, text: f(o.chime.text) }, chimeAccount: { ...o.chimeAccount, name: f(o.chimeAccount.name) } } : {}),
+        })) } : {}),
       };
     });
   }, []);
@@ -521,6 +526,7 @@ function Game() {
     if (isSeasonOver(sn)) { afterPosts(leveledFrom, leveledTo); return; }
     // Частка «нашого» в стрічці росте туром кар'єри, не сезоном (posts.ts:POST_QUOTA_BY_CAREER_ROUND).
     practiceUsedRef.current = false;
+    likedRef.current = new Set();
     // Свій пост Реєса — раз на три матчі (posts.ts:ownPostDue): чернетки голосами, яких він слухав найменше.
     const result = ownPostDue(ourRow(sn).played) ? buildPostContext(sn, careerRef.current, null)?.result : undefined;
     const acc = (key: string) => ({ ...POSTS.accounts[key], name: fillNames(POSTS.accounts[key].name, ROSTER) });
@@ -1066,7 +1072,15 @@ function Game() {
             : after);
           return tags;
         }}
-        onNext={() => afterPosts(stage.leveledFrom, stage.leveledTo)}
+        onLike={(post, on) => {
+          if (on) likedRef.current.add(post.account.handle); else likedRef.current.delete(post.account.handle);
+          if (on) track('y_like', { account: post.account.handle });
+        }}
+        onNext={() => {
+          // Лайки цієї стрічки — у кар'єру: наступна стрічка відгукнеться (posts.ts: PostWhen.liked).
+          setCareerBoth({ ...careerRef.current, lastLiked: [...likedRef.current] });
+          afterPosts(stage.leveledFrom, stage.leveledTo);
+        }}
       />
     );
   }

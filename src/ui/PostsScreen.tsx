@@ -18,6 +18,8 @@ type Props = {
   self: { name: string; handle: string };
   /** Применить выбранный ответ; возвращает бирки последствий. */
   onReply: (post: Post, option: ReplyOption) => string[];
+  /** Лайк поставлено чи знято — App запам'ятовує, кому (для відгуку в наступній стрічці). */
+  onLike?: (post: Post, on: boolean) => void;
   /** Свій пост Реєса (раз на три матчі): три чернетки голосами; публікація повертає бирки, як відповідь. */
   own?: OwnView[];
   onOwnPost?: (index: number) => string[];
@@ -60,12 +62,14 @@ function Name({ account, self, when }: { account?: PostAccount; self?: { name: s
   );
 }
 
-function Acts({ p }: { p: Post }) {
+/** Лайк — справжній (24.10): тап по серцю, і автор відгукнеться в наступній стрічці. Раніше серце фанатам
+ *  «ставилося» само (до 200 лайків), і гравець не знав, що це не він. */
+function Acts({ p, liked, onLike }: { p: Post; liked?: boolean; onLike?: () => void }) {
   return (
     <div className="x-acts">
       <span>{I.reply}{countLabel(Math.round(p.reposts / 2))}</span>
       <span>{I.repost}{countLabel(p.reposts)}</span>
-      <span className={p.account.kind === 'fan' && p.likes < 200 ? 'liked' : ''}>{I.like}{countLabel(p.likes)}</span>
+      <button type="button" className={`x-like ${liked ? 'liked' : ''}`} aria-pressed={!!liked} aria-label={t('Подобається')} onClick={onLike}>{I.like}{countLabel(p.likes + (liked ? 1 : 0))}</button>
       <span>{I.views}{countLabel(p.likes * 41 + p.reposts * 7)}</span>
       <span>{I.share}</span>
     </div>
@@ -75,7 +79,7 @@ function Acts({ p }: { p: Post }) {
 /** Чернетка, як її показує екран: імена вже підставлені, аккаунти відповідей — повні. */
 export type OwnView = { voice: VoiceKey; text: string; replies: { account: PostAccount; text: string }[] };
 
-export function PostsScreen({ posts, self, onReply, own, onOwnPost, onNext }: Props) {
+export function PostsScreen({ posts, self, onReply, onLike, own, onOwnPost, onNext }: Props) {
   useBanner('bannerY');   // банер Google внизу, поки відкрита стрічка (M48)
   // Відповідей за стрічку може бути кілька (REPLY_MAX): кожна — під своїм постом.
   const [replied, setReplied] = useState<Record<number, { option: ReplyOption; tags: string[] }>>({});
@@ -84,6 +88,8 @@ export function PostsScreen({ posts, self, onReply, own, onOwnPost, onNext }: Pr
   const [ownPick, setOwnPick] = useState<number | null>(null);
   const [ownDone, setOwnDone] = useState<{ index: number; tags: string[] } | null>(null);
   const ownPost = ownDone && ownDone.index >= 0 ? own![ownDone.index] : null;
+  const [likes, setLikes] = useState<Record<number, boolean>>({});
+  const like = (i: number) => { const on = !likes[i]; setLikes((l) => ({ ...l, [i]: on })); onLike?.(posts[i], on); };
 
   return (
     <div className="result posts">
@@ -156,7 +162,7 @@ export function PostsScreen({ posts, self, onReply, own, onOwnPost, onNext }: Pr
                     <small>{tf('{0} голосів · Завершено', countLabel(p.likes * 3))}</small>
                   </div>
                 )}
-                <Acts p={p} />
+                <Acts p={p} liked={likes[i]} onLike={() => like(i)} />
               </div>
 
               {p.reply && (
@@ -204,6 +210,15 @@ export function PostsScreen({ posts, self, onReply, own, onOwnPost, onNext }: Pr
                       </ul>
                     )}
                   </div>
+                  {done.option.chime && done.option.chimeAccount && (
+                    <>
+                      <Avatar account={done.option.chimeAccount} />
+                      <div className="x-body x-sub">
+                        <Name account={done.option.chimeAccount} when={t('щойно')} />
+                        <p className="x-tx">{done.option.chime.text}</p>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </article>

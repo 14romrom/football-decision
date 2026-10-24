@@ -64,7 +64,7 @@ describe('стрічка: контент', () => {
   it('плейсхолдеры разрешаются любым ростером; реальных людей по имени нет', () => {
     const texts = POSTS.posts.flatMap((r) => [
       ...r.lines, ...(r.reply?.lines ?? []), ...(r.replies ?? []).flatMap((x) => (x ? [x.text] : [])), ...(r.poll ?? []),
-      ...(r.replyOptions ?? []).flatMap((o) => [o.text, o.reaction]),
+      ...(r.replyOptions ?? []).flatMap((o) => [o.text, o.reaction, ...(o.chime ? [o.chime.text] : [])]),
        ]).concat((POSTS.own ?? []).flatMap((d) => [d.text, ...d.replies.map((r) => r.text)]));
     for (const key of keys) {
       const roster = rosterFor(key, makeRng(2));
@@ -245,6 +245,26 @@ describe('стрічка: контекст из сезона', () => {
     expect(c.nextFlags.length).toBeGreaterThan(0);
     expect(c.round).toBe(1);
     expect(buildPostContext(createSeason(22, keys), defaultCareer(), null)).toBeNull();
+  });
+});
+
+describe('стрічка: лайки й партнери в гілках', () => {
+  it('лайкнутий аккаунт відгукується в наступній стрічці, без лайка відгуку немає', () => {
+    const echoLines = new Set(POSTS.posts.filter((r) => r.when?.liked).flatMap((r) => r.lines));
+    const wag = POSTS.accounts.wag.handle;
+    for (let i = 0; i < 20; i++) {
+      expect(buildFeed(ctx({ round: 6 }), makeRng(900 + i)).some((p) => echoLines.has(p.text))).toBe(false);
+      const feed = buildFeed(ctx({ round: 6, liked: [wag] }), makeRng(900 + i));
+      expect(feed.some((p) => p.account.handle === wag && echoLines.has(p.text)), `сід ${900 + i}`).toBe(true);
+    }
+  });
+
+  it('у гілку вступають лише партнери по клубу', () => {
+    for (const r of POSTS.posts) for (const o of r.replyOptions ?? []) {
+      if (!o.chime) continue;
+      expect(POSTS.accounts[o.chime.account]?.kind, o.chime.text).toBe('club');
+      expect(['tibo', 'partner', 'larsson'], o.chime.text).toContain(o.chime.account);
+    }
   });
 });
 

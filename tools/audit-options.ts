@@ -51,7 +51,7 @@ export function critProb(pos: Position, mod: number, difficulty: number, partner
 }
 
 /** Ценность исхода в двух валютах. Веса — порядок величин, не калибровка. */
-function value(a: ApplyEffect | undefined): { team: number; self: number } {
+export function value(a: ApplyEffect | undefined): { team: number; self: number } {
   if (!a) return { team: 0, self: 0 };
   let team = 0, self = 0;
   if (a.goal) { team += 1; self += 6; }
@@ -86,7 +86,7 @@ type Row = {
 };
 
 /** Силы — тоже валюта: четверть очка за пункт (≈100 сил на 9 эпизодов). */
-const STAMINA_WEIGHT = 0.25;
+export const STAMINA_WEIGHT = 0.25;
 /** Отрыв EV, с которого эпизод считается «с правильным ответом». Порог абсолютный, поэтому он
  *  **читается только при `--bonus=0`**: с ростом игрока вся шкала EV раздувается (средний |EV| опции
  *  1.21 при +0 → 1.88 при +3, то есть на 55%), и отрывы растут вместе с ней — сцен с отрывом > 1.5

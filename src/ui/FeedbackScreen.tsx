@@ -71,7 +71,7 @@ export function FeedbackScreen({ onBack, backLabel, where }: Props) {
       </span>
 
       <h2>{t('Лист')}</h2>
-      <textarea className="fb-text" rows={6} value={text} onChange={(e) => setText(e.target.value)}
+      <textarea className="fb-text" rows={6} value={text} aria-label={t('Лист')} onChange={(e) => setText(e.target.value)}
         placeholder={kind === 'bug' ? t('Що сталося і що ти робив перед цим') : t('Кілька слів — цього досить')} />
       <p className="fb-note">{t('До листа гра допише версію, мову, тур і модель телефона, щоб помилку можна було повторити. Лист відкриється в пошті — його можна перечитати перед відправкою.')}</p>
 

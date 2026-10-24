@@ -262,7 +262,7 @@ html.reduce-motion .pause { animation: none; }
 .pause-rows > li > button.exit { color: var(--bad-soft); }
 .pause-rows > li > button.exit::after { color: #7a4a42; }
 .pause-lang { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 2px; font-size: 17px; }
-.pause-lang .seg button { min-height: 34px; font-size: 12px; padding: 0 12px; }
+.pause-lang .seg button { min-height: 48px; font-size: 12px; padding: 0 12px; }
 .pause .danger-btn { margin-bottom: 8px; }
 .nav-warn { font-size: 14px; line-height: 1.45; color: var(--ink); margin: 6px 0 14px; }
 
@@ -1066,7 +1066,7 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .noads { margin: 16px 0 6px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 6px; padding: 14px; display: grid; gap: 10px; }
 .noads b { font: 500 14px var(--font-caps); letter-spacing: .08em; text-transform: uppercase; }
 .noads p { margin: 0; font-size: 14.5px; line-height: 1.5; }
-.noads-restore { background: none; border: 0; color: var(--muted); font: 12.5px var(--font-mono); text-decoration: underline; padding: 4px; }
+.noads-restore { background: none; border: 0; color: var(--muted); font: 12.5px var(--font-mono); text-decoration: underline; padding: 4px 12px; min-height: 48px; }
 .noads-note { color: var(--muted); font-size: 12.5px; }
 /* Пауза в матчі (M48): чесний підпис під «Чекати» і тихий рядок про «Без реклами». */
 .adbreak-note { margin: 2px 0 0; text-align: center; font: 12px var(--font-mono); color: var(--muted); }
@@ -1077,7 +1077,7 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .fb-text:focus { outline: 1px solid var(--cream); }
 .fb-note { margin: 8px 0 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
 .fb-mail { color: var(--ink); font-weight: 400; font-family: var(--font-mono); font-size: 12.5px; user-select: all; }
-.fb-copy { background: none; border: 0; padding: 0; color: var(--muted); text-decoration: underline; font: inherit; }
+.fb-copy { background: none; border: 0; padding: 15px 6px; margin: -15px -6px; color: var(--muted); text-decoration: underline; font: inherit; }
 .fb-send { margin-top: 14px; }
 .crash .ghost { margin-top: 10px; }
 .eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
@@ -1091,12 +1091,17 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
    варіант («українська | E…», 17.10). Ужимається підпис — він переноситься. */
 .seg { display: inline-flex; flex: none; border: 1px solid var(--line-2); border-radius: 4px; overflow: hidden; font-family: var(--font-mono); font-size: 11.5px; }
 .set .l { flex: 1; min-width: 0; }
-.seg button { padding: 7px 10px; min-height: 36px; color: var(--muted); background: none; border: 0; border-radius: 0; font: inherit; }
+/* Ціль для пальця — 48 px (24.10, Firebase Robo: перемикачі були 36 dp при рекомендованих 48). */
+.seg button { padding: 7px 10px; min-height: 48px; color: var(--muted); background: none; border: 0; border-radius: 0; font: inherit; }
 .seg button.on { background: var(--cream); color: #141413; }
-.toggle { width: 44px; height: 26px; border-radius: 13px; background: var(--dim); border: 0; padding: 0; position: relative; flex: none; }
-.toggle.on { background: var(--accent); }
-.toggle::after { content: ''; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); transition: left .15s ease; }
-.toggle.on::after { left: 22px; }
+/* Тумблер (24.10, Firebase Robo): кнопка — 52×48 для пальця, видима доріжка та сама 44×26 (::before).
+   Кружок вимкненого — світлий: темний на сірій доріжці мав контраст 1,7. */
+.toggle { width: 52px; height: 48px; background: none; border: 0; padding: 0; position: relative; flex: none; }
+.toggle:active, .toggle:hover { background: none; }
+.toggle::before { content: ''; position: absolute; top: 11px; left: 4px; width: 44px; height: 26px; border-radius: 13px; background: var(--dim); }
+.toggle.on::before { background: var(--accent); }
+.toggle::after { content: ''; position: absolute; top: 15px; left: 8px; width: 18px; height: 18px; border-radius: 50%; background: var(--cream); transition: left .15s ease; }
+.toggle.on::after { left: 26px; background: var(--bg); }
 /* Налаштування возвращены к 42de5db по решению пользователя (19.09); хеш сборки там — mono, как было. */
 .settings .build { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
 

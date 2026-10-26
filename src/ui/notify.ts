@@ -97,7 +97,13 @@ export async function requestReview() {
   writeSettings({ ...readSettings(), reviewDone: true });
   if (!native()) return;
   try { await InAppReview.requestReview(); }
-  catch { window.open('https://play.google.com/store/apps/details?id=ua.footballdecision.app', '_blank'); }
+  catch { openStorePage(); }
 }
 export function reviewLater() { writeSettings({ ...readSettings(), reviewLaterAt: Date.now() }); }
 export const reviewAvailable = native;
+
+/** Сторінка гри в Google Play. Кнопка «Оцінити гру» (26.10, звіт закритого тесту) веде сюди, а не у вікно
+ *  оцінки: Google забороняє викликати його кнопкою — воно для моменту після гри й показується не завжди. */
+export function openStorePage() {
+  window.open('https://play.google.com/store/apps/details?id=ua.footballdecision.app', '_blank');
+}

@@ -10,6 +10,7 @@ import { readCareer } from '../telemetry/career-storage';
 import { readSeason } from '../telemetry/season-storage';
 import { readSettings, writeSettings } from '../telemetry/settings';
 import { t } from '../content/i18n';
+import { track } from '../telemetry/analytics';
 
 // Сповіщення й відгук на телефоні (M51, 18.10). Сервера немає: коли гру згортають, у чергу Android
 // стають три сповіщення (1, 3 і 7 днів), коли відкривають — черга знімається. Тому «тиша, доки не
@@ -97,13 +98,15 @@ export async function requestReview() {
   writeSettings({ ...readSettings(), reviewDone: true });
   if (!native()) return;
   try { await InAppReview.requestReview(); }
-  catch { openStorePage(); }
+  catch { openStorePage('fallback'); }
 }
 export function reviewLater() { writeSettings({ ...readSettings(), reviewLaterAt: Date.now() }); }
 export const reviewAvailable = native;
 
 /** Сторінка гри в Google Play. Кнопка «Оцінити гру» (26.10, звіт закритого тесту) веде сюди, а не у вікно
- *  оцінки: Google забороняє викликати його кнопкою — воно для моменту після гри й показується не завжди. */
-export function openStorePage() {
+ *  оцінки: Google забороняє викликати його кнопкою — воно для моменту після гри й показується не завжди.
+ *  `review_store` — для дашборду: скільки людей пішли оцінювати самі (`about`) чи після збою вікна (`fallback`). */
+export function openStorePage(from: 'about' | 'fallback' = 'about') {
+  track('review_store', { from });
   window.open('https://play.google.com/store/apps/details?id=ua.footballdecision.app', '_blank');
 }

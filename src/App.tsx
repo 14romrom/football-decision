@@ -308,8 +308,10 @@ function Game() {
 
       // Матч записано в кар'єру і сезон — повертатися більше нікуди (M45).
       dropShot('prematch');
+      // `league` — рядком (27.10): `season` числом GA4 як вимір не показує — «(not set)» у звіті, а розріз
+      // «друга / вища ліга» потрібен балансу. Число лишається для сортування.
       track('match_end', {
-        season: sn.number, round: sn.round + 1, match_no: after.matchesPlayed,
+        season: sn.number, league: session.conditions.league ?? 'second', round: sn.round + 1, match_no: after.matchesPlayed,
         result: summary.scoreUs > summary.scoreThem ? 'w' : summary.scoreUs < summary.scoreThem ? 'l' : 'd',
         score_us: summary.scoreUs, score_them: summary.scoreThem,
         goals: summary.stats.goals, assists: summary.stats.assists,
@@ -648,7 +650,7 @@ function Game() {
     // Те саме рішення — в аналітику (M49): розподіл виборів по сценах на живих гравцях, ярус кидка за
     // формою ризику, чи слухають голос, який «бачив», і скільки секунд думали.
     track('decision', {
-      scene: stage.episode.id, option: option.id, risk: res.position, tier: res.tier, difficulty: res.difficulty,
+      scene: stage.episode.id, option: option.id, league: session.conditions.league ?? 'second', risk: res.position, tier: res.tier, difficulty: res.difficulty,
       voice: option.voice?.who, insight: !!option.insight, minute: stage.minute,
       score_diff: session.state.scoreUs - session.state.scoreThem,
       sec: Math.round((performance.now() - shownAtRef.current) / 100) / 10,
@@ -981,7 +983,7 @@ function Game() {
         onNext={() => afterSeason(stage.leveledFrom, stage.leveledTo)}
         onNewSeason={() => {
           if (over) track('season_end', {
-            season: season.number, position: ourRow(season).position,
+            season: season.number, league: season.number >= 2 ? 'top' : 'second', position: ourRow(season).position,
             verdict: (season.number === 1 ? firstSeasonVerdict(season, career.coachTrust) : secondSeasonVerdict(season, career.coachTrust)).kind,
             goals: season.player.goals, assists: season.player.assists,
           });
@@ -1114,7 +1116,7 @@ function Game() {
           const before = careerRef.current;
           const { career: after, loot } = finishWeek(before, ctx, days, picks, scenes, anchor);
           setCareerBoth(after);
-          track('week_done', { season: sn.number, round: sn.round, picks: picks.length, anchor: anchor?.id });
+          track('week_done', { season: sn.number, league: sn.number >= 2 ? 'top' : 'second', round: sn.round, picks: picks.length, anchor: anchor?.id });
           return { loot, before: effectivePlayer(PLAYER, before), after: effectivePlayer(PLAYER, after) };
         }}
         onNext={() => setStage(BALANCE.growth.levels && leveledTo > leveledFrom ? { k: 'levelup', fromLevel: leveledFrom, toLevel: leveledTo } : { k: 'menu' })}

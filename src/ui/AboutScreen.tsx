@@ -72,7 +72,7 @@ export function AboutScreen({ onBack, backLabel }: Props) {
       <p className="about-refs">{t('Натхнення: Disco Elysium, Football Manager і кожен матч, де ти знав, як треба, і зробив інакше.')}</p>
 
       <button className="row" onClick={() => setFeedback(true)}>{t('Написати розробнику')}</button>
-      {reviewAvailable() && <button className="row" onClick={openStorePage}>{t('Оцінити гру в Google Play')}</button>}
+      {reviewAvailable() && <button className="row" onClick={() => openStorePage('about')}>{t('Оцінити гру в Google Play')}</button>}
       <button className="row row-back" onClick={onBack}>{backLabel ?? t('Головне меню')}</button>
       <p className="build">{buildLabel()}</p>
     </div>

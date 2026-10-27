@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import { AdMob, BannerAdPluginEvents, BannerAdPosition, BannerAdSize, InterstitialAdPluginEvents } from '@capacitor-community/admob';
 import { NativePurchases, PURCHASE_TYPE } from '@capgo/native-purchases';
 import { readSettings, writeSettings } from '../telemetry/settings';
@@ -99,14 +100,24 @@ export function prepareInterstitial(kind: 'interstitialPause' | 'interstitialAft
 }
 
 /** Показати ролик і дочекатися, поки його закриють. Не завантажився чи немає мережі — одразу далі:
- *  пауза в матчі лишається історією без ролика. Страховка від завислого SDK — 75 с. */
+ *  пауза в матчі лишається історією без ролика. Страховка від завислого SDK — 75 с.
+ *
+ *  Аналітика (27.10, комерційний блок дашборду): `ad_show` — ролик на екрані, `ad_leave` — гру згорнули,
+ *  поки ролик іде (вийшли з гри або тапнули рекламу — SDK цього не розрізняє), `ad_close` — закрили й
+ *  повернулися. Показ без закриття в тій самій сесії — гру вбили посеред ролика. */
 export async function showInterstitial(kind: 'interstitialPause' | 'interstitialAfterMatch'): Promise<void> {
   if (!adsActive() || !prepared.has(kind)) return;
   prepared.delete(kind);
+  const ad = kind === 'interstitialPause' ? 'pause' : 'after_match';
+  let shownAt = 0;
+  const sec = () => (shownAt ? Math.round((Date.now() - shownAt) / 1000) : 0);
   await new Promise<void>((resolve) => {
     const subs: Promise<{ remove: () => Promise<void> }>[] = [];
     const done = () => { clearTimeout(timer); subs.forEach((s) => void s.then((h) => h.remove())); resolve(); };
     const timer = setTimeout(done, 75_000);
+    subs.push(AdMob.addListener(InterstitialAdPluginEvents.Showed, () => { shownAt = Date.now(); track('ad_show', { ad }); }));
+    subs.push(App.addListener('appStateChange', ({ isActive }) => { if (!isActive && shownAt) track('ad_leave', { ad, sec: sec() }); }));
+    subs.push(AdMob.addListener(InterstitialAdPluginEvents.Dismissed, () => { track('ad_close', { ad, sec: sec() }); }));
     subs.push(AdMob.addListener(InterstitialAdPluginEvents.Dismissed, done));
     subs.push(AdMob.addListener(InterstitialAdPluginEvents.FailedToShow, done));
     AdMob.showInterstitial().catch(done);

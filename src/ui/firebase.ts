@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { ConsentStatus, ConsentType, FirebaseAnalytics } from '@capacitor-firebase/analytics';
-import { setSink } from '../telemetry/analytics';
+import { setSink, track } from '../telemetry/analytics';
+import { readCareer } from '../telemetry/career-storage';
 import { consentRegion } from './ads';
 
 // Приймач аналітики на телефоні (M49, 20.10): Firebase Analytics, проєкт `inside-the-box-f6608`
@@ -28,8 +29,23 @@ export function installAnalytics() {
       for (const [key, value] of Object.entries(props)) void FirebaseAnalytics.setUserProperty({ key, value }).catch(() => {});
     },
   });
-  void consentRegion().then((region) => {
+  void consentRegion().then(async (region) => {
     if (region !== 'other') return;
-    void FirebaseAnalytics.setConsent({ type: ConsentType.AnalyticsStorage, status: ConsentStatus.Granted }).catch(() => {});
+    await FirebaseAnalytics.setConsent({ type: ConsentType.AnalyticsStorage, status: ConsentStatus.Granted }).catch(() => {});
+    firstLaunch();
   });
+}
+
+// Свій «перший запуск» (27.10): системний `first_open` Firebase шле в першу ж секунду, ще до відповіді
+// UMP, тобто без згоди — і GA4 його в звітах не показує, «нові користувачі» там завжди 0. Тому шлемо
+// своє, вже після згоди, раз на встановлення. Хто встановив гру раніше (є збережена кар'єра), подію
+// не отримує: інакше оновлення порахувало б усіх старих гравців новими.
+const FIRST_KEY = 'football-decision.first-launch.v1';
+function firstLaunch() {
+  try {
+    if (localStorage.getItem(FIRST_KEY)) return;
+    localStorage.setItem(FIRST_KEY, '1');
+    if (readCareer().matchesPlayed > 0 || readCareer().prologue) return;
+  } catch { return; }
+  track('first_launch');
 }

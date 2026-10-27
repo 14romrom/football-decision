@@ -3,6 +3,7 @@
     "id": "humiliated_defender",
     "label": "їхній захисник злий — іде в кожен стик",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "dribbling",
       "first_touch"
@@ -13,6 +14,7 @@
     "id": "humiliated_defender",
     "label": "їхній захисник кидається — зона за ним відкрита",
     "value": 1,
+    "group": "opp",
     "attributes": [
       "finishing",
       "passing",
@@ -28,6 +30,7 @@
     "id": "partner_trusts",
     "label": "партнер шукає тебе",
     "value": 1,
+    "group": "head",
     "attributes": [
       "passing"
     ],
@@ -37,6 +40,7 @@
     "id": "partner_annoyed",
     "label": "партнер ображений",
     "value": -1,
+    "group": "head",
     "attributes": [
       "passing",
       "vision"
@@ -47,6 +51,7 @@
     "id": "coach_flank",
     "label": "гра йде через твій фланг",
     "value": 1,
+    "group": "cond",
     "phases": [
       "attack",
       "transition"
@@ -62,6 +67,7 @@
     "id": "keeper_owes",
     "label": "{keeper} тобі винен",
     "value": 1,
+    "group": "opp",
     "phases": [
       "defense"
     ],
@@ -71,6 +77,7 @@
     "id": "pattern_wide",
     "label": "захисник читає твої проходи по бровці",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "pace",
       "dribbling"
@@ -84,6 +91,7 @@
     "id": "pattern_wide",
     "label": "він чекає на бровку — центр відкритий",
     "value": 1,
+    "group": "opp",
     "attributes": [
       "vision",
       "passing"
@@ -97,6 +105,7 @@
     "id": "ref_annoyed",
     "label": "суддя тебе запам’ятав",
     "value": -1,
+    "group": "cond",
     "attributes": [
       "composure"
     ],
@@ -106,6 +115,7 @@
     "id": "ref_sympathetic",
     "label": "суддя на твоєму боці",
     "value": 1,
+    "group": "cond",
     "attributes": [
       "composure"
     ],
@@ -115,6 +125,7 @@
     "id": "them_dribbler",
     "label": "їхній дриблер — за фінтами не встигаєш",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "positioning",
       "pace"
@@ -128,6 +139,7 @@
     "id": "them_playmaker",
     "label": "їхній плеймейкер бачить кожну лінію",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "positioning",
       "vision"
@@ -141,6 +153,7 @@
     "id": "them_veteran",
     "label": "ветеран не купується на фінти",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "dribbling"
     ],
@@ -153,6 +166,7 @@
     "id": "them_youngster",
     "label": "молодий провалюється за тобою",
     "value": 1,
+    "group": "opp",
     "attributes": [
       "dribbling",
       "pace"
@@ -166,6 +180,7 @@
     "id": "them_hard",
     "label": "різкий опорник б’є по ногах",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "first_touch",
       "strength"
@@ -179,6 +194,7 @@
     "id": "them_rookie",
     "label": "новачок губить позицію",
     "value": 1,
+    "group": "opp",
     "attributes": [
       "vision",
       "passing"
@@ -192,6 +208,7 @@
     "id": "them_star",
     "label": "їхнього лідера не відпустиш ні на крок",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "positioning"
     ],
@@ -204,6 +221,7 @@
     "id": "them_target",
     "label": "здорованя не виграти в повітрі",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "strength"
     ],
@@ -216,6 +234,7 @@
     "id": "them_captain",
     "label": "їхній капітан говорить із суддею за двох",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "composure"
     ],
@@ -228,6 +247,7 @@
     "id": "them_local",
     "label": "улюбленець трибун — стадіон за нього",
     "value": -1,
+    "group": "opp",
     "attributes": [
       "composure"
     ],
@@ -240,6 +260,7 @@
     "id": "sub_threat",
     "label": "{sub} дихає в спину",
     "value": -1,
+    "group": "head",
     "attributes": [
       "composure"
     ],
@@ -249,6 +270,7 @@
     "id": "keeper_divesEarly",
     "label": "воротар падає рано",
     "value": 2,
+    "group": "opp",
     "options": [
       "wait_keeper",
       "panenka",
@@ -260,6 +282,7 @@
     "id": "keeper_divesEarly",
     "label": "воротар падає рано — на силу без нього",
     "value": -1,
+    "group": "opp",
     "options": [
       "power_shot"
     ],
@@ -269,6 +292,7 @@
     "id": "keeper_staysBig",
     "label": "воротар стоїть до останнього",
     "value": 2,
+    "group": "opp",
     "options": [
       "corner_power",
       "top_corner",
@@ -281,6 +305,7 @@
     "id": "keeper_staysBig",
     "label": "воротар стоїть до останнього — його не обдуриш",
     "value": -2,
+    "group": "opp",
     "options": [
       "wait_keeper",
       "panenka",
@@ -293,6 +318,7 @@
     "id": "keeper_nearPost",
     "label": "воротар тримається ближньої стійки",
     "value": 2,
+    "group": "opp",
     "options": [
       "curl_far",
       "curl_far_top",
@@ -304,6 +330,7 @@
     "id": "keeper_nearPost",
     "label": "воротар закрив ближню",
     "value": -1,
+    "group": "opp",
     "options": [
       "power_shot",
       "shoot_low"
@@ -314,6 +341,7 @@
     "id": "keeper_comesOut",
     "label": "воротар виходить рано",
     "value": 2,
+    "group": "opp",
     "options": [
       "chip_keeper",
       "nutmeg_low",
@@ -325,6 +353,7 @@
     "id": "keeper_comesOut",
     "label": "воротар уже вийшов — закручувати нема куди",
     "value": -1,
+    "group": "opp",
     "options": [
       "curl_far"
     ],
@@ -334,6 +363,7 @@
     "id": "knock",
     "label": "мікротравма — нога не слухається",
     "value": -1,
+    "group": "body",
     "attributes": [
       "pace",
       "strength",
@@ -346,6 +376,7 @@
     "id": "week_set_pieces",
     "label": "стандарти розбирали на тижні",
     "value": 1,
+    "group": "head",
     "phases": [
       "setpiece"
     ],
@@ -361,6 +392,7 @@
     "id": "week_tactics",
     "label": "розбір із тренером на тижні",
     "value": 1,
+    "group": "head",
     "phases": [
       "defense",
       "transition"
@@ -376,6 +408,7 @@
     "id": "week_promise",
     "label": "обіцяв гол хлопчику в палаті",
     "value": 1,
+    "group": "head",
     "attributes": [
       "finishing"
     ],
@@ -461,6 +494,7 @@
     "id": "seen_from_bench",
     "label": "прочитав з лави, де в них дірка",
     "value": 1,
+    "group": "head",
     "attributes": [
       "vision",
       "positioning"
@@ -486,6 +520,7 @@
     "id": "out_of_form",
     "label": "не в формі після літа без передсезонки",
     "value": -1,
+    "group": "body",
     "attributes": [
       "pace",
       "stamina"
@@ -537,6 +572,7 @@
     "id": "partner_bonded",
     "label": "дует: {partner} відкривається раніше, ніж ти дивишся",
     "value": 1,
+    "group": "head",
     "attributes": [
       "passing",
       "vision"
@@ -552,6 +588,7 @@
     "id": "partner_cold",
     "label": "{partner} перестав просити м’яч",
     "value": -1,
+    "group": "head",
     "attributes": [
       "passing",
       "vision"
@@ -572,6 +609,7 @@
     "id": "ultras_backing",
     "label": "ультрас за тебе — сектор тягне",
     "value": 1,
+    "group": "cond",
     "attributes": [
       "composure"
     ],
@@ -582,6 +620,7 @@
     "id": "nerves",
     "label": "мандраж перших турів",
     "value": -1,
+    "group": "head",
     "source": "player",
     "short": "мандраж"
   }

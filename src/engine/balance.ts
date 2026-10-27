@@ -117,10 +117,8 @@ export const BALANCE = {
 
   contextMod: {
     staminaHigh: 1,        // stamina >= 70
-    staminaLow: -2,        // stamina 20..39, для варианта полной цены
-    staminaCritical: -4,   // stamina < 20, для варианта полной цены
-    fatigueFullCost: 8,    // от этой цены штраф усталости полный, 5..7 — половина, дешевле — четверть
-    fatigueHalfCost: 5,
+    staminaLow: -1,        // stamina 20..39 — на будь-якому ході (27.10; було −2 на дорогих, −1 на дешевих)
+    staminaCritical: -2,   // stamina < 20 — на будь-якому ході (27.10; було до −4 на дорогих)
     composureLateGood: 2,  // composureNow >= 70 и минута > 80
     composureLateBad: -2,  // composureNow < 30 и минута > 80
     bookedDefending: -2,   // флаг 'booked' на защитном действии

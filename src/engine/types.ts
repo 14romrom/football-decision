@@ -108,6 +108,8 @@ export type FlagRule = {
   source?: 'player' | 'field';
   /** Короткая подпись для чипа (одно-два слова); без неё чип покажет первые два слова label. */
   short?: string;
+  /** Жетон, у який лягає поправка (тіло / голова / суперник / обставини). Обов'язкова для правил зі значенням (тест). */
+  group?: ModGroup;
 };
 
 /** Какие голоса слушали в этом матче: счётчик на recap и телеметрию,
@@ -303,7 +305,10 @@ export type Episode = {
  *  «показать роль кубика, игрока и ситуации на поле»). */
 export type ModSource = 'player' | 'field';
 /** `short` — одно-два слова для чипа «на кубик» (19.09): полная подпись — по тапу, в списке. */
-export type ModLine = { label: string; value: number; source: ModSource; short?: string };
+/** Група поправки — жетон на лотку «на кубик» (27.10): тіло, голова, суперник, обставини. Рядок атрибута групи
+ *  не має — це навичка, окрема монета. */
+export type ModGroup = 'body' | 'head' | 'opp' | 'cond';
+export type ModLine = { label: string; value: number; source: ModSource; short?: string; group?: ModGroup };
 
 export type Resolution = {
   rawRoll: number;          // что выпало на кубиках

@@ -603,9 +603,7 @@
   "0eeb850a17f2": "four",
   "70b89eb8bb19": "five",
   "1603d52f9251": "legs going",
-  "a5c1a92ea15d": "legs going, but this is cheap",
   "177738c1395a": "tired",
-  "dc8594c45846": "tired, but this is cheap",
   "7b791465a407": "fatigue",
   "60efc0a93409": "fresh",
   "8e15dc38bf05": "calm late on",
@@ -1547,7 +1545,6 @@
   "139bfedf1ff5": "{0} place · {1} {2}",
   "427316fca030": "Instruction: {0}",
   "596e7411fa2c": "{0} and {1} — at this much risk that's a disaster, and skill doesn't save it.",
-  "748506eaf325": " against {0}",
   "9445f33cbc4a": "{0} saw this option — without it there would be no button.",
   "caa206043af1": "Next → {0}",
   "0126261ab07c": "Season review · {0}",
@@ -12977,5 +12974,9 @@
   "8b1635d0a47a": "{self} spotted in the away end in a cap. The cap didn't help: recognised within three minutes.",
   "8fb35b29bd00": "their coach has seen the last few goals — man-marked from the first minute",
   "cc888a36c813": "away in the top division",
-  "554008234738": "Rate the game on Google Play"
+  "554008234738": "Rate the game on Google Play",
+  "5d370cb8a43c": "body",
+  "444e7693ac00": "head",
+  "adaa9ace12e3": "conditions",
+  "c1277ad025a2": "target {0}"
 }

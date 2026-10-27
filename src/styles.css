@@ -5,6 +5,13 @@
 
 :root {
   --bg: #0b0b0d;
+  /* Жетони «на кубик» (27.10): емаль груп, латунь навички, знак числа під жетоном. */
+  --tk-body: #9c4632; --tk-body-hi: #c8664c;
+  --tk-head: #3f5f93; --tk-head-hi: #6688c2;
+  --tk-opp: #3a353e; --tk-opp-hi: #6a6170;
+  --tk-cond: #5e5a3c; --tk-cond-hi: #8c8659;
+  --tk-skill: #b38a35; --tk-skill-hi: #f3d88a;
+  --tk-rim-c: #141215; --tk-plus: #e8c66a; --tk-minus: #e08d78;
   --panel: #141417;
   --panel-2: #101013;
   --line: #26262b;
@@ -1530,3 +1537,39 @@ html.reduce-motion .pc-ring.blink { animation: none; }
 .pitchlab-row { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
 .pitchlab-row button { font: 11px var(--font-mono); padding: 5px 7px; background: #18181c; color: var(--ink); border: 1px solid #333; border-radius: 3px; }
 .pitchlab-row button.on { border-color: var(--v-instinct); color: var(--v-instinct); }
+
+/* Жетони «на кубик» (27.10, макет «Жетони на кубик»). Лоток під варіантами і в кидку: над жетоном група,
+   у жетоні значок-силует, під ним число; висота стопки — модуль числа (--pile з Tokens.tsx). */
+.tk-tray { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 10px 14px; }
+.dice-zone.tk-tray { justify-content: center; padding: 10px 12px 12px;
+  background: repeating-linear-gradient(45deg, transparent 0 3px, rgba(255,255,255,.012) 3px 4px), #121517;
+  box-shadow: inset 0 8px 14px -8px rgba(0,0,0,.9); }
+.tk { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 56px; transition: opacity .25s; }
+.tk.spent { opacity: .28; }
+.tk-name { font: 500 10px/1 var(--font-caps); letter-spacing: .14em; text-transform: uppercase; color: var(--soft, #a39e8f); white-space: nowrap; }
+.tk-coin { --tk-c: var(--tk-opp); --tk-hi: var(--tk-opp-hi); --tk-rim: var(--tk-rim-c);
+  position: relative; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: rgba(255, 248, 235, .92);
+  background: radial-gradient(circle at 34% 26%, var(--tk-hi), var(--tk-c) 64%);
+  box-shadow: inset 0 0 0 2px var(--tk-rim), inset 0 0 0 3px color-mix(in srgb, var(--tk-hi) 70%, white 30%), inset 0 0 0 4.5px var(--tk-rim), var(--pile, 0 0 0 transparent); }
+.tk-coin.g-body { --tk-c: var(--tk-body); --tk-hi: var(--tk-body-hi); }
+.tk-coin.g-head { --tk-c: var(--tk-head); --tk-hi: var(--tk-head-hi); }
+.tk-coin.g-opp { --tk-c: var(--tk-opp); --tk-hi: var(--tk-opp-hi); }
+.tk-coin.g-cond { --tk-c: var(--tk-cond); --tk-hi: var(--tk-cond-hi); }
+.tk-coin.g-skill { --tk-c: var(--tk-skill); --tk-hi: var(--tk-skill-hi); color: #2a1d06; width: 48px; height: 48px; }
+.tk-ico { width: 25px; height: 25px; filter: drop-shadow(0 1px 0 rgba(0,0,0,.6)); }
+.g-skill .tk-ico { filter: drop-shadow(0 1px 0 rgba(255,240,200,.5)); }
+.tk-ico .s { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.tk-val { font: 600 15px/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.tk-val.pos { color: var(--tk-plus); } .tk-val.neg { color: var(--tk-minus); }
+.tk-flyer { position: fixed; z-index: 60; pointer-events: none; margin: 0 !important; }
+/* Кидок: сума над лотком, ціль поруч. */
+.roll-tray { border-top: 1px solid #1e1e23; padding: 6px 12px 12px; cursor: pointer; }
+.roll-total { display: flex; align-items: baseline; justify-content: center; gap: 12px; padding: 2px 0 12px; font-family: var(--font-mono); }
+.roll-total b { font-size: 32px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; min-width: 2ch; text-align: center; transition: color .1s; }
+.roll-total b.tick { color: var(--v-instinct); }
+.roll-total span { font-size: 13px; color: var(--muted); }
+/* У кидку п'ять монет (навичка + чотири групи) мають влазити в один ряд на 375 px: назву дозволено
+   перенести на два рядки («перший дотик»), монети вирівняні по низу. */
+.roll-tray .tk-tray { flex-wrap: nowrap; justify-content: space-between; gap: 4px; }
+.roll-tray .tk { flex: 1 1 0; min-width: 0; }
+.roll-tray .tk-name { white-space: normal; text-align: center; font-size: 9.5px; letter-spacing: .08em; line-height: 1.15; }

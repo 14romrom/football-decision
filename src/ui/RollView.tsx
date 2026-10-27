@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Spotlight, type Hint } from './Spotlight';
 import type { EpisodeOption, ModLine, Resolution, ResultBadge } from '../engine/types';
+import type { Token } from '../engine/tokens';
+import { SkillCoin, TokenStack } from './Tokens';
 import { VOICE_LABEL } from '../engine/voices';
 import { pickOutcome, POSITION_LABEL, TIER_LABEL } from '../engine/resolve';
-import { Icon } from './icons';
 import { motionReduced, readSettings, vibrate } from '../telemetry/settings';
-import { sfxDie, sfxReel, sfxStamp } from './sound';
+import { sfxCoin, sfxDie, sfxReel, sfxStamp } from './sound';
 import { t, tf } from '../content/i18n';
 
 // Кидок і результат (правка 19.09 после первой версии Г: «дубли и сложно»). Карточка строится
@@ -20,6 +21,11 @@ import { t, tf } from '../content/i18n';
 // до этого — шум, азарт делают ожидание, раздельная остановка и штамп после суммы. Поэтому при
 // prefers-reduced-motion барабана нет (пустые грани), а тайминги те же: убираем мельтешение,
 // не драматургию.
+//
+// Жетони (27.10, макет «Жетони на кубик», анімація «політ у суму»): після суми кубиків монета навички й
+// жетони сцени по черзі злітають у число, воно відлічує по одиниці, монета дзенькає (плюс вище, мінус
+// глухіше). Ціль — із поправками ходу, та сама, що на кнопці; жетони — ті самі, що лежали на лотку.
+// Пауза перед штампом довша (650 мс): після рахунку штамп не наступає на останній жетон.
 
 type Props = {
   option: EpisodeOption; res: Resolution; flavor?: string; flavorVoice?: string; badges?: ResultBadge[];
@@ -31,13 +37,22 @@ type Props = {
   onNext: () => void;
   /** Штамп вердикта появился — поле разыгрывает розв’язку (App → Pitch). */
   onVerdict?: () => void;
-  /** Підказка-прожектор (перший матч, M12): formula — після чипів, verdict — штамп з ісходом; обидві — коли все показано. */
+  /** Підказка-прожектор (перший матч, M12): formula — після жетонів, verdict — штамп з ісходом; обидві — коли все показано. */
   hint?: Hint;
+  /** Жетони сцени — ті, що лежали на лотку «на кубик» (engine/tokens.ts). */
+  tokens: Token[];
+  /** Поправки ходу, що сидять у цілі: ціль на екрані = ціль форми − shift (як на кнопці). */
+  shift: number;
+  /** Поправки сцени рядками — розбір по тапу. */
+  scene: ModLine[];
 };
 
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
 /** Шаги драматургии: время от старта, мс. Чипы — по одному после суммы. */
-const T_DIE1 = 900; const T_DIE2 = 1800; const T_SUM = 2100; const T_CHIP = 180; const T_VERDICT = 350; const T_OUTCOME = 400;
+const T_DIE1 = 900; const T_DIE2 = 1800; const T_SUM = 2100; const T_VERDICT = 650; const T_OUTCOME = 400;
+/** Жетон: політ у суму, потім відлік по одиниці і коротка пауза. */
+const T_FLY = 480; const T_TICK = 70; const T_GAP = 110;
+const itemTime = (v: number) => T_FLY + T_TICK * Math.abs(v) + T_GAP;
 /** Грань d10 по кругу: 11 → 1, 0 → 10 (без оператора остатка — тест «никаких процентов» ищет «%»). */
 const wrap = (v: number) => (v > 10 ? v - 10 : v < 1 ? v + 10 : v);
 /** Барабан одного кубика: до `stopAt` мс случайные грани каждые 70 мс, в последние полсекунды —
@@ -66,20 +81,24 @@ const FLAVOR_CLASS: Record<string, string> = {
   [t('ТРЕНЕР')]: 'say-coach', [t('ТРИБУНИ')]: 'say-fans',
 };
 
-export function RollView({ option, res, flavor, flavorVoice, badges, continues, chained = false, onNext, onVerdict, hint }: Props) {
+export function RollView({ option, res, flavor, flavorVoice, badges, continues, chained = false, onNext, onVerdict, hint, tokens, shift, scene }: Props) {
   const formulaRef = useRef<HTMLDivElement>(null);
   const verdictRef = useRef<HTMLDivElement>(null);
   const [hintOpen, setHintOpen] = useState(true);
-  const mods = useMemo<ModLine[]>(() => res.mods.filter((m, i) => i === 0 || m.value !== 0), [res]);
+  // Монети кидка: спершу навичка, далі жетони сцени.
+  const items = useMemo(() => [res.attrMod, ...tokens.map((tk) => tk.value)], [res.attrMod, tokens]);
+  const target = res.target - shift;
+  const final = res.rawRoll + items.reduce((s, v) => s + v, 0);
   // Расписание: 0 — крутятся оба, 1 — первый встал, 2 — второй встал, 3 — сумма,
-  // 4..4+n — чипы, потом вердикт, потом исход.
+  // 4..4+n — монети по одній, потом вердикт, потом исход.
   const schedule = useMemo(() => {
     const t = [0, T_DIE1, T_DIE2, T_SUM];
-    for (let i = 0; i < mods.length; i++) t.push(T_SUM + T_CHIP * (i + 1));
-    t.push(T_SUM + T_CHIP * mods.length + T_VERDICT);
-    t.push(T_SUM + T_CHIP * mods.length + T_VERDICT + T_OUTCOME);
+    let at = T_SUM + 300;
+    for (const v of items) { t.push(at); at += itemTime(v); }
+    t.push(at - T_GAP + T_VERDICT);
+    t.push(at - T_GAP + T_VERDICT + T_OUTCOME);
     return t;
-  }, [mods]);
+  }, [items]);
   const LAST = schedule.length - 1;
   const S_VERDICT = LAST - 1;
   // «Одразу» в налаштуваннях — кубики стоят с первого кадра, дальше та же драматургия.
@@ -128,19 +147,61 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
     return () => { stop1(); stop2(); };
   }, [option.id, res.roll, res.dice, instant]);
 
+  // Політ монети в суму і відлік (анімація «політ у суму»). Стадія 4+i — монета i злітає; число
+  // відлічує після приземлення. Тап по екрану (setStage(LAST)) — одразу підсумок.
+  const coinRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const totalRef = useRef<HTMLElement>(null);
+  const [running, setRunning] = useState(res.rawRoll);
+  const [ticking, setTicking] = useState(false);
+  const item = stage - 4;
+  useEffect(() => {
+    if (stage < 3) { setRunning(res.rawRoll); return; }
+    if (stage >= S_VERDICT) { setRunning(final); setTicking(false); return; }
+    if (item < 0 || item >= items.length) return;
+    const v = items[item];
+    const from = res.rawRoll + items.slice(0, item).reduce((s, x) => s + x, 0);
+    setRunning(from);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const reduced = motionReduced();
+    const coin = coinRefs.current[item], total = totalRef.current;
+    if (!reduced && coin && total) {
+      const a = coin.getBoundingClientRect(), b = total.getBoundingClientRect();
+      const fly = coin.cloneNode(true) as HTMLElement;
+      fly.classList.add('tk-flyer');
+      Object.assign(fly.style, { left: `${a.left}px`, top: `${a.top}px`, width: `${a.width}px`, height: `${a.height}px` });
+      fly.style.setProperty('--pile', '0 0 0 transparent');
+      document.body.appendChild(fly);
+      const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+      fly.animate([
+        { transform: 'none' },
+        { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 40}px) scale(1.15)`, offset: 0.55 },
+        { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: 0.2 },
+      ], { duration: T_FLY, easing: 'cubic-bezier(.4,0,.2,1)' }).finished.then(() => fly.remove(), () => fly.remove());
+      timers.push(setTimeout(() => fly.remove(), T_FLY + 50));
+    }
+    const land = reduced ? 0 : T_FLY;
+    timers.push(setTimeout(() => sfxCoin(item === 0 ? 'skill' : v > 0 ? 'plus' : 'minus'), land));
+    const step = v > 0 ? 1 : -1;
+    for (let i = 1; i <= Math.abs(v); i++) {
+      timers.push(setTimeout(() => { setRunning(from + step * i); setTicking(true); }, land + T_TICK * i));
+    }
+    timers.push(setTimeout(() => setTicking(false), land + T_TICK * Math.abs(v) + 40));
+    return () => timers.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage]);
+
   // Один источник истины с applyChoice (resolve.ts:pickOutcome).
   const outcome = pickOutcome(option, res);
-  const shownChips = Math.max(0, Math.min(mods.length, stage - 3));
-  const running = res.rawRoll + mods.slice(0, shownChips).reduce((s, m) => s + m.value, 0);
   const critBad = res.critical === 'fail' && stage >= 2;
   const [labels, setLabels] = useState(false);
+  const spent = (i: number) => stage >= S_VERDICT || i < item || (i === item && stage >= 4);
 
   return (
     <div className="scene roll" onClick={() => setStage(LAST)}>
       <div className={`choice chosen risk-${res.position}`}>
         <span className="choice-text">
           {option.label}
-          <span className="bracket">[{POSITION_LABEL[res.position]} {res.target}]</span>
+          <span className="bracket">[{POSITION_LABEL[res.position]} {target}]</span>
         </span>
       </div>
 
@@ -156,23 +217,17 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
         {res.critical === 'success' && stage >= 3 && <p className="crit-note">{t('Двадцять. Таке не пояснюють.')}</p>}
 
         {stage >= 3 && (
-          <div className="formula" ref={formulaRef} onClick={(e) => { e.stopPropagation(); setLabels((v) => !v); }}>
-            <span className="chips">
-              {mods.slice(0, shownChips).map((m, i) => (
-                <span key={m.label} className={`chip src-${m.source} ${m.value > 0 ? 'pos' : m.value < 0 ? 'neg' : 'zero'} chip-in`}>
-                  {i === 0 && Icon.target()}<i className="chip-word">{m.short || m.label}</i><span>{fmt(m.value)}</span>
-                </span>
-              ))}
-            </span>
-            <span className="formula-total">
-              {res.rawRoll} <b>{fmt(running - res.rawRoll)}</b> = <b className="tick">{running}</b>
-              {stage >= S_VERDICT && <>{tf(' проти {0}', res.target)}</>}
-            </span>
+          <div className="roll-tray" ref={formulaRef} onClick={(e) => { e.stopPropagation(); setLabels((v) => !v); }}>
+            <div className="roll-total"><b ref={totalRef} className={ticking ? 'tick' : ''}>{running}</b><span>{tf('ціль {0}', target)}</span></div>
+            <div className="tk-tray">
+              <SkillCoin attribute={option.attribute} value={res.attrMod} spent={spent(0)} coinRef={(el) => { coinRefs.current[0] = el; }} />
+              {tokens.map((tk, i) => <TokenStack key={tk.group} token={tk} spent={spent(i + 1)} coinRef={(el) => { coinRefs.current[i + 1] = el; }} />)}
+            </div>
           </div>
         )}
         {stage >= 3 && labels && (
           <ul className="mod-labels">
-            {mods.map((m) => <li key={m.label}><span>{m.label}</span><b className={m.value > 0 ? 'pos' : m.value < 0 ? 'neg' : ''}>{fmt(m.value)}</b></li>)}
+            {[res.mods[0], ...scene].map((m) => <li key={m.label}><span>{m.label}</span><b className={m.value > 0 ? 'pos' : m.value < 0 ? 'neg' : ''}>{fmt(m.value)}</b></li>)}
           </ul>
         )}
 

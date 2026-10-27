@@ -107,6 +107,30 @@ export function sfxDie() {
   });
 }
 
+/** Затримка повного удару штампа після легкого дотику — картинка штампа лягає під неї (RollView). */
+export const STAMP_LEAD = 0.15;
+
+/** Монета лягає в суму (27.10, жетони «на кубик»). Метал — негармонійні обертони з коротким згасанням:
+ *  плюс вище й дзвінкіше, мінус нижче, глухіше і з легким спадом висоти, навичка — повніша, з низьким ударом.
+ *  Рівень — як у кубиків (−26…−28 дБ): це подія кидка, не інтерфейс. Відлік числа по одиниці мовчить. */
+export function sfxCoin(kind: 'plus' | 'minus' | 'skill') {
+  const c = ac(); if (!c) return;
+  const t = at(c);
+  scaled(c, 0.9, () => {
+    if (kind === 'plus') {
+      [1, 2.32, 4.25, 6.8].forEach((m, i) => tone(c, t, { f: 1760 * m, d: 0.22 / (1 + i * 0.6), peak: 0.16 / (1 + i * 0.7) }));
+      burst(c, t, { f: 6500, q: 2, d: 0.012, peak: 0.12 });
+    } else if (kind === 'minus') {
+      [1, 2.32, 4.25].forEach((m, i) => tone(c, t, { f: 980 * m, f2: 900 * m, d: 0.13 / (1 + i * 0.8), peak: 0.17 / (1 + i * 1.1) }));
+      burst(c, t, { type: 'lowpass', f: 1800, q: 0.7, d: 0.03, peak: 0.16 });
+    } else {
+      tone(c, t, { f: 180, f2: 120, d: 0.08, peak: 0.25 });
+      [1, 2.32, 4.25, 6.8].forEach((m, i) => tone(c, t + 0.005, { f: 1320 * m, d: 0.4 / (1 + i * 0.5), peak: 0.15 / (1 + i * 0.6) }));
+      burst(c, t, { f: 5200, q: 2, d: 0.015, peak: 0.12 });
+    }
+  });
+}
+
 function thump(c: AudioContext, t: number, low: number, peak: number, len: number) {
   tone(c, t, { f: low * 2, f2: low, d: len, peak });
   burst(c, t, { type: 'lowpass', f: 900, q: 0.7, d: 0.06, peak: peak * 0.8 });
@@ -129,12 +153,17 @@ function groan(c: AudioContext, t: number) {
   s.stop(t + 2.15); lfo.stop(t + 2.15);
 }
 
-/** Штамп ісходу: чотири ваги, як чотири ісходи, і золотий дзвін на криті. */
+/** Штамп ісходу: чотири ваги, як чотири ісходи, і золотий дзвін на криті.
+ *  «Ту-ду» (27.10, макет «Жетони на кубик», рішення користувача — для всіх ісходів): легкий дотик
+ *  штампа, за 150 мс — повний удар. Ісход чути вагою другої долі, характер штампа однаковий. */
 export function sfxStamp(tier: Tier, crit: boolean) {
   const c = ac(); if (!c) return;
-  const t = at(c);
+  const t0 = at(c);
+  const t = t0 + STAMP_LEAD;
   const k = crit ? 1.4 : tier === 'badFail' ? 1.1 : 1.6;
   scaled(c, k, () => {
+    tone(c, t0, { f: 150, f2: 96, d: 0.07, peak: 0.26 });
+    burst(c, t0, { type: 'lowpass', f: 1300, q: 0.7, d: 0.035, peak: 0.2 });
     if (crit) { thump(c, t, 70, 0.6, 0.16); bell(c, t + 0.02, [880, 1318, 1760, 2637], 0.09, 1.6); return; }
     if (tier === 'clean') { thump(c, t, 70, 0.6, 0.16); bell(c, t + 0.01, [1318], 0.05, 0.35); }
     else if (tier === 'cost') thump(c, t, 62, 0.55, 0.16);

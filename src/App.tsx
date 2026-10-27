@@ -39,6 +39,7 @@ import { EspmProfile } from './ui/EspmProfile';
 import { LevelUpScreen } from './ui/LevelUpScreen';
 import { makeRng, type Rng } from './engine/rng';
 import { resolveOption } from './engine/resolve';
+import { sceneSplit, shiftFor, type SceneSplit } from './engine/tokens';
 import {
   advanceTo, applyChoice, CHAIN_NEXT, createMatch, finishMatch, nextEpisode, sceneInsights,
   type MatchSession, type MatchSummary,
@@ -97,7 +98,7 @@ type Stage =
   | { k: 'matchday' }
   | { k: 'feed' }
   | { k: 'episode'; episode: Episode; minute: number; link: boolean }
-  | { k: 'roll'; episode: Episode; minute: number; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string; chained?: boolean }
+  | { k: 'roll'; episode: Episode; minute: number; option: EpisodeOption; res: Resolution; events: TimelineEvent[]; continues?: string; chained?: boolean; split: SceneSplit; shift: number }
   // Фінальний свисток (M10, 20.09): лист оповідача на полі, потім кнопка «Перейти в роздягальню» → дошка.
   | { k: 'whistle'; whistle: Whistle; summary: MatchSummary; xpEarned: number; leveledFrom: number; leveledTo: number; before: Career; after: Career }
   // Вихід із лави (21.09): лист без кубика на хвилині виходу — сетап, голоси, «Вийти на поле».
@@ -625,6 +626,9 @@ function Game() {
     if (stage.k !== 'episode') return;
     const session = sessionRef.current!;
     const rng = rngRef.current!;
+    // Жетони й ціль — зі стану до кидка, ті самі, що на лотку й на кнопці (engine/tokens.ts).
+    const split = sceneSplit(stage.episode, session.state, session.player, session.conditions, session.flagRules);
+    const shift = shiftFor(split, option, stage.episode, session.state, session.player, session.conditions, session.flagRules);
     const res = resolveOption(session.state, session.player, option, stage.episode.phase, rng, session.conditions, session.flagRules);
 
     logDecision({
@@ -662,7 +666,7 @@ function Game() {
     const { events } = applyChoice(session, stage.episode, option, res, rng, FLAVOR);
     const continues = session.pendingFollowUp ? CHAIN_NEXT[session.pendingFollowUp] : undefined;
     const chained = !!session.pendingFollowUp;
-    setStage({ k: 'roll', episode: stage.episode, minute: stage.minute, option, res, events, continues, chained });
+    setStage({ k: 'roll', episode: stage.episode, minute: stage.minute, option, res, events, continues, chained, split, shift });
   }, [stage]);
 
   const afterRoll = useCallback(() => {
@@ -1206,6 +1210,9 @@ function Game() {
             continues={stage.continues}
             chained={stage.chained}
             hint={hintFor(stage.episode.id)}
+            tokens={stage.split.tokens}
+            shift={stage.shift}
+            scene={stage.split.scene}
             onNext={afterRoll}
             onVerdict={() => setFinale((f) => ({ kind: finaleFor(stage.episode, stage.option, stage.res, stage.events), action: reyesAction(stage.episode, stage.option, stage.res, stage.events), id: (f?.id ?? 0) + 1 }))}
           />

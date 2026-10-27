@@ -7,6 +7,7 @@ import { computeContext } from '../engine/context';
 import { availableOptions, CHAIN_NEXT, sceneInsights } from '../engine/match';
 import { catastropheBand, POSITION_LABEL } from '../engine/resolve';
 import { cleanTarget } from '../engine/balance';
+import { sceneSplit } from '../engine/tokens';
 import { t, tf } from '../content/i18n';
 
 // Сцена как диалог (макет А2, 19.09): сетап — строка ленты, голоса говорят до вариантов
@@ -46,6 +47,9 @@ function chainHint(o: EpisodeOption): string | null {
 
 export function EpisodeCard({ episode, minute, state, player, conditions, flagRules, link, hint, onChoose }: Props) {
   const options = availableOptions(episode, state, player);
+  // Ціль на кнопці — з поправками ходу (27.10): що різниться від варіанта до варіанта (пасуть, «голос веде»,
+  // риса проти дриблінгу), мовчки сидить у цілі, а на лотку «на кубик» — лише спільне для всіх ходів.
+  const split = sceneSplit(episode, state, player, conditions, flagRules);
   const insights = sceneInsights(episode, state, player);
   const voicesRef = useRef<HTMLDivElement>(null);
   const choicesRef = useRef<HTMLOListElement>(null);
@@ -95,7 +99,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
                       катастрофа — на яких кубиках усе піде не так. До цього видно було тільки ціль, і гравець
                       добудовував правило сам («катастрофа — це коли випала одиниця»). */}
                   <span className={`bracket risk-${ctx.position}`}>
-                    {tf('[{0} {1} · катастрофа {2}]', POSITION_LABEL[ctx.position], cleanTarget(ctx.position, o.difficulty), catastropheBand(ctx.position, ctx.attrMod))}
+                    {tf('[{0} {1} · катастрофа {2}]', POSITION_LABEL[ctx.position], cleanTarget(ctx.position, o.difficulty) - (split.shift[o.id] ?? 0), catastropheBand(ctx.position, ctx.attrMod))}
                   </span>
                   {/* Куди веде варіант — окремим елементом, не всередині скобки: скобка `nowrap`, і з
                       довгим ім'ям ланки («м'яч між лініями») рядок вилазив за екран на 47 px. */}

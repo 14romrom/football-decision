@@ -1,12 +1,13 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Film } from './Film';
-import type { Episode, FlagRule, MatchState, ModLine, Player, TimelineEvent } from '../engine/types';
+import type { Episode, FlagRule, MatchState, Player, TimelineEvent } from '../engine/types';
 import type { Kit as KitT, Roster } from '../engine/names';
 import type { MatchConditions } from '../engine/conditions';
 import type { FinaleKind } from '../engine/finale';
 import type { ReyesAction } from '../engine/action';
-import { computeContext } from '../engine/context';
-import { availableOptions, sceneInsights } from '../engine/match';
+import { sceneInsights } from '../engine/match';
+import { sceneSplit } from '../engine/tokens';
+import { TokenStack } from './Tokens';
 import { VOICE_LABEL } from '../engine/voices';
 import { Pitch } from './Pitch';
 import { ADS } from '../content';
@@ -41,24 +42,6 @@ function Kit({ kit }: { kit?: KitT }) {
     : kit.pattern === 'sash' ? `linear-gradient(45deg, ${kit.a} 4.8px, ${kit.b} 4.8px 7.8px, ${kit.a} 7.8px)`
     : kit.a;
   return <i className="strip-kit" style={{ background: bg, ...(kit.pattern === 'trim' ? { boxShadow: `inset 0 0 0 1.5px ${kit.b}` } : {}) }} aria-hidden="true" />;
-}
-
-const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
-
-/** Факторы, которые относятся к состоянию, а не к варианту: объединение по всем вариантам сцены
- *  без строки атрибута (первая) и без «<голос> веде» (зависит от того, кого слушаешь). При
- *  разных значениях одной подписи (ноги: дорогой/дешёвый вариант) — худшее. */
-function stateMods(episode: Episode, state: MatchState, player: Player, conditions: MatchConditions, flagRules: FlagRule[]): ModLine[] {
-  const seen = new Map<string, ModLine>();
-  for (const o of availableOptions(episode, state, player)) {
-    const ctx = computeContext(state, player, o, episode.phase, conditions, flagRules);
-    for (const m of ctx.mods.slice(1)) {
-      if (m.value === 0 || m.label.includes(t('веде'))) continue;
-      const prev = seen.get(m.label);
-      if (!prev || m.value < prev.value) seen.set(m.label, m);
-    }
-  }
-  return [...seen.values()];
 }
 
 export function MatchScreen({
@@ -144,7 +127,7 @@ export function MatchScreen({
     league: conditions.league === 'top' ? 'top' : 'second',
     boards: ADS.flatMap((a) => (a.title ? [a.title] : [])),
   };
-  const mods = episode ? stateMods(episode, state, player, conditions, flagRules) : [];
+  const tokens = episode ? sceneSplit(episode, state, player, conditions, flagRules).tokens : [];
   const insights = episode ? sceneInsights(episode, state, player) : [];
   // Сили — полоса по нижней кромке поля (19.09): сжимается влево, цвет по уровню.
   const stamina = Math.max(0, Math.min(100, state.stamina));
@@ -214,19 +197,14 @@ export function MatchScreen({
       {(episode || sheet) && <section className="moment">
       {children}
 
-      {!hideDiceZone && !sheet && <footer className="dice-zone">
-        <span className="dice-zone-label">{t('на кубик')}</span>
-        <span className="chips">
-          {mods.map((m) => (
-            <span key={m.label} className={`chip src-${m.source} ${m.value < 0 ? 'neg' : 'pos'}`} title={m.label} aria-label={`${m.label} ${fmt(m.value)}`}>
-              <i className="chip-word">{m.short || m.label}</i><span>{fmt(m.value)}</span>
-            </span>
-          ))}
-          {insights.map((v) => (
-            <span key={v.who} className={`chip chip-insight voice-${v.who}`} title={tf('{0} бачить', VOICE_LABEL[v.who])}>{Icon.eye()}<span>{t('бачить')}</span></span>
-          ))}
-          {mods.length === 0 && insights.length === 0 && episode && <span className="chip chip-none">{t('без поправок')}</span>}
-        </span>
+      {/* Лоток «на кубик» (27.10, макет «Жетони на кубик»): жетони сцени — однакові для будь-якого ходу, рівно те,
+          що піде в кидок; різниця між ходами вже в цілі на кнопці (engine/tokens.ts). Нульова група не лягає. */}
+      {!hideDiceZone && !sheet && <footer className="dice-zone tk-tray" aria-label={t('на кубик')}>
+        {tokens.map((tk) => <TokenStack key={tk.group} token={tk} />)}
+        {insights.map((v) => (
+          <span key={v.who} className={`chip chip-insight voice-${v.who}`} title={tf('{0} бачить', VOICE_LABEL[v.who])}>{Icon.eye()}<span>{t('бачить')}</span></span>
+        ))}
+        {tokens.length === 0 && insights.length === 0 && episode && <span className="chip chip-none">{t('без поправок')}</span>}
       </footer>}
       </section>}
     </div>

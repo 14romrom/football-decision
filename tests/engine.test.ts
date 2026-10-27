@@ -103,19 +103,19 @@ describe('пороги исходов', () => {
 });
 
 describe('контекстные модификаторы', () => {
-  it('свежесть даёт +1; усталость −2 и севшие ноги −4 — для дорогого варианта', () => {
+  it('свежесть даёт +1; усталость −1 и севшие ноги −2', () => {
     const expensive = option({ staminaCost: 12 });
     expect(computeContext(state({ stamina: 80 }), player, expensive, 'attack').flat).toBe(1);
     expect(computeContext(state({ stamina: 55 }), player, expensive, 'attack').flat).toBe(0);
-    expect(computeContext(state({ stamina: 30 }), player, expensive, 'attack').flat).toBe(-2);
-    expect(computeContext(state({ stamina: 10 }), player, expensive, 'attack').flat).toBe(-4);
+    expect(computeContext(state({ stamina: 30 }), player, expensive, 'attack').flat).toBe(-1);
+    expect(computeContext(state({ stamina: 10 }), player, expensive, 'attack').flat).toBe(-2);
   });
 
-  it('истощение бьёт по цене варианта: дешёвое решение на нулевых силах почти не страдает', () => {
-    expect(computeContext(state({ stamina: 5 }), player, option({ staminaCost: 12 }), 'attack').flat).toBe(-4);
-    expect(computeContext(state({ stamina: 5 }), player, option({ staminaCost: 6 }), 'attack').flat).toBe(-2);
-    expect(computeContext(state({ stamina: 5 }), player, option({ staminaCost: 2 }), 'attack').flat).toBe(-1);
-    expect(computeContext(state({ stamina: 30 }), player, option({ staminaCost: 3 }), 'attack').flat).toBe(-1);
+  it('усталость одна для любого хода (27.10): цена варианта штраф не меняет — «ноги» в сцене одни', () => {
+    for (const cost of [2, 6, 12]) {
+      expect(computeContext(state({ stamina: 5 }), player, option({ staminaCost: cost }), 'attack').flat).toBe(-2);
+      expect(computeContext(state({ stamina: 30 }), player, option({ staminaCost: cost }), 'attack').flat).toBe(-1);
+    }
   });
 
   it('кураж входит в score симметрично: до +2 и не ниже −2', () => {

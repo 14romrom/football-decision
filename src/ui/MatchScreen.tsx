@@ -5,10 +5,8 @@ import type { Kit as KitT, Roster } from '../engine/names';
 import type { MatchConditions } from '../engine/conditions';
 import type { FinaleKind } from '../engine/finale';
 import type { ReyesAction } from '../engine/action';
-import { sceneInsights } from '../engine/match';
 import { sceneSplit } from '../engine/tokens';
 import { TokenStack } from './Tokens';
-import { VOICE_LABEL } from '../engine/voices';
 import { Pitch } from './Pitch';
 import { ADS } from '../content';
 import { periodOfRound } from '../engine/season';
@@ -16,7 +14,6 @@ import { floodlit } from './prematch-text';
 import type { PitchScene } from './pitchDirector';
 import { useEffect } from 'react';
 import { matchAudio } from './sound';
-import { Icon } from './icons';
 import { t, tf } from '../content/i18n';
 
 // Экран матча по макету А2 (19.09): поле целиком сверху, под ним стрічка подій як діалог —
@@ -128,7 +125,6 @@ export function MatchScreen({
     boards: ADS.flatMap((a) => (a.title ? [a.title] : [])),
   };
   const tokens = episode ? sceneSplit(episode, state, player, conditions, flagRules).tokens : [];
-  const insights = episode ? sceneInsights(episode, state, player) : [];
   // Сили — полоса по нижней кромке поля (19.09): сжимается влево, цвет по уровню.
   const stamina = Math.max(0, Math.min(100, state.stamina));
   const clock = sheetMinute ?? (shown.length ? shown[shown.length - 1].minute : state.minute);
@@ -198,13 +194,12 @@ export function MatchScreen({
       {children}
 
       {/* Лоток «на кубик» (27.10, макет «Жетони на кубик»): жетони сцени — однакові для будь-якого ходу, рівно те,
-          що піде в кидок; різниця між ходами вже в цілі на кнопці (engine/tokens.ts). Нульова група не лягає. */}
+          що піде в кидок; різниця між ходами вже в цілі на кнопці (engine/tokens.ts). Нульова група не лягає.
+          Значка «бачить» тут немає (28.10): варіант від голосу бонусу до кидка не дає, а про нього вже кажуть
+          репліка голосу й підпис «відкрив …» на кнопці. */}
       {!hideDiceZone && !sheet && <footer className="dice-zone tk-tray" aria-label={t('на кубик')}>
         {tokens.map((tk) => <TokenStack key={tk.group} token={tk} />)}
-        {insights.map((v) => (
-          <span key={v.who} className={`chip chip-insight voice-${v.who}`} title={tf('{0} бачить', VOICE_LABEL[v.who])}>{Icon.eye()}<span>{t('бачить')}</span></span>
-        ))}
-        {tokens.length === 0 && insights.length === 0 && episode && <span className="chip chip-none">{t('без поправок')}</span>}
+        {tokens.length === 0 && episode && <span className="chip chip-none">{t('без поправок')}</span>}
       </footer>}
       </section>}
     </div>

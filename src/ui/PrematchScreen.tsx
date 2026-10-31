@@ -63,7 +63,7 @@ export function PrematchScreen({
 
   // Плитки: коротке слово згори, наслідок під ним. Довгі пояснення лишаються прозою нижче.
   const tiles: { label: string; value: string; note: string }[] = [
-    { label: t('Форма'), value: tone.title, note: tone.note.split('.')[0] + '.' },
+    { label: t('Форма'), value: tone.title, note: tone.tile },
     { label: t('Поле'), value: home ? t('Вдома') : t('Виїзд'), note: home ? t('Трибуни за тебе.') : t('Свист замість підтримки.') },
     { label: t('Погода'), value: weather.title, note: weather.note },
   ];

@@ -28,7 +28,9 @@ export const INSTRUCTION: Record<Exclude<MatchConditions['instruction'], 'none'>
     note: t('Тренер чекає голів і передач — і рахуватиме саме їх.') },
 };
 
-export function toneLines(c: MatchConditions): { title: string; note: string } {
+/** `tile` — речення, що пояснює саме заголовок (плейтест 31.10, Б-5): плитка показувала перше речення опису
+ *  (настрій), а заголовок брався з утоми — «ВТОМЛЕНИЙ» над «Серія перемог — упевненості вистачає на двох». */
+export function toneLines(c: MatchConditions): { title: string; tile: string } {
   const { confidence, fatigue } = c.tone;
   const form = confidence >= 2 ? t('Серія перемог — упевненості вистачає на двох.')
     : confidence === 1 ? t('Останні матчі радше вдалі, настрій робочий.')
@@ -39,10 +41,11 @@ export function toneLines(c: MatchConditions): { title: string; note: string } {
     : fatigue === 1 ? t('Другий матч поспіль, ноги в нормі.')
     : fatigue === 2 ? t('Третій матч за десять днів — стартуєш не на повних.')
     : t('Четвертий матч поспіль. Сил на всі дев’яносто немає.');
-  const title = confidence > 0 && fatigue < 2 ? t('На підйомі')
-    : confidence < 0 && fatigue >= 2 ? t('Вичавлений')
-    : fatigue >= 2 ? t('Втомлений') : confidence < 0 ? t('Пригнічений') : t('Рівний');
-  return { title, note: form + ' ' + legs };
+  const tired = fatigue >= 2;
+  const title = confidence > 0 && !tired ? t('На підйомі')
+    : confidence < 0 && tired ? t('Вичавлений')
+    : tired ? t('Втомлений') : confidence < 0 ? t('Пригнічений') : t('Рівний');
+  return { title, tile: tired ? legs : form };
 }
 
 /** День туру: непарні — субота, парні — неділя. Без оператора остачі: тест шукає «%» у текстах. */

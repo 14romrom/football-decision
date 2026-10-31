@@ -9,6 +9,7 @@ import { catastropheBand, POSITION_LABEL } from '../engine/resolve';
 import { cleanTarget } from '../engine/balance';
 import { sceneSplit } from '../engine/tokens';
 import { t, tf } from '../content/i18n';
+import { clockLabel } from './Scoreboard';
 
 // Сцена как диалог (макет А2, 19.09): сетап — строка ленты, голоса говорят до вариантов
 // («ЕГО — …», как в Disco Elysium), варианты — нумерованный список с одной скобкой
@@ -67,7 +68,7 @@ export function EpisodeCard({ episode, minute, state, player, conditions, flagRu
     // Лист момента (макет «Екран матчу: було / стало», кадр «стало+ зі знаком», 19.09): три зоны —
     // сетап под ярлыком минуты, голоса колонкой с линией (как в сценарии), варианты с номером в ячейке.
     <div className="scene">
-      <span className="minute-tab">{minute}′{link && <i className="link-mark"> {t('· продовження')}</i>}</span>
+      <span className="minute-tab">{clockLabel(minute)}{link && <i className="link-mark"> {t('· продовження')}</i>}</span>
       <p className="setup">{episode.setup}</p>
       {(insights.length > 0 || lines.length > 0) && (
         <div className="voices" ref={voicesRef}>

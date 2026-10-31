@@ -786,14 +786,38 @@ function afterWhistleEpisode(session: MatchSession, rng: Rng): Episode | null {
 
 /** Фінальний свисток: стрічка до 90-ї, сирена, оцінки за матч. Відокремлено від finishMatch (M36),
  *  бо між свистком і роздягальнею може бути ще одна сцена. */
+/** Компенсований час (31.10, табло з хвилиною): 2–5 хвилин після 90-ї — від сіду матчу, без кидка, тож прогони
+ *  не зсуваються. На 90-й — оголошення (вид стрічки `added`: суддя показує, скільки додано), далі один-два рядки
+ *  на 90+N (правила `filler` з `minMinute` 91 — «компенсований час», затягування). До цього рядок «Суддя показує,
+ *  скільки додано» випадав на 88–89-й, а годинник ніколи не йшов за 90 — текст і табло сперечалися. Голів і витрати
+ *  сил у компенсований час немає: рахунок і баланс матчу ті самі, що й до правки. */
+function addedTime(session: MatchSession, rng: Rng) {
+  const state = session.state;
+  const added = 2 + ((Math.imul(session.seed ^ 0x9e3779b9, 2654435761) >>> 0) % 4);
+  const end = 90 + added;
+  const at = Math.max(90, ...state.log.map((e) => e.minute));
+  if (at >= end) return;
+  state.minute = at;
+  state.log.push({ minute: at, kind: 'filler', ...feedPick(session, 'added', rng) });
+  const beats = added >= 4 ? 2 : 1;
+  for (let i = 1; i <= beats; i++) {
+    const minute = Math.max(at + i, Math.round(at + ((end - at) * i) / (beats + 1)));
+    if (minute >= end) break;
+    state.minute = minute;
+    state.log.push({ minute, kind: 'filler', ...feedPick(session, 'filler', rng) });
+  }
+  state.minute = end;
+}
+
 function blowWhistle(session: MatchSession, rng: Rng): TimelineEvent[] {
   if (session.whistled) return [];
   const state = session.state;
   const before = state.log.length;
   advanceTo(session, 90, rng);
-  // Не раніше за останній рядок: гол із контратаки після сцени на 90-й стоїть на 91-й (табло — «90+1′»).
+  addedTime(session, rng);
+  // Свисток — наприкінці компенсованого часу і не раніше за останній рядок (гол із контратаки після сцени на 90-й).
   state.log.push({
-    minute: Math.max(90, ...state.log.map((e) => e.minute)),
+    minute: Math.max(90, state.minute, ...state.log.map((e) => e.minute)),
     kind: 'fulltime',
     text: tf('Фінальний свисток. «{0}» — «{1}» {2}:{3}.', session.roster.us.name.nom, session.roster.them.name.nom, state.scoreUs, state.scoreThem),
   });

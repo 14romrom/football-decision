@@ -1185,6 +1185,7 @@ function Game() {
         {stage.k === 'whistle' && (
           <WhistleCard
             whistle={stage.whistle}
+            minute={[...session.state.log].reverse().find((e) => e.kind === 'fulltime')?.minute ?? 90}
             onNext={() => setStage({ k: 'result', summary: stage.summary, xpEarned: stage.xpEarned, leveledFrom: stage.leveledFrom, leveledTo: stage.leveledTo, before: stage.before, after: stage.after })}
           />
         )}

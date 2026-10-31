@@ -78,7 +78,7 @@ export const DEFAULT_OPPONENT = 'sandorea';
 /** Назва клубу за ключем і мовою. Стоїть тут, бо тут мовний шов: `fillNames` питає базову назву
  *  для рядка, який ще не перекладено, і решта коду про мови не знає (M47). Невідомий ключ — це наш
  *  клуб: у `OPPONENTS` його немає за визначенням. */
-export function clubName(key: string, lang: Lang = LANG): { nom: string; gen: string } {
+export function clubName(key: string, lang: Lang = LANG): TeamRoster['name'] {
   const basic = parallel && lang === BASE_LANG;
   const opp = basic ? OPPONENTS_BASE : OPPONENTS;
   return opp[key]?.name ?? ((basic ? BASE_ROSTER_JSON : rosterJson).us as TeamRoster).name;

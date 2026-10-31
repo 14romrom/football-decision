@@ -30,7 +30,7 @@ describe('сповіщення поки гравця немає', () => {
   it('1, 3 і 7 днів і ніколи вночі', () => {
     for (const hour of [0, 6, 9, 12, 20, 21, 23]) {
       const now = new Date(2026, 9, 18, hour, 40);
-      const plan = planAway(NOTIFY, 'loss', now, 'Ольвара');
+      const plan = planAway(NOTIFY, 'loss', now, 'Сталі');
       expect(plan.map((n) => n.day)).toEqual([1, 3, 7]);
       for (const n of plan) {
         const h = n.at.getHours() + n.at.getMinutes() / 60;

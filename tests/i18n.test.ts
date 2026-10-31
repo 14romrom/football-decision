@@ -85,9 +85,9 @@ describe('переклад', () => {
     expect(fillNames('{partner.dat} віддали м’яч.', roster)).toBe('Мораесу віддали м’яч.');
     expect(fillNames('They gave the ball to {partner.dat}.', roster)).toBe('They gave the ball to Moraes.');
     // `extra` як функція мови: назви клубів у стрічці приходять тим самим шляхом.
-    const extra = (_lang: 'uk' | 'en', r: Roster) => ({ leader: r === base ? 'Порту-Бланко' : 'Porto Blanco' });
-    expect(fillNames('Лідер — {leader}.', roster, extra)).toBe('Лідер — Порту-Бланко.');
-    expect(fillNames('The leader is {leader}.', roster, extra)).toBe('The leader is Porto Blanco.');
+    const extra = (_lang: 'uk' | 'en', r: Roster) => ({ leader: r === base ? 'Дунай' : 'Dunaj' });
+    expect(fillNames('Лідер — {leader}.', roster, extra)).toBe('Лідер — Дунай.');
+    expect(fillNames('The leader is {leader}.', roster, extra)).toBe('The leader is Dunaj.');
     // Без двійника (базова збірка) поведінка та сама, що до появи перекладу.
     expect(fillNames('{partner.dat} віддали м’яч.', { us: team(uk), them: team(uk) } as unknown as Roster)).toBe('Мораесу віддали м’яч.');
   });

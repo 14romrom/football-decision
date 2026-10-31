@@ -135,8 +135,8 @@ describe('условия матча: ресурсы и реакции', () => {
     const rng = makeRng(7);
     const s = createMatch('o', 7, PLAYER, rng, EPISODES_RAW, rosterFor('olvar'), neutralConditions('olvar'));
     const text = JSON.stringify(s.episodes);
-    expect(text).toContain('Ольвар');
-    expect(text).not.toContain('Сан-Дореа');
+    expect(text).toContain('Сталь');
+    expect(text).not.toContain('Гурнік');
     expect(text).not.toMatch(/\{(?!trigger\.)[a-z.]+\}/);
   });
 });

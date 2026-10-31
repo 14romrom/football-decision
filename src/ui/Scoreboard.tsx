@@ -45,7 +45,8 @@ function Wing({ side, at }: { side: Side; at: 'l' | 'r' }) {
     '--edge': b.toLowerCase() === a.toLowerCase() ? `color-mix(in srgb, ${a} 60%, #000)` : b,
     color: side.kit?.num ?? 'var(--cream)',
   } as CSSProperties;
-  // Довга назва (понад десять знаків: «Сьєрра-Бланка», «Porto Blanco») — у два рядки по дефісу чи пробілу.
+  // Довга назва (понад десять знаків) — у два рядки по дефісу чи пробілу. Нинішні назви клубів коротші, але
+  // новий клуб чи переклад можуть бути довшими.
   return <span className={`sb-wing ${at}${side.name.length > 10 ? ' long' : ''}`} style={style}><b>{side.name}</b></span>;
 }
 

@@ -13,8 +13,8 @@ const keys = OPPONENT_KEYS.second;
 const strengths = Object.fromEntries(keys.map((k) => [k, OPPONENTS[k].strength]));
 const GROUPS: PostGroup[] = ['self', 'league', 'world', 'cross', 'meta'];
 const EXTRA = {
-  last: 'Ольвар', 'last.gen': 'Ольвара', leader: 'Ольвар', 'leader.gen': 'Ольвара',
-  bottom: 'Ріо-Секо', 'bottom.gen': 'Ріо-Секо', score: '1:2', position: '4', round: '5', quote: '…',
+  last: 'Сталь', 'last.gen': 'Сталі', leader: 'Сталь', 'leader.gen': 'Сталі',
+  bottom: 'Тиса', 'bottom.gen': 'Тиси', score: '1:2', position: '4', round: '5', quote: '…',
   'moment.minute': '62', 'moment.ord': '62-га', 'moment.acc': '62-гу', 'moment.past': 'пішов в обведення', 'moment.recap': 'і втратив.',
 };
 

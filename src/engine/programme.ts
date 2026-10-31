@@ -11,7 +11,7 @@ export type ProgrammeInput = {
   round: number;
   /** Номер сезону (M14): другий — вища ліга. */
   seasonNumber?: number;
-  /** Прошлый матч: счёт и соперник в родительном («проти «Ольвара»»). */
+  /** Прошлый матч: счёт и соперник в родительном («проти «Сталі»»). */
   last?: { scoreUs: number; scoreThem: number; opponentGen: string } | null;
   /** Тонус из условий матча: −2…+2. */
   confidence: number;

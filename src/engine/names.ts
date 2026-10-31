@@ -21,8 +21,13 @@ export type Kit = {
   a: string; b: string; num: string; gk: string; gkNum: string;
 };
 
+/** Рід і число назви клубу — для узгодження дієслова: «Гурнік виграв», «Славія виграла», «Динамо виграло»,
+ *  «Карпати виграли». */
+export type ClubGender = 'm' | 'f' | 'n' | 'pl';
+
 export type TeamRoster = {
-  name: { nom: string; gen: string };
+  /** `g` — рід назви; без нього жіночий, як «Вальмара». */
+  name: { nom: string; gen: string; g?: ClubGender };
   kit?: Kit;
   players: Record<string, NameForms>;
   /** Ключи игроков, чьи фамилии попадают в ленту как авторы голов. */
@@ -49,6 +54,14 @@ const PLACEHOLDER = /\{([a-z0-9]+(?:\.[a-z]+){0,2})\}/g;
 /** `{partner}` → фамилия своего игрока; `{partner.dat}` — в дательном;
  *  `{them.striker.gen}` — игрок соперника; `{us}` / `{them.gen}` — названия команд.
  *  Неизвестный ключ — ошибка, а не пустая строка: опечатка в контенте должна валить тест. */
+/** Узгодження з назвою клубу (31.10, назви клубів Центральної Європи): `{leader:програв|програла|програло|програли}` —
+ *  чоловічий, жіночий, середній рід, множина. До того всі суперники були «іспанськими» й узгоджувалися в жіночому
+ *  роді, і рядок «„{bottom}“ виграла» з «Гурніком» став би помилкою. Рід — `name.g` у ростері для `{us}`/`{them}`,
+ *  для вставок `extra` — ключ `<назва>.g`; без нього — жіночий. Перевірка плейсхолдерів перекладу цих вставок не
+ *  бачить (у них двокрапка), тож англійський рядок пишеться без них. */
+const AGREE = /\{([a-z0-9]+):([^{}|]*)\|([^{}|]*)\|([^{}|]*)\|([^{}|]*)\}/g;
+const FORM: Record<ClubGender, number> = { m: 0, f: 1, n: 2, pl: 3 };
+
 /** Начало предложения: пусто перед плейсхолдером, или точка/знак и пробел, или открывающая лапка. */
 const SENTENCE_START = /(^|[.!?…]\s+|«|\n\s*)$/;
 
@@ -74,13 +87,17 @@ export function fillNames(text: string, roster: Roster, extra: Extra = {}, base?
   const useBase = !!roster.base && (base ?? isBaseText(text));
   const r = useBase ? roster.base! : roster;
   const ex = typeof extra === 'function' ? extra(useBase ? BASE_LANG : LANG, r) : extra;
-  return text.replace(PLACEHOLDER, (whole: string, path: string, offset: number) => {
+  const agreed = text.replace(AGREE, (_w: string, key: string, ...forms: string[]) => {
+    const g = (key === 'us' || key === 'them' ? r[key].name.g : ex[`${key}.g`]) as ClubGender | undefined;
+    return forms[FORM[g ?? 'f']];
+  });
+  return agreed.replace(PLACEHOLDER, (whole: string, path: string, offset: number) => {
     // {trigger.*} — след решения, подставляется реактивным эпизодом в момент показа.
     if (path.startsWith('trigger.')) return whole;
     const value = ex[path] ?? resolveName(path, r, whole);
     // Характеристики соперника пишутся с маленькой («їхній ветеран»), но в начале
     // предложения — с большой, как и фамилии. Фамилиям это ничего не меняет.
-    return SENTENCE_START.test(text.slice(0, offset)) ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+    return SENTENCE_START.test(agreed.slice(0, offset)) ? value.charAt(0).toUpperCase() + value.slice(1) : value;
   });
 }
 

@@ -15,7 +15,8 @@ import type { MatchResult } from './conditions';
 import type { Attribute } from './types';
 import { plural, t, tf } from '../content/i18n';
 
-export type ClubName = { nom: string; gen: string };
+/** Назва клубу з родом (`g`): у множині («Карпати») дієслово теперішнього часу — у множині. */
+export type ClubName = { nom: string; gen: string; g?: 'm' | 'f' | 'n' | 'pl' };
 
 // Місцевий відмінок для «на … місці» — і називний середнього роду для «піднялася на …».
 const AT = ['', t('першому'), t('другому'), t('третьому'), t('четвертому'), t('п’ятому'), t('шостому'), t('сьомому'), t('восьмому')];
@@ -49,8 +50,9 @@ export function pressLabel(uses: Partial<Record<Attribute, number>> | undefined)
 }
 
 /** Заголовок тура на странице таблицы. Наш клуб — «Вальмара», женский род глаголов зашит: клуб
- *  фиксирован в ростере (roster.json → us). Соперник — только в родительном («проти „Ольвара“»),
- *  у клубов нет орудного (см. CLAUDE.md про «з/із/у»). */
+ *  фиксирован в ростере (roster.json → us). Соперник — в родительном («проти „Сталі“») или подлежащим без
+ *  прошедшего времени (лидер, второй): число глагола — по `g` («Карпати» утримують). У клубов нет орудного
+ *  (см. CLAUDE.md про «з/із/у»). */
 export function roundHeadline(season: Season, club: (key: string) => ClubName): string {
   const rows = standings(season);
   const us = rows.find((r) => r.club === US)!;
@@ -65,6 +67,7 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
   const score = tf('{0}:{1} проти «{2}»', last.scoreUs, last.scoreThem, opp.gen);
   const leader = rows[0];
   const leaderName = club(leader.club).nom;
+  const leaderMany = club(leader.club).g === 'pl';
 
   if (season.round >= SEASON_ROUNDS) {
     // Стикові (M19): поки пара є, а результату немає — заголовок про них, а не про підсумок сезону.
@@ -122,14 +125,18 @@ export function roundHeadline(season: Season, club: (key: string) => ClubName): 
   if (leader.club === US) {
     const second = rows[1];
     const gap = us.points - second.points;
+    const two = club(second.club);
+    const pts = plural(gap, t('очко'), t('очки'), t('очок'));
     const tail = gap > 0
-      ? tf('«{0}» відстає на {1} {2}.', club(second.club).nom, gap, plural(gap, t('очко'), t('очки'), t('очок')))
-      : tf('«{0}» — поруч, за різницею м’ячів.', club(second.club).nom);
+      ? (two.g === 'pl' ? tf('«{0}» відстають на {1} {2}.', two.nom, gap, pts) : tf('«{0}» відстає на {1} {2}.', two.nom, gap, pts))
+      : tf('«{0}» — поруч, за різницею м’ячів.', two.nom);
     const verb = prevUs.position === 1 ? t('утримує перше') : t('виходить на перше');
     return tf('«{0}» {1} після {2}. {3}', usName, verb, score, tail);
   }
 
-  const lead = prevLeader.club === leader.club ? tf('«{0}» утримує перше.', leaderName) : tf('«{0}» виходить на перше.', leaderName);
+  const lead = prevLeader.club === leader.club
+    ? (leaderMany ? tf('«{0}» утримують перше.', leaderName) : tf('«{0}» утримує перше.', leaderName))
+    : (leaderMany ? tf('«{0}» виходять на перше.', leaderName) : tf('«{0}» виходить на перше.', leaderName));
   const move = us.position < prevUs.position ? tf('піднялася на {0}', TO[us.position])
     : us.position > prevUs.position ? tf('опустилася на {0}', TO[us.position])
     : tf('лишається на {0}', AT[us.position]);

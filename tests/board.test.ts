@@ -63,7 +63,7 @@ describe('картка з дельтою', () => {
     });
     const sm = summary({ coachRating: 5.7 });
     const after = applyMatchToCareer(before, st, sm, false);
-    const d = cardDelta(before, after, st, sm, PLAYER, EPISODES, 'Порту-Бланко');
+    const d = cardDelta(before, after, st, sm, PLAYER, EPISODES, 'Дунай');
     expect(d.voices.map((v) => v.who)).toEqual(['ego', 'vision', 'team']);
     expect(d.balanceNote).toBe('Его — голос, який ти слухаєш.');
     expect(d.trust).toMatchObject({ from: 56, to: after.coachTrust });

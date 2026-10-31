@@ -2,13 +2,13 @@
 import { describe, it, expect } from 'vitest';
 import { HUNTER, hunterRound, programmeNote, traitNote, TRAIT_NOTE, type ProgrammeInput } from '../src/engine/programme';
 
-const base: ProgrammeInput = { round: 4, last: { scoreUs: 0, scoreThem: 4, opponentGen: 'Порту-Бланко' }, confidence: -1, scoringStreak: 0, dryStreak: 1, weekActivities: [{ id: 'yoga', title: 'Йога' }, { id: 'interview', title: 'Інтерв’ю' }], coachTrust: 55, matchesPlayed: 3 };
+const base: ProgrammeInput = { round: 4, last: { scoreUs: 0, scoreThem: 4, opponentGen: 'Дуная' }, confidence: -1, scoringStreak: 0, dryStreak: 1, weekActivities: [{ id: 'yoga', title: 'Йога' }, { id: 'interview', title: 'Інтерв’ю' }], coachTrust: 55, matchesPlayed: 3 };
 
 describe('програмка', () => {
   // Голос прес-служби (21.09): з тижня — тільки публічне (йога прес-службі невідома), довіра — словами про тренера.
   it('заметка собирается из прошлого матча, публичного дела тижня и слов о тренере — без дыр и без «!»', () => {
     const n = programmeNote(base);
-    expect(n).toContain('Після поразки 0:4 проти «Порту-Бланко»');
+    expect(n).toContain('Після поразки 0:4 проти «Дуная»');
     expect(n).toContain('Цього тижня — інтерв’ю.');
     expect(n).not.toContain('йога');
     expect(n).toContain('Тренер придивляється.');

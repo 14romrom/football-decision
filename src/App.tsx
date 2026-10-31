@@ -466,9 +466,10 @@ function Game() {
       const club = (key: string) => clubName(key, lang);
       const last = club(ctx.lastOpponentKey ?? nextKey);
       return {
-        last: last.nom, 'last.gen': last.gen,
-        leader: club(ctx.leaderKey).nom, 'leader.gen': club(ctx.leaderKey).gen,
-        bottom: club(ctx.bottomKey).nom, 'bottom.gen': club(ctx.bottomKey).gen,
+        // `.g` — рід назви для узгодження дієслова в пості (`{leader:програв|програла|програло|програли}`).
+        last: last.nom, 'last.gen': last.gen, 'last.g': last.g ?? 'f',
+        leader: club(ctx.leaderKey).nom, 'leader.gen': club(ctx.leaderKey).gen, 'leader.g': club(ctx.leaderKey).g ?? 'f',
+        bottom: club(ctx.bottomKey).nom, 'bottom.gen': club(ctx.bottomKey).gen, 'bottom.g': club(ctx.bottomKey).g ?? 'f',
         score: ctx.scoreUs + ':' + ctx.scoreThem, position: String(ctx.position), round: String(ctx.round),
       };
     };

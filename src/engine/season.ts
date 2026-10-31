@@ -407,8 +407,12 @@ export function nextSeasonFrom(
 ): { season: Season; career: Record<string, unknown> } {
   const promo = promotion(prev);
   const keep = promo?.with ?? [];
+  // Клуб другої ліги, що не грав із нами в першому сезоні, — лише якщо клубів вищої не вистачає на місця
+  // (31.10, перевірка логіки світу): раніше він потрапляв у вищу лігу в 59–79% других сезонів без жодного
+  // підвищення. Клубів вищої (4) і тих, хто піднявся з нами (1–2), на п'ять місць вистачає завжди.
   const rest = secondKeys.filter((k) => !prev.clubs.includes(k));
-  const pool = prev.number === 1 ? [...keep, ...topKeys, ...rest] : [...topKeys, ...secondKeys];
+  const fill = keep.length + topKeys.length < LEAGUE_SIZE - 1 ? rest : [];
+  const pool = prev.number === 1 ? [...keep, ...topKeys, ...fill] : [...topKeys, ...secondKeys];
   const season = createSeason(seed, pool, prev.number + 1, keep, keep[0] ? { club: keep[0], round: 2 } : undefined);
 
   const results: Record<string, { scoreUs: number; scoreThem: number; venue: 'home' | 'away' }[]> = {};

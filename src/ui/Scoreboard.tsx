@@ -20,18 +20,19 @@ import { t, tf } from '../content/i18n';
 export const clockLabel = (m: number) => (m > 90 ? `90+${m - 90}′` : `${Math.max(1, m)}′`);
 
 /** Пробіг хвилин до нової: уперед — по одній, назад чи «менше руху» — одразу. Під штампом перерви годинник
- *  уже на 46′: другий тайм починається з неї, а не з 45′, що на мить виринала після штампа. */
+ *  уже на 46′: другий тайм починається з неї, а не з 45′, що на мить виринала після штампа. Одним ефектом, щоб
+ *  штамп обривав і пробіг до 45′, що ще йде: інакше його таймери дописували 45′ поверх 46′ (перевірка грою 31.10). */
 function useRunningMinute(target: number, halfTime: boolean): number {
   const [shown, setShown] = useState(target);
   const at = useRef(target);
-  useEffect(() => { if (halfTime) { at.current = 46; setShown(46); } }, [halfTime]);
   useEffect(() => {
+    if (halfTime) { at.current = 46; setShown(46); return; }
     const from = at.current;
     if (target <= from || motionReduced()) { at.current = target; setShown(target); return; }
     const n = target - from, dt = Math.min(70, 600 / n);
     const timers = Array.from({ length: n }, (_, i) => setTimeout(() => { at.current = from + i + 1; setShown(from + i + 1); }, dt * (i + 1)));
     return () => timers.forEach(clearTimeout);
-  }, [target]);
+  }, [target, halfTime]);
   return shown;
 }
 

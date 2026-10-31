@@ -150,7 +150,6 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     <div className="pitch-cam">
       <svg ref={svgRef} className="pitch" preserveAspectRatio="xMidYMid slice" aria-hidden="true" />
       {scene?.weather === 'rain' && <div className="pitch-rain" aria-hidden="true" />}
-      <span className="pitch-clock">{minute}′</span>
     </div>
   );
 }

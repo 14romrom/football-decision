@@ -1,20 +1,21 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Film } from './Film';
 import type { Episode, FlagRule, MatchState, Player, TimelineEvent } from '../engine/types';
-import type { Kit as KitT, Roster } from '../engine/names';
+import type { Roster } from '../engine/names';
 import type { MatchConditions } from '../engine/conditions';
 import type { FinaleKind } from '../engine/finale';
 import type { ReyesAction } from '../engine/action';
 import { sceneSplit } from '../engine/tokens';
 import { TokenStack } from './Tokens';
 import { Pitch } from './Pitch';
+import { Scoreboard, clockLabel } from './Scoreboard';
 import { ADS } from '../content';
 import { periodOfRound } from '../engine/season';
 import { floodlit } from './prematch-text';
 import type { PitchScene } from './pitchDirector';
 import { useEffect } from 'react';
 import { matchAudio } from './sound';
-import { t, tf } from '../content/i18n';
+import { t } from '../content/i18n';
 
 // Экран матча по макету А2 (19.09): поле целиком сверху, под ним стрічка подій як діалог —
 // старые строки гаснут и уходят под поле, — сцена (EpisodeCard) или бросок (RollView), внизу
@@ -29,17 +30,6 @@ import { t, tf } from '../content/i18n';
 // вони повертаються разом із полем після кидка. **Кидок — теж лист** (22.09, плейтест: кубики під стрічкою за згином):
 // смужка й без стрічки, поки не натиснуто «далі»; поле повертається зі стрічкою, і розв’язка (finale) грає при монтуванні
 // поля — тому поле під час стрічки стоїть за останньою сценою (`pitchEpisode`), а не за «нічим».
-
-/** Кружок форми клубу — та сама схема, що на фішках поля (ui/pitchDirector.ts). */
-function Kit({ kit }: { kit?: KitT }) {
-  if (!kit) return null;
-  const bg = kit.pattern === 'stripes' ? `repeating-linear-gradient(90deg, ${kit.a} 0 2px, ${kit.b} 2px 4px)`
-    : kit.pattern === 'hoops' ? `repeating-linear-gradient(0deg, ${kit.a} 0 2px, ${kit.b} 2px 4px)`
-    : kit.pattern === 'halves' ? `linear-gradient(90deg, ${kit.a} 4.5px, ${kit.b} 4.5px)`
-    : kit.pattern === 'sash' ? `linear-gradient(45deg, ${kit.a} 4.8px, ${kit.b} 4.8px 7.8px, ${kit.a} 7.8px)`
-    : kit.a;
-  return <i className="strip-kit" style={{ background: bg, ...(kit.pattern === 'trim' ? { boxShadow: `inset 0 0 0 1.5px ${kit.b}` } : {}) }} aria-hidden="true" />;
-}
 
 export function MatchScreen({
   state, roster, shown, waiting, onSkip, onReading, onPlayed, cue, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, seed, flagRules, hideDiceZone, finale, sheet, children,
@@ -127,15 +117,19 @@ export function MatchScreen({
   const tokens = episode ? sceneSplit(episode, state, player, conditions, flagRules).tokens : [];
   // Сили — полоса по нижней кромке поля (19.09): сжимается влево, цвет по уровню.
   const stamina = Math.max(0, Math.min(100, state.stamina));
-  const clock = sheetMinute ?? (shown.length ? shown[shown.length - 1].minute : state.minute);
-  const staminaTone = stamina < 25 ? 'low' : stamina < 50 ? 'mid' : '';
+  // До першого рядка — нуль, а не хвилина рушія: рушій уже прорахував матч до першої сцени, і табло
+  // на мить показувало 9′, а потім ішло назад до стартового свистка.
+  const clock = sheetMinute ?? (shown.length ? shown[shown.length - 1].minute : 0);
   // Лист відкритий — сцена, кидок, вихід, свисток: поле й стрічка не потрібні, все в один екран.
   const moment = !!episode || !!sheet;
   // Рахунок — за показаною стрічкою, а не за станом рушія (17.10): рушій рахує матч до наступної сцени
   // наперед, і табло показувало гол раніше, ніж поле його розіграло, а стрічка — написала.
   const scoreUs = shown.filter((e) => e.kind === 'goalUs').length;
   const scoreThem = shown.filter((e) => e.kind === 'goalThem').length;
-  const scoreTone = scoreUs > scoreThem ? 'lead' : scoreUs < scoreThem ? 'trail' : '';
+  // Перерва й фінал — за останнім показаним рядком; лист після перерви (сцена на 46′) показує свою хвилину.
+  const last = shown[shown.length - 1];
+  const full = last?.kind === 'fulltime';
+  const half = !full && last?.kind === 'halftime' && (sheetMinute === undefined || sheetMinute <= 45);
 
   // Гул стадіону — поки відкритий матч, і під листами теж: стадіон не затихає, коли Реєс думає.
   // Тема меню на матчі поступається гулу і повертається після свистка (коли матч знято з екрана).
@@ -144,22 +138,18 @@ export function MatchScreen({
     <div className="match de-match">
       <Film />
 
-      {/* Смужка рахунку — завжди зверху (17.10): і над листом, і над полем. Кружок біля назви — форма
-          клубу, та сама, що на фішках поля. Сили — тонка лінія по нижній кромці; на полі вони ще й кільцем
-          навколо фішки Реєса. */}
-      {/* Господарі зліва, як на будь-якому табло (плейтест 22.10: «табло не показує, виїзд чи домашній»):
-          на виїзді «Вальмара» справа, і рахунок теж «їхні : наші». Колір рахунку — як і раніше, за нами. */}
-      <div className="score-strip">
+      {/* Табло — завжди зверху й закріплене (31.10, ui/Scoreboard.tsx): і над листом, і над полем.
+          Господарі зліва, як на будь-якому табло (плейтест 22.10: «табло не показує, виїзд чи домашній»):
+          на виїзді «Вальмара» справа, і рахунок теж «їхні : наші». Час на паузі, поки відкритий лист або
+          гравець гортає стрічку вгору (App тоді не подає рядків). */}
+      <div className="sb-pin">
         {(() => {
           const away = conditions.venue === 'away';
           const L = away ? roster.them : roster.us, R = away ? roster.us : roster.them;
-          return <>
-            <span className={`strip-team${L.name.nom.length > 11 ? ' long' : ''}`}><Kit kit={L.kit} />{L.name.nom}</span>
-            <b className={`strip-score ${scoreTone}`}>{away ? `${scoreThem} : ${scoreUs}` : `${scoreUs} : ${scoreThem}`}</b>
-            <span className={`strip-team r${R.name.nom.length > 11 ? ' long' : ''}`}>{R.name.nom}<Kit kit={R.kit} /></span>
-          </>;
+          return <Scoreboard left={{ name: L.name.nom, kit: L.kit }} right={{ name: R.name.nom, kit: R.kit }}
+            score={away ? [scoreThem, scoreUs] : [scoreUs, scoreThem]} minute={clock}
+            live={!moment && !reading && !full && !half} stamp={full ? 'full' : half ? 'half' : undefined} stamina={stamina} />;
         })()}
-        <div className={`stamina-bar thin ${staminaTone}`} title={tf('сили {0}', Math.round(stamina))} aria-hidden="true"><i style={{ width: `${stamina}%` }} /></div>
       </div>
       {!moment && (
         <Pitch episode={pitchEpisode ?? episode} selfName={roster.us.players.self.nom} strength={conditions.strength} roster={roster} top={conditions.league === 'top'} scene={scene}
@@ -177,7 +167,7 @@ export function MatchScreen({
             const age = shown.length - 1 - i;   // 0 — последняя строка
             return (
               <p key={i} className={`tape-line kind-${e.kind} age-${Math.min(age, 4)}`}>
-                <span className="tape-minute">{e.minute}′</span> — {e.text}
+                <span className="tape-minute">{clockLabel(e.minute)}</span> — {e.text}
               </p>
             );
           })}

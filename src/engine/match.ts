@@ -579,11 +579,20 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
     return [...a, ...b];
   }
 
-  if (from < 45 && until >= 45) {
+  // Перерва — на своєму місці серед рядків проміжку (31.10, табло з хвилиною): раніше рядок «Перерва» ставився
+  // на початок проміжку, а за ним ішли рядки того ж проміжку з 43–44-ї — у 60% матчів час на табло біг назад
+  // (замір 500 матчів). Тепер рядки до 45-ї — перед перервою, після неї — з 46-ї, як у футболі; рахунок і
+  // варіант рядка — на момент перерви. Сили відновлюються, як і раніше, на початку проміжку.
+  let halfDue = from < 45 && until >= 45;
+  if (halfDue) {
     state.stamina = clamp(state.stamina + BALANCE.halftimeRecovery, 0, 100);
     syncTired(state);
-    state.log.push({ minute: 45, kind: 'halftime', ...feedPick(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
   }
+  const half = () => {
+    if (!halfDue) return;
+    halfDue = false;
+    state.log.push({ minute: 45, kind: 'halftime', ...feedPick(session, 'halftime', rng, { score: state.scoreUs + ':' + state.scoreThem }) });
+  };
 
   const gap = until - from;
   const beats = gap >= 16 ? 3 : gap >= 8 ? 2 : 1;
@@ -595,12 +604,14 @@ export function advanceTo(session: MatchSession, until: number, rng: Rng): Timel
   const knockBeat = !goal && rollKnock(session, rng) ? rng.int(1, beats) : -1;
   for (let i = 1; i <= beats; i++) {
     const minute = Math.round(from + (gap * i) / (beats + 1));
+    if (minute > 45) half();
     tickTime(session, gap / (beats + 1));
     if (i === goalBeat) pushGoal(session, goal!, minute, rng);
     else if (i === knockBeat) pushKnock(session, minute, rng);
     else state.log.push({ minute, kind: 'filler', ...feedPick(session, 'filler', rng) });
   }
   tickTime(session, gap / (beats + 1));
+  half();
   state.minute = until;
   if (session.onBench && until >= entry) benchEnter(session, rng);
 
@@ -780,8 +791,9 @@ function blowWhistle(session: MatchSession, rng: Rng): TimelineEvent[] {
   const state = session.state;
   const before = state.log.length;
   advanceTo(session, 90, rng);
+  // Не раніше за останній рядок: гол із контратаки після сцени на 90-й стоїть на 91-й (табло — «90+1′»).
   state.log.push({
-    minute: 90,
+    minute: Math.max(90, ...state.log.map((e) => e.minute)),
     kind: 'fulltime',
     text: tf('Фінальний свисток. «{0}» — «{1}» {2}:{3}.', session.roster.us.name.nom, session.roster.them.name.nom, state.scoreUs, state.scoreThem),
   });
@@ -1017,6 +1029,7 @@ export function applyChoice(
     }
   }
   const link = chainTarget(session, outcome.apply, rng, episode.id);
+  const effectsFrom = state.log.length;
   const conceded = applyEffects(session, outcome.apply, minute, rng, { episodeId: episode.id, optionId: option.id, past: option.past });
   // Цепочка не сработала — исход достраивается запасным apply (пенальті б’є {striker}).
   if (!link && outcome.apply?.followUpElse) {
@@ -1052,6 +1065,10 @@ export function applyChoice(
     })(),
     badges: resultBadges(outcome.apply),
   });
+  // Рядки наслідків із пізнішою хвилиною (гол із контратаки — «через хвилину») — після рядка самої сцени:
+  // інакше стрічка йшла 31′ → 30′, і табло з хвилиною бігло назад (замір 31.10: 64 на 500 матчів).
+  const tail = state.log.splice(effectsFrom);
+  state.log.push(...tail.filter((e) => e.minute <= minute), ...tail.filter((e) => e.minute > minute));
 
   session.usedEpisodeIds.push(episode.id);
   if (link) {

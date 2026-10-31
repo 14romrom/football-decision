@@ -231,6 +231,15 @@ function Game() {
   const [holding, setHolding] = useState(false);
   /** Гравець гортає стрічку вгору (MatchScreen) — нові рядки й лист чекають, поки не повернеться вниз. */
   const [reading, setReading] = useState(false);
+  /** Матч, у якому підказку «Ти на лаві» вже закрили (плейтест 31.10, Б-1): вона з'являється після стартового
+   *  свистка, а не на листі 52′, і поки відкрита, стрічка стоїть — інакше перший тайм ішов без пояснення. */
+  const [tapeHintDone, setTapeHintDone] = useState<string | null>(null);
+  const tapeHintFor = (session: MatchSession | null, shownCount: number): Hint | undefined => {
+    const tut = session?.tutorial;
+    if (!session || !tut || !shownCount || tapeHintDone === session.matchId || !readSettings().hints) return undefined;
+    const id = tut.plan.find((e) => tut.hints[e]?.target === 'tape');
+    return id ? { ...tut.hints[id], step: tut.plan.indexOf(id) + 1, total: tut.plan.length } : undefined;
+  };
   /** Сцена, що ось-ось відкриється: поле показує її місце (передчуття). */
   const [cue, setCue] = useState<Episode | null>(null);
   const openNowRef = useRef<(() => void) | null>(null);
@@ -556,7 +565,7 @@ function Game() {
 
   // Проигрывание ленты: по одному событию, пока очередь не опустеет.
   useEffect(() => {
-    if (stage.k !== 'feed' || reading) return;
+    if (stage.k !== 'feed' || reading || tapeHintFor(sessionRef.current, shownRef.current.length)) return;
     if (queue.length === 0) {
       const p = pendingRef.current;
       if (!p) return;
@@ -606,7 +615,7 @@ function Game() {
       cap = setTimeout(advance, playWaitFor(prev.kind));
     }, prev ? dwellFor(prev) : 1200);
     return () => { clearTimeout(t); clearTimeout(cap); waitPlayRef.current = null; };
-  }, [stage.k, queue, reading]);
+  }, [stage.k, queue, reading, tapeHintDone, shown.length > 0]);
 
   /** Поле доіграло постановку рядка: якщо стрічка вже дочитала його й чекає — далі. */
   const playedRef = useRef<TimelineEvent | null>(null);
@@ -1172,6 +1181,8 @@ function Game() {
         hideDiceZone={stage.k === 'roll'}
         sheet={stage.k === 'whistle' || stage.k === 'entry' || stage.k === 'adbreak'}
         finale={finale}
+        tapeHint={stage.k === 'feed' ? tapeHintFor(session, shown.length) : undefined}
+        onTapeHintDone={() => setTapeHintDone(session.matchId)}
       >
         {stage.k === 'adbreak' && (
           <AdBreakCard

@@ -9,6 +9,7 @@ import { sceneSplit } from '../engine/tokens';
 import { TokenStack } from './Tokens';
 import { Pitch } from './Pitch';
 import { Scoreboard, clockLabel } from './Scoreboard';
+import { Spotlight, type Hint } from './Spotlight';
 import { ADS } from '../content';
 import { periodOfRound } from '../engine/season';
 import { floodlit } from './prematch-text';
@@ -32,7 +33,7 @@ import { t } from '../content/i18n';
 // поля — тому поле під час стрічки стоїть за останньою сценою (`pitchEpisode`), а не за «нічим».
 
 export function MatchScreen({
-  state, roster, shown, waiting, onSkip, onReading, onPlayed, cue, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, seed, flagRules, hideDiceZone, finale, sheet, children,
+  state, roster, shown, waiting, onSkip, onReading, onPlayed, cue, episode, pitchEpisode, sheetMinute, onBench, player, conditions, round, seed, flagRules, hideDiceZone, finale, sheet, tapeHint, onTapeHintDone, children,
 }: {
   state: MatchState;
   roster: Roster;
@@ -67,6 +68,9 @@ export function MatchScreen({
   sheet?: boolean;
   /** Розв’язка на поле — приходит со штампом вердикта (App → RollView.onVerdict). */
   finale?: { kind: FinaleKind; id: number; action?: ReyesAction } | null;
+  /** Підказка першого матчу на стрічку («Ти на лаві»): App показує її після стартового свистка і тримає стрічку. */
+  tapeHint?: Hint;
+  onTapeHintDone?: () => void;
   children: ReactNode;
 }) {
   // Стрічка — як чат (плейтест 22.10: «хз як вручну почитати/поскролити лог»): уся історія матчу в ній,
@@ -74,6 +78,7 @@ export function MatchScreen({
   // старі рядки не гаснуть — їх же читають. Кнопки «ще N подій» більше немає: жест, який знає кожен.
   const [reading, setReading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const tapeRef = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const read = (on: boolean) => { if (on !== reading) { setReading(on); onReading?.(on); } };
   // Висота вікна стрічки — до низу екрана, з місцем під «далі ⟶»: так гортається стрічка, а не сторінка.
@@ -160,7 +165,8 @@ export function MatchScreen({
           instruction={conditions.instruction} lead={scoreUs - scoreThem} afterBreak={shown[shown.length - 1]?.kind === 'halftime'} secondHalf={shown.some((e) => e.kind === 'halftime')} onPlayed={onPlayed} />
       )}
 
-      {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}${reading ? ' reading' : ''}`}>
+      {!moment && tapeHint && <Spotlight hint={tapeHint} target={tapeRef} onDone={() => onTapeHintDone?.()} />}
+      {!moment && <div ref={tapeRef} className={`tape ${episode || sheet ? 'dimmed' : ''}${reading ? ' reading' : ''}`}>
         <div className="tape-shade" />
         <div className="tape-scroll" ref={scrollRef} onScroll={onScroll}>
           {shown.map((e, i) => {

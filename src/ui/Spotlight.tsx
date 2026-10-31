@@ -13,7 +13,7 @@ import { t } from '../content/i18n';
 // перед виміром; на скрол/ресайз перемірюємо. Затемнення тапом не закривається — тільки «Зрозуміло»:
 // інакше тестер закриє, не прочитавши (плейтест «не знайшов кнопки»).
 
-export type HintTarget = 'choices' | 'formula' | 'voices' | 'verdict';
+export type HintTarget = 'choices' | 'formula' | 'voices' | 'verdict' | 'tape';
 export type Hint = { target: HintTarget; title: string; text: string; step: number; total: number };
 
 type Props = { hint: Hint; target: RefObject<HTMLElement>; onDone: () => void };

@@ -715,7 +715,6 @@
   "4257c9bbf03d": "the capital's academy, average age of the squad is twenty-one",
   "ef45d512df77": "Daniel Reyes",
   "e175e2f71b3d": "You're on the bench",
-  "a0c5918a1f87": "You watch the first half from the bench — the feed shows what the team does without you. In the second half the coach will bring you on, and the decisions become yours. The first one is already here: how to warm up.",
   "6ecb84f33aa4": "Risk",
   "2573557a1d73": "In the brackets — the price of a mistake. Controlled: failing costs little. Risky: costs dearly. Desperate: costs everything. The number is what you need on the dice to come out clean.",
   "3f91387dd456": "The dice and the attribute",
@@ -12990,5 +12989,6 @@
   "e6ef56bd6794": "The board goes up above the fourth official's head. {coach} nods as if he'd ordered it himself.",
   "fe00704af07d": "Added time comes over the tannoy. Someone in the stands whistles — at the number, not the ref.",
   "9dbb587474ca": "Time added on. The ref taps his watch so everyone can see: he's counting too.",
-  "e7ad83bac218": "{0} · full time"
+  "e7ad83bac218": "{0} · full time",
+  "0b031f284cc7": "You watch the first half from the bench — the feed shows what the team does without you. In the second half the coach will bring you on, and the decisions become yours."
 }

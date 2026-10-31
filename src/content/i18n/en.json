@@ -1457,7 +1457,6 @@
   "4913e96aed07": "And: \"We're in the top two. {0} Don't let it slip.\"",
   "39c7d6b8b311": "And: \"Nobody wants the play-off — not them, not us. {0} The top two are right there.\"",
   "f49efc2ff193": "And: \"We need one place. One. {0} I'm not asking — I'm telling you.\"",
-  "7e0ffaf4f8d8": "{0}' leader is never given a yard.",
   "09a40fe10336": "{0}' dribbler: not everyone keeps up with the feints.",
   "d7ddcdbacec0": "{0}' playmaker sees every line.",
   "92d37d0980fb": "{0}' veteran at the back doesn't buy feints.",
@@ -12990,5 +12989,6 @@
   "db84e14e97a9": "LOGIC [Trivial: failure] — {moment.minute}′: {self} {moment.past}. Logic looks for someone to blame. Finds him.",
   "692ef2eee4b1": "DRAMA [Impossible: success] — {moment.minute}′: {self} {moment.past}. Even he believed it.",
   "42e29244edcb": "broke {self} down from the highlights: looks backwards too much. tactics or fear? thread 1/40",
-  "2743e6a5bfca": "you're welcome. 3/40 will be about where you look"
+  "2743e6a5bfca": "you're welcome. 3/40 will be about where you look",
+  "cc2ecd190da4": "{0}' leader is the one you can't give a yard."
 }

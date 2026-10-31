@@ -66,11 +66,13 @@ type Props = {
   lead?: number;
   /** Останній показаний рядок — перерва: перший рядок другого тайму почнеться з розводу. */
   afterBreak?: boolean;
+  /** Перерва вже була — поле збирається з командами, що помінялися воротами. */
+  secondHalf?: boolean;
   /** Постановку рядка доіграно (або її немає) — стрічка чекає на це, щоб наступний рядок не обривав поле. */
   onPlayed?: (e: TimelineEvent) => void;
 };
 
-export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue, instruction = 'free', lead = 0, afterBreak = false, onPlayed }: Props) {
+export function Pitch({ episode, selfName, strength = 'even', roster, top = false, scene, finale, pulse, onBench = false, sentOff = false, stamina, momentum, minute, seed = 0, cue, instruction = 'free', lead = 0, afterBreak = false, secondHalf = false, onPlayed }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const dir = useRef<Director | null>(null);
   /** Розв'язка сцени на полі — стрічка чекає на неї так само, як на постановку рядка (onPlayed). */
@@ -87,7 +89,7 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     }
     names.u10 = selfName;
     const d = new Director(svgRef.current, {
-      usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(), top, scene, seed,
+      usKit: roster.us.kit, themKit: roster.them.kit, formation: formationOf(FORMATION_BY_STRENGTH[strength]), names, reduced: motionReduced(), top, scene, seed, secondHalf,
     });
     d.setBench(onBench, sentOff);
     d.setMinute(minute);
@@ -133,6 +135,9 @@ export function Pitch({ episode, selfName, strength = 'even', roster, top = fals
     // Хвилина рядка — до розіграшу: від неї варіація постановки (M52), а ефект хвилини нижче спрацює пізніше.
     if (pulse.minute !== undefined) d.setMinute(pulse.minute);
     if (pulse.stage) void d.play(pulse.stage, pulse.kind).then(done);
+    // Фінальний свисток — у тунель, як на перерві (плейтест 31.10): раніше рядок не мав постановки,
+    // і фішки лишалися там, де застав останній розіграш.
+    else if (pulse.kind === 'fulltime') void d.play({ act: 'half', tags: ['final'] }).then(done);
     else if (pulse.kind === 'goalUs' || pulse.kind === 'goalThem') void d.play({ act: 'echo', tags: [] }, pulse.kind).then(done);
     else done();
     // eslint-disable-next-line react-hooks/exhaustive-deps

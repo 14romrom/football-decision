@@ -251,7 +251,14 @@ export function sfxOoh() { sfxFile(`crowd_ooh_${pick(2)}`, 0.55, 0.05); }
 /** Свист трибун — рядки стрічки з поміткою `stands` (затягування, фол, аут на виїзді). */
 export function sfxBoo() { sfxFile(`crowd_boo_${pick(2)}`, 0.5); }
 export type Whistle = 'short' | 'start' | 'half' | 'final';
-export function sfxWhistle(kind: Whistle) { sfxFile(`whistle_${kind}`, 0.35); }
+/** Коли який свисток звучав востаннє: фінальний дає поле (рядок «Фінальний свисток», команди йдуть у
+ *  тунель), і лист свистка після нього не свистить удруге. Якщо поле не встигло — свистить лист. */
+const whistled: Partial<Record<Whistle, number>> = {};
+export function sfxWhistle(kind: Whistle) { whistled[kind] = performance.now(); sfxFile(`whistle_${kind}`, 0.35); }
+export function sfxWhistleOnce(kind: Whistle, withinMs = 6000) {
+  const at = whistled[kind];
+  if (at === undefined || performance.now() - at > withinMs) sfxWhistle(kind);
+}
 
 /** Гул стадіону під матчем — окремий перемикач «Гул стадіону»: комусь він заважатиме читати. */
 export function ambience(on: boolean) {

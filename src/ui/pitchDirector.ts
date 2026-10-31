@@ -32,6 +32,8 @@ const ZY = { L: 12, C: 34, R: 56 } as const;
 const OUR_GOAL: P = [0, 34];
 const THEIR_GOAL: P = [PW, 34];
 const BENCH: P = [50, -3.4];
+/** Тунель у підтрибунне — між лавами, за верхньою бровкою. */
+const TUNNEL: P = [52.5, -4.4];
 /** Події кінцівки, що закінчують удар (engine/action.ts:ACTION_BEATS). */
 const SHOT_END: ActionBeat[] = ['whiff', 'bar', 'post', 'over', 'wide', 'tip', 'held', 'parry', 'block', 'line'];
 
@@ -95,6 +97,8 @@ export type DirectorOptions = {
   top?: boolean;
   /** Сід матчу: разом із хвилиною вирішує варіації рухів (M52). */
   seed?: number;
+  /** Перерва вже була: поле збирається віддзеркаленим — команди помінялися воротами. */
+  secondHalf?: boolean;
 };
 
 type Token = { g: SVGGElement; mv: SVGGElement; body: SVGGElement; label?: SVGTextElement; ring?: SVGCircleElement; glow?: SVGCircleElement; p: P };
@@ -109,6 +113,13 @@ const dist = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
 export class Director {
   private svg: SVGSVGElement;
+  /** Усе поле — в одній групі: у другому таймі вона віддзеркалюється, і команди міняються воротами
+   *  (плейтест 31.10: «половина поля не змінюється після перерви»). Координати лишаються ті самі —
+   *  ми атакуємо праворуч у світі, — віддзеркалення лише в показі (`setFlip`, `setView`). */
+  private world: SVGGElement | null = null;
+  private flipped = false;
+  /** Команди пішли в тунель і ще не вийшли. */
+  private offPitch = false;
   private t: Record<string, Token> = {};
   private ball!: SVGGElement;
   private ballP: P = [52.5, 34];
@@ -185,12 +196,23 @@ export class Director {
     this.home = { ...US_HOME, ...THEM_HOME[opt.formation], ref: [52, 44], med: [44, -3.2], sub: BENCH };
     this.cast();
     svg.textContent = '';
+    this.world = this.el('g', {});
     this.drawPitch(opt.usKit ?? FALLBACK_US, opt.themKit ?? FALLBACK_THEM);
     this.reset();
+    if (opt.secondHalf) this.setFlip(true);
+  }
+
+  /** Другий тайм — команди помінялися воротами. Цифри й підписи CSS повертає назад (`.pc-flip text`). */
+  private setFlip(on: boolean) {
+    if (this.flipped === on || !this.world) return;
+    this.flipped = on;
+    this.world.setAttribute('transform', on ? `matrix(-1 0 0 1 ${PW} 0)` : '');
+    this.svg.classList.toggle('pc-flip', on);
+    this.setView(this.view);
   }
 
   // ——— малювання ———————————————————————————————————————————————————————
-  private el<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number>, parent: Element = this.svg): SVGElementTagNameMap[K] {
+  private el<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number>, parent: Element = this.world ?? this.svg): SVGElementTagNameMap[K] {
     const e = document.createElementNS(NS, tag);
     for (const k in attrs) e.setAttribute(k, String(attrs[k]));
     parent.appendChild(e);
@@ -428,7 +450,11 @@ export class Director {
     this.own.setAttribute('r', best === 'u10' ? '2.75' : '2.05');
     this.own.setAttribute('opacity', '.75');
   }
-  private setView(v: View) { this.view = v; this.svg.setAttribute('viewBox', `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${v.h.toFixed(2)}`); }
+  private setView(v: View) {
+    this.view = v;
+    const x = this.flipped ? PW - v.x - v.w : v.x;
+    this.svg.setAttribute('viewBox', `${x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${v.h.toFixed(2)}`);
+  }
   pos(id: string): P { return this.t[id]?.p ?? [52.5, 34]; }
 
   /** Усі по місцях без анімації: перший кадр поля. */
@@ -690,7 +716,7 @@ export class Director {
   }
 
   private async playLine(st: Stage, kind?: string) {
-    if (st.act === 'half') sfxWhistle('half');
+    if (st.act === 'half') sfxWhistle(st.tags.includes('final') ? 'final' : 'half');
     // Номер розіграшу цього рядка (playAct бере ++run першою дією). Фон — лише з ним: якщо поле зняли,
     // поки рядок догравав, this.run уже інший, і фон із новим номером грав би вічно на невидимому полі
     // (18.10: удари по м'ячу на титулі й у зошиті — по три одночасно, від трьох «осиротілих» полів).
@@ -708,10 +734,14 @@ export class Director {
     // Перерва — команди йдуть у тунель пішки: тут склейка вбила б саму постановку.
     this.cutNext = st.act !== 'half';
     // Другий тайм розводять вони (перший — ми, рядок `kickoff`): перший рядок після перерви починається з центру.
-    if (st.act === 'half') this.secondHalf = true;
+    if (st.act === 'half') this.secondHalf = !st.tags.includes('final');
     else if (this.secondHalf) {
       this.secondHalf = false;
-      await this.centre(my, 'them', 700);
+      // Виходять із тунелю вже на інших половинах; поле, змонтоване після перерви, стоїть по місцях.
+      const out = this.offPitch;
+      this.setFlip(true);
+      this.walkOn();
+      await this.centre(my, 'them', out ? 1700 : 700);
       if (my !== this.run) return;
       // Розвод сам переніс м'яч у центр першим тактом; склейка лишається за рядком, що йде далі.
       this.cutNext = true;
@@ -1011,9 +1041,13 @@ export class Director {
         await S({ moves: { u10: this.home.u10 }, cam: [52.5, 30], w: 52, dur: 550 });
         break;
       }
-      case 'wide': case 'crowd': case 'half': {
-        const m = st.act === 'crowd' ? this.crowded() : st.act === 'half' ? this.toTunnel() : this.block([52.5, 34]);
-        await S({ moves: m, ball: st.act === 'half' ? [52.5, -1] : [52.5 + jit(5), 34], cam: [52.5, st.act === 'half' ? 28 : 34], w: 104, dur: st.act === 'half' ? 1400 : 900 });
+      case 'half': {
+        await this.walkOff(my, st.tags.includes('final') ? 2000 : 2400);
+        break;
+      }
+      case 'wide': case 'crowd': {
+        const m = st.act === 'crowd' ? this.crowded() : this.block([52.5, 34]);
+        await S({ moves: m, ball: [52.5 + jit(5), 34], cam: [52.5, 34], w: 104, dur: 900 });
         break;
       }
       case 'push': case 'deep': {
@@ -2218,7 +2252,7 @@ export class Director {
         await along(run, [(from[0] + run[0]) / 2, from[1]], 450, lin, () => '');
         if (my !== this.run) return;
         const skid = this.el('path', { d: `M${run[0]},${run[1]} L${run[0]},${run[1]}`, class: 'pc-skid' });
-        this.svg.insertBefore(skid, this.ballShadow);
+        this.ballShadow.before(skid);
         void this.step(my, { moves: mateMoves(end, 1), dur: 1100 });
         const low = (k: number) => Math.min(1, k * 4);
         await along(end, [(run[0] + end[0]) / 2, (run[1] + end[1]) / 2], 650, out, (k) => {
@@ -2334,11 +2368,46 @@ export class Director {
     for (const id in this.home) { if (['ref', 'med', 'u1', 't1'].includes(id) || !this.playing(id)) continue; const a = i++ * 2.399; const r = 2 + (i % 5) * 1.6; m[id] = [52.5 + Math.cos(a) * r * 1.2, 34 + Math.sin(a) * r]; }
     return m;
   }
-  private toTunnel(): Record<string, P> {
-    const m: Record<string, P> = {};
-    let i = 0;
-    for (const id in this.home) { if (id === 'med' || !this.playing(id)) continue; m[id] = [42 + (i % 8) * 3, 2.5 + Math.floor(i / 8) * 2.8]; i++; }
-    return m;
+  /** Перерва і фінальний свисток (плейтест 31.10: «фішки скупчуються біля бровки, а не йдуть у
+   *  підтрибунне»). Раніше всі ставали рядами на полі біля бровки й там і лишалися. Тепер ідуть до
+   *  тунелю між лавами двома чергами — ближчі першими — і зникають у ньому; суддя з м'ячем — посередині. */
+  private async walkOff(my: number, dur: number) {
+    const ids = Object.keys(this.t).filter((id) => id !== 'med' && this.playing(id));
+    const from: Record<string, P> = {};
+    for (const id of ids) from[id] = this.pos(id);
+    ids.sort((a, b) => dist(from[a], TUNNEL) - dist(from[b], TUNNEL));
+    for (const id in this.t) this.t[id].label?.setAttribute('opacity', '0');
+    this.own.setAttribute('opacity', '0');
+    this.offPitch = true;
+    const lane = (id: string) => (id === 'ref' ? 0 : isUs(id) ? -.9 : .9);
+    const b0 = this.ballP, v0 = this.view, v1 = this.frame([52.5, 24], 104);
+    const spread = .45;
+    await this.raw(dur, (k) => {
+      if (my !== this.run) return;
+      const e = (s: number) => s * s * (3 - 2 * s);
+      const c = e(Math.min(1, k * 2));
+      this.setView({ x: v0.x + (v1.x - v0.x) * c, y: v0.y + (v1.y - v0.y) * c, w: v0.w + (v1.w - v0.w) * c, h: v0.h + (v1.h - v0.h) * c });
+      ids.forEach((id, i) => {
+        const s = clamp((k - spread * i / ids.length) / (1 - spread), 0, 1);
+        const to: P = [TUNNEL[0] + lane(id), TUNNEL[1]];
+        this.put(id, [from[id][0] + (to[0] - from[id][0]) * e(s), from[id][1] + (to[1] - from[id][1]) * e(s)]);
+        this.t[id].g.setAttribute('opacity', (1 - clamp((s - .8) / .2, 0, 1)).toFixed(2));
+        if (id === 'ref') { this.putBall(this.pos(id)); this.ball.setAttribute('opacity', this.t[id].g.getAttribute('opacity') ?? '1'); }
+      });
+      if (!ids.includes('ref')) this.putBall([b0[0] + (TUNNEL[0] - b0[0]) * e(k), b0[1] + (TUNNEL[1] - b0[1]) * e(k)]);
+      this.own.setAttribute('opacity', '0');
+    });
+  }
+  /** Вихід на другий тайм: з тунелю, а `centre` розводить їх по місцях. */
+  private walkOn() {
+    this.ball.setAttribute('opacity', '1');
+    if (!this.offPitch) return;
+    this.offPitch = false;
+    for (const id of Object.keys(this.t)) {
+      if (id === 'med' || !this.playing(id)) continue;
+      this.put(id, [TUNNEL[0] + (id === 'ref' ? 0 : isUs(id) ? -.9 : .9), TUNNEL[1]]);
+      this.t[id].g.setAttribute('opacity', '1');
+    }
   }
 
   /** Зупинити все, що грається: компонент знято або прийшов новий рядок. */

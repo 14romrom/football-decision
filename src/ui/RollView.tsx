@@ -50,9 +50,13 @@ type Props = {
 const fmt = (v: number) => (v > 0 ? `+${v}` : v < 0 ? `−${Math.abs(v)}` : '0');
 /** Шаги драматургии: время от старта, мс. Чипы — по одному после суммы. */
 const T_DIE1 = 900; const T_DIE2 = 1800; const T_SUM = 2100; const T_VERDICT = 650; const T_OUTCOME = 400;
-/** Жетон: політ у суму, потім відлік по одиниці і коротка пауза. */
-const T_FLY = 480; const T_TICK = 70; const T_GAP = 110;
+/** Жетон: політ у суму, потім відлік по одиниці і коротка пауза. 31.10 швидше на чверть (480 / 70 / 110):
+ *  тестер «витрачаю час на перегляд анімації бафів». */
+const T_FLY = 380; const T_TICK = 55; const T_GAP = 70;
 const itemTime = (v: number) => T_FLY + T_TICK * Math.abs(v) + T_GAP;
+/** «Одразу» в налаштуваннях: монети злітають разом (з розльотом), число добігає швидко, штамп ближче. Раніше
+ *  «одразу» прибирало лише барабан, а жетони йшли по одному — з трьома це 2,5–3 с (плейтест 31.10). */
+const T_SPREAD = 60; const T_TICK_FAST = 30; const T_VERDICT_FAST = 420;
 /** Грань d10 по кругу: 11 → 1, 0 → 10 (без оператора остатка — тест «никаких процентов» ищет «%»). */
 const wrap = (v: number) => (v > 10 ? v - 10 : v < 1 ? v + 10 : v);
 /** Барабан одного кубика: до `stopAt` мс случайные грани каждые 70 мс, в последние полсекунды —
@@ -91,18 +95,23 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   const final = res.rawRoll + items.reduce((s, v) => s + v, 0);
   // Расписание: 0 — крутятся оба, 1 — первый встал, 2 — второй встал, 3 — сумма,
   // 4..4+n — монети по одній, потом вердикт, потом исход.
+  const instant = readSettings().dice === 'instant';
   const schedule = useMemo(() => {
+    if (instant) {
+      const sum = items.reduce((s, v) => s + v, 0);
+      const fly = 300 + T_FLY + T_SPREAD * (items.length - 1) + T_TICK_FAST * Math.abs(sum);
+      return [0, 0, 0, 150, 300, fly + T_VERDICT_FAST, fly + T_VERDICT_FAST + T_OUTCOME];
+    }
     const t = [0, T_DIE1, T_DIE2, T_SUM];
     let at = T_SUM + 300;
     for (const v of items) { t.push(at); at += itemTime(v); }
     t.push(at - T_GAP + T_VERDICT);
     t.push(at - T_GAP + T_VERDICT + T_OUTCOME);
     return t;
-  }, [items]);
+  }, [items, instant]);
   const LAST = schedule.length - 1;
   const S_VERDICT = LAST - 1;
-  // «Одразу» в налаштуваннях — кубики стоят с первого кадра, дальше та же драматургия.
-  const instant = readSettings().dice === 'instant';
+  // «Одразу» в налаштуваннях — кубики стоят с первого кадра, монети летять разом (стадія 4 — усі).
   const [stage, setStage] = useState(instant ? 2 : 0);
   const [spin, setSpin] = useState<[number, number]>([0, 0]);
 
@@ -158,34 +167,41 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
     if (stage < 3) { setRunning(res.rawRoll); return; }
     if (stage >= S_VERDICT) { setRunning(final); setTicking(false); return; }
     if (item < 0 || item >= items.length) return;
-    const v = items[item];
+    // «Одразу» — уся група однією стадією, інакше одна монета.
+    const group = instant ? items.map((_, i) => i) : [item];
+    const v = group.reduce((s, i) => s + items[i], 0);
     const from = res.rawRoll + items.slice(0, item).reduce((s, x) => s + x, 0);
     setRunning(from);
     const timers: ReturnType<typeof setTimeout>[] = [];
     const reduced = motionReduced();
-    const coin = coinRefs.current[item], total = totalRef.current;
-    if (!reduced && coin && total) {
-      const a = coin.getBoundingClientRect(), b = total.getBoundingClientRect();
-      const fly = coin.cloneNode(true) as HTMLElement;
-      fly.classList.add('tk-flyer');
-      Object.assign(fly.style, { left: `${a.left}px`, top: `${a.top}px`, width: `${a.width}px`, height: `${a.height}px` });
-      fly.style.setProperty('--pile', '0 0 0 transparent');
-      document.body.appendChild(fly);
-      const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
-      fly.animate([
-        { transform: 'none' },
-        { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 40}px) scale(1.15)`, offset: 0.55 },
-        { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: 0.2 },
-      ], { duration: T_FLY, easing: 'cubic-bezier(.4,0,.2,1)' }).finished.then(() => fly.remove(), () => fly.remove());
-      timers.push(setTimeout(() => fly.remove(), T_FLY + 50));
-    }
-    const land = reduced ? 0 : T_FLY;
-    timers.push(setTimeout(() => sfxCoin(item === 0 ? 'skill' : v > 0 ? 'plus' : 'minus'), land));
+    const total = totalRef.current;
+    group.forEach((ci, n) => {
+      const coin = coinRefs.current[ci];
+      const delay = n * T_SPREAD;
+      if (!reduced && coin && total) {
+        const a = coin.getBoundingClientRect(), b = total.getBoundingClientRect();
+        const fly = coin.cloneNode(true) as HTMLElement;
+        fly.classList.add('tk-flyer');
+        Object.assign(fly.style, { left: `${a.left}px`, top: `${a.top}px`, width: `${a.width}px`, height: `${a.height}px` });
+        fly.style.setProperty('--pile', '0 0 0 transparent');
+        document.body.appendChild(fly);
+        const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+        fly.animate([
+          { transform: 'none' },
+          { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 40}px) scale(1.15)`, offset: 0.55 },
+          { transform: `translate(${dx}px, ${dy}px) scale(.5)`, opacity: 0.2 },
+        ], { duration: T_FLY, delay, fill: 'backwards', easing: 'cubic-bezier(.4,0,.2,1)' }).finished.then(() => fly.remove(), () => fly.remove());
+        timers.push(setTimeout(() => fly.remove(), delay + T_FLY + 50));
+      }
+      timers.push(setTimeout(() => sfxCoin(ci === 0 ? 'skill' : items[ci] > 0 ? 'plus' : 'minus'), (reduced ? 0 : T_FLY) + delay));
+    });
+    const land = reduced ? 0 : T_FLY + T_SPREAD * (group.length - 1);
+    const tick = instant ? T_TICK_FAST : T_TICK;
     const step = v > 0 ? 1 : -1;
     for (let i = 1; i <= Math.abs(v); i++) {
-      timers.push(setTimeout(() => { setRunning(from + step * i); setTicking(true); }, land + T_TICK * i));
+      timers.push(setTimeout(() => { setRunning(from + step * i); setTicking(true); }, land + tick * i));
     }
-    timers.push(setTimeout(() => setTicking(false), land + T_TICK * Math.abs(v) + 40));
+    timers.push(setTimeout(() => setTicking(false), land + tick * Math.abs(v) + 40));
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
@@ -194,7 +210,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
   const outcome = pickOutcome(option, res);
   const critBad = res.critical === 'fail' && stage >= 2;
   const [labels, setLabels] = useState(false);
-  const spent = (i: number) => stage >= S_VERDICT || i < item || (i === item && stage >= 4);
+  const spent = (i: number) => stage >= S_VERDICT || (instant && stage >= 4) || i < item || (i === item && stage >= 4);
 
   return (
     <div className="scene roll" onClick={() => setStage(LAST)}>
@@ -260,7 +276,7 @@ export function RollView({ option, res, flavor, flavorVoice, badges, continues, 
               </ul>
             )}
             {(chained || continues) && <p className="continues">{t('Момент триває — наступне рішення на цій же хвилині.')}</p>}
-            <button className="primary de-next" onClick={onNext}>{continues ? tf('Далі → {0}', continues) : chained ? t('Далі') : t('Граємо далі')}</button>
+            <button className="primary de-next" data-swipe="next" onClick={onNext}>{continues ? tf('Далі → {0}', continues) : chained ? t('Далі') : t('Граємо далі')}</button>
           </div>
         )}
         </div>

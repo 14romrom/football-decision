@@ -240,7 +240,7 @@ export function WeekScreen({ days, scenes, sees, seen, seed = 0, month, anchor, 
             <>
               <p className="nb-chosen"><b>{chosen.label}.</b> {chosen.text}</p>
               <p className="nb-aside">{chosen.effect.note}</p>
-              <button className="primary menu-primary nb-sheet-btn" onClick={() => advance(picks)}>{last ? t('Підсумок тижня') : t('Далі')}</button>
+              <button className="primary menu-primary nb-sheet-btn" data-swipe="next" onClick={() => advance(picks)}>{last ? t('Підсумок тижня') : t('Далі')}</button>
             </>
           ) : (
             <>
@@ -277,7 +277,7 @@ export function WeekScreen({ days, scenes, sees, seen, seed = 0, month, anchor, 
         <span className="minute-tab">{tf('{0} · ВЕЧІР', DAY[d].toUpperCase())}</span>
         <p className="setup">{out.text}</p>
         <p className={`nb-aside voice-${offer.activity.voice}`}><b>{voice}</b>{out.effect.note}</p>
-        <button className="primary menu-primary nb-sheet-btn" onClick={() => afterOutcome(offer)}>{sceneFor(out, scenes, seen, sceneUsed) ? t('Що далі') : last ? t('Підсумок тижня') : t('Далі')}</button>
+        <button className="primary menu-primary nb-sheet-btn" data-swipe="next" onClick={() => afterOutcome(offer)}>{sceneFor(out, scenes, seen, sceneUsed) ? t('Що далі') : last ? t('Підсумок тижня') : t('Далі')}</button>
       </div></div>
     );
   };

@@ -5,6 +5,7 @@ import { LANG } from './content/i18n';
 import './styles.css';
 import { installUiSounds } from './ui/sound';
 import { installBackButton } from './ui/backButton';
+import { installSwipe } from './ui/swipe';
 import { CrashGuard } from './ui/CrashGuard';
 import { installNotify } from './ui/notify';
 import { installAds } from './ui/ads';
@@ -12,6 +13,7 @@ import { installAnalytics } from './ui/firebase';
 
 installUiSounds();
 installBackButton();
+installSwipe();
 installNotify();
 installAds();
 installAnalytics();

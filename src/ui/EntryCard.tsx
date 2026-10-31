@@ -17,7 +17,7 @@ export function EntryCard({ entry, minute, debut, onNext }: Props) {
           {entry.voices.map((v) => <p key={v.who} className={`say voice-${v.who}`}><b>{VOICE_LABEL[v.who]}</b><span>{v.line}</span></p>)}
         </div>
       )}
-      <button className="primary title-primary whistle-go" onClick={onNext}>{t('Вийти на поле')}</button>
+      <button className="primary title-primary whistle-go" data-swipe="next" onClick={onNext}>{t('Вийти на поле')}</button>
     </div>
   );
 }

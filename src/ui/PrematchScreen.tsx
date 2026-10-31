@@ -104,7 +104,7 @@ export function PrematchScreen({
       {about && <p className="pm-prose"><b>{t('Суперник')}</b>{about}</p>}
       {memory && <p className="pm-prose"><b>{t('Пам’ять')}</b>{memory}</p>}
 
-      <button className="primary menu-primary pm-cta" onClick={onStart}>{t('До матчу')}</button>
+      <button className="primary menu-primary pm-cta" data-swipe="next" onClick={onStart}>{t('До матчу')}</button>
     </div>
   );
 }

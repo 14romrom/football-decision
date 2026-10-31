@@ -118,7 +118,7 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = t('ДО П
         {sheetCard(spread.tab, (
           <>
             <p className="setup">{cold && (o as { replyCold?: string }).replyCold ? (o as { replyCold?: string }).replyCold : o.reply}</p>
-            <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? t('Що далі') : t('Далі')}</button>
+            <button className="primary menu-primary nb-sheet-btn" data-swipe="next" onClick={afterReply}>{last ? t('Що далі') : t('Далі')}</button>
           </>
         ), false)}
       </div>
@@ -137,13 +137,13 @@ export function PrologueScreen({ spreads, onFinish, onNext, lootTab = t('ДО П
           {spread.head && page === 0 && <div className="head-line"><b>{spread.head}</b></div>}
           <p className="setup">{sheet[page]}</p>
           {!lastPage && (
-            <button className="primary menu-primary nb-sheet-btn" onClick={() => setPhase({ p: 'sheet', page: page + 1 })}>{t('Далі')}</button>
+            <button className="primary menu-primary nb-sheet-btn" data-swipe="next" onClick={() => setPhase({ p: 'sheet', page: page + 1 })}>{t('Далі')}</button>
           )}
           {/* Лист без вибору (M35): розворот, який нічого не питає, а каже, чим усе скінчилося.
               Потрібен там, де гравець щойно отримав новину і йому треба її дочитати, а не вирішувати:
               розв’язка медогляду. Кадр лишається — варіанти за нього не борються. */}
           {lastPage && options.length === 0 && (
-            <button className="primary menu-primary nb-sheet-btn" onClick={afterReply}>{last ? t('Що далі') : t('Далі')}</button>
+            <button className="primary menu-primary nb-sheet-btn" data-swipe="next" onClick={afterReply}>{last ? t('Що далі') : t('Далі')}</button>
           )}
           {lastPage && options.length > 0 && (
             <>

@@ -5,20 +5,20 @@
 import type { Whistle } from '../engine/whistle';
 import { t } from '../content/i18n';
 import { useEffect } from 'react';
-import { sfxWhistle } from './sound';
+import { sfxWhistleOnce } from './sound';
 
 type Props = { whistle: Whistle; onNext: () => void };
 
 export function WhistleCard({ whistle, onNext }: Props) {
   // Три свистки — разом із листом фінального свистка, один раз.
-  useEffect(() => { sfxWhistle('final'); }, []);
+  useEffect(() => { sfxWhistleOnce('final'); }, []);
   return (
     <div className="scene whistle">
       <span className="minute-tab">{t('90′ · фінальний свисток')}</span>
       <p className="setup">{whistle.summary}</p>
       {whistle.promise && <p className="setup whistle-promise">{whistle.promise}</p>}
       <p className="setup whistle-crowd">{whistle.crowd}</p>
-      <button className="primary title-primary whistle-go" onClick={onNext}>{t('Перейти в роздягальню')}</button>
+      <button className="primary title-primary whistle-go" data-swipe="next" onClick={onNext}>{t('Перейти в роздягальню')}</button>
     </div>
   );
 }

@@ -1517,6 +1517,9 @@ html.launching .title-menu { transform: translateY(12px); }
 .pc-ref-mouth { stroke-width: .3; stroke-linecap: round; }
 .pc-num { font-family: var(--font-mono); font-weight: 600; text-anchor: middle; }
 .pc-label { font-family: var(--font-mono); font-size: 1.2px; fill: #e6e1d6; text-anchor: middle; stroke: #0b0b0d; stroke-width: .3; paint-order: stroke; transition: opacity .3s; }
+/* Другий тайм (31.10): поле віддзеркалене — команди помінялися воротами; цифри, підписи й щити
+   повертаються назад, кожен навколо свого центру. */
+.pitch.pc-flip text { transform-box: fill-box; transform-origin: center; transform: scaleX(-1); }
 .pc-ring-bg { fill: none; stroke: #26262b; stroke-width: .42; }
 .pc-ring { fill: none; stroke: var(--accent); stroke-width: .42; stroke-linecap: round; transition: stroke-dasharray .6s, stroke .6s; }
 .pc-ring.mid { stroke: var(--warn); } .pc-ring.low { stroke: var(--bad); }

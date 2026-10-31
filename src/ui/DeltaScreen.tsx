@@ -70,7 +70,7 @@ export function DeltaScreen({ player, career, season, dominant, delta, onOpenCar
         </dl>
       )}
       <p className="muted delta-hint">{t('Тап по стикеру — повна картка.')}</p>
-      <button className="primary menu-primary" onClick={onNext}>{t('Далі')}</button>
+      <button className="primary menu-primary" data-swipe="next" onClick={onNext}>{t('Далі')}</button>
     </div>
   );
 }

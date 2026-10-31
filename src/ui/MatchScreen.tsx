@@ -167,7 +167,7 @@ export function MatchScreen({
           // Заміна й червона ставляться кидком сцени — після нього поле вже без Реєса (match.ts: subbed_off / sent_off).
           onBench={onBench || state.flags.includes('subbed_off')} sentOff={state.flags.includes('sent_off')}
           stamina={stamina} momentum={state.momentum} minute={clock} seed={seed} cue={cue}
-          instruction={conditions.instruction} lead={scoreUs - scoreThem} afterBreak={shown[shown.length - 1]?.kind === 'halftime'} onPlayed={onPlayed} />
+          instruction={conditions.instruction} lead={scoreUs - scoreThem} afterBreak={shown[shown.length - 1]?.kind === 'halftime'} secondHalf={shown.some((e) => e.kind === 'halftime')} onPlayed={onPlayed} />
       )}
 
       {!moment && <div className={`tape ${episode || sheet ? 'dimmed' : ''}${reading ? ' reading' : ''}`}>
@@ -185,7 +185,7 @@ export function MatchScreen({
         {state.coachTrust < 30 && (
           <p className="tape-line say say-coach"><b>{t('Тренер')}</b> {t('— дедалі частіше поглядає на брівку: там уже розминаються.')}</p>
         )}
-        {waiting && <button className="skip" onClick={skip}>{t('далі ⟶')}</button>}
+        {waiting && <button className="skip" data-swipe="next" onClick={skip}>{t('далі ⟶')}</button>}
       </div>}
 
       {/* Карточка момента отделена от таймлайна панелью: сцена, варианты и зона «на кубик» — одно целое.

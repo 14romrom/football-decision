@@ -137,7 +137,7 @@ export function SeasonScreen({ season, club, playerName, playerGen, ads, verdict
       {/* Кнопка прилипає до низу, як на решті екранів (22.09, плейтест: до «Далі» доводилось гортати всю рекламу). */}
       {over
         ? <button className="primary menu-primary" onClick={onNewSeason}>{nextLabel}</button>
-        : <button className="primary menu-primary" onClick={onNext}>{t('Далі')}</button>}
+        : <button className="primary menu-primary" data-swipe="next" onClick={onNext}>{t('Далі')}</button>}
     </div>
   );
 }

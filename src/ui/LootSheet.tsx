@@ -86,7 +86,7 @@ export function LootSheet({ tab, loot, before, after, empty, button, onNext }: P
           })}
         </div>
       )}
-      <button className="primary menu-primary nb-sheet-btn" onClick={onNext}>{button}</button>
+      <button className="primary menu-primary nb-sheet-btn" data-swipe="next" onClick={onNext}>{button}</button>
     </div></div>
   );
 }

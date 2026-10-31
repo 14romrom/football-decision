@@ -42,7 +42,7 @@ export function ChapterCard({ chapter, index, total, onNext }: Props) {
           </div>
         </div>
       </div>
-      <button className="primary menu-primary" onClick={onNext}>{t('Далі')}</button>
+      <button className="primary menu-primary" data-swipe="next" onClick={onNext}>{t('Далі')}</button>
     </div>
   );
 }

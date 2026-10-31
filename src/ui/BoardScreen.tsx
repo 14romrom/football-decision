@@ -116,7 +116,7 @@ export function BoardScreen({ summary, roster, moments, round, prev, onNext }: P
         <div className="wb-sticky">{t('з трибун')}<b>{fmt(summary.fanRating)}</b></div>
         <div className="wb-tray" aria-hidden="true" /><div className="wb-pen" aria-hidden="true" /><div className="wb-sponge" aria-hidden="true" />
       </div>
-      <button className="primary menu-primary" onClick={onNext}>{t('Далі')}</button>
+      <button className="primary menu-primary" data-swipe="next" onClick={onNext}>{t('Далі')}</button>
     </div>
   );
 }

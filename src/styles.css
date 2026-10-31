@@ -1077,7 +1077,9 @@ html.reduce-motion .die, html.reduce-motion .dice-sum, html.reduce-motion .bar-f
 .noads-note { color: var(--muted); font-size: 12.5px; }
 /* Пауза в матчі (M48): чесний підпис під «Чекати» і тихий рядок про «Без реклами». */
 .adbreak-note { margin: 2px 0 0; text-align: center; font: 12px var(--font-mono); color: var(--muted); }
-.adbreak-quiet { margin: 0; text-align: center; font-size: 12.5px; font-style: italic; color: var(--muted); opacity: .8; }
+.adbreak-buy { display: block; width: 100%; margin: 14px 0 0; min-height: 48px; padding: 10px 14px; background: none; color: var(--ink); border: 1px solid #4a463c; border-radius: 3px;
+  font: 500 13px var(--font-caps); letter-spacing: .1em; text-transform: uppercase; }
+.adbreak-buy:disabled { opacity: .45; }
 /* Відгук і екран збою (18.10): той самий службовий екран, поле листа — на папері теми, без рамок браузера. */
 .fb-kind { align-self: flex-start; flex-wrap: wrap; }
 .fb-text { width: 100%; box-sizing: border-box; min-height: 140px; resize: vertical; background: var(--panel-2); color: var(--ink); border: 1px solid var(--line-2); border-radius: 4px; padding: 10px 12px; font: 16px/1.45 var(--font-text); }

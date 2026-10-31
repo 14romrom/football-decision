@@ -12605,7 +12605,6 @@
   "2c3c89fb22f7": "{dm} has already written your number down. In pencil, so it can be rubbed out.",
   "fe331a8f6fc4": "{0}′ · pause",
   "596aebb9313a": "Wait",
-  "a8a2956c35d7": "You can switch ads off for good in settings.",
   "ed1000e45592": "No ads",
   "1e3f55552434": "Thank you. There are no more ads in the game, and the match pauses stay as part of the story.",
   "25f35aa0d17b": "No purchase found on this Google Play account.",
@@ -12977,5 +12976,6 @@
   "5d370cb8a43c": "body",
   "444e7693ac00": "head",
   "adaa9ace12e3": "conditions",
-  "c1277ad025a2": "target {0}"
+  "c1277ad025a2": "target {0}",
+  "4bc6fb255aa9": "No ads, for good · {0}"
 }
